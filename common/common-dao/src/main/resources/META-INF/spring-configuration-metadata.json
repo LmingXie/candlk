@@ -1,0 +1,19 @@
+{
+	"groups": [
+		{
+			"name": "spring.tx",
+			"type": "org.springframework.aop.support.DefaultPointcutAdvisor",
+			"sourceType": "com.candlk.common.dao.MyBatisAutoConfiguration$TxAdviceConfig",
+			"sourceMethod": "txAdviceAdvisor(org.springframework.transaction.interceptor.TransactionInterceptor)"
+		}
+	],
+	"properties": [
+		{
+			"name": "spring.tx.pointcut.expression",
+			"type": "java.lang.String",
+			"description": "Spring声明式事务切面表达式",
+			"sourceType": "org.springframework.aop.support.DefaultPointcutAdvisor",
+			"defaultValue": "execution(public * @org.springframework.stereotype.Service com.candlk..*.*(..))"
+		}
+	]
+}

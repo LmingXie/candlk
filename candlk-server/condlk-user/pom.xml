@@ -1,0 +1,104 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<project xmlns="http://maven.apache.org/POM/4.0.0"
+         xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+         xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
+	<modelVersion>4.0.0</modelVersion>
+
+	<parent>
+		<groupId>com.candlk</groupId>
+		<artifactId>candlk-server</artifactId>
+		<version>1.0.0</version>
+	</parent>
+
+	<artifactId>condlk-user</artifactId>
+	<packaging>jar</packaging>
+	<properties>
+		<env-version>1.0.0</env-version>
+		<maven.compiler.source>${java.version}</maven.compiler.source>
+		<maven.compiler.target>${java.version}</maven.compiler.target>
+	</properties>
+
+	<dependencies>
+		<dependency>
+			<groupId>com.candlk</groupId>
+			<artifactId>base</artifactId>
+			<version>${env-version}</version>
+		</dependency>
+
+		<dependency>
+			<groupId>com.candlk</groupId>
+			<artifactId>common-alarm</artifactId>
+			<version>1.0.0</version>
+		</dependency>
+
+		<!--
+		<dependency>
+			<groupId>com.sun.mail</groupId>
+			<artifactId>javax.mail</artifactId>
+		</dependency>
+		-->
+
+		<dependency>
+			<groupId>com.candlk</groupId>
+			<artifactId>common-gencode</artifactId>
+			<version>1.0.0</version>
+			<scope>test</scope>
+		</dependency>
+
+		<!--ip 解析 https://mvnrepository.com/artifact/com.maxmind.geoip2/geoip2-->
+		<!-- https://github.com/P3TERX/GeoLite.mmdb/releases -->
+		<dependency>
+			<groupId>com.maxmind.geoip2</groupId>
+			<artifactId>geoip2</artifactId>
+			<version>4.1.0</version>
+		</dependency>
+
+	</dependencies>
+
+	<build>
+		<plugins>
+
+			<plugin>
+				<groupId>org.apache.maven.plugins</groupId>
+				<artifactId>maven-jar-plugin</artifactId>
+				<executions>
+					<execution>
+						<id>default-jar</id>
+						<phase>package</phase>
+						<goals>
+							<goal>jar</goal>
+						</goals>
+						<configuration>
+							<archive>
+								<manifestEntries>
+									<Add-Opens>java.base/java.lang java.base/java.util java.base/java.math</Add-Opens>
+								</manifestEntries>
+							</archive>
+						</configuration>
+					</execution>
+				</executions>
+			</plugin>
+
+			<plugin>
+				<groupId>org.springframework.boot</groupId>
+				<artifactId>spring-boot-maven-plugin</artifactId>
+				<configuration>
+					<executable>true</executable>
+					<mainClass>com.candlk.webapp.UserApplication</mainClass>
+				</configuration>
+				<executions>
+					<execution>
+						<id>executable-jar</id>
+						<goals>
+							<goal>repackage</goal>
+						</goals>
+						<configuration>
+							<executable>true</executable>
+						</configuration>
+					</execution>
+				</executions>
+			</plugin>
+		</plugins>
+	</build>
+
+</project>
