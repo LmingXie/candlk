@@ -48,13 +48,6 @@
 			<version>1.17.2</version>
 		</dependency>
 
-		<!--
-		<dependency>
-			<groupId>com.sun.mail</groupId>
-			<artifactId>javax.mail</artifactId>
-		</dependency>
-		-->
-
 		<dependency>
 			<groupId>com.candlk</groupId>
 			<artifactId>common-gencode</artifactId>

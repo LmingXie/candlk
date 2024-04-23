@@ -52,13 +52,15 @@ public class Web3JConfig {
 	}
 
 	public void sendWarn(String title, String content) {
-		final HttpEntity<JSONObject> httpEntity = new HttpEntity<>(JSONObject.of(
-				"accessToken", accessToken,
-				"title", title,
-				"content", content), new HttpHeaders());
-		final String body = restTemplate.postForEntity("https://connector.dingtalk.com/webhook/trigger/data/sync?webhookId=" + webhookId, httpEntity, String.class)
-				.getBody();
-		log.warn("预警通知结果：{}", body);
+		SpringUtil.asyncRun(() -> {
+			final HttpEntity<JSONObject> httpEntity = new HttpEntity<>(JSONObject.of(
+					"accessToken", accessToken,
+					"title", title,
+					"content", content), new HttpHeaders());
+			final String body = restTemplate.postForEntity("https://connector.dingtalk.com/webhook/trigger/data/sync?webhookId=" + webhookId, httpEntity, String.class)
+					.getBody();
+			log.warn("预警通知结果：{}", body);
+		});
 	}
 
 	private final static Function<String, String> initContractName = k -> {
@@ -71,20 +73,56 @@ public class Web3JConfig {
 		return k;
 	};
 	/** 根据方法解释提示内容 */
-	public final static Map<String, Function<String[], String[]>> METHOD2TIP = new HashMap<>() {{
-		put("0x75710569", inputs -> {
-			String from = inputs[0], to = inputs[1], hash = inputs[2], input = inputs[3], nickname = inputs[4];
-			final String poolContractAddress = new Address(input.substring(11, 74)).getValue(), poolName = contractNames.computeIfAbsent(poolContractAddress, initContractName);
-			final BigDecimal amount = new BigDecimal(new BigInteger(input.substring(74), 16)).movePointLeft(18).setScale(2, RoundingMode.HALF_UP);
-			return new String[] {
-					"预警：esXAI赎回",
-					"### XAI预警！  \n<br>" +
-							"**识别到关注的【" + nickname + "】地址正在" + "从【" + poolName + "】池赎回。**\n<br>"
-							+ "赎回数量：**" + amount + " esXAI** \n<br/><br/>"
-							+ "[点击前往查看](https://arbiscan.io/tx/" + hash + ")"
-			};
-		});
-	}};
+	public final static Map<String, Function<String[], String[]>> METHOD2TIP = new HashMap<>() {
+		{
+			put("0x75710569", inputs -> parseStake(inputs, "预警：esXAI赎回", " esXAI**  \n  ", "赎回", BigDecimal.valueOf(8000)));
+			put("0xd4e44335", inputs -> parseStake(inputs, "预警：Keys赎回", "**  \n  ", "赎回", BigDecimal.valueOf(10)));
+			put("0xa528916d", inputs -> parseStake(inputs, "预警：esXAI质押", " esXAI**  \n  ", "质押", BigDecimal.valueOf(8000)));
+			put("0x2f1a0b1c", inputs -> parseStake(inputs, "预警：Keys质押", "**  \n  ", "质押", BigDecimal.valueOf(10)));
+			put("0x098e8ae7", inputs -> {
+				String hash = inputs[2], nickname = inputs[4];
+				return new String[] {
+						"预警：创建池子",
+						"### 预警：创建池子！  \n  " +
+								"识别到关注的【**" + nickname + "**】地址正创建新池。  \n  "
+								+ "Hash：**" + hash + "**  \n  "
+								+ "[点击前往查看详情](https://arbiscan.io/tx/" + hash + ")"
+				};
+			});
+			put(null, inputs -> {
+				String from = inputs[0], to = inputs[1], hash = inputs[2], input = inputs[3], nickname = inputs[4], method = inputs[5];
+				return new String[] {
+						"预警：无法识别的调用",
+						"### 预警：无法识别的调用！  \n  " +
+								"识别到关注的【**" + nickname + "**】地址进行了一笔无法识别的调用。  \n  "
+								+ "From：" + from + "  \n  "
+								+ "To：**" + to + "**  \n  "
+								+ "Method：**" + method + "**  \n  "
+								+ "Hash：" + hash + "  \n  "
+								+ "[点击前往查看详情](https://arbiscan.io/tx/" + hash + ")"
+				};
+			});
+		}
+
+		private static String[] parseStake(String[] inputs, String x, String x1, String type, BigDecimal threshold) {
+			final String from = inputs[0], to = inputs[1], hash = inputs[2], input = inputs[3], nickname = inputs[4] == null ? from : inputs[4];
+			final boolean hasBigAmount = inputs.length > 6;
+			BigDecimal amount = new BigDecimal(new BigInteger(input.substring(74), 16));
+			if (x.contains("esXAI")) {
+				amount = amount.movePointLeft(18).setScale(2, RoundingMode.HALF_UP);
+			}
+			if (!hasBigAmount || amount.compareTo(threshold) >= 0) {
+				final String poolContractAddress = new Address(input.substring(11, 74)).getValue(), poolName = contractNames.computeIfAbsent(poolContractAddress, initContractName);
+				return new String[] { x,
+						"### " + x + "！  \n  " +
+								"识别到关注的【**" + nickname + "**】地址正在【" + poolName + "】池进行" + type + "。  \n  "
+								+ type + "数量：**" + amount + x1
+								+ "[点击前往查看详情](https://arbiscan.io/tx/" + hash + ")"
+				};
+			}
+			return null;
+		}
+	};
 
 	private final static Map<String, String> contractNames = new HashMap<>();
 

@@ -8,60 +8,9 @@ spring:
   profiles:
     active: local
   application:
-    name: bj-user
+    name: user
   main:
     allow-circular-references: true
-
-  ### redis连接配置
-  redis:
-    host: 192.168.0.99
-    password: sakFsl#89jflka
-    database: 0
-
-  ### db连接配置
-  shardingsphere: # https://shardingsphere.apache.org/document/current/cn/user-manual/shardingsphere-jdbc/usage/sharding/spring-boot-starter/
-    enabled: false
-  datasource:
-    driver-class-name: com.mysql.cj.jdbc.Driver
-    url: jdbc:mysql://127.0.0.1/game?useUnicode=true
-    username: root
-    password: 123456
-    hikari:
-      connection-timeout: 10000
-      max-lifetime: 300000
-      auto-commit: false
-      data-source-properties:
-        characterEncoding: UTF-8
-        serverTimezone: GMT+8
-        useSSL: false # 5.5.45+ / 5.6.26+ / 5.7.6+ 默认为true
-        allowPublicKeyRetrieval: true
-        useServerPrepStmts: true
-        cachePrepStmts: true
-        useLocalSessionState: true
-        useUnbufferedInput: false
-        # maintainTimeStats: false #为 false 减少系统时间调用
-        elideSetAutoCommits: true
-        cacheServerConfiguration: true
-        # enableQueryTimeouts: false # 高性能负载环境下可以考虑为false
-        # connectionAttributes: none # since 5.1.25(MySQL 5.6+) 可提高数据库连接创建/初始化速度
-        prepStmtCacheSize: 250 # 默认 25
-        prepStmtCacheSqlLimit: 1024 # 默认 256
-mybatis-plus:
-  type-handlers-package: com.candlk.context.dao
-  mapper-locations: classpath:/mapper/**/*.xml
-  configuration:
-    map-underscore-to-camel-case: true
-    default-enum-type-handler: org.apache.ibatis.type.EnumOrdinalTypeHandler
-  global-config:
-    db-config:
-      table-prefix: gs_
-      id-type: auto # 数据库 ID 自增
-      logic-delete-field: state
-      logic-delete-value: 0
-      logic-not-delete-value: 3
-  type-aliases-package: com.candlk.**.entity
-  type-enums-package: com.candlk.**.model
-
 
   ### common-config.yml 所有服务的公共配置
   messages:
@@ -97,10 +46,12 @@ warn:
     url: https://qyapi.weixin.qq.com/cgi-bin/webhook/send?key=ffdc8cb0-5bcd-4ae1-a1a6-6acbe654e3cb
 service:
   xai:
-    web3jUrl: https://arb1.arbitrum.io/rpc
+#    web3jUrl: https://arb1.arbitrum.io/rpc
+    web3jUrl: https://arbitrum.llamarpc.com
+#    web3jUrl: https://arbitrum.blockpi.network/v1/rpc/public
     accessToken: 0699ae605b56910e521bf8fea6104d028a1e724d068f8261a6271b2a877c783f
     webhookId: 1029d9449a1f0b5238500004
-    lastBlock: 203876682
+    lastBlock: 204057254
     spyFroms:
       "0xcd6100d7a6b120b7042ba09b787a1cb26a2e6ae1": Alpha-K1
       "0xad490066fedddb64bafc266dca033a84ac5c900b": Alpha-K2
