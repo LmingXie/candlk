@@ -23,7 +23,7 @@ spring:
     enabled: false
   datasource:
     driver-class-name: com.mysql.cj.jdbc.Driver
-    url: jdbc:mysql://192.168.0.99/bj_game_local?useUnicode=true
+    url: jdbc:mysql://127.0.0.1/game?useUnicode=true
     username: root
     password: 123456
     hikari:
@@ -63,7 +63,7 @@ mybatis-plus:
   type-enums-package: com.candlk.**.model
 
 
-### common-config.yml 所有服务的公共配置
+  ### common-config.yml 所有服务的公共配置
   messages:
     use-code-as-default-message: true
   mvc:
@@ -95,3 +95,12 @@ management:
 warn:
   service:
     url: https://qyapi.weixin.qq.com/cgi-bin/webhook/send?key=ffdc8cb0-5bcd-4ae1-a1a6-6acbe654e3cb
+service:
+  xai:
+    web3jUrl: https://arb1.arbitrum.io/rpc
+    accessToken: 0699ae605b56910e521bf8fea6104d028a1e724d068f8261a6271b2a877c783f
+    webhookId: 1029d9449a1f0b5238500004
+    lastBlock: 203876682
+    spyFroms:
+      "0xcd6100d7a6b120b7042ba09b787a1cb26a2e6ae1": Alpha-K1
+      "0xad490066fedddb64bafc266dca033a84ac5c900b": Alpha-K2
