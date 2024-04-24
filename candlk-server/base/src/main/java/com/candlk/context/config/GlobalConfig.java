@@ -23,8 +23,8 @@ import net.sf.jsqlparser.expression.Expression;
 import net.sf.jsqlparser.expression.LongValue;
 import net.sf.jsqlparser.schema.Column;
 import org.mybatis.spring.annotation.MapperScan;
-import org.springframework.boot.autoconfigure.condition.*;
-import org.springframework.boot.context.properties.ConfigurationProperties;
+import org.springframework.boot.autoconfigure.condition.ConditionalOnBean;
+import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
 import org.springframework.cache.caffeine.CaffeineCacheManager;
 import org.springframework.context.annotation.*;
 import org.springframework.context.support.ResourceBundleMessageSource;
@@ -49,9 +49,9 @@ public class GlobalConfig {
 	public CacheBugWarnExpiredService bugWarnExpiredService() {
 		final CaffeineCacheManager cacheManager = new CaffeineCacheManager();
 		final Caffeine<Object, Object> caffeine = Caffeine.newBuilder()
-		                                                  .initialCapacity(32)
-		                                                  .maximumSize(512)
-		                                                  .expireAfterWrite(60, TimeUnit.SECONDS);
+				.initialCapacity(32)
+				.maximumSize(512)
+				.expireAfterWrite(60, TimeUnit.SECONDS);
 		cacheManager.setCaffeine(caffeine);
 		return new CacheBugWarnExpiredService(cacheManager);
 	}
@@ -63,9 +63,9 @@ public class GlobalConfig {
 		pool.setThreadNamePrefix("Task-Pool-");
 		int coreCount = Runtime.getRuntime().availableProcessors();
 		int min = Math.max(coreCount >> 1, 1);
-		pool.setCorePoolSize(min);
+		pool.setCorePoolSize(min + 4);
 		// 需要考虑 任务 的IO类型
-		pool.setMaxPoolSize(coreCount * 2 + 2);
+		pool.setMaxPoolSize(coreCount * 2 + 6);
 		pool.setQueueCapacity(1024);
 		pool.setKeepAliveSeconds(300);
 		pool.setWaitForTasksToCompleteOnShutdown(true);
@@ -143,7 +143,6 @@ public class GlobalConfig {
 		JsqlParserGlobal.setJsqlParseCache(new FstSerialCaffeineJsqlParseCache(cache -> cache.maximumSize(1024).expireAfterAccess(1, TimeUnit.MINUTES)));
 	}
 	*/
-
 
 	/**
 	 * 本地缓存跨服务同步刷新支持配置

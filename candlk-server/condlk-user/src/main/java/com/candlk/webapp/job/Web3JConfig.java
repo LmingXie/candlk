@@ -4,6 +4,8 @@ import java.math.*;
 import java.util.*;
 import java.util.function.Function;
 
+import javax.annotation.PostConstruct;
+
 import com.alibaba.fastjson2.JSONObject;
 import com.candlk.common.util.SpringUtil;
 import lombok.Getter;
@@ -30,6 +32,9 @@ import org.web3j.protocol.http.HttpService;
 public class Web3JConfig {
 
 	public String web3jUrl = "https://arb1.arbitrum.io/rpc";
+
+	public List<String> web3jUrlPool = new ArrayList<>();
+
 	public String accessToken = "0699ae605b56910e521bf8fea6104d028a1e724d068f8261a6271b2a877c783f";
 	public String webhookId = "1029d9449a1f0b5238500004";
 	public volatile BigInteger lastBlock = BigInteger.valueOf(203584844);
@@ -51,6 +56,25 @@ public class Web3JConfig {
 		httpRequestFactory.setReadTimeout(10000);
 		httpRequestFactory.setConnectTimeout(5000);
 		restTemplate = new RestTemplate();
+	}
+
+	private volatile int offset = 0, maxOffset;
+	public List<Web3j> web3jPool = new ArrayList<>();
+
+	@PostConstruct
+	public void init() {
+		this.maxOffset = web3jUrlPool.size() - 1;
+		for (String url : web3jUrlPool) {
+			web3jPool.add(Web3j.build(new HttpService(url)));
+		}
+	}
+
+	public synchronized Web3j pollingGetWeb3j() {
+		final Web3j result = web3jPool.get(offset);
+		if (offset++ >= maxOffset) {
+			offset = 0;
+		}
+		return result;
 	}
 
 	@Bean

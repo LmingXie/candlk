@@ -50,14 +50,23 @@ warn:
     url: https://qyapi.weixin.qq.com/cgi-bin/webhook/send?key=ffdc8cb0-5bcd-4ae1-a1a6-6acbe654e3cb
 service:
   xai:
-#    web3jUrl: https://arb1.arbitrum.io/rpc
+    web3jUrl: https://arb1.arbitrum.io/rpc
 #    web3jUrl: https://arbitrum.llamarpc.com
-    web3jUrl: wss://arbitrum-one-rpc.publicnode.com
+#    web3jUrl: wss://arbitrum-one-rpc.publicnode.com
 #    web3jUrl: wss://arbitrum-one.publicnode.com
 #    web3jUrl: https://arbitrum.blockpi.network/v1/rpc/public
+    web3jUrlPool:
+      - https://arbitrum.llamarpc.com
+      - wss://arbitrum-one-rpc.publicnode.com
+      - wss://arbitrum-one.publicnode.com
+      - https://arbitrum.blockpi.network/v1/rpc/public
+      - https://arb1.arbitrum.io/rpc
+      - https://rpc.ankr.com/arbitrum
+      - https://arb-pokt.nodies.app
+      - https://arbitrum-one.public.blastapi.io
     accessToken: 0699ae605b56910e521bf8fea6104d028a1e724d068f8261a6271b2a877c783f
     webhookId: 1029d9449a1f0b5238500004
-    lastBlock: 202918880
+    lastBlock: 204358952
     spyFroms:
       "0xcd6100d7a6b120b7042ba09b787a1cb26a2e6ae1": Alpha-K1
       "0xad490066fedddb64bafc266dca033a84ac5c900b": Alpha-K2

@@ -35,7 +35,8 @@ public class XAIJob {
 		do {
 			final BigInteger blockNumber = web3JConfig.incrLastBlock();
 			SpringUtil.asyncRun(() -> {
-				final EthBlock.Block block = web3j.ethGetBlockByNumber(new DefaultBlockParameterNumber(blockNumber), true).send().getBlock();
+				final Web3j newWeb3j = web3JConfig.pollingGetWeb3j();
+				final EthBlock.Block block = newWeb3j.ethGetBlockByNumber(new DefaultBlockParameterNumber(blockNumber), true).send().getBlock();
 				log.info("正在执行扫描区块：{}", blockNumber);
 				final List<TransactionResult> txs = block.getTransactions();
 				if (!CollectionUtils.isEmpty(txs)) {
@@ -70,7 +71,7 @@ public class XAIJob {
 						if ("0x4c749d097832de2fecc989ce18fdc5f1bd76700c".equalsIgnoreCase(to)) {
 							if ("0x840ecba0".equalsIgnoreCase(method)) { // 大额赎回的领取
 								SpringUtil.asyncRun(() -> {
-									final TransactionReceipt receipt = web3j.ethGetTransactionReceipt(hash).send().getTransactionReceipt().get();
+									final TransactionReceipt receipt = newWeb3j.ethGetTransactionReceipt(hash).send().getTransactionReceipt().get();
 									final List<Log> logs = receipt.getLogs();
 									if (logs.size() == 4) {
 										final Log redemption = logs.get(1), recycle = logs.get(2);
