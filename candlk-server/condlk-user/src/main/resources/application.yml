@@ -1,5 +1,5 @@
 server:
-  port: 8080
+  port: 8081
   servlet:
     session:
       cookie:
@@ -11,7 +11,11 @@ spring:
     name: user
   main:
     allow-circular-references: true
-
+  ### redis连接配置
+  redis:
+    host: 192.168.0.99
+    password: sakFsl#89jflka
+    database: 0
   ### common-config.yml 所有服务的公共配置
   messages:
     use-code-as-default-message: true
@@ -47,11 +51,13 @@ warn:
 service:
   xai:
 #    web3jUrl: https://arb1.arbitrum.io/rpc
-    web3jUrl: https://arbitrum.llamarpc.com
+#    web3jUrl: https://arbitrum.llamarpc.com
+    web3jUrl: wss://arbitrum-one-rpc.publicnode.com
+#    web3jUrl: wss://arbitrum-one.publicnode.com
 #    web3jUrl: https://arbitrum.blockpi.network/v1/rpc/public
     accessToken: 0699ae605b56910e521bf8fea6104d028a1e724d068f8261a6271b2a877c783f
     webhookId: 1029d9449a1f0b5238500004
-    lastBlock: 204057254
+    lastBlock: 202918880
     spyFroms:
       "0xcd6100d7a6b120b7042ba09b787a1cb26a2e6ae1": Alpha-K1
       "0xad490066fedddb64bafc266dca033a84ac5c900b": Alpha-K2

@@ -33,6 +33,8 @@ public class Web3JConfig {
 	public String accessToken = "0699ae605b56910e521bf8fea6104d028a1e724d068f8261a6271b2a877c783f";
 	public String webhookId = "1029d9449a1f0b5238500004";
 	public BigInteger lastBlock = BigInteger.valueOf(203584844);
+	/** 大额赎回的领取 */
+	public BigDecimal redemptionThreshold = new BigDecimal(50000);
 
 	/** 需要监听的发送者请求（小写）地址 -> 备注 */
 	public Map<String, String> spyFroms = new HashMap<>();
@@ -72,9 +74,17 @@ public class Web3JConfig {
 		}
 		return k;
 	};
-	/** 根据方法解释提示内容 */
+	/**
+	 * 根据方法解释提示内容
+	 * <p>
+	 * 空格格式：&nbsp 或 &#160 或 &#xA0
+	 * <p>
+	 * 换行格式： \n
+	 * </p>
+	 */
 	public final static Map<String, Function<String[], String[]>> METHOD2TIP = new HashMap<>() {
 		{
+			put("0x57634198", inputs -> new String[] { "普通消息：从池子中领取奖励", null });
 			put("0x75710569", inputs -> parseStake(inputs, "预警：esXAI赎回", " esXAI**  \n  ", "赎回", BigDecimal.valueOf(8000)));
 			put("0xd4e44335", inputs -> parseStake(inputs, "预警：Keys赎回", "**  \n  ", "赎回", BigDecimal.valueOf(10)));
 			put("0xa528916d", inputs -> parseStake(inputs, "预警：esXAI质押", " esXAI**  \n  ", "质押", BigDecimal.valueOf(8000)));
@@ -83,8 +93,8 @@ public class Web3JConfig {
 				String hash = inputs[2], nickname = inputs[4];
 				return new String[] {
 						"预警：创建池子",
-						"### 预警：创建池子！  \n  " +
-								"识别到关注的【**" + nickname + "**】地址正创建新池。  \n  "
+						"### 预警：创建池子！  \n  "
+								+ "识别到关注的【**" + nickname + "**】地址正创建新池。  \n  "
 								+ "Hash：**" + hash + "**  \n  "
 								+ "[点击前往查看详情](https://arbiscan.io/tx/" + hash + ")"
 				};
@@ -93,8 +103,8 @@ public class Web3JConfig {
 				String from = inputs[0], to = inputs[1], hash = inputs[2], input = inputs[3], nickname = inputs[4], method = inputs[5];
 				return new String[] {
 						"预警：无法识别的调用",
-						"### 预警：无法识别的调用！  \n  " +
-								"识别到关注的【**" + nickname + "**】地址进行了一笔无法识别的调用。  \n  "
+						"### 预警：无法识别的调用！  \n  "
+								+ "识别到关注的【**" + nickname + "**】地址进行了一笔无法识别的调用。  \n  "
 								+ "From：" + from + "  \n  "
 								+ "To：**" + to + "**  \n  "
 								+ "Method：**" + method + "**  \n  "
@@ -110,12 +120,17 @@ public class Web3JConfig {
 			BigDecimal amount = new BigDecimal(new BigInteger(input.substring(74), 16));
 			if (x.contains("esXAI")) {
 				amount = amount.movePointLeft(18).setScale(2, RoundingMode.HALF_UP);
+			} else if (input.length() > 138) {
+				amount = new BigDecimal(new BigInteger(input.substring(138, 202), 16));
+			}
+			if (hasBigAmount) { // 大额预警
+				x = "大额" + x;
 			}
 			if (!hasBigAmount || amount.compareTo(threshold) >= 0) {
 				final String poolContractAddress = new Address(input.substring(11, 74)).getValue(), poolName = contractNames.computeIfAbsent(poolContractAddress, initContractName);
 				return new String[] { x,
-						"### " + x + "！  \n  " +
-								"识别到关注的【**" + nickname + "**】地址正在【" + poolName + "】池进行" + type + "。  \n  "
+						"### " + x + "！  \n  "
+								+ "识别到关注的【**" + nickname + "**】地址正在【" + poolName + "】池进行" + type + "。  \n  "
 								+ type + "数量：**" + amount + x1
 								+ "[点击前往查看详情](https://arbiscan.io/tx/" + hash + ")"
 				};
