@@ -32,16 +32,20 @@ public class XAIJob {
 	@Scheduled(cron = "${service.cron.xai:0/5 * * * * ?}")
 	public void run() throws Exception {
 		final BigInteger lastBlock = web3j.ethBlockNumber().send().getBlockNumber();
-		int retry;
 		do {
 			final BigInteger blockNumber = web3JConfig.incrLastBlock();
-			retry = 5;
-			while (retry-- > 0) {
-				SpringUtil.asyncRun(() -> {
-					final Web3j newWeb3j = web3JConfig.pollingGetWeb3j();
-					this.exec(newWeb3j, blockNumber);
-				}, "接口被限制，进行重试");
-			}
+			SpringUtil.asyncRun(() -> {
+				int retry = 5;
+				while (retry-- > 0) {
+					try {
+						final Web3j newWeb3j = web3JConfig.pollingGetWeb3j();
+						this.exec(newWeb3j, blockNumber);
+						break;
+					} catch (Exception e) {
+						log.info("接口被限制，进行重试");
+					}
+				}
+			});
 		} while (lastBlock.compareTo(web3JConfig.lastBlock) > 0);
 		log.info("结束本次扫描，最后区块：{}", web3JConfig.lastBlock);
 	}

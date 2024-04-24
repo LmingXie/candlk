@@ -11,6 +11,11 @@ spring:
     name: user
   main:
     allow-circular-references: true
+  ### redis连接配置
+  redis:
+    host: 192.168.0.99
+    password: sakFsl#89jflka
+    database: 0
   ### common-config.yml 所有服务的公共配置
   messages:
     use-code-as-default-message: true
