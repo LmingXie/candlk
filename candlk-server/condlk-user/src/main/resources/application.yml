@@ -11,11 +11,6 @@ spring:
     name: user
   main:
     allow-circular-references: true
-  ### redis连接配置
-  redis:
-    host: 192.168.0.99
-    password: sakFsl#89jflka
-    database: 0
   ### common-config.yml 所有服务的公共配置
   messages:
     use-code-as-default-message: true
@@ -64,6 +59,8 @@ service:
       - https://rpc.ankr.com/arbitrum
       - https://arb-pokt.nodies.app
       - https://arbitrum-one.public.blastapi.io
+      - wss://arbitrum-one-rpc.publicnode.com
+      - https://endpoints.omniatech.io/v1/arbitrum/one/public
     accessToken: 0699ae605b56910e521bf8fea6104d028a1e724d068f8261a6271b2a877c783f
     webhookId: 1029d9449a1f0b5238500004
     lastBlock: 204358952
