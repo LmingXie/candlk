@@ -32,7 +32,8 @@ public class Web3JConfig {
 	public String web3jUrl = "https://arb1.arbitrum.io/rpc";
 	public String accessToken = "0699ae605b56910e521bf8fea6104d028a1e724d068f8261a6271b2a877c783f";
 	public String webhookId = "1029d9449a1f0b5238500004";
-	public BigInteger lastBlock = BigInteger.valueOf(203584844);
+	public volatile BigInteger lastBlock = BigInteger.valueOf(203584844);
+
 	/** 大额赎回的领取 */
 	public BigDecimal redemptionThreshold = new BigDecimal(50000);
 
@@ -40,6 +41,10 @@ public class Web3JConfig {
 	public Map<String, String> spyFroms = new HashMap<>();
 
 	private static final RestTemplate restTemplate;
+
+	public synchronized BigInteger incrLastBlock() {
+		return this.lastBlock = this.lastBlock.add(BigInteger.ONE);
+	}
 
 	static {
 		final SimpleClientHttpRequestFactory httpRequestFactory = new SimpleClientHttpRequestFactory();
@@ -90,21 +95,21 @@ public class Web3JConfig {
 			put("0xa528916d", inputs -> parseStake(inputs, "预警：esXAI质押", " esXAI**  \n  ", "质押", BigDecimal.valueOf(8000)));
 			put("0x2f1a0b1c", inputs -> parseStake(inputs, "预警：Keys质押", "**  \n  ", "质押", BigDecimal.valueOf(10)));
 			put("0x098e8ae7", inputs -> {
-				String hash = inputs[2], nickname = inputs[4];
+				final String from = inputs[0], hash = inputs[2], nickname = inputs[4];
 				return new String[] {
 						"预警：创建池子",
 						"### 预警：创建池子！  \n  "
-								+ "识别到关注的【**" + nickname + "**】地址正创建新池。  \n  "
+								+ "识别到关注的【**[" + nickname + "](https://arbiscan.io/address/" + from + ")**】地址正创建新池。  \n  "
 								+ "Hash：**" + hash + "**  \n  "
 								+ "[点击前往查看详情](https://arbiscan.io/tx/" + hash + ")"
 				};
 			});
 			put(null, inputs -> {
-				String from = inputs[0], to = inputs[1], hash = inputs[2], input = inputs[3], nickname = inputs[4], method = inputs[5];
+				final String from = inputs[0], to = inputs[1], hash = inputs[2], input = inputs[3], nickname = inputs[4], method = inputs[5];
 				return new String[] {
 						"预警：无法识别的调用",
 						"### 预警：无法识别的调用！  \n  "
-								+ "识别到关注的【**" + nickname + "**】地址进行了一笔无法识别的调用。  \n  "
+								+ "识别到关注的【**[" + nickname + "](https://arbiscan.io/address/" + from + ")**】地址进行了一笔无法识别的调用。  \n  "
 								+ "From：" + from + "  \n  "
 								+ "To：**" + to + "**  \n  "
 								+ "Method：**" + method + "**  \n  "
@@ -130,7 +135,7 @@ public class Web3JConfig {
 				final String poolContractAddress = new Address(input.substring(11, 74)).getValue(), poolName = contractNames.computeIfAbsent(poolContractAddress, initContractName);
 				return new String[] { x,
 						"### " + x + "！  \n  "
-								+ "识别到关注的【**" + nickname + "**】地址正在【" + poolName + "】池进行" + type + "。  \n  "
+								+ "识别到关注的【**[" + nickname + "](https://arbiscan.io/address/" + from + ")**】地址正在【" + poolName + "】池进行" + type + "。  \n  "
 								+ type + "数量：**" + amount + x1
 								+ "[点击前往查看详情](https://arbiscan.io/tx/" + hash + ")"
 				};
