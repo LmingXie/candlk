@@ -68,7 +68,7 @@ service:
       - https://endpoints.omniatech.io/v1/arbitrum/one/public
     accessToken: 0699ae605b56910e521bf8fea6104d028a1e724d068f8261a6271b2a877c783f
     webhookId: 1029d9449a1f0b5238500004
-    lastBlock: 204358952
+    lastBlock: 204546434
     spyFroms:
       "0xcd6100d7a6b120b7042ba09b787a1cb26a2e6ae1": Alpha-K1
       "0xad490066fedddb64bafc266dca033a84ac5c900b": Alpha-K2

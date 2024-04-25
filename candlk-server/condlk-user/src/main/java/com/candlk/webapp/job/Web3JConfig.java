@@ -159,7 +159,7 @@ public class Web3JConfig {
 				final String poolContractAddress = new Address(input.substring(11, 74)).getValue(), poolName = contractNames.computeIfAbsent(poolContractAddress, initContractName);
 				return new String[] { x,
 						"### " + x + "！  \n  "
-								+ "识别到关注的【**[" + nickname + "](https://arbiscan.io/address/" + from + ")**】地址正在【" + poolName + "】池进行" + type + "。  \n  "
+								+ "识别到关注的【**[" + nickname + "](https://arbiscan.io/address/" + from + ")**】地址正在【**[" + poolName + "](https://app.xai.games/pool/" + poolContractAddress + "/summary)**】池进行" + type + "。  \n  "
 								+ type + "数量：**" + amount + x1
 								+ "[点击前往查看详情](https://arbiscan.io/tx/" + hash + ")"
 				};
