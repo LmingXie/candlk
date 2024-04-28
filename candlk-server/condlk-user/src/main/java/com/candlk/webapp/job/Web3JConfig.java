@@ -35,8 +35,7 @@ public class Web3JConfig {
 
 	public List<String> web3jUrlPool = new ArrayList<>();
 
-	public String accessToken = "0699ae605b56910e521bf8fea6104d028a1e724d068f8261a6271b2a877c783f";
-	public String webhookId = "1029d9449a1f0b5238500004";
+	public String dingTalkBotUrl = "https://oapi.dingtalk.com/robot/send?access_token=0699ae605b56910e521bf8fea6104d028a1e724d068f8261a6271b2a877c783f";
 	public volatile BigInteger lastBlock = BigInteger.valueOf(203584844);
 
 	/** 大额赎回的领取 */
@@ -85,10 +84,13 @@ public class Web3JConfig {
 	public void sendWarn(String title, String content) {
 		SpringUtil.asyncRun(() -> {
 			final HttpEntity<JSONObject> httpEntity = new HttpEntity<>(JSONObject.of(
-					"accessToken", accessToken,
-					"title", title,
-					"content", content), new HttpHeaders());
-			final String body = restTemplate.postForEntity("https://connector.dingtalk.com/webhook/trigger/data/sync?webhookId=" + webhookId, httpEntity, String.class)
+					"msgtype", "markdown",
+					"markdown", JSONObject.of(
+							"title", title,
+							"text", content
+					),
+					"at", JSONObject.of("isAtAll", "true")), new HttpHeaders());
+			final String body = restTemplate.postForEntity(dingTalkBotUrl, httpEntity, String.class)
 					.getBody();
 			log.warn("预警通知结果：{}", body);
 		});

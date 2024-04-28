@@ -50,6 +50,7 @@ warn:
     url: https://qyapi.weixin.qq.com/cgi-bin/webhook/send?key=ffdc8cb0-5bcd-4ae1-a1a6-6acbe654e3cb
 service:
   xai:
+    dingTalkBotUrl: https://oapi.dingtalk.com/robot/send?access_token=0699ae605b56910e521bf8fea6104d028a1e724d068f8261a6271b2a877c783f
     web3jUrl: https://arb1.arbitrum.io/rpc
 #    web3jUrl: https://arbitrum.llamarpc.com
 #    web3jUrl: wss://arbitrum-one-rpc.publicnode.com
@@ -66,9 +67,7 @@ service:
       - https://arbitrum-one.public.blastapi.io
       - wss://arbitrum-one-rpc.publicnode.com
       - https://endpoints.omniatech.io/v1/arbitrum/one/public
-    accessToken: 0699ae605b56910e521bf8fea6104d028a1e724d068f8261a6271b2a877c783f
-    webhookId: 1029d9449a1f0b5238500004
-    lastBlock: 204546434
+    lastBlock: 205556859
     spyFroms:
       "0xcd6100d7a6b120b7042ba09b787a1cb26a2e6ae1": Alpha-K1
       "0xad490066fedddb64bafc266dca033a84ac5c900b": Alpha-K2
