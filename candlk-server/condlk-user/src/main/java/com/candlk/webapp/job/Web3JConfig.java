@@ -3,7 +3,7 @@ package com.candlk.webapp.job;
 import java.math.*;
 import java.util.*;
 import java.util.function.Function;
-
+import java.util.function.Supplier;
 import javax.annotation.PostConstruct;
 
 import com.alibaba.fastjson2.JSONObject;
@@ -38,8 +38,12 @@ public class Web3JConfig {
 	public String dingTalkBotUrl = "https://oapi.dingtalk.com/robot/send?access_token=0699ae605b56910e521bf8fea6104d028a1e724d068f8261a6271b2a877c783f";
 	public volatile BigInteger lastBlock = BigInteger.valueOf(203584844);
 
-	/** 大额赎回的领取 */
-	public BigDecimal redemptionThreshold = new BigDecimal(50000);
+	/** XAI大额赎回的领取 */
+	public BigDecimal redemptionThreshold = new BigDecimal(5000);
+	/** 池子esXAI大额 */
+	public static BigDecimal esXAIThreshold = new BigDecimal(10000);
+	/** 池子Keys大额 */
+	public static BigDecimal keysThreshold = new BigDecimal(5);
 
 	/** 需要监听的发送者请求（小写）地址 -> 备注 */
 	public Map<String, String> spyFroms = new HashMap<>();
@@ -116,10 +120,18 @@ public class Web3JConfig {
 	public final static Map<String, Function<String[], String[]>> METHOD2TIP = new HashMap<>() {
 		{
 			put("0x57634198", inputs -> new String[] { "普通消息：从池子中领取奖励", null });
-			put("0x75710569", inputs -> parseStake(inputs, "预警：esXAI赎回", " esXAI**  \n  ", "赎回", BigDecimal.valueOf(8000)));
-			put("0xd4e44335", inputs -> parseStake(inputs, "预警：Keys赎回", "**  \n  ", "赎回", BigDecimal.valueOf(10)));
-			put("0xa528916d", inputs -> parseStake(inputs, "预警：esXAI质押", " esXAI**  \n  ", "质押", BigDecimal.valueOf(8000)));
-			put("0x2f1a0b1c", inputs -> parseStake(inputs, "预警：Keys质押", "**  \n  ", "质押", BigDecimal.valueOf(10)));
+			put("0x2f1a0b1c", inputs -> parseStake(inputs, "预警：Keys质押", () -> new BigDecimal(new BigInteger(inputs[3].substring(138, 202), 16)), "**  \n  ", "质押", keysThreshold));
+			put("0xa528916d", inputs -> parseStake(inputs, "预警：esXAI质押", () ->
+					new BigDecimal(new BigInteger(inputs[3].substring(74), 16)).movePointLeft(18).setScale(2, RoundingMode.HALF_UP), " esXAI**  \n  ", "质押", esXAIThreshold));
+			put("0xd4e44335", inputs -> parseStake(inputs, "快讯：Keys 赎回申请", () -> new BigDecimal(new BigInteger(inputs[3].substring(74), 16)), "**  \n  ", "赎回", keysThreshold));
+			put("0x75710569", inputs -> parseStake(inputs, "快讯：esXAI 赎回申请", () ->
+					new BigDecimal(new BigInteger(inputs[3].substring(74), 16)).movePointLeft(18).setScale(2, RoundingMode.HALF_UP), " esXAI**  \n  ", "赎回", esXAIThreshold));
+			// unstakeKeys
+			put("0x95003265", inputs -> parseStake(inputs, "预警：Keys 赎回成功", () -> new BigDecimal(new BigInteger(inputs[3].substring(202, 266), 16)), "**  \n  ", "赎回", keysThreshold));
+			// unstakeEsXai
+			put("0x68da34e6", inputs -> parseStake(inputs, "预警：esXAI 赎回成功", () ->
+							new BigDecimal(new BigInteger(inputs[3].substring(138, 202), 16)).movePointLeft(18).setScale(2, RoundingMode.HALF_UP),
+					" esXAI**  \n  ", "赎回", esXAIThreshold));
 			put("0x098e8ae7", inputs -> {
 				final String from = inputs[0], hash = inputs[2], nickname = inputs[4];
 				return new String[] {
@@ -145,15 +157,10 @@ public class Web3JConfig {
 			});
 		}
 
-		private static String[] parseStake(String[] inputs, String x, String x1, String type, BigDecimal threshold) {
+		private static String[] parseStake(String[] inputs, String x, Supplier<BigDecimal> supplier, String x1, String type, BigDecimal threshold) {
 			final String from = inputs[0], to = inputs[1], hash = inputs[2], input = inputs[3], nickname = inputs[4] == null ? from : inputs[4];
+			final BigDecimal amount = supplier.get();
 			final boolean hasBigAmount = inputs.length > 6;
-			BigDecimal amount = new BigDecimal(new BigInteger(input.substring(74), 16));
-			if (x.contains("esXAI")) {
-				amount = amount.movePointLeft(18).setScale(2, RoundingMode.HALF_UP);
-			} else if (input.length() > 138) {
-				amount = new BigDecimal(new BigInteger(input.substring(138, 202), 16));
-			}
 			if (hasBigAmount) { // 大额预警
 				x = "大额" + x;
 			}

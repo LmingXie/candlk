@@ -32,7 +32,7 @@ public class XAIJob {
 	@Scheduled(cron = "${service.cron.xai:0/5 * * * * ?}")
 	public void run() throws Exception {
 		final BigInteger lastBlock = web3j.ethBlockNumber().send().getBlockNumber();
-		do {
+		while (lastBlock.compareTo(web3JConfig.lastBlock) > 0) {
 			final BigInteger blockNumber = web3JConfig.incrLastBlock();
 			SpringUtil.asyncRun(() -> {
 				int retry = 5;
@@ -46,7 +46,7 @@ public class XAIJob {
 					}
 				}
 			});
-		} while (lastBlock.compareTo(web3JConfig.lastBlock) > 0);
+		}
 		log.info("结束本次扫描，最后区块：{}", web3JConfig.lastBlock);
 	}
 
