@@ -44,6 +44,7 @@ public class Web3JConfig {
 	public static BigDecimal esXAIThreshold = new BigDecimal(10000);
 	/** 池子Keys大额 */
 	public static BigDecimal keysThreshold = new BigDecimal(5);
+	public String statFilePath = "/mnt/xai_bot/stat.json";
 
 	/** 需要监听的发送者请求（小写）地址 -> 备注 */
 	public Map<String, String> spyFroms = new HashMap<>();

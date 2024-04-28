@@ -6,7 +6,6 @@ import java.util.*;
 import java.util.stream.Collectors;
 
 import com.alibaba.fastjson2.JSON;
-import okhttp3.OkHttpClient;
 import org.apache.commons.lang3.tuple.Pair;
 import org.apache.commons.lang3.tuple.Triple;
 import org.jsoup.Jsoup;
@@ -32,13 +31,13 @@ public class XAIDataStatTest {
 	}
 
 	public static void main(String[] args) throws Exception {
-		// final Triple<BigDecimal, BigDecimal, String> triple = append(20);
-		// BigDecimal currentCompleteRedemptionAmount = new BigDecimal("771811.122505");
-		// BigDecimal recycleAmount = new BigDecimal("1157716.683805");
-		// System.out.println("According to the on-chain data, @XAI_GAMES the last two days add complete redemption amount " + triple.getLeft() + " XAI, recycle amount " + triple.getMiddle() + " XAI.");
-		// System.out.println("\nUp to now total complete redemption amount " + currentCompleteRedemptionAmount.add(triple.getLeft()) + " XAI, recycle total amount " + recycleAmount.add(triple.getMiddle()) + " XAI.");
-		// System.out.println("\nsource link: https://arbiscan.io/advanced-filter?tkn=0x4cb9a7ae498cedcbb5eae9f25736ae7d428c9d66&txntype=2&mtd=0x840ecba0%7eComplete+Redemption");
-		// System.out.println("\nLast transaction hash " + triple.getRight());
+		final Triple<BigDecimal, BigDecimal, String> triple = append(23);
+		BigDecimal currentCompleteRedemptionAmount = new BigDecimal("838194.655871");
+		BigDecimal recycleAmount = new BigDecimal("1257291.983870");
+		System.out.println("According to the on-chain data, @XAI_GAMES the last two days add complete redemption amount " + triple.getLeft() + " XAI, recycle amount " + triple.getMiddle() + " XAI.");
+		System.out.println("\nUp to now total complete redemption amount " + currentCompleteRedemptionAmount.add(triple.getLeft()) + " XAI, recycle total amount " + recycleAmount.add(triple.getMiddle()) + " XAI.");
+		System.out.println("\nsource link: https://arbiscan.io/advanced-filter?tkn=0x4cb9a7ae498cedcbb5eae9f25736ae7d428c9d66&txntype=2&mtd=0x840ecba0%7eComplete+Redemption");
+		System.out.println("\nLast transaction hash " + triple.getRight());
 		// Pair<BigDecimal, BigDecimal> bigDecimalBigDecimalPair = completeRedemptionAmount();
 		// System.out.println("According to the on-chain data, @XAI_GAMES yesterday add complete redemption amount " + bigDecimalBigDecimalPair.getLeft() + " XAI, recycle amount " + bigDecimalBigDecimalPair.getRight() + " XAI.");
 
@@ -48,7 +47,7 @@ public class XAIDataStatTest {
 
 		// 解析取消质押的esXAI数量
 		// https://arbiscan.io/advanced-filter?fadd=0xf9e08660223e2dbb1c0b28c82942ab6b5e38b8e5&tadd=0xf9e08660223e2dbb1c0b28c82942ab6b5e38b8e5&txntype=0&mtd=0xd4e44335~Create+Unstake+Key+Request%2c0x75710569~Create+Unstake+Es+Xai+Request&ps=100&p=1
-		parseCreateUnstakeKeyRequest(1, 15, false, "D:\\xai\\unstake_esXAI\\advanced-filter", "0xd6b670ba726949b3b82d62f658718685a67ca02af3551bdf02bb5f6f783d5004");
+		// parseCreateUnstakeKeyRequest(1, 15, false, "D:\\xai\\unstake_esXAI\\advanced-filter", "0xd6b670ba726949b3b82d62f658718685a67ca02af3551bdf02bb5f6f783d5004");
 		// 0x64afcb3f7c79fdbf67ff6d41635c95b60dd39fcc   0x1524a4cc9dfa9b748deb10509c329e3e20278c9b
 	}
 
@@ -111,7 +110,7 @@ public class XAIDataStatTest {
 	public static Triple<BigDecimal, BigDecimal, String> append(int currentId) throws Exception {
 		BigDecimal total = BigDecimal.ZERO, recycleTotal = BigDecimal.ZERO;
 		final String recycleAccount = "0x1F941F7Fb552215af81e6bE87F59578C18783483";
-		final String endTxHash = "0xc1afa3020ab439006285bed9254375ab2adbb3f3cdb8b35d1e0e88a71dea1b60";
+		final String endTxHash = "0x04c74474e3146b95b615a4d4afa133b42596473a2784724bc63ebf3a83374b5c";
 		Document doc = Jsoup.parse(new File("D:\\xai\\advanced-filter" + currentId));
 		Elements tbody = doc.getElementsByTag("tbody");
 		Element body = tbody.get(0);

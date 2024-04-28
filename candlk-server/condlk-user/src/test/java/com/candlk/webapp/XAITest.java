@@ -2,7 +2,7 @@ package com.candlk.webapp;
 
 import javax.annotation.Resource;
 
-import com.candlk.webapp.job.XAIJob;
+import com.candlk.webapp.job.XAIScanJob;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.junit.jupiter.MockitoExtension;
@@ -14,11 +14,11 @@ import org.springframework.test.context.junit.jupiter.SpringExtension;
 public class XAITest {
 
 	@Resource
-	private XAIJob xaiJob;
+	private XAIScanJob xaiScanJob;
 
 	@Test
 	public void xaiJobTest() throws Exception {
-		xaiJob.run();
+		xaiScanJob.run();
 	}
 
 }

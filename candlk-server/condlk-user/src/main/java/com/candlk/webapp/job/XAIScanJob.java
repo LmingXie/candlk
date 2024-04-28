@@ -22,14 +22,16 @@ import static com.candlk.webapp.job.Web3JConfig.METHOD2TIP;
 
 @Slf4j
 @Configuration
-public class XAIJob {
+public class XAIScanJob {
 
 	@Resource
 	private Web3j web3j;
 	@Resource
 	private Web3JConfig web3JConfig;
+	@Resource
+	XAIRedemptionJob xaiRedemptionJob;
 
-	@Scheduled(cron = "${service.cron.xai:0/5 * * * * ?}")
+	@Scheduled(cron = "${service.cron.XAIScanJob:0/5 * * * * ?}")
 	public void run() throws Exception {
 		final BigInteger lastBlock = web3j.ethBlockNumber().send().getBlockNumber();
 		while (lastBlock.compareTo(web3JConfig.lastBlock) > 0) {
@@ -90,11 +92,13 @@ public class XAIJob {
 							final List<Log> logs = receipt.getLogs();
 							if (logs.size() == 4) {
 								final Log redemption = logs.get(1), recycle = logs.get(2);
-								final BigDecimal redemptionAmount = new BigDecimal(new BigInteger(redemption.getData().substring(2), 16)).movePointLeft(18);
+								final BigDecimal redemptionAmount = new BigDecimal(new BigInteger(redemption.getData().substring(2), 16))
+										.movePointLeft(18).setScale(2, RoundingMode.HALF_UP),
+										recycleAmount = new BigDecimal(new BigInteger(recycle.getData().substring(2), 16))
+												.movePointLeft(18).setScale(2, RoundingMode.HALF_UP);
+
 								if (redemptionAmount.compareTo(web3JConfig.redemptionThreshold) >= 0) {
-									final BigDecimal totalAmount = new BigDecimal(new BigInteger(logs.get(0).getData().substring(2), 16)).movePointLeft(18),
-											recycleAmount = new BigDecimal(new BigInteger(recycle.getData().substring(2), 16)).movePointLeft(18)
-													.setScale(2, RoundingMode.HALF_UP);
+									final BigDecimal totalAmount = new BigDecimal(new BigInteger(logs.get(0).getData().substring(2), 16)).movePointLeft(18);
 									final String redemptionTo = redemption.getTopics().get(2);
 									web3JConfig.sendWarn("预警：XAI大额赎回领取事件",
 											"### 预警：XAI大额赎回领取事件！  \n  "
@@ -104,6 +108,9 @@ public class XAIJob {
 													+ "赎回地址：**" + redemptionTo.replaceAll("0x000000000000000000000000", "0x") + "**  \n  "
 													+ "[点击前往查看详情](https://arbiscan.io/tx/" + hash + ")");
 								}
+
+								// 汇总统计
+								xaiRedemptionJob.incrStat(redemptionAmount, recycleAmount);
 							}
 						});
 					}
