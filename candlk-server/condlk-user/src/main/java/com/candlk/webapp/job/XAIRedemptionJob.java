@@ -22,6 +22,7 @@ public class XAIRedemptionJob {
 
 	@Resource
 	private Web3JConfig web3JConfig;
+	public final static NumberFormat format = DecimalFormat.getCurrencyInstance(Locale.US);
 
 	@Scheduled(cron = "${service.cron.XAIRedemptionJob:0 0 1 * * ?}")
 	public void run() throws Exception {
@@ -32,7 +33,6 @@ public class XAIRedemptionJob {
 		final JSONObject daily = root.getJSONObject("D").getJSONObject(yyyyMMdd),
 				w = root.getJSONObject("W").getJSONObject(weeklyYyyyMMdd),
 				m = root.getJSONObject("M").getJSONObject(yyyyMM);
-		final NumberFormat format = DecimalFormat.getCurrencyInstance(Locale.US);
 		web3JConfig.sendWarn("赎回统计",
 				"### 赎回统计  \n  "
 						+ "#### 日期：**" + d + "**  \n  "
@@ -42,10 +42,10 @@ public class XAIRedemptionJob {
 						+ "赎回：**<font color=\"red\">" + format.format(daily.getBigDecimal(totalRedemption)) + " XAI</font>**  \n  "
 						+ "销毁：**" + format.format(daily.getBigDecimal(totalRecycle)) + " XAI**  \n  "
 						+ "#### 当周【**" + weeklyYyyyMMdd + "**】  \n  "
-						+ "赎回：**" + format.format(w.getBigDecimal(totalRedemption)) + " XAI</font>**  \n  "
+						+ "赎回：**<font color=\"red\">" + format.format(w.getBigDecimal(totalRedemption)) + " XAI</font>**  \n  "
 						+ "销毁：**" + format.format(w.getBigDecimal(totalRecycle)) + " XAI**  \n  "
 						+ "#### 当月  \n  "
-						+ "赎回：**<font color=\"red\">" + format.format(m.getBigDecimal(totalRedemption)) + " XAI</font>  \n  "
+						+ "赎回：**<font color=\"red\">" + format.format(m.getBigDecimal(totalRedemption)) + " XAI</font>**  \n  "
 						+ "销毁：**" + format.format(m.getBigDecimal(totalRecycle)) + " XAI**  \n  "
 		);
 	}
