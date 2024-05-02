@@ -42,6 +42,8 @@ public class Web3JConfig {
 	public BigDecimal redemptionThreshold = new BigDecimal(5000);
 	/** 池子esXAI大额 */
 	public static BigDecimal esXAIThreshold = new BigDecimal(10000);
+	/** 顶级Keys算力池解除质押成功提醒 */
+	public BigDecimal unstakeKeysThreshold = new BigDecimal("2.7");
 	/** 池子Keys大额 */
 	public static BigDecimal keysThreshold = new BigDecimal(5);
 	public String statFilePath = "/mnt/xai_bot/stat.json";

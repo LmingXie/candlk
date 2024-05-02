@@ -4,6 +4,7 @@ import java.math.*;
 import java.text.DecimalFormat;
 import java.text.NumberFormat;
 import java.util.*;
+import javax.annotation.Nullable;
 import javax.annotation.Resource;
 
 import com.alibaba.fastjson2.*;
@@ -28,6 +29,19 @@ public class XAIPowerJob {
 
 	public final static BigDecimal esXAIWei = new BigDecimal(10000), keysWei = BigDecimal.ONE;
 	public final static NumberFormat format = DecimalFormat.getCurrencyInstance(Locale.US);
+
+	@Nullable
+	public static PoolInfoVO getPoolInfo(String poolAddress) {
+		try {
+			final JSONObject root = XAIRedemptionJob.deserialization(file);
+			final Map<String, PoolInfoVO> infoMap = root.to(new TypeReference<>() {
+			});
+			return infoMap.get(poolAddress);
+		} catch (Exception e) {
+			log.error("获取池子信息失败", e);
+			return null;
+		}
+	}
 
 	@Scheduled(cron = "${service.cron.XAIPowerJob:0 0 1 * * ?}")
 	public void run() {

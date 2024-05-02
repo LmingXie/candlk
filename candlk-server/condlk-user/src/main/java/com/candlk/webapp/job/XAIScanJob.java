@@ -12,6 +12,7 @@ import org.apache.commons.lang3.StringUtils;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.util.CollectionUtils;
+import org.web3j.abi.datatypes.Address;
 import org.web3j.protocol.Web3j;
 import org.web3j.protocol.core.DefaultBlockParameterNumber;
 import org.web3j.protocol.core.methods.response.*;
@@ -19,6 +20,7 @@ import org.web3j.protocol.core.methods.response.EthBlock.TransactionObject;
 import org.web3j.protocol.core.methods.response.EthBlock.TransactionResult;
 
 import static com.candlk.webapp.job.Web3JConfig.METHOD2TIP;
+import static com.candlk.webapp.job.Web3JConfig.getContractName;
 
 @Slf4j
 @Configuration
@@ -67,6 +69,26 @@ public class XAIScanJob {
 					final String[] msg = METHOD2TIP.getOrDefault(method, METHOD2TIP.get(null))
 							.apply(new String[] { from, to, hash, input, nickname, method });
 					X.use(msg, m -> web3JConfig.sendWarn(msg[0], msg[1]));
+
+					// Keys 质押或赎回成功
+					if (method != null && (method.equals("0x2f1a0b1c") || method.equals("0x95003265"))) {
+						final String poolContractAddress = new Address(input.substring(11, 74)).getValue(), poolName = getContractName(poolContractAddress);
+						final PoolInfoVO poolInfo = XAIPowerJob.getPoolInfo(poolContractAddress);
+
+						// 算力大于阈值时触发提醒
+						final BigDecimal power;
+						if (poolInfo != null && poolInfo.keyCount.compareTo(new BigInteger("745")) >= 0
+								&& (power = poolInfo.calcEsXAIPower(BigDecimal.ONE)).compareTo(web3JConfig.unstakeKeysThreshold) > 0) {
+							web3JConfig.sendWarn("预警：顶级池Keys赎回提醒",
+									"### 预警：顶级池Keys赎回提醒！  \n  "
+											+ "顶级池【**[" + poolName + "](https://app.xai.games/pool/" + poolContractAddress + "/summary)**】存在空闲质押空间。  \n  "
+											+ "当前质押Keys：**" + poolInfo.keyCount + "**  \n  "
+											+ "当前质押EsXAI：**" + new BigDecimal(poolInfo.totalStakedAmount).movePointLeft(18).setScale(2, RoundingMode.HALF_UP) + "**  \n  "
+											+ "Power：**" + power + "**  \n  "
+											+ "[点击前往查看详情](https://arbiscan.io/tx/" + hash + ")"
+							);
+						}
+					}
 				}
 				// 只识别大额质押与赎回
 				else if ("0xf9e08660223e2dbb1c0b28c82942ab6b5e38b8e5".equalsIgnoreCase(to)) {
