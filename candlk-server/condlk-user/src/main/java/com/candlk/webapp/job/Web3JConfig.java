@@ -128,9 +128,9 @@ public class Web3JConfig {
 			put("0x2f1a0b1c", inputs -> parseStake(inputs, "预警：Keys质押", () -> new BigDecimal(new BigInteger(inputs[3].substring(138, 202), 16)), "**  \n  ", "质押", keysThreshold));
 			put("0xa528916d", inputs -> parseStake(inputs, "预警：esXAI质押", () ->
 					new BigDecimal(new BigInteger(inputs[3].substring(74), 16)).movePointLeft(18).setScale(2, RoundingMode.HALF_UP), " esXAI**  \n  ", "质押", esXAIThreshold));
-			put("0xd4e44335", inputs -> parseStake(inputs, "通知：Keys 赎回申请", () -> new BigDecimal(new BigInteger(inputs[3].substring(74), 16)), "**  \n  ", "赎回", keysThreshold));
-			put("0x75710569", inputs -> parseStake(inputs, "通知：esXAI 赎回申请", () ->
-					new BigDecimal(new BigInteger(inputs[3].substring(74), 16)).movePointLeft(18).setScale(2, RoundingMode.HALF_UP), " esXAI**  \n  ", "赎回", esXAIThreshold));
+			// put("0xd4e44335", inputs -> parseStake(inputs, "通知：Keys 赎回申请", () -> new BigDecimal(new BigInteger(inputs[3].substring(74), 16)), "**  \n  ", "赎回", keysThreshold));
+			// put("0x75710569", inputs -> parseStake(inputs, "通知：esXAI 赎回申请", () ->
+			// 		new BigDecimal(new BigInteger(inputs[3].substring(74), 16)).movePointLeft(18).setScale(2, RoundingMode.HALF_UP), " esXAI**  \n  ", "赎回", esXAIThreshold));
 			// unstakeKeys
 			put("0x95003265", inputs -> parseStake(inputs, "预警：Keys 赎回成功", () -> new BigDecimal(new BigInteger(inputs[3].substring(202, 266), 16)), "**  \n  ", "赎回", keysThreshold));
 			// unstakeEsXai

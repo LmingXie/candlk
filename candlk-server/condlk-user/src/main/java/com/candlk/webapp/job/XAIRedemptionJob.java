@@ -36,18 +36,22 @@ public class XAIRedemptionJob {
 		web3JConfig.sendWarn("赎回统计",
 				"### 赎回统计  \n  "
 						+ "#### 日期：**" + d + "**  \n  "
-						+ "赎回总量：**<font color=\"red\">" + format.format(root.getBigDecimal(totalRedemption)) + " XAI</font>**  \n  "
-						+ "销毁总量：**" + format.format(root.getBigDecimal(totalRecycle)) + " XAI**  \n  "
+						+ "赎回总量：**<font color=\"red\">" + formatAmount(root.getBigDecimal(totalRedemption)) + " XAI</font>**  \n  "
+						+ "销毁总量：**" + formatAmount(root.getBigDecimal(totalRecycle)) + " XAI**  \n  "
 						+ "#### 当日  \n  "
-						+ "赎回：**<font color=\"red\">" + format.format(daily.getBigDecimal(totalRedemption)) + " XAI</font>**  \n  "
-						+ "销毁：**" + format.format(daily.getBigDecimal(totalRecycle)) + " XAI**  \n  "
+						+ "赎回：**<font color=\"red\">" + formatAmount(daily.getBigDecimal(totalRedemption)) + " XAI</font>**  \n  "
+						+ "销毁：**" + formatAmount(daily.getBigDecimal(totalRecycle)) + " XAI**  \n  "
 						+ "#### 当周【**" + weeklyYyyyMMdd + "**】  \n  "
-						+ "赎回：**<font color=\"red\">" + format.format(w.getBigDecimal(totalRedemption)) + " XAI</font>**  \n  "
-						+ "销毁：**" + format.format(w.getBigDecimal(totalRecycle)) + " XAI**  \n  "
+						+ "赎回：**<font color=\"red\">" + formatAmount(w.getBigDecimal(totalRedemption)) + " XAI</font>**  \n  "
+						+ "销毁：**" + formatAmount(w.getBigDecimal(totalRecycle)) + " XAI**  \n  "
 						+ "#### 当月  \n  "
-						+ "赎回：**<font color=\"red\">" + format.format(m.getBigDecimal(totalRedemption)) + " XAI</font>**  \n  "
-						+ "销毁：**" + format.format(m.getBigDecimal(totalRecycle)) + " XAI**  \n  "
+						+ "赎回：**<font color=\"red\">" + formatAmount(m.getBigDecimal(totalRedemption)) + " XAI</font>**  \n  "
+						+ "销毁：**" + formatAmount(m.getBigDecimal(totalRecycle)) + " XAI**  \n  "
 		);
+	}
+
+	private String formatAmount(BigDecimal amount) {
+		return format.format(amount).replaceAll("\\$", "").replaceAll(".00", "");
 	}
 
 	private final static String totalRedemption = "totalRedemption", totalRecycle = "totalRecycle";
