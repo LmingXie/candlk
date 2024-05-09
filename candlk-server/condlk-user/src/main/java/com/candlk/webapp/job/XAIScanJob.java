@@ -35,7 +35,7 @@ public class XAIScanJob {
 
 	@Scheduled(cron = "${service.cron.XAIScanJob:0/5 * * * * ?}")
 	public void run() throws Exception {
-		final BigInteger lastBlock = web3j.ethBlockNumber().send().getBlockNumber();
+		final BigInteger lastBlock = /*web3j.ethBlockNumber().send().getBlockNumber()*/new BigInteger("208710323");
 		while (lastBlock.compareTo(web3JConfig.lastBlock) > 0) {
 			final BigInteger blockNumber = web3JConfig.incrLastBlock();
 			SpringUtil.asyncRun(() -> {
@@ -65,30 +65,33 @@ public class XAIScanJob {
 				final String from = info.getFrom(), to = info.getTo(), hash = info.getHash(), input = info.getInput(),
 						nickname = web3JConfig.spyFroms.get(from.toLowerCase()),
 						method = StringUtils.length(input) > 10 ? input.substring(0, 10) : null;
+
+				// Keys 质押或赎回成功
+				if (method != null && (method.equals("0x2f1a0b1c") || method.equals("0x95003265"))) {
+					final String poolContractAddress = new Address(input.substring(11, 74)).getValue(), poolName = getContractName(poolContractAddress);
+					final PoolInfoVO poolInfo = XAIPowerJob.getPoolInfo(poolContractAddress, newWeb3j, true);
+
+					// 算力大于阈值时触发提醒
+					final BigDecimal power;
+					if (poolInfo != null && poolInfo.keyCount.compareTo(new BigInteger("750")) < 0
+							&& (power = poolInfo.calcKeysPower(BigDecimal.ONE)).compareTo(web3JConfig.unstakeKeysThreshold) > 0) {
+						final BigDecimal totalStakedAmount = new BigDecimal(poolInfo.totalStakedAmount).movePointLeft(18).setScale(0, RoundingMode.HALF_UP);
+						web3JConfig.sendWarn("通知：满Keys池赎回提醒",
+								"### 通知：满Keys池赎回提醒！  \n  "
+										+ "顶级池【<font color=\"red\">**[" + poolName + "](https://app.xai.games/pool/" + poolContractAddress + "/summary)**</font>】存在空闲质押空间。  \n  "
+										+ "当前质押Keys：**<font color=\"red\">" + poolInfo.keyCount + "</font>**  \n  "
+										+ "当前质押EsXAI：**" + XAIRedemptionJob.formatAmount(new BigDecimal(poolInfo.totalStakedAmount)
+										.movePointLeft(18).setScale(2, RoundingMode.HALF_UP)) + "**  \n  "
+										+ "加成：**×" + poolInfo.calcStakingTier(totalStakedAmount) + "**  \n  "
+										+ "算力值：**" + power + "**  \n  "
+										+ "[点击前往查看详情](https://arbiscan.io/tx/" + hash + ")"
+						);
+					}
+				}
 				if (nickname != null) {
 					final String[] msg = METHOD2TIP.getOrDefault(method, METHOD2TIP.get(null))
 							.apply(new String[] { from, to, hash, input, nickname, method });
 					X.use(msg, m -> web3JConfig.sendWarn(msg[0], msg[1]));
-
-					// Keys 质押或赎回成功
-					if (method != null && (method.equals("0x2f1a0b1c") || method.equals("0x95003265"))) {
-						final String poolContractAddress = new Address(input.substring(11, 74)).getValue(), poolName = getContractName(poolContractAddress);
-						final PoolInfoVO poolInfo = XAIPowerJob.getPoolInfo(poolContractAddress);
-
-						// 算力大于阈值时触发提醒
-						final BigDecimal power;
-						if (poolInfo != null && poolInfo.keyCount.compareTo(new BigInteger("745")) >= 0
-								&& (power = poolInfo.calcEsXAIPower(BigDecimal.ONE)).compareTo(web3JConfig.unstakeKeysThreshold) > 0) {
-							web3JConfig.sendWarn("预警：顶级池Keys赎回提醒",
-									"### 预警：顶级池Keys赎回提醒！  \n  "
-											+ "顶级池【**[" + poolName + "](https://app.xai.games/pool/" + poolContractAddress + "/summary)**】存在空闲质押空间。  \n  "
-											+ "当前质押Keys：**" + poolInfo.keyCount + "**  \n  "
-											+ "当前质押EsXAI：**" + new BigDecimal(poolInfo.totalStakedAmount).movePointLeft(18).setScale(2, RoundingMode.HALF_UP) + "**  \n  "
-											+ "Power：**" + power + "**  \n  "
-											+ "[点击前往查看详情](https://arbiscan.io/tx/" + hash + ")"
-							);
-						}
-					}
 				}
 				// 只识别大额质押与赎回
 				else if ("0xf9e08660223e2dbb1c0b28c82942ab6b5e38b8e5".equalsIgnoreCase(to)) {

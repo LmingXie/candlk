@@ -110,7 +110,7 @@ public class Web3JConfig {
 		try {
 			return getContractName(web3jProxy, k);
 		} catch (Exception e) {
-			log.error("获取合约名称失败：" + e.getMessage());
+			log.error("获取合约名称失败：" + e);
 		}
 		return k;
 	};

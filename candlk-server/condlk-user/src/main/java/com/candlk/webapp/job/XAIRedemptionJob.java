@@ -50,7 +50,7 @@ public class XAIRedemptionJob {
 		);
 	}
 
-	private String formatAmount(BigDecimal amount) {
+	public static String formatAmount(BigDecimal amount) {
 		return format.format(amount).replaceAll("\\$", "").replaceAll(".00", "");
 	}
 

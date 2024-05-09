@@ -51,8 +51,8 @@ warn:
 service:
   cron:
     XAIScanJob: "0/5 * * * * ?"
-    XAIRedemptionJob: "0 0/1 * * * ?"
-
+    XAIRedemptionJob: "0 0/60 * * * ?"
+    XAIPowerJob: "0 0 1 * * ?"
   xai:
     dingTalkBotUrl: https://oapi.dingtalk.com/robot/send?access_token=0699ae605b56910e521bf8fea6104d028a1e724d068f8261a6271b2a877c783f
     web3jUrl: https://arb1.arbitrum.io/rpc
@@ -61,9 +61,13 @@ service:
 #    web3jUrl: wss://arbitrum-one.publicnode.com
 #    web3jUrl: https://arbitrum.blockpi.network/v1/rpc/public
     web3jUrlPool:
-      - https://arbitrum.llamarpc.com
-      - wss://arbitrum-one-rpc.publicnode.com
+      - https://arbitrum-one-rpc.publicnode.com
+      - https://arbitrum.meowrpc.com
       - wss://arbitrum-one.publicnode.com
+      - https://arbitrum.rpc.subquery.network/public
+      - https://arbitrum-one.publicnode.com
+      - https://api.stateless.solutions/arbitrum-one/v1/demo
+      - https://public.stackup.sh/api/v1/node/arbitrum-one
       - https://arbitrum.blockpi.network/v1/rpc/public
       - https://arb1.arbitrum.io/rpc
       - https://rpc.ankr.com/arbitrum
@@ -71,7 +75,7 @@ service:
       - https://arbitrum-one.public.blastapi.io
       - wss://arbitrum-one-rpc.publicnode.com
       - https://endpoints.omniatech.io/v1/arbitrum/one/public
-    lastBlock: 205566024
+    lastBlock: 208710320
     redemptionThreshold: 5000
     spyFroms:
       "0xcd6100d7a6b120b7042ba09b787a1cb26a2e6ae1": Alpha-K1

@@ -27,14 +27,24 @@ public class XAIPowerJob {
 			file = "/mnt/xai_bot/power.json";
 
 	public final static BigDecimal esXAIWei = new BigDecimal(10000), keysWei = BigDecimal.ONE;
-	public final static NumberFormat format = DecimalFormat.getCurrencyInstance(Locale.US);
+	public final static NumberFormat FORMAT = DecimalFormat.getCurrencyInstance(Locale.US);
+
+	public static PoolInfoVO getPoolInfo(String poolAddress) {
+		return getPoolInfo(poolAddress, null, false);
+	}
 
 	@Nullable
-	public static PoolInfoVO getPoolInfo(String poolAddress) {
+	public static PoolInfoVO getPoolInfo(String poolAddress, Web3j web3j, boolean flush) {
 		try {
 			final JSONObject root = XAIRedemptionJob.deserialization(file);
 			final Map<String, PoolInfoVO> infoMap = root.to(new TypeReference<>() {
 			});
+			if (flush) {
+				final PoolInfoVO poolInfo = PoolInfo.getPoolInfo(web3j, poolAddress).toVO();
+				log.info("正在强刷池子信息：poolAddress={}，keyCount={}", poolAddress, poolInfo.keyCount);
+				infoMap.put(poolAddress, poolInfo);
+				XAIRedemptionJob.serialization(file, JSON.parseObject(Jsons.encode(infoMap)));
+			}
 			return infoMap.get(poolAddress);
 		} catch (Exception e) {
 			log.error("获取池子信息失败", e);
