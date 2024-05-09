@@ -33,9 +33,9 @@ public class MarkdownTest {
 		int offset = 1;
 		for (String poolName : poolNames) {
 			sb.append(offset).append(". ");
-			String format = String.format("%-30s", poolName + "【变】");
+			String format = String.format("%-30s", poolName + "变");
 			String s = format.replaceAll(" ", "&nbsp;").replaceAll(poolName, "[" + poolName + "](https://app.xai.games/pool/0x0bb6dd508da137d0e0b7c0d26b4eca824530d854/summary)")
-					.replaceAll("【变】", "<font color=\"warning\">【变】</font>");
+					.replaceAll("变", "<font color=\"warning\">变</font>");
 			sb.append(s);
 			sb.append("6.72").append(" ".repeat(5))
 					.append("×3").append(" ".repeat(5))

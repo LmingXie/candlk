@@ -35,7 +35,7 @@ public class XAIScanJob {
 
 	@Scheduled(cron = "${service.cron.XAIScanJob:0/5 * * * * ?}")
 	public void run() throws Exception {
-		final BigInteger lastBlock = /*web3j.ethBlockNumber().send().getBlockNumber()*/new BigInteger("208710323");
+		final BigInteger lastBlock = web3j.ethBlockNumber().send().getBlockNumber();
 		while (lastBlock.compareTo(web3JConfig.lastBlock) > 0) {
 			final BigInteger blockNumber = web3JConfig.incrLastBlock();
 			SpringUtil.asyncRun(() -> {

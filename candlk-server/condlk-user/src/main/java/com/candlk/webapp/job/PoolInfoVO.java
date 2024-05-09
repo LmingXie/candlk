@@ -1,15 +1,24 @@
 package com.candlk.webapp.job;
 
 import java.math.*;
+import java.util.*;
 
+import com.alibaba.fastjson2.JSONObject;
 import lombok.Getter;
 import lombok.Setter;
+import lombok.extern.slf4j.Slf4j;
+import org.apache.commons.lang3.StringUtils;
+import org.springframework.web.client.RestTemplate;
 import org.web3j.abi.datatypes.StaticStruct;
+import org.web3j.protocol.Web3j;
 
+@Slf4j
 @Getter
 @Setter
 public class PoolInfoVO extends StaticStruct {
 
+	/** 代理地址 */
+	public String delegateAddress;
 	public String poolAddress;
 	public String owner;
 	public String keyBucketTracker;
@@ -98,6 +107,81 @@ public class PoolInfoVO extends StaticStruct {
 			tier = BigDecimal.ONE;
 		}
 		return tier;
+	}
+
+	public String getDelegateAddress(Web3j web3j, boolean flush) {
+		int retry = 3;
+		while (retry-- > 0) {
+			try {
+				if (flush || StringUtils.isEmpty(this.delegateAddress)) {
+					this.delegateAddress = PoolInfo.getDelegateOwner(web3j, poolAddress);
+					// 无委托代理地址，所有人则是 owner
+					if ("0x0000000000000000000000000000000000000000".equals(this.delegateAddress)) {
+						this.delegateAddress = this.owner;
+					}
+				}
+				return this.delegateAddress;
+			} catch (Exception e) {
+				log.error("获取委托人地址异常：", e);
+			}
+		}
+		return this.delegateAddress;
+	}
+
+	public boolean hasActivePool(RestTemplate restTemplate, String delegateOwner, BigInteger startBlockNumber) {
+		// arbiscan API 1s 5次请求
+		final String url = "https://api.arbiscan.io/api?module=account&action=txlist&address=" + delegateOwner + "&startblock=" + startBlockNumber + "&endblock=latest&page=1&offset=10&sort=desc&apikey=J63CM8DDT4J4PMBZEVGQ47Z9ZHWAUXIYEX";
+		int retry = 3;
+		while (retry-- > 0) {
+			try {
+				final JSONObject resp = restTemplate.getForEntity(url, JSONObject.class).getBody();
+				if (resp != null && "1".equals(resp.getString("status"))) {
+					List<ScanTx> result = resp.getList("result", ScanTx.class);
+					for (ScanTx tx : result) {
+						if ("0xb4d6b7df".equals(tx.methodId) || "0x86bb8f37".equals(tx.methodId)) {
+							// 最近一笔领取交易，时间距离小于1小时，则算活跃
+							return ((System.currentTimeMillis() / 1000) - tx.timeStamp < 3600);
+						}
+					}
+				}
+			} catch (Exception e) {
+				final String message = e.getMessage();
+				log.error("验证委托人地址是否活跃失败：delegateOwner={},startBlockNumber={},url={},message={}", delegateOwner, startBlockNumber, url, message == null ? e : message);
+				try {
+					Thread.sleep(1000);
+				} catch (InterruptedException ignored) {
+				}
+			}
+		}
+		return false;
+	}
+
+	@Setter
+	@Getter
+	public static class ScanTx {
+
+		public String blockNumber;
+		public Long timeStamp;
+		public String hash;
+		public String nonce;
+		public String blockHash;
+		public String transactionIndex;
+		public String from;
+		public String to;
+		public String value;
+		public String gas;
+		public String gasPrice;
+		public String gasPriceBid;
+		public String isError;
+		public String txreceiptStatus;
+		public String input;
+		public String contractAddress;
+		public String cumulativeGasUsed;
+		public String gasUsed;
+		public String confirmations;
+		public String methodId;
+		public String functionName;
+
 	}
 
 }

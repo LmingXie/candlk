@@ -1,6 +1,6 @@
 package com.candlk.webapp.job;
 
-import java.math.*;
+import java.math.BigInteger;
 import java.util.List;
 
 import com.candlk.common.util.BeanUtil;
@@ -79,6 +79,7 @@ public class PoolInfo extends StaticStruct {
 		this._name = new String(new DynamicBytes(Numeric.hexStringToByteArray(_name.getValue().toString(16))).getValue()).replaceAll("\\u0000", "");
 
 	}
+
 	public static PoolInfo getPoolInfo(Web3j web3j, String contractAddress) throws Exception {
 		final List<TypeReference<?>> outputParameters = List.of(new TypeReference<PoolInfo>() {
 		});
@@ -101,6 +102,14 @@ public class PoolInfo extends StaticStruct {
 		final Function function = new Function("getPoolAddress", List.of(new Uint256(index)), List.of(new TypeReference<Address>() {
 		}));
 		final EthCall ethCall = web3j.ethCall(Transaction.createEthCallTransaction(null, contractAddress, FunctionEncoder.encode(function)), LATEST).send();
+		return ((Address) FunctionReturnDecoder.decode(ethCall.getValue(), function.getOutputParameters()).get(0)).getValue();
+	}
+
+	public static String getDelegateOwner(Web3j web3j, String contractAddress) throws Exception {
+		final Function function = new Function("delegateOwner", List.of(), List.of(new TypeReference<Address>() {
+		}));
+		final EthCall ethCall = web3j.ethCall(Transaction.createEthCallTransaction(
+				null, contractAddress, FunctionEncoder.encode(function)), LATEST).send();
 		return ((Address) FunctionReturnDecoder.decode(ethCall.getValue(), function.getOutputParameters()).get(0)).getValue();
 	}
 

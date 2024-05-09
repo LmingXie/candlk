@@ -50,14 +50,14 @@ warn:
     url: https://qyapi.weixin.qq.com/cgi-bin/webhook/send?key=ffdc8cb0-5bcd-4ae1-a1a6-6acbe654e3cb
 service:
   cron:
-    XAIScanJob: "0/5 * * * * ?"
+    XAIScanJob: "0 0/60 * * * ?"
     XAIRedemptionJob: "0 0/60 * * * ?"
     XAIPowerJob: "0 0 1 * * ?"
   xai:
     dingTalkBotUrl: https://oapi.dingtalk.com/robot/send?access_token=0699ae605b56910e521bf8fea6104d028a1e724d068f8261a6271b2a877c783f
-    web3jUrl: https://arb1.arbitrum.io/rpc
+#    web3jUrl: https://arb1.arbitrum.io/rpc
 #    web3jUrl: https://arbitrum.llamarpc.com
-#    web3jUrl: wss://arbitrum-one-rpc.publicnode.com
+    web3jUrl: wss://arbitrum-one-rpc.publicnode.com
 #    web3jUrl: wss://arbitrum-one.publicnode.com
 #    web3jUrl: https://arbitrum.blockpi.network/v1/rpc/public
     web3jUrlPool:
