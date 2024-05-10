@@ -158,7 +158,7 @@ public class XAIPowerJob {
 						.append(totalStakedAmount.movePointLeft(4).setScale(0, RoundingMode.HALF_UP)).append("w").append(" | ")
 						.append(nonFlushActivePool(info)
 								? "<font color=\"common_green1_color\">[✔️](https://arbiscan.io/address/" + info.getDelegateAddress() + ")</font>"
-								: "<font color=\"red\">[✘](https://arbiscan.io/address/" + info.getPoolAddress() + ")</font>")
+								: "<font color=\"red\">[✘](https://arbiscan.io/address/" + info.getPoolAddress() + "#tokentxns)</font>")
 						.append(" |   \n  ")
 				;
 			}
@@ -182,7 +182,7 @@ public class XAIPowerJob {
 						.append(info.keyCount).append(" | ")
 						.append(nonFlushActivePool(info)
 								? "<font color=\"common_green1_color\">[✔️](https://arbiscan.io/address/" + info.getDelegateAddress() + ")</font>"
-								: "<font color=\"red\">[✘](https://arbiscan.io/address/" + info.getPoolAddress() + ")</font>")
+								: "<font color=\"red\">[✘](https://arbiscan.io/address/" + info.getPoolAddress() + "#tokentxns)</font>")
 						.append(" |   \n  ")
 				;
 			}
