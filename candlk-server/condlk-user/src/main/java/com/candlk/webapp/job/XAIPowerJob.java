@@ -36,10 +36,6 @@ public class XAIPowerJob {
 	public final static BigDecimal esXAIWei = new BigDecimal(10000), keysWei = BigDecimal.ONE;
 	public final static NumberFormat FORMAT = DecimalFormat.getCurrencyInstance(Locale.US);
 
-	public static PoolInfoVO getPoolInfo(String poolAddress) {
-		return getPoolInfo(poolAddress, null, false);
-	}
-
 	@Nullable
 	public static PoolInfoVO getPoolInfo(String poolAddress, Web3j web3j, boolean flush) {
 		try {
@@ -64,7 +60,7 @@ public class XAIPowerJob {
 	private static final Cache<String, Boolean> activeCaffeine = Caffeine.newBuilder()
 			.initialCapacity(256)
 			.maximumSize(1024)
-			.expireAfterWrite(60, TimeUnit.MINUTES)
+			.expireAfterWrite(2, TimeUnit.HOURS)
 			.build();
 	private static final String activeCaffeineFile = "/mnt/xai_bot/active.json";
 
@@ -81,8 +77,20 @@ public class XAIPowerJob {
 		}
 	}
 
-	public static boolean getActivePool(PoolInfoVO info, RestTemplate restTemplate, Web3j web3j, BigInteger startBlockNumber, boolean flush) {
-		final Function<String, @PolyNull Boolean> function = k -> info.hasActivePool(restTemplate, info.getDelegateAddress(web3j, flush), startBlockNumber);
+	public static boolean nonFlushActivePool(PoolInfoVO info) {
+		return getAndFlushActivePool(info, null, null, null, null, false);
+	}
+
+	public static boolean getAndFlushActivePool(PoolInfoVO info, RestTemplate restTemplate, Web3j web3j, BigInteger startBlockNumber, BigDecimal weakActiveThreshold, boolean flush) {
+		final Function<String, @PolyNull Boolean> function = k -> {
+			boolean active = info.hasActivePool(restTemplate, info.getDelegateAddress(web3j, flush), startBlockNumber);
+			log.info("刷新池子的活跃度结果：poolAddress={}，active={}，KeyCount={}，weakActiveThreshold={}", info.poolAddress, active, info.keyCount, weakActiveThreshold);
+			if (!active && info.keyCount.compareTo(new BigInteger("100")) > 0) { // 针对大池进行弱检测
+				active = info.weakActiveCheck(restTemplate, info.poolAddress, startBlockNumber, weakActiveThreshold);
+				log.info("针对大池进行活跃度的弱检测结果：poolAddress={}，active={}，KeyCount={}，weakActiveThreshold={}", info.poolAddress, active, info.keyCount, weakActiveThreshold);
+			}
+			return active;
+		};
 		return activeCaffeine.get(info.poolAddress, function);
 	}
 
@@ -125,7 +133,7 @@ public class XAIPowerJob {
 				final PoolInfoVO newPoolInfo = PoolInfo.getPoolInfo(web3j, poolAddress).toVO();
 				newPoolInfo.setDelegateAddress(oldDelegateAddress);
 				// 刷新最新的委托人地址地址
-				getActivePool(newPoolInfo, restTemplate, web3j, startBlockNumber, true);
+				getAndFlushActivePool(newPoolInfo, restTemplate, web3j, startBlockNumber, web3JConfig.weakActiveThreshold, true);
 				entry.setValue(newPoolInfo);
 				log.info("正在刷新算力【{}】 每1000EsXAI算力 -> {},每1Keys算力 -> {}", poolAddress, newPoolInfo.calcEsXAIPower(esXAIWei), newPoolInfo.calcKeysPower(BigDecimal.ONE));
 			}
@@ -148,10 +156,9 @@ public class XAIPowerJob {
 						.append(info.calcEsXAIPower(esXAIWei)).append(" | ")
 						.append("×").append(info.calcStakingTier(totalStakedAmount)).append(" | ")
 						.append(totalStakedAmount.movePointLeft(4).setScale(0, RoundingMode.HALF_UP)).append("w").append(" | ")
-						// .append(this.getActivePool(info, restTemplate, startBlockNumber) ? "<font color=\"common_green1_color\">✔️</font>" : "<font color=\"red\">✘</font>")
-						.append(getActivePool(info, restTemplate, web3j, startBlockNumber, false)
+						.append(nonFlushActivePool(info)
 								? "<font color=\"common_green1_color\">[✔️](https://arbiscan.io/address/" + info.getDelegateAddress() + ")</font>"
-								: "<font color=\"red\">[✘](https://arbiscan.io/address/" + info.getDelegateAddress() + ")</font>")
+								: "<font color=\"red\">[✘](https://arbiscan.io/address/" + info.getPoolAddress() + ")</font>")
 						.append(" |   \n  ")
 				;
 			}
@@ -173,9 +180,9 @@ public class XAIPowerJob {
 						.append(info.calcKeysPower(keysWei)).append(" | ")
 						.append("×").append(info.calcStakingTier(totalStakedAmount)).append(" | ")
 						.append(info.keyCount).append(" | ")
-						.append(getActivePool(info, restTemplate, web3j, startBlockNumber, false)
+						.append(nonFlushActivePool(info)
 								? "<font color=\"common_green1_color\">[✔️](https://arbiscan.io/address/" + info.getDelegateAddress() + ")</font>"
-								: "<font color=\"red\">[✘](https://arbiscan.io/address/" + info.getDelegateAddress() + ")</font>")
+								: "<font color=\"red\">[✘](https://arbiscan.io/address/" + info.getPoolAddress() + ")</font>")
 						.append(" |   \n  ")
 				;
 			}

@@ -128,6 +128,39 @@ public class PoolInfoVO extends StaticStruct {
 		return this.delegateAddress;
 	}
 
+	public boolean weakActiveCheck(RestTemplate restTemplate, String poolAddress, BigInteger startBlockNumber, BigDecimal weakActiveThreshold) {
+		// arbiscan API 1s 5次请求
+		final String url = "https://api.arbiscan.io/api?module=account&action=tokentx&contractaddress=0x4c749d097832de2fecc989ce18fdc5f1bd76700c&address=" + poolAddress + "&page=1&offset=100&startblock=" + startBlockNumber + "&endblock=latest&sort=desc&apikey=J63CM8DDT4J4PMBZEVGQ47Z9ZHWAUXIYEX";
+		int retry = 3;
+		while (retry-- > 0) {
+			try {
+				final JSONObject resp = restTemplate.getForEntity(url, JSONObject.class).getBody();
+				if (resp != null && "1".equals(resp.getString("status"))) {
+					final List<ScanTx> result = resp.getList("result", ScanTx.class);
+					int counter = 0;
+					for (ScanTx tx : result) {
+						if ("0x0000000000000000000000000000000000000000".equals(tx.from) && poolAddress.equals(tx.to) && "deprecated".equals(tx.input)
+								&& ((System.currentTimeMillis() / 1000) - tx.timeStamp < 3600)) {
+							// 1小时内，超过两笔交易 零地址 交易，或者单笔 2000+（此规则需结合质押的Keys数量进行使用）
+							// TODO 每次减半后需要进行调整，需结合质押的Keys数进行
+							if (++counter >= 2 || new BigDecimal(tx.value).movePointLeft(18).compareTo(weakActiveThreshold) >= 0) {
+								return true;
+							}
+						}
+					}
+				}
+			} catch (Exception e) {
+				final String message = e.getMessage();
+				log.error("根据合约交易历史验证是否活跃失败：poolAddress={},startBlockNumber={},weakActiveThreshold={},url={},message={}", poolAddress, startBlockNumber, weakActiveThreshold, url, message == null ? e : message);
+				try {
+					Thread.sleep(500);
+				} catch (InterruptedException ignored) {
+				}
+			}
+		}
+		return false;
+	}
+
 	public boolean hasActivePool(RestTemplate restTemplate, String delegateOwner, BigInteger startBlockNumber) {
 		// arbiscan API 1s 5次请求
 		final String url = "https://api.arbiscan.io/api?module=account&action=txlist&address=" + delegateOwner + "&startblock=" + startBlockNumber + "&endblock=latest&page=1&offset=10&sort=desc&apikey=J63CM8DDT4J4PMBZEVGQ47Z9ZHWAUXIYEX";
@@ -136,7 +169,7 @@ public class PoolInfoVO extends StaticStruct {
 			try {
 				final JSONObject resp = restTemplate.getForEntity(url, JSONObject.class).getBody();
 				if (resp != null && "1".equals(resp.getString("status"))) {
-					List<ScanTx> result = resp.getList("result", ScanTx.class);
+					final List<ScanTx> result = resp.getList("result", ScanTx.class);
 					for (ScanTx tx : result) {
 						if ("0xb4d6b7df".equals(tx.methodId) || "0x86bb8f37".equals(tx.methodId)) {
 							// 最近一笔领取交易，时间距离小于1小时，则算活跃
@@ -148,7 +181,7 @@ public class PoolInfoVO extends StaticStruct {
 				final String message = e.getMessage();
 				log.error("验证委托人地址是否活跃失败：delegateOwner={},startBlockNumber={},url={},message={}", delegateOwner, startBlockNumber, url, message == null ? e : message);
 				try {
-					Thread.sleep(1000);
+					Thread.sleep(500);
 				} catch (InterruptedException ignored) {
 				}
 			}
