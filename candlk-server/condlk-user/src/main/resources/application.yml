@@ -55,11 +55,11 @@ service:
     XAIPowerJob: "0 0 1 * * ?"
   xai:
     dingTalkBotUrl: https://oapi.dingtalk.com/robot/send?access_token=0699ae605b56910e521bf8fea6104d028a1e724d068f8261a6271b2a877c783f
-#    web3jUrl: https://arb1.arbitrum.io/rpc
-#    web3jUrl: https://arbitrum.llamarpc.com
+    #    web3jUrl: https://arb1.arbitrum.io/rpc
+    #    web3jUrl: https://arbitrum.llamarpc.com
     web3jUrl: wss://arbitrum-one-rpc.publicnode.com
-#    web3jUrl: wss://arbitrum-one.publicnode.com
-#    web3jUrl: https://arbitrum.blockpi.network/v1/rpc/public
+    #    web3jUrl: wss://arbitrum-one.publicnode.com
+    #    web3jUrl: https://arbitrum.blockpi.network/v1/rpc/public
     web3jUrlPool:
       - https://arbitrum-one-rpc.publicnode.com
       - https://arbitrum.meowrpc.com
@@ -85,7 +85,9 @@ service:
     weakActiveThreshold: 2000
     # 顶级Keys算力池解除质押成功提醒
     unstakeKeysThreshold: 2.7
-
+    # 排行榜排名
+    topN: 25
+    # 监控的交易发送人地址
     spyFroms:
       "0xcd6100d7a6b120b7042ba09b787a1cb26a2e6ae1": Alpha-K1
       "0xad490066fedddb64bafc266dca033a84ac5c900b": Alpha-K2
