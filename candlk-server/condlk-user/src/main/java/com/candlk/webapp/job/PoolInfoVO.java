@@ -129,8 +129,8 @@ public class PoolInfoVO extends StaticStruct {
 	}
 
 	public boolean weakActiveCheck(RestTemplate restTemplate, String poolAddress, BigInteger startBlockNumber, BigDecimal weakActiveThreshold) {
-		// arbiscan API 1s 5次请求
-		final String url = "https://api.arbiscan.io/api?module=account&action=tokentx&contractaddress=0x4c749d097832de2fecc989ce18fdc5f1bd76700c&address=" + poolAddress + "&page=1&offset=100&startblock=" + startBlockNumber + "&endblock=latest&sort=desc&apikey=J63CM8DDT4J4PMBZEVGQ47Z9ZHWAUXIYEX";
+		// arbiscan API 1s 5次请求 https://api.arbiscan.io/
+		final String url = "https://arbiscan.lming1210.workers.dev/api?module=account&action=tokentx&contractaddress=0x4c749d097832de2fecc989ce18fdc5f1bd76700c&address=" + poolAddress + "&page=1&offset=100&startblock=" + startBlockNumber + "&endblock=latest&sort=desc&apikey=J63CM8DDT4J4PMBZEVGQ47Z9ZHWAUXIYEX";
 		int retry = 3;
 		while (retry-- > 0) {
 			try {
@@ -153,7 +153,7 @@ public class PoolInfoVO extends StaticStruct {
 				final String message = e.getMessage();
 				log.error("根据合约交易历史验证是否活跃失败：poolAddress={},startBlockNumber={},weakActiveThreshold={},url={},message={}", poolAddress, startBlockNumber, weakActiveThreshold, url, message == null ? e : message);
 				try {
-					Thread.sleep(500);
+					Thread.sleep(1000);
 				} catch (InterruptedException ignored) {
 				}
 			}
@@ -162,8 +162,8 @@ public class PoolInfoVO extends StaticStruct {
 	}
 
 	public boolean hasActivePool(RestTemplate restTemplate, String delegateOwner, BigInteger startBlockNumber) {
-		// arbiscan API 1s 5次请求
-		final String url = "https://api.arbiscan.io/api?module=account&action=txlist&address=" + delegateOwner + "&startblock=" + startBlockNumber + "&endblock=latest&page=1&offset=10&sort=desc&apikey=J63CM8DDT4J4PMBZEVGQ47Z9ZHWAUXIYEX";
+		// arbiscan API 1s 5次请求 https://api.arbiscan.io/
+		final String url = "https://arbiscan.lming1210.workers.dev/api?module=account&action=txlist&address=" + delegateOwner + "&startblock=" + startBlockNumber + "&endblock=latest&page=1&offset=10&sort=desc&apikey=J63CM8DDT4J4PMBZEVGQ47Z9ZHWAUXIYEX";
 		int retry = 3;
 		while (retry-- > 0) {
 			try {
@@ -181,7 +181,7 @@ public class PoolInfoVO extends StaticStruct {
 				final String message = e.getMessage();
 				log.error("验证委托人地址是否活跃失败：delegateOwner={},startBlockNumber={},url={},message={}", delegateOwner, startBlockNumber, url, message == null ? e : message);
 				try {
-					Thread.sleep(500);
+					Thread.sleep(1000);
 				} catch (InterruptedException ignored) {
 				}
 			}
