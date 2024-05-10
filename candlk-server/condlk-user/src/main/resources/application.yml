@@ -76,7 +76,14 @@ service:
       - wss://arbitrum-one-rpc.publicnode.com
       - https://endpoints.omniatech.io/v1/arbitrum/one/public
     lastBlock: 208710320
+    # 大额赎回成功
     redemptionThreshold: 5000
+    # 大额质押与赎回
+    esXAIThreshold: 10000
+    keysThreshold: 5
+    # 弱活跃度触发阈值（每次减半后需要进行调整，产出参考：https://arbiscan.io/address/0x958e5cc35fd7f95c135d55c7209fa972bdb68617#tokentxns）
+    weakActiveThreshold: 2000
+
     spyFroms:
       "0xcd6100d7a6b120b7042ba09b787a1cb26a2e6ae1": Alpha-K1
       "0xad490066fedddb64bafc266dca033a84ac5c900b": Alpha-K2
