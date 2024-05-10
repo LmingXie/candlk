@@ -6,6 +6,7 @@ import java.text.NumberFormat;
 import java.util.*;
 import java.util.concurrent.ConcurrentMap;
 import java.util.concurrent.TimeUnit;
+import java.util.function.Function;
 import javax.annotation.*;
 
 import com.alibaba.fastjson2.*;
@@ -13,6 +14,7 @@ import com.candlk.context.web.Jsons;
 import com.github.benmanes.caffeine.cache.Cache;
 import com.github.benmanes.caffeine.cache.Caffeine;
 import lombok.extern.slf4j.Slf4j;
+import org.checkerframework.checker.nullness.qual.PolyNull;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.web.client.RestTemplate;
@@ -57,14 +59,14 @@ public class XAIPowerJob {
 		}
 	}
 
-	final static RestTemplate restTemplate = new RestTemplate();
+	private static final RestTemplate restTemplate = new RestTemplate();
 
-	final Cache<String, Boolean> activeCaffeine = Caffeine.newBuilder()
+	private static final Cache<String, Boolean> activeCaffeine = Caffeine.newBuilder()
 			.initialCapacity(256)
 			.maximumSize(1024)
 			.expireAfterWrite(60, TimeUnit.MINUTES)
 			.build();
-	final String activeCaffeineFile = "/mnt/xai_bot/active.json";
+	private static final String activeCaffeineFile = "/mnt/xai_bot/active.json";
 
 	@PostConstruct
 	public void init() {
@@ -79,8 +81,9 @@ public class XAIPowerJob {
 		}
 	}
 
-	public boolean getActivePool(PoolInfoVO info, RestTemplate restTemplate, BigInteger startBlockNumber, boolean flush) {
-		return activeCaffeine.get(info.poolAddress, k -> info.hasActivePool(restTemplate, info.getDelegateAddress(web3j, flush), startBlockNumber));
+	public static boolean getActivePool(PoolInfoVO info, RestTemplate restTemplate, Web3j web3j, BigInteger startBlockNumber, boolean flush) {
+		final Function<String, @PolyNull Boolean> function = k -> info.hasActivePool(restTemplate, info.getDelegateAddress(web3j, flush), startBlockNumber);
+		return activeCaffeine.get(info.poolAddress, function);
 	}
 
 	public void flushActivePoolLocalFile() {
@@ -118,11 +121,13 @@ public class XAIPowerJob {
 
 			for (Map.Entry<String, PoolInfoVO> entry : infoMap.entrySet()) {
 				final String poolAddress = entry.getKey();
-				final PoolInfoVO poolInfo = PoolInfo.getPoolInfo(web3j, poolAddress).toVO();
+				final String oldDelegateAddress = entry.getValue().getDelegateAddress();
+				final PoolInfoVO newPoolInfo = PoolInfo.getPoolInfo(web3j, poolAddress).toVO();
+				newPoolInfo.setDelegateAddress(oldDelegateAddress);
 				// 刷新最新的委托人地址地址
-				this.getActivePool(poolInfo, restTemplate, startBlockNumber, true);
-				entry.setValue(poolInfo);
-				log.info("正在刷新算力【{}】 每1000EsXAI算力 -> {},每1Keys算力 -> {}", poolAddress, poolInfo.calcEsXAIPower(esXAIWei), poolInfo.calcKeysPower(BigDecimal.ONE));
+				getActivePool(newPoolInfo, restTemplate, web3j, startBlockNumber, true);
+				entry.setValue(newPoolInfo);
+				log.info("正在刷新算力【{}】 每1000EsXAI算力 -> {},每1Keys算力 -> {}", poolAddress, newPoolInfo.calcEsXAIPower(esXAIWei), newPoolInfo.calcKeysPower(BigDecimal.ONE));
 			}
 			flushActivePoolLocalFile();
 			XAIRedemptionJob.serialization(file, JSON.parseObject(Jsons.encode(infoMap)));
@@ -144,7 +149,7 @@ public class XAIPowerJob {
 						.append("×").append(info.calcStakingTier(totalStakedAmount)).append(" | ")
 						.append(totalStakedAmount.movePointLeft(4).setScale(0, RoundingMode.HALF_UP)).append("w").append(" | ")
 						// .append(this.getActivePool(info, restTemplate, startBlockNumber) ? "<font color=\"common_green1_color\">✔️</font>" : "<font color=\"red\">✘</font>")
-						.append(this.getActivePool(info, restTemplate, startBlockNumber, false)
+						.append(getActivePool(info, restTemplate, web3j, startBlockNumber, false)
 								? "<font color=\"common_green1_color\">[✔️](https://arbiscan.io/address/" + info.getDelegateAddress() + ")</font>"
 								: "<font color=\"red\">[✘](https://arbiscan.io/address/" + info.getDelegateAddress() + ")</font>")
 						.append(" |   \n  ")
@@ -168,7 +173,7 @@ public class XAIPowerJob {
 						.append(info.calcKeysPower(keysWei)).append(" | ")
 						.append("×").append(info.calcStakingTier(totalStakedAmount)).append(" | ")
 						.append(info.keyCount).append(" | ")
-						.append(this.getActivePool(info, restTemplate, startBlockNumber, false)
+						.append(getActivePool(info, restTemplate, web3j, startBlockNumber, false)
 								? "<font color=\"common_green1_color\">[✔️](https://arbiscan.io/address/" + info.getDelegateAddress() + ")</font>"
 								: "<font color=\"red\">[✘](https://arbiscan.io/address/" + info.getDelegateAddress() + ")</font>")
 						.append(" |   \n  ")
@@ -188,42 +193,20 @@ public class XAIPowerJob {
 
 	public static void main(String[] args) throws Exception {
 		// System.out.println(new BigDecimal("744229").movePointLeft(4).setScale(0, RoundingMode.HALF_UP));
-		final Web3j web3j1 = Web3j.build(new HttpService("https://arbitrum-one.public.blastapi.io"));
-		String poolFactoryContractAddress = "0xF9E08660223E2dbb1c0b28c82942aB6B5E38b8E5";
 
+		final Web3j web3j1 = Web3j.build(new HttpService("https://arbitrum-one.public.blastapi.io"));
+		initLocalFile(web3j1);
+	}
+
+	private static void initLocalFile(Web3j web3j1) throws Exception {
+		String poolFactoryContractAddress = "0xF9E08660223E2dbb1c0b28c82942aB6B5E38b8E5";
 		final BigInteger poolsCount = PoolInfo.getPoolsCount(web3j1, poolFactoryContractAddress);
 		System.out.println("poolsCount = " + poolsCount);
 
 		final Map<String, PoolInfoVO> infoMap = new HashMap<>(poolsCount.intValue());
 
-		// for (BigInteger i = BigInteger.ZERO; i.compareTo(poolsCount) < 0; i = i.add(BigInteger.ONE)) {
-		// 	String poolAddress = PoolInfo.getPoolAddress(web3j1, poolFactoryContractAddress, i);
-		// 	infoMap.put(poolAddress, PoolInfo.getPoolInfo(web3j1, poolAddress));
-		// 	System.out.println("poolAddress = " + poolAddress);
-		// }
-
 		final PoolInfoVO poolInfo = PoolInfo.getPoolInfo(web3j1, "0xd471C63C24F5e59aFB5Bf67892A6F3B3dB9C495A").toVO();
 		infoMap.put(poolInfo.poolAddress, poolInfo);
-
-		// final PoolInfo poolInfo2 = PoolInfo.getPoolInfo(web3j1, "0x499D227EaC69C5abB22f638721661D4b2fA19C7C");
-		// infoMap.put(poolInfo2.poolAddress, poolInfo2.toVO());
-		//
-		// for (PoolInfoVO info : infoMap.values()) {
-		// 	System.out.println(info.poolAddress + " -> " + info.calcEsXAIPower(esXAIWei));
-		// 	System.out.println(info.poolAddress + " -> " + info.calcKeysPower(keysWei));
-		// }
-		//
-		// System.out.println("EsXAI 算力排名");
-		// List<PoolInfoVO> collect = infoMap.values().stream().sorted((o1, o2) -> o2.calcEsXAIPower(esXAIWei).compareTo(o1.calcEsXAIPower(esXAIWei))).toList();
-		// for (PoolInfoVO info : collect) {
-		// 	System.out.println(info.poolAddress + " -> " + info.calcEsXAIPower(esXAIWei));
-		// }
-		//
-		// System.out.println("Keys 算力排名");
-		// List<PoolInfoVO> keys = infoMap.values().stream().sorted((o1, o2) -> o2.calcKeysPower(keysWei).compareTo(o1.calcKeysPower(keysWei))).toList();
-		// for (PoolInfoVO info : keys) {
-		// 	System.out.println(info.poolAddress + " -> " + info.calcKeysPower(keysWei));
-		// }
 
 		System.out.println(Jsons.encode(poolInfo));
 		System.out.println("每1000EsXAI算力：" + poolInfo.calcEsXAIPower(esXAIWei));
