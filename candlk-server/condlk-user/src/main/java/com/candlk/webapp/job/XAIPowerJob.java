@@ -83,6 +83,9 @@ public class XAIPowerJob {
 	}
 
 	public static boolean getAndFlushActivePool(PoolInfoVO info, RestTemplate restTemplate, Web3j web3j, BigInteger startBlockNumber, BigDecimal weakActiveThreshold, boolean flush) {
+		if (info.delegateAddress == null) {
+			info.getDelegateAddress(web3j, flush);
+		}
 		final Function<String, @PolyNull Boolean> function = k -> {
 			boolean active = info.hasActivePool(restTemplate, info.getDelegateAddress(web3j, flush), startBlockNumber);
 			log.info("刷新池子的活跃度结果：poolAddress={}，active={}，KeyCount={}，weakActiveThreshold={}", info.poolAddress, active, info.keyCount, weakActiveThreshold);
@@ -199,7 +202,7 @@ public class XAIPowerJob {
 						.append(" |   \n  ")
 				;
 
-				buildTgMsg(tgMsg, i, info, totalStakedAmount, poolName, total, keyCount, true);
+				buildTgMsg(tgMsg, i, info, totalStakedAmount, poolName, total, keyCount, false);
 			}
 			// 持久化本地缓存文件
 			flushActivePoolLocalFile();

@@ -34,8 +34,9 @@ public class XAITest {
 	private XAIPowerJob xaiPowerJob;
 
 	@Test
-	public void xaiPowerJobTest() {
+	public void xaiPowerJobTest() throws InterruptedException {
 		xaiPowerJob.run();
+		Thread.sleep(10 * 1000);
 	}
 
 	@Resource
