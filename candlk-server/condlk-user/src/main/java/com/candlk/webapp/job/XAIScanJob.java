@@ -93,7 +93,7 @@ public class XAIScanJob {
 										.movePointLeft(18).setScale(2, RoundingMode.HALF_UP)) + "*  \n"
 										+ "Tier：*×" + poolInfo.calcStakingTier(totalStakedAmount) + "*  \n"
 										+ "Power：*" + power + "*  \n"
-										+ "[\uD83D\uDC49\uD83D\uDC49View](arbiscan.io/tx/" + hash + ")"
+										+ "[\uD83D\uDC49\uD83D\uDC49Click View](arbiscan.io/tx/" + hash + ")"
 						);
 					}
 				}
@@ -149,7 +149,7 @@ public class XAIScanJob {
 													+ "Redemption Amount：*" + redemptionAmount.setScale(2, RoundingMode.HALF_UP) + " XAI*  \n"
 													+ "Burn Amount：*" + recycleAmount.setScale(2, RoundingMode.HALF_UP) + " XAI*  \n"
 													+ "Address：*" + redemptionTo.replaceAll("0x000000000000000000000000", "0x") + "*  \n"
-													+ "[\uD83D\uDC49\uD83D\uDC49View](arbiscan.io/tx/" + hash + ")");
+													+ "[\uD83D\uDC49\uD83D\uDC49Click View](arbiscan.io/tx/" + hash + ")");
 								}
 
 								// 汇总统计

@@ -83,7 +83,7 @@ public class SendMessageTest {
 						+ "EsXAI Staked：*" + "526,201 " + "*  \n"
 						+ "Tier：*×" + "3" + "*  \n"
 						+ "Power：*" + "5.23" + "*  \n"
-						+ "[\uD83D\uDC49\uD83D\uDC49View](arbiscan.io/tx/" + "0x0054ffa71c5a38eea6b9bc179424ebbe4e9f1b14f7a4a872766c242c553a32d4" + ")");
+						+ "[\uD83D\uDC49\uD83D\uDC49Click View](arbiscan.io/tx/" + "0x0054ffa71c5a38eea6b9bc179424ebbe4e9f1b14f7a4a872766c242c553a32d4" + ")");
 	}
 
 	public static String getEsXAIRank(List<String> poolNames) {

@@ -140,11 +140,13 @@ public class Web3JConfig {
 				"parse_mode", "Markdown",
 				"text", content
 		), new HttpHeaders());
-		final JSONObject body = proxyRestTemplate.postForEntity(tgMsgHookUrl, httpEntity, JSONObject.class).getBody();
-		if (body != null && body.getBoolean("ok")) {
-			System.out.println("发送Telegram成功：" + Jsons.encode(body));
-		} else {
-			System.out.println("发送Telegram失败：" + Jsons.encode(body));
+		try {
+			final JSONObject body = proxyRestTemplate.postForEntity(tgMsgHookUrl, httpEntity, JSONObject.class).getBody();
+			if (body == null || !body.getBoolean("ok")) {
+				log.error("发送Telegram消息失败：content={}，body={}", content, Jsons.encode(body));
+			}
+		} catch (Exception e) {
+			log.error("发送Telegram消息异常：content={}", content, e);
 		}
 	}
 
@@ -203,7 +205,7 @@ public class Web3JConfig {
 						"\uD83D\uDE80*Warn：Create Pool !* \n\n"
 								+ "Monitored [" + nickname + "](arbiscan.io/address/" + from + ") address creating a new pool.  \n"
 								+ "Hash：*" + hash + "*  \n"
-								+ "[\uD83D\uDC49\uD83D\uDC49View](arbiscan.io/tx/" + hash + ")"
+								+ "[\uD83D\uDC49\uD83D\uDC49Click View](arbiscan.io/tx/" + hash + ")"
 				};
 			});
 			put(null, inputs -> {
@@ -224,7 +226,7 @@ public class Web3JConfig {
 								+ "To：*" + to + "*  \n"
 								+ "Method：*" + method + "*  \n"
 								+ "Hash：" + hash + "  \n"
-								+ "[\uD83D\uDC49\uD83D\uDC49View](arbiscan.io/tx/" + hash + ")"
+								+ "[\uD83D\uDC49\uD83D\uDC49Click View](arbiscan.io/tx/" + hash + ")"
 
 				};
 			});
@@ -246,9 +248,9 @@ public class Web3JConfig {
 								+ "[点击前往查看详情](https://arbiscan.io/tx/" + hash + ")",
 
 						"\uD83D\uDE80*Warn：" + typeEn + " !* \n\n"
-								+ "Monitored that address [" + nickname + "](arbiscan.io/address/" + from + ") is in [" + poolName + "](app.xai.games/pool/" + poolContractAddress + "/summary)**】 pool " + type + " action.  \n"
-								+ type + " Amount：*" + amount + x1 + " \n"
-								+ "[\uD83D\uDC49\uD83D\uDC49View](arbiscan.io/tx/" + hash + ")"
+								+ "Monitored that address [" + nickname + "](arbiscan.io/address/" + from + ") in [" + poolName + "](app.xai.games/pool/" + poolContractAddress + "/summary) pool " + typeEn + " action.  \n"
+								+ typeEn + " Amount：*" + amount + x1.replaceAll("\\*\\*", "*") + " \n"
+								+ "[\uD83D\uDC49\uD83D\uDC49Click View](arbiscan.io/tx/" + hash + ")"
 				};
 			}
 			return null;
