@@ -70,7 +70,7 @@ public class Web3JConfig {
 	public Map<String, String> spyFroms = new HashMap<>();
 
 	private static final RestTemplate restTemplate;
-	private static RestTemplate proxyRestTemplate;
+	public RestTemplate proxyRestTemplate;
 
 	public synchronized BigInteger incrLastBlock() {
 		return this.lastBlock = this.lastBlock.add(BigInteger.ONE);
@@ -81,7 +81,6 @@ public class Web3JConfig {
 		httpRequestFactory.setReadTimeout(10000);
 		httpRequestFactory.setConnectTimeout(5000);
 		restTemplate = new RestTemplate(httpRequestFactory);
-		proxyRestTemplate = new RestTemplate(httpRequestFactory);
 	}
 
 	private volatile int offset = 0, maxOffset;
@@ -95,6 +94,7 @@ public class Web3JConfig {
 		}
 
 		// 初始化RestTemplate代理
+		proxyRestTemplate = new RestTemplate();
 		final SimpleClientHttpRequestFactory factory = new SimpleClientHttpRequestFactory();
 		factory.setProxy(new Proxy(Proxy.Type.SOCKS, new InetSocketAddress(host, port)));
 		proxyRestTemplate.setRequestFactory(factory);

@@ -158,7 +158,7 @@ public class XAIPowerJob {
 						.append("×").append(info.calcStakingTier(totalStakedAmount)).append(" | ")
 						.append(total).append(" | ")
 						.append(keyCount).append(" | ")
-						.append(getAndFlushActivePool(info, restTemplate, web3j, startBlockNumber, web3JConfig.weakActiveThreshold, true)
+						.append(getAndFlushActivePool(info, web3JConfig.proxyRestTemplate, web3j, startBlockNumber, web3JConfig.weakActiveThreshold, true)
 								// .append(nonFlushActivePool(info)
 								? "[<font color=\"green\">✔️</font>](https://arbiscan.io/address/" + info.getDelegateAddress() + ")"
 								: "[<font color=\"red\">✘</font>](https://arbiscan.io/address/" + info.getPoolAddress() + "#tokentxns)"
@@ -192,7 +192,7 @@ public class XAIPowerJob {
 						.append(info.calcKeysPower(keysWei)).append(" | ")
 						.append("×").append(info.calcStakingTier(totalStakedAmount)).append(" | ")
 						.append(info.keyCount).append(" | ")
-						.append(getAndFlushActivePool(info, restTemplate, web3j, startBlockNumber, web3JConfig.weakActiveThreshold, true)
+						.append(getAndFlushActivePool(info, web3JConfig.proxyRestTemplate, web3j, startBlockNumber, web3JConfig.weakActiveThreshold, true)
 								// .append(nonFlushActivePool(info)
 								? "[<font color=\"green\">✔️</font>](https://arbiscan.io/address/" + info.getDelegateAddress() + ")"
 								: "[<font color=\"red\">✘</font>](https://arbiscan.io/address/" + info.getPoolAddress() + "#tokentxns)")
