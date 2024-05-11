@@ -27,7 +27,8 @@ public class XAIRedemptionJob {
 	@Scheduled(cron = "${service.cron.XAIRedemptionJob:0 0 1 * * ?}")
 	public void run() throws Exception {
 		final EasyDate d = new EasyDate();
-		final String yyyyMMdd = Formats.getYyyyMMdd(d) + "", yyyyMM = Formats.getYyyyMM(d) + "", weeklyYyyyMMdd = Formats.getYyyyMMdd(d.addDay(1 - d.getWeekDay())) + "";
+		final String yyyyMMdd = Formats.getYyyyMMdd(d) + "", yyyyMM = Formats.getYyyyMM(d) + "", outM = d.getYear() + "-" + d.getMonth(),
+				weeklyYyyyMMdd = Formats.getYyyyMMdd(d.addDay(1 - d.getWeekDay())) + "", outW = d.getYear() + "-" + d.getMonth() + "-" + d.getWeekDay();
 		final JSONObject root = deserialization(web3JConfig.statFilePath);
 
 		final JSONObject daily = root.getJSONObject("D").getJSONObject(yyyyMMdd),
@@ -39,15 +40,32 @@ public class XAIRedemptionJob {
 						+ "赎回总量：**<font color=\"red\">" + formatAmount(root.getBigDecimal(totalRedemption)) + " XAI</font>**  \n  "
 						+ "销毁总量：**" + formatAmount(root.getBigDecimal(totalRecycle)) + " XAI**  \n  "
 						+ "#### 当日  \n  "
-						+ "赎回：**<font color=\"red\">" + formatAmount(daily.getBigDecimal(totalRedemption)) + " XAI</font>**  \n  "
-						+ "销毁：**" + formatAmount(daily.getBigDecimal(totalRecycle)) + " XAI**  \n  "
-						+ "#### 当周【**" + weeklyYyyyMMdd + "**】  \n  "
-						+ "赎回：**<font color=\"red\">" + formatAmount(w.getBigDecimal(totalRedemption)) + " XAI</font>**  \n  "
-						+ "销毁：**" + formatAmount(w.getBigDecimal(totalRecycle)) + " XAI**  \n  "
-						+ "#### 当月  \n  "
-						+ "赎回：**<font color=\"red\">" + formatAmount(m.getBigDecimal(totalRedemption)) + " XAI</font>**  \n  "
-						+ "销毁：**" + formatAmount(m.getBigDecimal(totalRecycle)) + " XAI**  \n  "
-		);
+						+ "赎回：**<font color=\"red\">" + formatAmount(daily == null ? BigDecimal.ZERO : daily.getBigDecimal(totalRedemption)) + " XAI</font>**  \n  "
+						+ "销毁：**" + formatAmount(daily == null ? BigDecimal.ZERO : daily.getBigDecimal(totalRecycle)) + " XAI**  \n  "
+						+ "#### 当周【**" + outW + "**】  \n  "
+						+ "赎回：**<font color=\"red\">" + formatAmount(w == null ? BigDecimal.ZERO : w.getBigDecimal(totalRedemption)) + " XAI</font>**  \n  "
+						+ "销毁：**" + formatAmount(w == null ? BigDecimal.ZERO : w.getBigDecimal(totalRecycle)) + " XAI**  \n  "
+						+ "#### 当月【**" + outM + "**】  \n  "
+						+ "赎回：**<font color=\"red\">" + formatAmount(m == null ? BigDecimal.ZERO : m.getBigDecimal(totalRedemption)) + " XAI</font>**  \n  "
+						+ "销毁：**" + formatAmount(m == null ? BigDecimal.ZERO : m.getBigDecimal(totalRecycle)) + " XAI**  \n  "
+				,
+				"*Redemption Stat*\n" +
+						"Time: *" + d + "* \n" +
+						"\n*ToDay: * \n" +
+						"Redemption: *" + formatAmount(daily == null ? BigDecimal.ZERO : daily.getBigDecimal(totalRedemption)) + " XAI*\n" +
+						"Burn❤\uFE0F\u200D\uD83D\uDD25：" + formatAmount(daily == null ? BigDecimal.ZERO : daily.getBigDecimal(totalRecycle)) + " XAI\n" +
+
+						"\n*Week(" + outW + "): * \n" +
+						"Redemption: *" + formatAmount(w == null ? BigDecimal.ZERO : w.getBigDecimal(totalRedemption)) + " XAI*\n" +
+						"Burn❤\uFE0F\u200D\uD83D\uDD25：" + formatAmount(w == null ? BigDecimal.ZERO : w.getBigDecimal(totalRecycle)) + " XAI\n" +
+
+						"\n*Month(" + outM + "): * \n" +
+						"Redemption: *" + formatAmount(m == null ? BigDecimal.ZERO : m.getBigDecimal(totalRedemption)) + " XAI*\n" +
+						"Burn❤\uFE0F\u200D\uD83D\uDD25：" + formatAmount(m == null ? BigDecimal.ZERO : m.getBigDecimal(totalRecycle)) + " XAI\n" +
+
+						"\n*History Total: * \n" +
+						"Redemption: *" + formatAmount(root.getBigDecimal(totalRedemption)) + " XAI*\n" +
+						"Burn❤\uFE0F\u200D\uD83D\uDD25：*" + formatAmount(root.getBigDecimal(totalRecycle)) + " XAI*\n");
 	}
 
 	public static String formatAmount(BigDecimal amount) {

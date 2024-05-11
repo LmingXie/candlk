@@ -13,8 +13,9 @@ spring:
     allow-circular-references: true
   ### redis连接配置
   redis:
-    host: 192.168.0.99
-    password: sakFsl#89jflka
+    host: 175.178.150.79
+    port: 6380
+    password: admin@3069!
     database: 0
   ### common-config.yml 所有服务的公共配置
   messages:
@@ -51,13 +52,15 @@ warn:
 service:
   proxy:
     host: 127.0.0.1
-    port: 10818
+    port: 10808
   cron:
     XAIScanJob: "0 0/60 * * * ?"
     XAIRedemptionJob: "0 0/60 * * * ?"
     XAIPowerJob: "0 0 1 * * ?"
   xai:
     dingTalkBotUrl: https://oapi.dingtalk.com/robot/send?access_token=0699ae605b56910e521bf8fea6104d028a1e724d068f8261a6271b2a877c783f
+    tgMsgHookUrl: https://api.telegram.org/bot7098739919:AAG7V8jhpmhehF9Z5ZHL6YgA9qmmpkwV3Zg/sendMessage
+    tgChatId: -1002081472730
     #    web3jUrl: https://arb1.arbitrum.io/rpc
     #    web3jUrl: https://arbitrum.llamarpc.com
     web3jUrl: wss://arbitrum-one-rpc.publicnode.com
@@ -89,7 +92,7 @@ service:
     # 顶级Keys算力池解除质押成功提醒
     unstakeKeysThreshold: 2.7
     # 排行榜排名
-    topN: 25
+    topN: 30
     # 监控的交易发送人地址
     spyFroms:
       "0xcd6100d7a6b120b7042ba09b787a1cb26a2e6ae1": Alpha-K1

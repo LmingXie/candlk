@@ -1,6 +1,8 @@
 package com.candlk.webapp.job;
 
 import java.math.*;
+import java.net.InetSocketAddress;
+import java.net.Proxy;
 import java.util.*;
 import java.util.function.Function;
 import java.util.function.Supplier;
@@ -12,6 +14,7 @@ import com.candlk.context.web.Jsons;
 import lombok.Getter;
 import lombok.Setter;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.boot.context.properties.ConfigurationProperties;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
@@ -55,11 +58,19 @@ public class Web3JConfig {
 	public String statFilePath = "/mnt/xai_bot/stat.json";
 	/** 取排名多少 */
 	public Integer topN = 20;
+	@Value("${service.proxy.host}")
+	private String host;
+	@Value("${service.proxy.port}")
+	private Integer port;
+
+	private String tgMsgHookUrl;
+	private String tgChatId;
 
 	/** 需要监听的发送者请求（小写）地址 -> 备注 */
 	public Map<String, String> spyFroms = new HashMap<>();
 
 	private static final RestTemplate restTemplate;
+	private static RestTemplate proxyRestTemplate;
 
 	public synchronized BigInteger incrLastBlock() {
 		return this.lastBlock = this.lastBlock.add(BigInteger.ONE);
@@ -69,7 +80,8 @@ public class Web3JConfig {
 		final SimpleClientHttpRequestFactory httpRequestFactory = new SimpleClientHttpRequestFactory();
 		httpRequestFactory.setReadTimeout(10000);
 		httpRequestFactory.setConnectTimeout(5000);
-		restTemplate = new RestTemplate();
+		restTemplate = new RestTemplate(httpRequestFactory);
+		proxyRestTemplate = new RestTemplate(httpRequestFactory);
 	}
 
 	private volatile int offset = 0, maxOffset;
@@ -81,6 +93,11 @@ public class Web3JConfig {
 		for (String url : web3jUrlPool) {
 			web3jPool.add(Web3j.build(new HttpService(url)));
 		}
+
+		// 初始化RestTemplate代理
+		final SimpleClientHttpRequestFactory factory = new SimpleClientHttpRequestFactory();
+		factory.setProxy(new Proxy(Proxy.Type.SOCKS, new InetSocketAddress(host, port)));
+		proxyRestTemplate.setRequestFactory(factory);
 	}
 
 	public synchronized Web3j pollingGetWeb3j() {
@@ -96,7 +113,7 @@ public class Web3JConfig {
 		return Web3j.build(new HttpService(web3jUrl));
 	}
 
-	public void sendWarn(String title, String content) {
+	public void sendWarn(String title, String content, String telegramMsg) {
 		SpringUtil.asyncRun(() -> {
 			final HttpEntity<JSONObject> httpEntity = new HttpEntity<>(JSONObject.of(
 					"msgtype", "markdown",
@@ -114,6 +131,21 @@ public class Web3JConfig {
 				log.error("预警通知异常：body={},title={},text={}", body, title, content);
 			}
 		});
+		SpringUtil.asyncRun(() -> sendTelegramMessage(telegramMsg));
+	}
+
+	public void sendTelegramMessage(String content) {
+		final HttpEntity<JSONObject> httpEntity = new HttpEntity<>(JSONObject.of(
+				"chat_id", tgChatId,
+				"parse_mode", "Markdown",
+				"text", content
+		), new HttpHeaders());
+		final JSONObject body = proxyRestTemplate.postForEntity(tgMsgHookUrl, httpEntity, JSONObject.class).getBody();
+		if (body != null && body.getBoolean("ok")) {
+			System.out.println("发送Telegram成功：" + Jsons.encode(body));
+		} else {
+			System.out.println("发送Telegram失败：" + Jsons.encode(body));
+		}
 	}
 
 	private final static Function<String, String> initContractName = k -> {
@@ -137,27 +169,27 @@ public class Web3JConfig {
 		{
 			put("0x57634198", inputs -> new String[] { "普通消息：从池子中领取奖励", null });
 			put("0x2f1a0b1c", inputs -> parseStake(inputs, "预警：Keys质押", () -> new BigDecimal(new BigInteger(inputs[3].substring(138, 202), 16)),
-					"**  \n  ", "质押", new BigDecimal(inputs[7])));
+					"**  \n  ", "质押", "Staked", new BigDecimal(inputs[7])));
 
 			put("0xa528916d", inputs -> parseStake(inputs, "预警：esXAI质押", () ->
 					new BigDecimal(new BigInteger(inputs[3].substring(74), 16)).movePointLeft(18)
-							.setScale(2, RoundingMode.HALF_UP), " esXAI**  \n  ", "质押", new BigDecimal(inputs[6])));
+							.setScale(2, RoundingMode.HALF_UP), " esXAI**  \n  ", "质押", "Staked", new BigDecimal(inputs[6])));
 
 			put("0xd4e44335", inputs -> parseStake(inputs, "通知：Keys 赎回申请", () -> new BigDecimal(new BigInteger(inputs[3].substring(74), 16)),
-					"**  \n  ", "赎回", new BigDecimal(inputs[7])));
+					"**  \n  ", "赎回", "Approve Redemption", new BigDecimal(inputs[7])));
 
 			put("0x75710569", inputs -> parseStake(inputs, "通知：esXAI 赎回申请", () ->
 					new BigDecimal(new BigInteger(inputs[3].substring(74), 16)).movePointLeft(18)
-							.setScale(2, RoundingMode.HALF_UP), " esXAI**  \n  ", "赎回", new BigDecimal(inputs[6])));
+							.setScale(2, RoundingMode.HALF_UP), " esXAI**  \n  ", "赎回", "Approve Redemption", new BigDecimal(inputs[6])));
 
 			// unstakeKeys
 			put("0x95003265", inputs -> parseStake(inputs, "预警：Keys 赎回成功", () -> new BigDecimal(new BigInteger(inputs[3].substring(202, 266), 16)),
-					"**  \n  ", "赎回", new BigDecimal(inputs[7])));
+					"**  \n  ", "赎回", "Complete Redemption", new BigDecimal(inputs[7])));
 
 			// unstakeEsXai
 			put("0x68da34e6", inputs -> parseStake(inputs, "预警：esXAI 赎回成功", () ->
 							new BigDecimal(new BigInteger(inputs[3].substring(138, 202), 16)).movePointLeft(18).setScale(2, RoundingMode.HALF_UP),
-					" esXAI**  \n  ", "赎回", new BigDecimal(inputs[6])));
+					" esXAI**  \n  ", "赎回", "Complete Redemption", new BigDecimal(inputs[6])));
 
 			put("0x098e8ae7", inputs -> {
 				final String from = inputs[0], hash = inputs[2], nickname = inputs[4];
@@ -166,7 +198,12 @@ public class Web3JConfig {
 						"### 预警：创建池子！  \n  "
 								+ "识别到关注的【**[" + nickname + "](https://arbiscan.io/address/" + from + ")**】地址正创建新池。  \n  "
 								+ "Hash：**" + hash + "**  \n  "
-								+ "[点击前往查看详情](https://arbiscan.io/tx/" + hash + ")"
+								+ "[点击前往查看详情](https://arbiscan.io/tx/" + hash + ")",
+
+						"\uD83D\uDE80*Warn：Create Pool !* \n\n"
+								+ "Monitored [" + nickname + "](arbiscan.io/address/" + from + ") address creating a new pool.  \n"
+								+ "Hash：*" + hash + "*  \n"
+								+ "[\uD83D\uDC49\uD83D\uDC49View](arbiscan.io/tx/" + hash + ")"
 				};
 			});
 			put(null, inputs -> {
@@ -179,12 +216,21 @@ public class Web3JConfig {
 								+ "To：**" + to + "**  \n  "
 								+ "Method：**" + method + "**  \n  "
 								+ "Hash：" + hash + "  \n  "
-								+ "[点击前往查看详情](https://arbiscan.io/tx/" + hash + ")"
+								+ "[点击前往查看详情](https://arbiscan.io/tx/" + hash + ")",
+
+						"\uD83D\uDE80*Warn：Unrecognized call !* \n\n"
+								+ "Monitored [" + nickname + "](arbiscan.io/address/" + from + ") address made an unrecognized call. \n"
+								+ "From：" + from + "  \n"
+								+ "To：*" + to + "*  \n"
+								+ "Method：*" + method + "*  \n"
+								+ "Hash：" + hash + "  \n"
+								+ "[\uD83D\uDC49\uD83D\uDC49View](arbiscan.io/tx/" + hash + ")"
+
 				};
 			});
 		}
 
-		private static String[] parseStake(String[] inputs, String x, Supplier<BigDecimal> supplier, String x1, String type, BigDecimal threshold) {
+		private static String[] parseStake(String[] inputs, String x, Supplier<BigDecimal> supplier, String x1, String type, String typeEn, BigDecimal threshold) {
 			final String from = inputs[0], to = inputs[1], hash = inputs[2], input = inputs[3], nickname = inputs[4] == null ? from : inputs[4];
 			final BigDecimal amount = supplier.get();
 			final boolean hasBigAmount = inputs.length > 8; // "1" 占位
@@ -197,7 +243,12 @@ public class Web3JConfig {
 						"### " + x + "！  \n  "
 								+ "识别到关注的【**[" + nickname + "](https://arbiscan.io/address/" + from + ")**】地址正在【**[" + poolName + "](https://app.xai.games/pool/" + poolContractAddress + "/summary)**】池进行" + type + "。  \n  "
 								+ type + "数量：**" + amount + x1
-								+ "[点击前往查看详情](https://arbiscan.io/tx/" + hash + ")"
+								+ "[点击前往查看详情](https://arbiscan.io/tx/" + hash + ")",
+
+						"\uD83D\uDE80*Warn：" + typeEn + " !* \n\n"
+								+ "Monitored that address [" + nickname + "](arbiscan.io/address/" + from + ") is in [" + poolName + "](app.xai.games/pool/" + poolContractAddress + "/summary)**】 pool " + type + " action.  \n"
+								+ type + " Amount：*" + amount + x1 + " \n"
+								+ "[\uD83D\uDC49\uD83D\uDC49View](arbiscan.io/tx/" + hash + ")"
 				};
 			}
 			return null;

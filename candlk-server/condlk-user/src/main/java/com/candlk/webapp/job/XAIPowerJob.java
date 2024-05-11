@@ -1,8 +1,6 @@
 package com.candlk.webapp.job;
 
 import java.math.*;
-import java.net.InetSocketAddress;
-import java.net.Proxy;
 import java.text.DecimalFormat;
 import java.text.NumberFormat;
 import java.util.*;
@@ -17,9 +15,7 @@ import com.github.benmanes.caffeine.cache.Cache;
 import com.github.benmanes.caffeine.cache.Caffeine;
 import lombok.extern.slf4j.Slf4j;
 import org.checkerframework.checker.nullness.qual.PolyNull;
-import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.Configuration;
-import org.springframework.http.client.SimpleClientHttpRequestFactory;
 import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.web.client.RestTemplate;
 import org.web3j.protocol.Web3j;
@@ -32,10 +28,6 @@ public class XAIPowerJob {
 	private Web3j web3j;
 	@Resource
 	private Web3JConfig web3JConfig;
-	@Value("${service.proxy.host}")
-	private String host;
-	@Value("${service.proxy.port}")
-	private Integer port;
 
 	public final static String poolFactoryContractAddress = "0xF9E08660223E2dbb1c0b28c82942aB6B5E38b8E5",
 			file = "/mnt/xai_bot/power.json";
@@ -73,10 +65,6 @@ public class XAIPowerJob {
 
 	@PostConstruct
 	public void init() {
-		// 初始化RestTemplate代理
-		final SimpleClientHttpRequestFactory factory = new SimpleClientHttpRequestFactory();
-		factory.setProxy(new Proxy(Proxy.Type.HTTP, new InetSocketAddress(host, port)));
-		restTemplate.setRequestFactory(factory);
 
 		try {
 			// 加载本地缓存
@@ -155,64 +143,94 @@ public class XAIPowerJob {
 			final StringBuilder sb = new StringBuilder("### 10000/EsXAI算力排行榜  \n  ");
 			sb.append("|  排名  |  池子  |  算力  |  加成   | EsXAI  | Keys  | 活跃  |   \n  ");
 			sb.append("|:------:|:------|:-------:|:-----:|:-----:|:-----:|:-----:|  \n  ");
-			final StringBuilder tgMsg = new StringBuilder("*\uD83D\uDCB910000/EsXAI算力排行榜*\n\n*排名            池子     	                      算力     加成      总质押      活跃* \n");
-			for (int i = 0; i < topN; i++) {
+			final StringBuilder tgMsg = new StringBuilder("*\uD83D\uDCB910000/EsXAI Stake Computing Power Rank *\n\n*Rank      Power    Tier       EsXAI      Keys    Active           Pool* \n");
+			for (int i = 1; i <= topN; i++) {
 				final PoolInfoVO info = esXAIPowerTopN.get(i);
 				// 只刷新排行榜上池子的活跃状态，并更新委托人地址
 				final BigDecimal totalStakedAmount = new BigDecimal(info.totalStakedAmount).movePointLeft(18).setScale(0, RoundingMode.HALF_UP);
-				final String poolName = Web3JConfig.getContractName(info.poolAddress);
-				sb.append("| ").append(i + 1)
+				final String poolName = Web3JConfig.getContractName(info.poolAddress),
+						total = totalStakedAmount.movePointLeft(4).setScale(0, RoundingMode.HALF_UP).toPlainString() + "w",
+						keyCount = info.keyCount.toString();
+				sb.append("| ").append(i)
 						.append(" | [").append(outPoolName(poolName)).append("](https://app.xai.games/pool/").append(info.poolAddress).append("/summary)")
 						.append(info.getUpdateSharesTimestamp().compareTo(BigInteger.ZERO) > 0 ? "<font color=\"red\">变</font> | " : " | ")
 						.append(info.calcEsXAIPower(esXAIWei)).append(" | ")
 						.append("×").append(info.calcStakingTier(totalStakedAmount)).append(" | ")
-						.append(totalStakedAmount.movePointLeft(4).setScale(0, RoundingMode.HALF_UP)).append("w").append(" | ")
-						.append(info.keyCount).append(" | ")
+						.append(total).append(" | ")
+						.append(keyCount).append(" | ")
 						.append(getAndFlushActivePool(info, restTemplate, web3j, startBlockNumber, web3JConfig.weakActiveThreshold, true)
+								// .append(nonFlushActivePool(info)
 								? "[<font color=\"green\">✔️</font>](https://arbiscan.io/address/" + info.getDelegateAddress() + ")"
-								: "[<font color=\"red\">✘</font>](https://arbiscan.io/address/" + info.getPoolAddress() + "#tokentxns)")
+								: "[<font color=\"red\">✘</font>](https://arbiscan.io/address/" + info.getPoolAddress() + "#tokentxns)"
+						)
 						.append(" |   \n  ")
 				;
+				buildTgMsg(tgMsg, i, info, totalStakedAmount, poolName, total, keyCount);
 			}
 			log.info("EsXAI算力排行榜：{}", sb);
-			// web3JConfig.sendWarn("EsXAI算力排行榜", sb.toString());
+			web3JConfig.sendWarn("EsXAI算力排行榜", sb.toString(), tgMsg.toString());
 
 			final List<PoolInfoVO> keysIPowerTopN = infoMap.values().stream().sorted((o1, o2) -> o2.calcKeysPower(keysWei).compareTo(o1.calcKeysPower(keysWei))).toList();
 			sb.setLength(0);
 			sb.append("### 1/Keys算力排行榜  \n  ");
 			sb.append("|  排名  |   池子   |   算力   |  加成  | 总质押  | 活跃  |   \n  ");
 			sb.append("|:------:|:------|:-------:|:-----:|:-----:|:-----:|  \n  ");
-			for (int i = 0; i < topN; i++) {
+
+			tgMsg.setLength(0);
+			tgMsg.append("*\uD83D\uDCB91/Keys Stake Computing Power Rank *\n\n*Rank      Power    Tier       EsXAI      Keys    Active           Pool* \n");
+
+			for (int i = 1; i <= topN; i++) {
 				final PoolInfoVO info = keysIPowerTopN.get(i);
 				// 只刷新排行榜上池子的活跃状态，并更新委托人地址
-				getAndFlushActivePool(info, restTemplate, web3j, startBlockNumber, web3JConfig.weakActiveThreshold, true);
 				final BigDecimal totalStakedAmount = new BigDecimal(info.totalStakedAmount).movePointLeft(18).setScale(0, RoundingMode.HALF_UP);
-				final String poolName = Web3JConfig.getContractName(info.poolAddress);
-				sb.append("| ").append(i + 1)
+				final String poolName = Web3JConfig.getContractName(info.poolAddress),
+						total = totalStakedAmount.movePointLeft(4).setScale(0, RoundingMode.HALF_UP).toPlainString() + "w",
+						keyCount = info.keyCount.toString();
+				sb.append("| ").append(i)
 						.append(" | [").append(outPoolName(poolName)).append("](https://app.xai.games/pool/").append(info.poolAddress).append("/summary)")
 						.append(info.getUpdateSharesTimestamp().compareTo(BigInteger.ZERO) > 0 ? "<font color=\"red\">变</font> | " : " | ")
 						.append(info.calcKeysPower(keysWei)).append(" | ")
 						.append("×").append(info.calcStakingTier(totalStakedAmount)).append(" | ")
 						.append(info.keyCount).append(" | ")
 						.append(getAndFlushActivePool(info, restTemplate, web3j, startBlockNumber, web3JConfig.weakActiveThreshold, true)
+								// .append(nonFlushActivePool(info)
 								? "[<font color=\"green\">✔️</font>](https://arbiscan.io/address/" + info.getDelegateAddress() + ")"
 								: "[<font color=\"red\">✘</font>](https://arbiscan.io/address/" + info.getPoolAddress() + "#tokentxns)")
 						.append(" |   \n  ")
 				;
+
+				buildTgMsg(tgMsg, i, info, totalStakedAmount, poolName, total, keyCount);
 			}
+			// 持久化本地缓存文件
 			flushActivePoolLocalFile();
 			XAIRedemptionJob.serialization(file, JSON.parseObject(Jsons.encode(infoMap)));
 			log.info("Keys算力排行榜：{}", sb);
-			// web3JConfig.sendWarn("Keys算力排行榜", sb.toString());
+			web3JConfig.sendWarn("Keys算力排行榜", sb.toString(), tgMsg.toString());
 		} catch (Exception e) {
 			log.error("算力统计异常", e);
 		}
 	}
 
+	private void buildTgMsg(StringBuilder tgMsg, int i, PoolInfoVO info, BigDecimal totalStakedAmount, String poolName, String total, String keyCount) {
+		tgMsg.append("*").append(i).append("*         ").append(i < 10 ? "  " : "")
+				.append(" 	  ").append(info.calcEsXAIPower(esXAIWei))
+				.append(" 	        ×").append(info.calcStakingTier(totalStakedAmount))
+				.append(" 	        ").append(total).append(total.length() > 3 ? "        " : "          ")
+				.append(keyCount).append(keyCount.length() > 2 ? "        " : "          ")
+				.append(nonFlushActivePool(info)
+						? "[✅](arbiscan.io/address/" + info.getDelegateAddress() + ")"
+						: "[❌](arbiscan.io/address/" + info.getPoolAddress() + "#tokentxns)"
+				).append("     [")
+				.append(poolName.length() > 14 ? poolName.substring(0, 14) + "..." : poolName).append("](app.xai.games/pool/").append(info.poolAddress).append("/summary)")
+				.append(info.getUpdateSharesTimestamp().compareTo(BigInteger.ZERO) > 0 ? "‼\uFE0F" : "")
+				.append("\n")
+		;
+	}
+
 	private static String outPoolName(String poolName) {
 		final String newPoolName = poolName.replaceAll(" ", "").replaceAll("-", "").replaceAll("\\|", "").replaceAll("｜", "");
 		final int len = newPoolName.length();
-		return /*len > 15 ? newPoolName.substring(0, 6) + "***" + newPoolName.substring(len - 6, len) :*/ newPoolName.substring(0, Math.min(len, 12));
+		return newPoolName.substring(0, Math.min(len, 12));
 	}
 
 	public static void main(String[] args) throws Exception {

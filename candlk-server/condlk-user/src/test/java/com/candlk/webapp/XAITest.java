@@ -38,6 +38,14 @@ public class XAITest {
 	}
 
 	@Resource
+	XAIRedemptionJob xaiRedemptionJob;
+
+	@Test
+	public void xaiRedemptionJobTest() throws Exception {
+		xaiRedemptionJob.run();
+	}
+
+	@Resource
 	Web3JConfig web3JConfig;
 
 	@Test

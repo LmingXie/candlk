@@ -84,7 +84,16 @@ public class XAIScanJob {
 										.movePointLeft(18).setScale(2, RoundingMode.HALF_UP)) + "**  \n  "
 										+ "加成：**×" + poolInfo.calcStakingTier(totalStakedAmount) + "**  \n  "
 										+ "算力值：**" + power + "**  \n  "
-										+ "[点击前往查看详情](https://arbiscan.io/tx/" + hash + ")"
+										+ "[点击前往查看详情](https://arbiscan.io/tx/" + hash + ")",
+
+								"\uD83D\uDCAF*Notify：Full Keys Pool Redemption !*\n\n"
+										+ "Pool：[" + poolName + "](app.xai.games/pool/" + poolContractAddress + "/summary)  \n"
+										+ "Keys Staked：*" + poolInfo.keyCount + "*  \n "
+										+ "EsXAI Staked：*" + XAIRedemptionJob.formatAmount(new BigDecimal(poolInfo.totalStakedAmount)
+										.movePointLeft(18).setScale(2, RoundingMode.HALF_UP)) + "*  \n"
+										+ "Tier：*×" + poolInfo.calcStakingTier(totalStakedAmount) + "*  \n"
+										+ "Power：*" + power + "*  \n"
+										+ "[\uD83D\uDC49\uD83D\uDC49View](arbiscan.io/tx/" + hash + ")"
 						);
 					}
 				}
@@ -92,7 +101,7 @@ public class XAIScanJob {
 					final String[] msg = METHOD2TIP.getOrDefault(method, METHOD2TIP.get(null))
 							.apply(new String[] { from, to, hash, input, nickname, method, web3JConfig.esXAIThreshold, web3JConfig.keysThreshold });
 					if (msg != null && msg[1] != null) {
-						web3JConfig.sendWarn(msg[0], msg[1]);
+						web3JConfig.sendWarn(msg[0], msg[1], msg[2]);
 					}
 				}
 				// 只识别大额质押与赎回
@@ -102,7 +111,7 @@ public class XAIScanJob {
 						final String[] msg = function.apply(new String[] { from, to, hash, input, from, method, web3JConfig.esXAIThreshold, web3JConfig.keysThreshold, "1" });
 						X.use(msg, m -> {
 							if (msg[1] != null) {
-								web3JConfig.sendWarn(msg[0], msg[1]);
+								web3JConfig.sendWarn(msg[0], msg[1], msg[2]);
 							} else {
 								log.info("识别到普通调用 -> {}：from={},to={},hash={}", msg[0], from, to, hash);
 							}
@@ -133,7 +142,14 @@ public class XAIScanJob {
 													+ "赎回数量：**" + redemptionAmount.setScale(2, RoundingMode.HALF_UP) + " XAI**  \n  "
 													+ "销毁数量：**" + recycleAmount.setScale(2, RoundingMode.HALF_UP) + " XAI**  \n  "
 													+ "赎回地址：**" + redemptionTo.replaceAll("0x000000000000000000000000", "0x") + "**  \n  "
-													+ "[点击前往查看详情](https://arbiscan.io/tx/" + hash + ")");
+													+ "[点击前往查看详情](https://arbiscan.io/tx/" + hash + ")",
+
+											"\uD83D\uDE80*Warn：XAI Bulk Complete Redemption !* \n\n"
+													+ "Monitored *" + this.getPeriod(redemptionAmount, totalAmount) + "* days of complete redemption collection event.  \n"
+													+ "Redemption Amount：*" + redemptionAmount.setScale(2, RoundingMode.HALF_UP) + " XAI*  \n"
+													+ "Burn Amount：*" + recycleAmount.setScale(2, RoundingMode.HALF_UP) + " XAI*  \n"
+													+ "Address：*" + redemptionTo.replaceAll("0x000000000000000000000000", "0x") + "*  \n"
+													+ "[\uD83D\uDC49\uD83D\uDC49View](arbiscan.io/tx/" + hash + ")");
 								}
 
 								// 汇总统计
