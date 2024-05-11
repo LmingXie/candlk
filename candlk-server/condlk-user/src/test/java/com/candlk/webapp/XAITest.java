@@ -6,6 +6,7 @@ import javax.annotation.Resource;
 
 import com.candlk.context.web.Jsons;
 import com.candlk.webapp.job.*;
+import me.codeplayer.util.RandomUtil;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.junit.jupiter.MockitoExtension;
@@ -25,6 +26,7 @@ public class XAITest {
 	@Test
 	public void xaiJobTest() throws Exception {
 		xaiScanJob.run();
+		Thread.sleep(5 * 60 * 1000);
 	}
 
 	@Resource
@@ -55,6 +57,13 @@ public class XAITest {
 		boolean b = XAIPowerJob.getAndFlushActivePool(poolInfo, restTemplate, web3j1, startBlockNumber, web3JConfig.weakActiveThreshold, true);
 		// xaiPowerJob.flushActivePoolLocalFile();
 		System.out.println("活跃状态：" + b);
+	}
+
+	public static void main(String[] args) {
+		for (int i = 0; i < 10; i++) {
+			System.out.println(RandomUtil.getInt(10, 999));
+			System.out.println(RandomUtil.getInt(1, 2) > 1 ? "❌" : "✅");
+		}
 	}
 
 }

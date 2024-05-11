@@ -91,7 +91,9 @@ public class XAIScanJob {
 				if (nickname != null) {
 					final String[] msg = METHOD2TIP.getOrDefault(method, METHOD2TIP.get(null))
 							.apply(new String[] { from, to, hash, input, nickname, method, web3JConfig.esXAIThreshold, web3JConfig.keysThreshold });
-					X.use(msg, m -> web3JConfig.sendWarn(msg[0], msg[1]));
+					if (msg != null && msg[1] != null) {
+						web3JConfig.sendWarn(msg[0], msg[1]);
+					}
 				}
 				// 只识别大额质押与赎回
 				else if ("0xf9e08660223e2dbb1c0b28c82942ab6b5e38b8e5".equalsIgnoreCase(to)) {

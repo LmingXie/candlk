@@ -8,6 +8,7 @@ import javax.annotation.PostConstruct;
 
 import com.alibaba.fastjson2.JSONObject;
 import com.candlk.common.util.SpringUtil;
+import com.candlk.context.web.Jsons;
 import lombok.Getter;
 import lombok.Setter;
 import lombok.extern.slf4j.Slf4j;
@@ -106,7 +107,12 @@ public class Web3JConfig {
 					"at", JSONObject.of("isAtAll", "true")), new HttpHeaders());
 			final String body = restTemplate.postForEntity(dingTalkBotUrl, httpEntity, String.class)
 					.getBody();
-			log.warn("预警通知结果：{}", body);
+			final JSONObject resp = Jsons.parseObject(body);
+			if ("0".equals(resp.getString("errcode"))) {
+				log.warn("预警通知结果：{}", body);
+			} else {
+				log.error("预警通知异常：body={},title={},text={}", body, title, content);
+			}
 		});
 	}
 
