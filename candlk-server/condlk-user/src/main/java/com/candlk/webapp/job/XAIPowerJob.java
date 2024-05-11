@@ -119,7 +119,7 @@ public class XAIPowerJob {
 			if (offset > 0) {
 				for (int i = size; i < newSize; i++) {
 					final String poolAddress = PoolInfo.getPoolAddress(web3j, poolFactoryContractAddress, BigInteger.valueOf(i));
-					infoMap.put(poolAddress, null);
+					infoMap.put(poolAddress.toLowerCase(), null);
 					log.info("发现新池子【{}】", poolAddress);
 				}
 			}
@@ -165,7 +165,7 @@ public class XAIPowerJob {
 						)
 						.append(" |   \n  ")
 				;
-				buildTgMsg(tgMsg, i, info, totalStakedAmount, poolName, total, keyCount);
+				buildTgMsg(tgMsg, i, info, totalStakedAmount, poolName, total, keyCount, true);
 			}
 			log.info("EsXAI算力排行榜：{}", sb);
 			web3JConfig.sendWarn("EsXAI算力排行榜", sb.toString(), tgMsg.toString());
@@ -199,7 +199,7 @@ public class XAIPowerJob {
 						.append(" |   \n  ")
 				;
 
-				buildTgMsg(tgMsg, i, info, totalStakedAmount, poolName, total, keyCount);
+				buildTgMsg(tgMsg, i, info, totalStakedAmount, poolName, total, keyCount, true);
 			}
 			// 持久化本地缓存文件
 			flushActivePoolLocalFile();
@@ -211,9 +211,9 @@ public class XAIPowerJob {
 		}
 	}
 
-	private void buildTgMsg(StringBuilder tgMsg, int i, PoolInfoVO info, BigDecimal totalStakedAmount, String poolName, String total, String keyCount) {
+	private void buildTgMsg(StringBuilder tgMsg, int i, PoolInfoVO info, BigDecimal totalStakedAmount, String poolName, String total, String keyCount, boolean esXAIRank) {
 		tgMsg.append("*").append(i).append("*         ").append(i < 10 ? "  " : "")
-				.append(" 	  ").append(info.calcEsXAIPower(esXAIWei))
+				.append(" 	  ").append(esXAIRank ? info.calcEsXAIPower(esXAIWei) : info.calcKeysPower(keysWei))
 				.append(" 	        ×").append(info.calcStakingTier(totalStakedAmount))
 				.append(" 	        ").append(total).append(total.length() > 3 ? "        " : "          ")
 				.append(keyCount).append(keyCount.length() > 2 ? "        " : "          ")

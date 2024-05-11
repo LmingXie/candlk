@@ -55,11 +55,11 @@ public class PoolInfoVO extends StaticStruct {
 		final BigDecimal totalStakedAmount = new BigDecimal(this.totalStakedAmount).movePointLeft(18);
 		final BigDecimal tier = calcStakingTier(totalStakedAmount);
 		if (stakedBucketShare.compareTo(BigInteger.ZERO) <= 0 || wei.compareTo(totalStakedAmount) >= 0 || tier.compareTo(new BigDecimal(2)) < 0) { // 无配比
-			return BigDecimal.ZERO;
+			return esXAIPower = BigDecimal.ZERO;
 		}
 		final BigDecimal esXAIPoolTotalPower = new BigDecimal(keyCount).multiply(tier)
 				.multiply(new BigDecimal(stakedBucketShare).divide(percent, 18, RoundingMode.HALF_UP));
-		return (wei.divide(totalStakedAmount, 18, RoundingMode.HALF_UP)).multiply(esXAIPoolTotalPower).setScale(2, RoundingMode.HALF_UP);
+		return esXAIPower = (wei.divide(totalStakedAmount, 18, RoundingMode.HALF_UP)).multiply(esXAIPoolTotalPower).setScale(2, RoundingMode.HALF_UP);
 	}
 
 	public transient volatile BigDecimal keysPower;
@@ -73,12 +73,12 @@ public class PoolInfoVO extends StaticStruct {
 		}
 		final BigDecimal totalStakedAmount = new BigDecimal(this.totalStakedAmount).movePointLeft(18);
 		if (keyBucketShare.compareTo(BigInteger.ZERO) <= 0) { // 无配比
-			return BigDecimal.ZERO;
+			return keysPower = BigDecimal.ZERO;
 		}
 		final BigDecimal keyCount = new BigDecimal(this.keyCount);
 		final BigDecimal keysPoolTotalPower = keyCount.multiply(calcStakingTier(totalStakedAmount))
 				.multiply(new BigDecimal(keyBucketShare).divide(percent, 18, RoundingMode.HALF_UP));
-		return wei.divide(keyCount, 18, RoundingMode.HALF_UP)
+		return keysPower = wei.divide(keyCount, 18, RoundingMode.HALF_UP)
 				.multiply(keysPoolTotalPower).setScale(2, RoundingMode.HALF_UP);
 	}
 
@@ -106,7 +106,7 @@ public class PoolInfoVO extends StaticStruct {
 		} else {
 			tier = BigDecimal.ONE;
 		}
-		return tier;
+		return tierCache = tier;
 	}
 
 	public String getDelegateAddress(Web3j web3j, boolean flush) {
