@@ -28,7 +28,7 @@ public class TestAction {
 		String tgMsg = "https://api.telegram.org/bot7098739919:AAG7V8jhpmhehF9Z5ZHL6YgA9qmmpkwV3Zg/sendMessage?chat_id=-1002081472730&text=这是一条测试消息&parse_mode=Markdown";
 		RestTemplate restTemplate = new RestTemplate();
 		SimpleClientHttpRequestFactory reqfac = new SimpleClientHttpRequestFactory();
-		reqfac.setProxy(new Proxy(Proxy.Type.HTTP, new InetSocketAddress(host, port)));
+		reqfac.setProxy(new Proxy(Proxy.Type.SOCKS, new InetSocketAddress(host, port)));
 		restTemplate.setRequestFactory(reqfac);
 		JSONObject body = restTemplate.getForEntity(tgMsg, JSONObject.class).getBody();
 		return Messager.OK(Jsons.encode(body));
