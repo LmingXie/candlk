@@ -59,7 +59,7 @@ public class XAIPowerJob {
 	private static final Cache<String, Boolean> activeCaffeine = Caffeine.newBuilder()
 			.initialCapacity(256)
 			.maximumSize(1024)
-			.expireAfterWrite(2, TimeUnit.HOURS)
+			.expireAfterWrite(30, TimeUnit.MINUTES)
 			.build();
 	private static final String activeCaffeineFile = "/mnt/xai_bot/active.json";
 
