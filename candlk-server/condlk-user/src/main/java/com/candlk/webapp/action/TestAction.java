@@ -3,11 +3,14 @@ package com.candlk.webapp.action;
 import java.net.InetSocketAddress;
 import java.net.Proxy;
 
+import javax.annotation.Resource;
+
 import com.alibaba.fastjson2.JSONObject;
 import com.candlk.common.model.Messager;
 import com.candlk.common.web.Ready;
 import com.candlk.context.web.Jsons;
 import com.candlk.context.web.ProxyRequest;
+import com.candlk.webapp.job.XAIPowerJob;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.http.client.SimpleClientHttpRequestFactory;
 import org.springframework.web.bind.annotation.*;
@@ -22,6 +25,9 @@ public class TestAction {
 	@Value("${service.proxy.port}")
 	private Integer port;
 
+	@Resource
+	XAIPowerJob xaiPowerJob;
+
 	@Ready("墙外访问测试")
 	@GetMapping("/ping")
 	public Messager<String> addOrEdit(ProxyRequest q) {
@@ -34,5 +40,11 @@ public class TestAction {
 		return Messager.OK(Jsons.encode(body));
 	}
 
+	@Ready("强刷排名")
+	@GetMapping("/flushPower")
+	public Messager<Void> flushPower(ProxyRequest q) {
+		xaiPowerJob.run();
+		return Messager.OK();
+	}
 
 }
