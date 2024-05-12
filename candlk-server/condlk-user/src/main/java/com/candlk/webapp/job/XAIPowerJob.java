@@ -148,7 +148,7 @@ public class XAIPowerJob {
 			sb.append("|:------:|:------|:-------:|:-----:|:-----:|:-----:|:-----:|  \n  ");
 			final StringBuilder tgMsg = new StringBuilder("*\uD83D\uDCB910000/EsXAI Stake Computing Power Rank *\n\n*Rank      Power    Tier       EsXAI      Keys    Active           Pool* \n");
 			for (int i = 1; i <= topN; i++) {
-				final PoolInfoVO info = esXAIPowerTopN.get(i);
+				final PoolInfoVO info = esXAIPowerTopN.get(i - 1);
 				// 只刷新排行榜上池子的活跃状态，并更新委托人地址
 				final BigDecimal totalStakedAmount = new BigDecimal(info.totalStakedAmount).movePointLeft(18).setScale(0, RoundingMode.HALF_UP);
 				final String poolName = Web3JConfig.getContractName(info.poolAddress),
@@ -183,7 +183,7 @@ public class XAIPowerJob {
 			tgMsg.append("*\uD83D\uDCB91/Keys Stake Computing Power Rank *\n\n*Rank      Power    Tier       EsXAI      Keys    Active           Pool* \n");
 
 			for (int i = 1; i <= topN; i++) {
-				final PoolInfoVO info = keysIPowerTopN.get(i);
+				final PoolInfoVO info = keysIPowerTopN.get(i - 1);
 				// 只刷新排行榜上池子的活跃状态，并更新委托人地址
 				final BigDecimal totalStakedAmount = new BigDecimal(info.totalStakedAmount).movePointLeft(18).setScale(0, RoundingMode.HALF_UP);
 				final String poolName = Web3JConfig.getContractName(info.poolAddress),
