@@ -162,7 +162,7 @@ public class XAIPowerJob {
 						.append(keyCount).append(" | ")
 						.append(getAndFlushActivePool(info, web3JConfig.proxyRestTemplate, web3j, startBlockNumber, web3JConfig.weakActiveThreshold, true)
 								// .append(nonFlushActivePool(info)
-								? "[<font color=\"green\">✔️</font>](https://arbiscan.io/address/" + info.getDelegateAddress() + ")"
+								? "[<font color=\"green\">✔️</font>](https://arbiscan.io/address/" + info.getPoolAddress() + "#tokentxns)"
 								: "[<font color=\"red\">✘</font>](https://arbiscan.io/address/" + info.getPoolAddress() + "#tokentxns)"
 						)
 						.append(" |   \n  ")
@@ -195,7 +195,7 @@ public class XAIPowerJob {
 						.append(info.keyCount).append(" | ")
 						.append(getAndFlushActivePool(info, web3JConfig.proxyRestTemplate, web3j, startBlockNumber, web3JConfig.weakActiveThreshold, true)
 								// .append(nonFlushActivePool(info)
-								? "[<font color=\"green\">✔️</font>](https://arbiscan.io/address/" + info.getDelegateAddress() + ")"
+								? "[<font color=\"green\">✔️</font>](https://arbiscan.io/address/" + info.getPoolAddress() + "#tokentxns)"
 								: "[<font color=\"red\">✘</font>](https://arbiscan.io/address/" + info.getPoolAddress() + "#tokentxns)")
 						.append(" |   \n  ")
 				;
@@ -223,7 +223,7 @@ public class XAIPowerJob {
 				.append(" 	      ").append(total).append(symbol ? "M" : "K").append(total.length() > 3 ? "        " : "          ")
 				.append(keyCount).append(keyCount.length() > 2 ? "        " : "          ")
 				.append(nonFlushActivePool(info)
-						? "[✅](arbiscan.io/address/" + info.getDelegateAddress() + ")"
+						? "[✅](arbiscan.io/address/" + info.getPoolAddress() + ")"
 						: "[❌](arbiscan.io/address/" + info.getPoolAddress() + "#tokentxns)"
 				).append("     [")
 				.append(poolName.length() > 14 ? poolName.substring(0, 14) + "..." : poolName).append("](app.xai.games/pool/").append(info.poolAddress).append("/summary)")
