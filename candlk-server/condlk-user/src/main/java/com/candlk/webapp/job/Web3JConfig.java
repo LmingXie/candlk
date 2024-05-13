@@ -4,6 +4,7 @@ import java.math.*;
 import java.net.InetSocketAddress;
 import java.net.Proxy;
 import java.util.*;
+import java.util.concurrent.TimeUnit;
 import java.util.function.Function;
 import java.util.function.Supplier;
 import javax.annotation.PostConstruct;
@@ -11,6 +12,8 @@ import javax.annotation.PostConstruct;
 import com.alibaba.fastjson2.JSONObject;
 import com.candlk.common.util.SpringUtil;
 import com.candlk.context.web.Jsons;
+import com.github.benmanes.caffeine.cache.Cache;
+import com.github.benmanes.caffeine.cache.Caffeine;
 import lombok.Getter;
 import lombok.Setter;
 import lombok.extern.slf4j.Slf4j;
@@ -258,10 +261,14 @@ public class Web3JConfig {
 	};
 
 	public static String getContractName(String poolContractAddress) {
-		return contractNames.computeIfAbsent(poolContractAddress, initContractName);
+		return contractNames.get(poolContractAddress, initContractName);
 	}
 
-	private final static Map<String, String> contractNames = new HashMap<>();
+	private static final Cache<String, String> contractNames = Caffeine.newBuilder()
+			.initialCapacity(256)
+			.maximumSize(2048)
+			.expireAfterWrite(3, TimeUnit.HOURS)
+			.build();
 
 	public static String getContractName(Web3j web3j, String contractAddress) throws Exception {
 		final List<TypeReference<?>> outputReturnTypes = List.of(new org.web3j.abi.TypeReference<Utf8String>() {
