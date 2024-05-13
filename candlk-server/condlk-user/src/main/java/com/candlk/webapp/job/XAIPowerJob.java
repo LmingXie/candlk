@@ -14,6 +14,7 @@ import com.candlk.context.web.Jsons;
 import com.github.benmanes.caffeine.cache.Cache;
 import com.github.benmanes.caffeine.cache.Caffeine;
 import lombok.extern.slf4j.Slf4j;
+import me.codeplayer.util.Arith;
 import org.checkerframework.checker.nullness.qual.PolyNull;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.scheduling.annotation.Scheduled;
@@ -168,7 +169,7 @@ public class XAIPowerJob {
 						)
 						.append(" |   \n  ")
 				;
-				buildTgMsg(tgMsg, i, info, totalStakedAmount, poolName, total, keyCount, true);
+				buildTgMsg(tgMsg, i, info, totalStakedAmount, poolName, keyCount, true);
 			}
 			log.info("EsXAI算力排行榜：{}", sb);
 			web3JConfig.sendWarn("EsXAI算力排行榜", sb.toString(), tgMsg.toString());
@@ -187,7 +188,6 @@ public class XAIPowerJob {
 				// 只刷新排行榜上池子的活跃状态，并更新委托人地址
 				final BigDecimal totalStakedAmount = new BigDecimal(info.totalStakedAmount).movePointLeft(18).setScale(0, RoundingMode.HALF_UP);
 				final String poolName = Web3JConfig.getContractName(info.poolAddress),
-						total = totalStakedAmount.movePointLeft(4).setScale(0, RoundingMode.HALF_UP).toPlainString() + "w",
 						keyCount = info.keyCount.toString();
 				sb.append("| ").append(i)
 						.append(" | [").append(outPoolName(poolName)).append("](https://app.xai.games/pool/").append(info.poolAddress).append("/summary)")
@@ -202,7 +202,7 @@ public class XAIPowerJob {
 						.append(" |   \n  ")
 				;
 
-				buildTgMsg(tgMsg, i, info, totalStakedAmount, poolName, total, keyCount, false);
+				buildTgMsg(tgMsg, i, info, totalStakedAmount, poolName, keyCount, false);
 			}
 			// 持久化本地缓存文件
 			flushActivePoolLocalFile();
@@ -214,11 +214,15 @@ public class XAIPowerJob {
 		}
 	}
 
-	private void buildTgMsg(StringBuilder tgMsg, int i, PoolInfoVO info, BigDecimal totalStakedAmount, String poolName, String total, String keyCount, boolean esXAIRank) {
+	private void buildTgMsg(StringBuilder tgMsg, int i, PoolInfoVO info, BigDecimal totalStakedAmount, String poolName, String keyCount, boolean esXAIRank) {
+		final BigDecimal mAmount = totalStakedAmount.movePointLeft(6).setScale(2, RoundingMode.HALF_UP),
+				kAmount = totalStakedAmount.movePointLeft(3).setScale(0, RoundingMode.HALF_UP);
+		final boolean symbol = kAmount.compareTo(Arith.HUNDRED) >= 0;
+		String total = (symbol ? mAmount : kAmount).toPlainString();
 		tgMsg.append("*").append(i).append("*         ").append(i < 10 ? "  " : "")
 				.append(" 	  ").append(esXAIRank ? info.calcEsXAIPower(esXAIWei) : info.calcKeysPower(keysWei))
 				.append(" 	        ×").append(info.calcStakingTier(totalStakedAmount))
-				.append(" 	        ").append(total).append(total.length() > 3 ? "        " : "          ")
+				.append(" 	      ").append(total).append(symbol ? "M" : "K").append(total.length() > 3 ? "        " : "          ")
 				.append(keyCount).append(keyCount.length() > 2 ? "        " : "          ")
 				.append(nonFlushActivePool(info)
 						? "[✅](arbiscan.io/address/" + info.getDelegateAddress() + ")"
