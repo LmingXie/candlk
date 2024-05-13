@@ -55,8 +55,6 @@ public class XAIPowerJob {
 		}
 	}
 
-	private static final RestTemplate restTemplate = new RestTemplate();
-
 	private static final Cache<String, Boolean> activeCaffeine = Caffeine.newBuilder()
 			.initialCapacity(256)
 			.maximumSize(1024)
