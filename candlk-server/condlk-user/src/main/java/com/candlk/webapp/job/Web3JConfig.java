@@ -250,7 +250,7 @@ public class Web3JConfig {
 								+ type + "数量：**" + amount + x1
 								+ "[点击前往查看详情](https://arbiscan.io/tx/" + hash + ")",
 
-						"\uD83D\uDE80*Warn：" + typeEn + " !* \n\n"
+						"\uD83D\uDE80*BlockTrade：" + typeEn + " !* \n\n"
 								+ "Monitored that address [" + nickname + "](arbiscan.io/address/" + from + ") in [" + poolName + "](app.xai.games/pool/" + poolContractAddress + "/summary) pool " + typeEn + " action.  \n"
 								+ typeEn + " Amount：*" + amount + x1.replaceAll("\\*\\*", "*") + " \n"
 								+ "[\uD83D\uDC49\uD83D\uDC49Click View](arbiscan.io/tx/" + hash + ")"

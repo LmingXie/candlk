@@ -144,7 +144,7 @@ public class XAIScanJob {
 													+ "赎回地址：**" + redemptionTo.replaceAll("0x000000000000000000000000", "0x") + "**  \n  "
 													+ "[点击前往查看详情](https://arbiscan.io/tx/" + hash + ")",
 
-											"\uD83D\uDE80*Warn：XAI Bulk Complete Redemption !* \n\n"
+											"\uD83D\uDE80*BlockTrade：XAI Complete Redemption !* \n\n"
 													+ "Monitored *" + this.getPeriod(redemptionAmount, totalAmount) + "* days of complete redemption collection event.  \n"
 													+ "Redemption Amount：*" + redemptionAmount.setScale(2, RoundingMode.HALF_UP) + " XAI*  \n"
 													+ "Burn Amount：*" + recycleAmount.setScale(2, RoundingMode.HALF_UP) + " XAI*  \n"
