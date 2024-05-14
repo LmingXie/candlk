@@ -86,7 +86,7 @@ public class XAIScanJob {
 										+ "算力值：**" + power + "**  \n  "
 										+ "[点击前往查看详情](https://arbiscan.io/tx/" + hash + ")",
 
-								"\uD83D\uDCAF*Notify：Full Keys Pool Redemption !*\n\n"
+								"\uD83D\uDCAF*||Notify||：Full Keys Pool Redemption !*\n\n"
 										+ "Pool：[" + poolName + "](app.xai.games/pool/" + poolContractAddress + "/summary)  \n"
 										+ "Keys Staked：*" + poolInfo.keyCount + "*  \n "
 										+ "EsXAI Staked：*" + XAIRedemptionJob.formatAmount(new BigDecimal(poolInfo.totalStakedAmount)
