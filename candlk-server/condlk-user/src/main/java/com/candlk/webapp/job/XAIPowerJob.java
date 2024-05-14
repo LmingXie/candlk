@@ -75,11 +75,13 @@ public class XAIPowerJob {
 		return getAndFlushActivePool(info, null, web3j, null, null, false);
 	}
 
-	public static boolean getAndFlushActivePool(PoolInfoVO info, RestTemplate restTemplate, Web3j web3j, BigInteger startBlockNumber, BigDecimal weakActiveThreshold, boolean flush) {
+	public static boolean getAndFlushActivePool(PoolInfoVO info, RestTemplate restTemplate, Web3j web3j, BigInteger endBlockNumber, BigDecimal weakActiveThreshold, boolean flush) {
 		if (info.delegateAddress == null) {
 			info.getDelegateAddress(web3j, flush);
 		}
 		final Function<String, @PolyNull Boolean> function = k -> {
+			// Arbitrum 平均 0.26s一个区块，1小时 = 14400 区块，这里取最近15000个区块，1小时内未领奖则算不活跃的池子
+			BigInteger startBlockNumber = endBlockNumber.subtract(new BigInteger("15000"));
 			boolean active = info.hasActivePool(restTemplate, info.getDelegateAddress(web3j, flush), startBlockNumber);
 			log.info("刷新池子的活跃度结果：poolAddress={}，active={}，KeyCount={}，weakActiveThreshold={}", info.poolAddress, active, info.keyCount, weakActiveThreshold);
 			if (!active && info.keyCount.compareTo(new BigInteger("100")) > 0) { // 针对大池进行弱检测
@@ -126,9 +128,7 @@ public class XAIPowerJob {
 				}
 			}
 
-			final BigInteger endBlockNumber = web3j.ethBlockNumber().send().getBlockNumber(),
-					// Arbitrum 平均 0.26s一个区块，1小时 = 14400 区块，这里取最近15000个区块，1小时内未领奖则算不活跃的池子
-					startBlockNumber = endBlockNumber.subtract(new BigInteger("15000"));
+			final BigInteger endBlockNumber = web3j.ethBlockNumber().send().getBlockNumber();
 
 			for (Map.Entry<String, PoolInfoVO> entry : infoMap.entrySet()) {
 				final String poolAddress = entry.getKey();
@@ -160,7 +160,7 @@ public class XAIPowerJob {
 						.append("×").append(info.calcStakingTier()).append(" | ")
 						.append(total).append(" | ")
 						.append(keyCount).append(" | ")
-						.append(getAndFlushActivePool(info, web3JConfig.proxyRestTemplate, web3j, startBlockNumber, web3JConfig.weakActiveThreshold, true)
+						.append(getAndFlushActivePool(info, web3JConfig.proxyRestTemplate, web3j, endBlockNumber, web3JConfig.weakActiveThreshold, true)
 								// .append(nonFlushActivePool(info, web3j)
 								? "[<font color=\"green\">✔️</font>](https://arbiscan.io/address/" + info.getPoolAddress() + "#tokentxns)"
 								: "[<font color=\"red\">✘</font>](https://arbiscan.io/address/" + info.getPoolAddress() + "#tokentxns)"
@@ -191,7 +191,7 @@ public class XAIPowerJob {
 						.append(info.calcKeysPower(keysWei)).append(" | ")
 						.append("×").append(info.calcStakingTier()).append(" | ")
 						.append(info.keyCount).append(" | ")
-						.append(getAndFlushActivePool(info, web3JConfig.proxyRestTemplate, web3j, startBlockNumber, web3JConfig.weakActiveThreshold, true)
+						.append(getAndFlushActivePool(info, web3JConfig.proxyRestTemplate, web3j, endBlockNumber, web3JConfig.weakActiveThreshold, true)
 								// .append(nonFlushActivePool(info, web3j)
 								? "[<font color=\"green\">✔️</font>](https://arbiscan.io/address/" + info.getPoolAddress() + "#tokentxns)"
 								: "[<font color=\"red\">✘</font>](https://arbiscan.io/address/" + info.getPoolAddress() + "#tokentxns)")
@@ -210,10 +210,9 @@ public class XAIPowerJob {
 		}
 	}
 
-	public static String outputActive(PoolInfoVO info, Web3j web3j) {
-		return nonFlushActivePool(info, web3j)
-				? "[✅](https://arbiscan.io/address/" + info.getPoolAddress() + ")"
-				: "[❌](https://arbiscan.io/address/" + info.getPoolAddress() + "#tokentxns)";
+	public static String outputActive(boolean active, String poolAddress) {
+		return active ? "[✅](https://arbiscan.io/address/" + poolAddress + ")"
+				: "[❌](https://arbiscan.io/address/" + poolAddress + "#tokentxns)";
 	}
 
 	private void buildTgMsg(StringBuilder tgMsg, int i, PoolInfoVO info, String poolName, String keyCount, boolean esXAIRank) {
@@ -223,7 +222,7 @@ public class XAIPowerJob {
 				.append(" 	   ×").append(info.calcStakingTier())
 				.append(" 	   ").append(total).append(total.length() > 4 ? "        " : "          ")
 				.append(keyCount).append(keyCount.length() > 2 ? "      " : "        ")
-				.append(outputActive(info, web3j)).append("     \\[")
+				.append(outputActive(nonFlushActivePool(info, web3j), info.poolAddress)).append("     \\[")
 				.append(parsePercent(info.ownerShare)).append("/").append(parsePercent(info.keyBucketShare)).append("/").append(parsePercent(info.stakedBucketShare))
 				.append("][")
 				.append(poolName.length() > 14 ? poolName.substring(0, 14) : poolName).append("](app.xai.games/pool/").append(info.poolAddress).append("/summary)")

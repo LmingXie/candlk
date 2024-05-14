@@ -31,8 +31,7 @@ import org.web3j.protocol.Web3j;
 import org.web3j.protocol.core.DefaultBlockParameterName;
 import org.web3j.protocol.http.HttpService;
 
-import static com.candlk.webapp.job.XAIPowerJob.esXAIWei;
-import static com.candlk.webapp.job.XAIPowerJob.keysWei;
+import static com.candlk.webapp.job.XAIPowerJob.*;
 
 @Slf4j
 @Setter
@@ -51,9 +50,9 @@ public class Web3JConfig {
 	/** XAI大额赎回的领取 */
 	public BigDecimal redemptionThreshold = new BigDecimal(5000);
 	/** 池子esXAI大额 */
-	public String esXAIThreshold = "50000";
+	public BigDecimal esXAIThreshold = new BigDecimal(50000);
 	/** 池子Keys大额 */
-	public String keysThreshold = "5";
+	public BigDecimal keysThreshold = new BigDecimal(5);
 	/** 顶级Keys算力池解除质押成功提醒 */
 	public BigDecimal unstakeKeysThreshold = new BigDecimal("2.7");
 	/**
@@ -114,9 +113,11 @@ public class Web3JConfig {
 		return result;
 	}
 
+	private transient Web3j web3jCache;
+
 	@Bean
 	public Web3j getWeb3j() {
-		return Web3j.build(new HttpService(web3jUrl));
+		return web3jCache = Web3j.build(new HttpService(web3jUrl));
 	}
 
 	public void sendWarn(String title, String content, String telegramMsg) {
@@ -174,34 +175,34 @@ public class Web3JConfig {
 	 * 换行格式： \n
 	 * </p>
 	 */
-	public final static Map<String, Function<String[], String[]>> METHOD2TIP = new HashMap<>() {
+	public final static Map<String, Function<Object[], String[]>> METHOD2TIP = new HashMap<>() {
 		{
 			put("0x57634198", inputs -> new String[] { "普通消息：从池子中领取奖励", null });
-			put("0x2f1a0b1c", inputs -> parseStake(inputs, "预警：Keys质押", () -> new BigDecimal(new BigInteger(inputs[3].substring(138, 202), 16)),
-					"**  \n  ", "质押", "Staked", new BigDecimal(inputs[7])));
+			put("0x2f1a0b1c", inputs -> parseStake(inputs, "预警：Keys质押", () -> new BigDecimal(new BigInteger(((String) inputs[3]).substring(138, 202), 16)),
+					"**  \n  ", "质押", "Staked", (BigDecimal) inputs[7]));
 
 			put("0xa528916d", inputs -> parseStake(inputs, "预警：esXAI质押", () ->
-					new BigDecimal(new BigInteger(inputs[3].substring(74), 16)).movePointLeft(18)
-							.setScale(2, RoundingMode.HALF_UP), " esXAI**  \n  ", "质押", "Staked", new BigDecimal(inputs[6])));
+					new BigDecimal(new BigInteger(((String) inputs[3]).substring(74), 16)).movePointLeft(18)
+							.setScale(2, RoundingMode.HALF_UP), " esXAI**  \n  ", "质押", "Staked", (BigDecimal) inputs[6]));
 
-			put("0xd4e44335", inputs -> parseStake(inputs, "通知：Keys 赎回申请", () -> new BigDecimal(new BigInteger(inputs[3].substring(74), 16)),
-					"**  \n  ", "赎回", "Approve Redemption", new BigDecimal(inputs[7])));
+			put("0xd4e44335", inputs -> parseStake(inputs, "通知：Keys 赎回申请", () -> new BigDecimal(new BigInteger(((String) inputs[3]).substring(74), 16)),
+					"**  \n  ", "赎回", "Approve Redemption", (BigDecimal) inputs[7]));
 
 			put("0x75710569", inputs -> parseStake(inputs, "通知：esXAI 赎回申请", () ->
-					new BigDecimal(new BigInteger(inputs[3].substring(74), 16)).movePointLeft(18)
-							.setScale(2, RoundingMode.HALF_UP), " esXAI**  \n  ", "赎回", "Approve Redemption", new BigDecimal(inputs[6])));
+					new BigDecimal(new BigInteger(((String) inputs[3]).substring(74), 16)).movePointLeft(18)
+							.setScale(2, RoundingMode.HALF_UP), " esXAI**  \n  ", "赎回", "Approve Redemption", (BigDecimal) inputs[6]));
 
 			// unstakeKeys
-			put("0x95003265", inputs -> parseStake(inputs, "预警：Keys 赎回成功", () -> new BigDecimal(new BigInteger(inputs[3].substring(202, 266), 16)),
-					"**  \n  ", "赎回", "Complete Redemption", new BigDecimal(inputs[7])));
+			put("0x95003265", inputs -> parseStake(inputs, "预警：Keys 赎回成功", () -> new BigDecimal(new BigInteger(((String) inputs[3]).substring(202, 266), 16)),
+					"**  \n  ", "赎回", "Complete Redemption", (BigDecimal) inputs[7]));
 
 			// unstakeEsXai
 			put("0x68da34e6", inputs -> parseStake(inputs, "预警：esXAI 赎回成功", () ->
-							new BigDecimal(new BigInteger(inputs[3].substring(138, 202), 16)).movePointLeft(18).setScale(2, RoundingMode.HALF_UP),
-					" esXAI**  \n  ", "赎回", "Complete Redemption", new BigDecimal(inputs[6])));
+							new BigDecimal(new BigInteger(((String) inputs[3]).substring(138, 202), 16)).movePointLeft(18).setScale(2, RoundingMode.HALF_UP),
+					" esXAI**  \n  ", "赎回", "Complete Redemption", (BigDecimal) inputs[6]));
 
 			put("0x098e8ae7", inputs -> {
-				final String from = inputs[0], hash = inputs[2], nickname = inputs[4];
+				final String from = (String) inputs[0], hash = (String) inputs[2], nickname = (String) inputs[4];
 				return new String[] {
 						"预警：创建池子",
 						"### 预警：创建池子！  \n  "
@@ -216,7 +217,7 @@ public class Web3JConfig {
 				};
 			});
 			put(null, inputs -> {
-				final String from = inputs[0], to = inputs[1], hash = inputs[2], input = inputs[3], nickname = inputs[4], method = inputs[5];
+				final String from = (String) inputs[0], to = (String) inputs[1], hash = (String) inputs[2], nickname = (String) inputs[4], method = (String) inputs[5];
 				return new String[] {
 						"预警：无法识别的调用",
 						"### 预警：无法识别的调用！  \n  "
@@ -239,19 +240,20 @@ public class Web3JConfig {
 			});
 		}
 
-		private static String[] parseStake(String[] inputs, String x, Supplier<BigDecimal> supplier, String x1, String type, String typeEn, BigDecimal threshold) {
-			final String from = inputs[0], to = inputs[1], hash = inputs[2], input = inputs[3], nickname = inputs[4] == null ? from : inputs[4];
+		private static String[] parseStake(Object[] inputs, String x, Supplier<BigDecimal> supplier, String x1, String type, String typeEn, BigDecimal threshold) {
+			final String from = (String) inputs[0], hash = (String) inputs[2], input = (String) inputs[3], nickname = inputs[4] == null ? from : (String) inputs[4];
 			final BigDecimal amount = supplier.get();
-			final boolean hasBigAmount = inputs.length > 8; // "1" 占位
+			final boolean hasBigAmount = inputs.length > 9; // "1" 占位
 			if (hasBigAmount) { // 大额预警
 				x = "大额" + x;
 			}
 			if (!hasBigAmount || amount.compareTo(threshold) >= 0) {
 				final String poolContractAddress = new Address(input.substring(11, 74)).getValue(), poolName = getContractName(poolContractAddress);
 
-				final Web3j web3jProxy = SpringUtil.getBean(Web3j.class);
-				final PoolInfoVO info = XAIPowerJob.getPoolInfo(poolContractAddress, web3jProxy, true);
-				final String outputActive = XAIPowerJob.outputActive(info, web3jProxy);
+				final Web3JConfig configProxy = SpringUtil.getBean(Web3JConfig.class);
+				final PoolInfoVO info = XAIPowerJob.getPoolInfo(poolContractAddress, configProxy.web3jCache, true);
+				final BigInteger lastBlock = (BigInteger) inputs[8];
+				final String outputActive = outputActive(getAndFlushActivePool(info, configProxy.proxyRestTemplate, configProxy.web3jCache, lastBlock, configProxy.weakActiveThreshold, true), info.poolAddress);
 				return new String[] { x,
 						"### " + x + "！  \n  "
 								+ "识别到关注的【**[" + nickname + "](https://arbiscan.io/address/" + from + ")**】地址正在【**[" + poolName + "](https://app.xai.games/pool/" + poolContractAddress + "/summary)**】池进行" + type + "。  \n  "

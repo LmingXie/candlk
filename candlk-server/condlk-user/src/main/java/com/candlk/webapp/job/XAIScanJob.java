@@ -21,8 +21,8 @@ import org.web3j.protocol.core.methods.response.EthBlock.TransactionResult;
 
 import static com.candlk.webapp.job.Web3JConfig.METHOD2TIP;
 import static com.candlk.webapp.job.Web3JConfig.getContractName;
-import static com.candlk.webapp.job.XAIPowerJob.esXAIWei;
-import static com.candlk.webapp.job.XAIPowerJob.keysWei;
+import static com.candlk.webapp.job.XAIPowerJob.*;
+import static com.candlk.webapp.job.XAIPowerJob.getAndFlushActivePool;
 
 @Slf4j
 @Configuration
@@ -45,7 +45,7 @@ public class XAIScanJob {
 				while (retry-- > 0) {
 					try {
 						final Web3j newWeb3j = web3JConfig.pollingGetWeb3j();
-						this.exec(newWeb3j, blockNumber);
+						this.exec(newWeb3j, blockNumber, lastBlock);
 						break;
 					} catch (Exception e) {
 						log.info("接口被限制，进行重试");
@@ -56,7 +56,7 @@ public class XAIScanJob {
 		log.info("结束本次扫描，最后区块：{}", web3JConfig.lastBlock);
 	}
 
-	private void exec(Web3j newWeb3j, BigInteger blockNumber) throws Exception {
+	private void exec(Web3j newWeb3j, BigInteger blockNumber, BigInteger lastBlock) throws Exception {
 		final EthBlock.Block block = newWeb3j.ethGetBlockByNumber(new DefaultBlockParameterNumber(blockNumber), true).send().getBlock();
 		log.info("正在执行扫描区块：{}", blockNumber);
 		final List<TransactionResult> txs = block.getTransactions();
@@ -93,23 +93,23 @@ public class XAIScanJob {
 										+ "*esXAI Power：" + poolInfo.calcEsXAIPower(esXAIWei) + "* \n"
 										+ "*esXAI Staked：" + poolInfo.outputExXAI() + "* \n "
 										+ "*Keys Staked：" + poolInfo.keyCount + "* \n"
-										+ "*Active：*" + XAIPowerJob.outputActive(poolInfo, web3j) + " \n"
+										+ "*Active：*" + outputActive(getAndFlushActivePool(poolInfo, web3JConfig.proxyRestTemplate, newWeb3j, lastBlock, web3JConfig.weakActiveThreshold, true), poolInfo.poolAddress) + " \n"
 										+ "[\uD83D\uDC49\uD83D\uDC49Click View](https://arbiscan.io/tx/" + hash + ")"
 						);
 					}
 				}
 				if (nickname != null) {
 					final String[] msg = METHOD2TIP.getOrDefault(method, METHOD2TIP.get(null))
-							.apply(new String[] { from, to, hash, input, nickname, method, web3JConfig.esXAIThreshold, web3JConfig.keysThreshold });
+							.apply(new Object[] { from, to, hash, input, nickname, method, web3JConfig.esXAIThreshold, web3JConfig.keysThreshold, lastBlock });
 					if (msg != null && msg[1] != null) {
 						web3JConfig.sendWarn(msg[0], msg[1], msg[2]);
 					}
 				}
 				// 只识别大额质押与赎回
 				else if ("0xf9e08660223e2dbb1c0b28c82942ab6b5e38b8e5".equalsIgnoreCase(to)) {
-					final Function<String[], String[]> function = METHOD2TIP.get(method);
+					final Function<Object[], String[]> function = METHOD2TIP.get(method);
 					if (function != null) {
-						final String[] msg = function.apply(new String[] { from, to, hash, input, from, method, web3JConfig.esXAIThreshold, web3JConfig.keysThreshold, "1" });
+						final String[] msg = function.apply(new Object[] { from, to, hash, input, from, method, web3JConfig.esXAIThreshold, web3JConfig.keysThreshold, lastBlock, "1" });
 						X.use(msg, m -> {
 							if (msg[1] != null) {
 								web3JConfig.sendWarn(msg[0], msg[1], msg[2]);
