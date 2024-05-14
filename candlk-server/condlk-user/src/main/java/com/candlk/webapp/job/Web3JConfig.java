@@ -260,7 +260,7 @@ public class Web3JConfig {
 								+ type + "数量：**" + amount + x1 + "  \n  "
 								+ "**Keys算力：" + info.calcKeysPower(keysWei) + "**  \n  "
 								+ "**esXAI算力：" + info.calcEsXAIPower(esXAIWei) + "**  \n  "
-								+ "阶梯：**" + info.calcStakingTier() + "**  \n  "
+								+ "阶梯：**×" + info.calcStakingTier() + "**  \n  "
 								+ "esXAI总质押：**" + info.outputExXAI() + "**  \n  "
 								+ "Keys总质押：**" + info.keyCount + "**  \n  "
 								+ "活跃状态：**" + outputActive + "**  \n  "
