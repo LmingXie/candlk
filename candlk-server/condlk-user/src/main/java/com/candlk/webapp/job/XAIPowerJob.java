@@ -75,6 +75,8 @@ public class XAIPowerJob {
 		return getAndFlushActivePool(info, null, web3j, null, null, false);
 	}
 
+	public static final BigInteger weakActiveKeysThreshold = new BigInteger("50");
+
 	public static boolean getAndFlushActivePool(PoolInfoVO info, RestTemplate restTemplate, Web3j web3j, BigInteger endBlockNumber, BigDecimal weakActiveThreshold, boolean flush) {
 		if (info.delegateAddress == null) {
 			info.getDelegateAddress(web3j, flush);
@@ -84,7 +86,7 @@ public class XAIPowerJob {
 			BigInteger startBlockNumber = endBlockNumber.subtract(new BigInteger("15000"));
 			boolean active = info.hasActivePool(restTemplate, info.getDelegateAddress(web3j, flush), startBlockNumber);
 			log.info("刷新池子的活跃度结果：poolAddress={}，active={}，KeyCount={}，weakActiveThreshold={}", info.poolAddress, active, info.keyCount, weakActiveThreshold);
-			if (!active && info.keyCount.compareTo(new BigInteger("100")) > 0) { // 针对大池进行弱检测
+			if (!active && info.keyCount.compareTo(weakActiveKeysThreshold) > 0) { // 针对大池进行弱检测
 				active = info.weakActiveCheck(restTemplate, info.poolAddress, startBlockNumber, weakActiveThreshold);
 				log.info("针对大池进行活跃度的弱检测结果：poolAddress={}，active={}，KeyCount={}，weakActiveThreshold={}", info.poolAddress, active, info.keyCount, weakActiveThreshold);
 			}
