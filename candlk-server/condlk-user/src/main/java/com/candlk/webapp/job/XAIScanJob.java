@@ -89,7 +89,7 @@ public class XAIScanJob {
 										+ "[点击前往查看详情](https://arbiscan.io/tx/" + hash + ")",
 
 								"\uD83D\uDCAF*||Notify||：Full Keys Pool Redemption !*\n\n"
-										+ "Pool：[" + poolName + "](app.xai.games/pool/" + poolContractAddress + "/summary)  \n"
+										+ "Full pool [" + poolName + "](app.xai.games/pool/" + poolContractAddress + "/summary) a stake may be made. \n"
 										+ "*Tier：×" + poolInfo.calcStakingTier() + "* \n"
 										+ "*Keys Power：" + poolInfo.calcKeysPower(keysWei) + "* \n"
 										+ "*esXAI Power：" + poolInfo.calcEsXAIPower(esXAIWei) + "* \n"
