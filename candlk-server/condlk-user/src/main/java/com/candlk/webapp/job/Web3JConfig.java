@@ -142,7 +142,7 @@ public class Web3JConfig {
 	}
 
 	public void sendTelegramMessage(String content) {
-		log.info("正在想Telegram推送消息：{}", content);
+		log.info("正在向Telegram推送消息：{}", content);
 		final HttpEntity<JSONObject> httpEntity = new HttpEntity<>(JSONObject.of(
 				"chat_id", tgChatId,
 				"parse_mode", "Markdown",

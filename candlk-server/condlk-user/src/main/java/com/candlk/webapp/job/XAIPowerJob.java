@@ -219,8 +219,8 @@ public class XAIPowerJob {
 
 	private void buildTgMsg(StringBuilder tgMsg, int i, PoolInfoVO info, String poolName, String keyCount, boolean esXAIRank) {
 		final String total = info.outputExXAI();
-		tgMsg.append("*").append(i).append("*  ").append(i < 10 ? "  " : "")
-				.append("  *").append(esXAIRank ? info.calcEsXAIPower(esXAIWei) : info.calcKeysPower(keysWei))
+		tgMsg.append("*").append(i).append("  ").append(i < 10 ? "  " : "")
+				.append("  ").append(esXAIRank ? info.calcEsXAIPower(esXAIWei) : info.calcKeysPower(keysWei))
 				.append("* 	   ×").append(info.calcStakingTier())
 				.append(" 	   ").append(total).append(total.length() > 4 ? "        " : "          ")
 				.append(keyCount).append(keyCount.length() > 2 ? "      " : "        ")
