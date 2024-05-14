@@ -56,6 +56,8 @@ public class XAIScanJob {
 		log.info("结束本次扫描，最后区块：{}", web3JConfig.lastBlock);
 	}
 
+	public static final BigInteger MAX_KEYS_CAPACITY = new BigInteger("750");
+
 	private void exec(Web3j newWeb3j, BigInteger blockNumber, BigInteger lastBlock) throws Exception {
 		final EthBlock.Block block = newWeb3j.ethGetBlockByNumber(new DefaultBlockParameterNumber(blockNumber), true).send().getBlock();
 		log.info("正在执行扫描区块：{}", blockNumber);
@@ -75,7 +77,7 @@ public class XAIScanJob {
 
 					// 算力大于阈值时触发提醒
 					final BigDecimal power;
-					if (poolInfo.keyCount.compareTo(new BigInteger("750")) < 0 && (power = poolInfo.calcKeysPower(BigDecimal.ONE)).compareTo(web3JConfig.unstakeKeysThreshold) >= 0) {
+					if (poolInfo.keyCount.compareTo(MAX_KEYS_CAPACITY) < 0 && (power = poolInfo.calcKeysPower(BigDecimal.ONE)).compareTo(web3JConfig.unstakeKeysThreshold) >= 0) {
 						web3JConfig.sendWarn("通知：满Keys池赎回提醒",
 								"### 通知：满Keys池赎回提醒！  \n  "
 										+ "顶级池【<font color=\"red\">**[" + poolName + "](https://app.xai.games/pool/" + poolContractAddress + "/summary)**</font>】存在空闲质押空间。  \n  "
