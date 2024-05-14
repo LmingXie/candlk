@@ -44,6 +44,10 @@ public class PoolInfoVO extends StaticStruct {
 	public BigInteger v6;
 	public String _name;
 
+	public static String parsePercent(BigInteger wei) {
+		return new BigDecimal(wei).movePointLeft(4).setScale(1, RoundingMode.DOWN).toPlainString().replaceAll("\\.0", "");
+	}
+
 	public transient volatile BigDecimal esXAIPower;
 
 	/**
