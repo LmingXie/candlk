@@ -7,6 +7,7 @@ import com.alibaba.fastjson2.JSONObject;
 import lombok.Getter;
 import lombok.Setter;
 import lombok.extern.slf4j.Slf4j;
+import me.codeplayer.util.Arith;
 import org.apache.commons.lang3.StringUtils;
 import org.springframework.web.client.RestTemplate;
 import org.web3j.abi.datatypes.StaticStruct;
@@ -52,8 +53,8 @@ public class PoolInfoVO extends StaticStruct {
 		if (esXAIPower != null) {
 			return esXAIPower;
 		}
-		final BigDecimal totalStakedAmount = new BigDecimal(this.totalStakedAmount).movePointLeft(18);
-		final BigDecimal tier = calcStakingTier(totalStakedAmount);
+		final BigDecimal totalStakedAmount = parseTotalStakedAmount();
+		final BigDecimal tier = calcStakingTier();
 		if (stakedBucketShare.compareTo(BigInteger.ZERO) <= 0 || wei.compareTo(totalStakedAmount) >= 0 || tier.compareTo(new BigDecimal(2)) < 0) { // 无配比
 			return esXAIPower = BigDecimal.ZERO;
 		}
@@ -62,7 +63,21 @@ public class PoolInfoVO extends StaticStruct {
 		return esXAIPower = (wei.divide(totalStakedAmount, 18, RoundingMode.HALF_UP)).multiply(esXAIPoolTotalPower).setScale(2, RoundingMode.HALF_UP);
 	}
 
+	public transient volatile BigDecimal totalStakedAmountVal;
+
+	public BigDecimal parseTotalStakedAmount() {
+		return totalStakedAmountVal != null ? totalStakedAmountVal : new BigDecimal(totalStakedAmount).movePointLeft(18).setScale(0, RoundingMode.HALF_UP);
+	}
+
 	public transient volatile BigDecimal keysPower;
+
+	public String outputExXAI() {
+		final BigDecimal parsedTotalStakedAmount = parseTotalStakedAmount();
+		final BigDecimal mAmount = parsedTotalStakedAmount.movePointLeft(6).setScale(2, RoundingMode.HALF_UP),
+				kAmount = parsedTotalStakedAmount.movePointLeft(3).setScale(0, RoundingMode.HALF_UP);
+		final boolean symbol = kAmount.compareTo(Arith.HUNDRED) >= 0;
+		return (symbol ? mAmount : kAmount).toPlainString() + (symbol ? "M" : "K");
+	}
 
 	/**
 	 * keys算力 = 1 / keys总质押 * ( keys总质押 * 阶梯加成 * keys分成比例 = keys池总算力)
@@ -71,12 +86,11 @@ public class PoolInfoVO extends StaticStruct {
 		if (keysPower != null) {
 			return keysPower;
 		}
-		final BigDecimal totalStakedAmount = new BigDecimal(this.totalStakedAmount).movePointLeft(18);
 		if (keyBucketShare.compareTo(BigInteger.ZERO) <= 0) { // 无配比
 			return keysPower = BigDecimal.ZERO;
 		}
 		final BigDecimal keyCount = new BigDecimal(this.keyCount);
-		final BigDecimal keysPoolTotalPower = keyCount.multiply(calcStakingTier(totalStakedAmount))
+		final BigDecimal keysPoolTotalPower = keyCount.multiply(calcStakingTier())
 				.multiply(new BigDecimal(keyBucketShare).divide(percent, 18, RoundingMode.HALF_UP));
 		return keysPower = wei.divide(keyCount, 18, RoundingMode.HALF_UP)
 				.multiply(keysPoolTotalPower).setScale(2, RoundingMode.HALF_UP);
@@ -90,10 +104,11 @@ public class PoolInfoVO extends StaticStruct {
 
 	public transient volatile BigDecimal tierCache;
 
-	public synchronized BigDecimal calcStakingTier(BigDecimal totalStakedAmount) {
+	public synchronized BigDecimal calcStakingTier() {
 		if (tierCache != null) {
 			return tierCache;
 		}
+		final BigDecimal totalStakedAmount = parseTotalStakedAmount();
 		final BigDecimal tier; // Bronze 青铜
 		if (totalStakedAmount.compareTo(Diamond) >= 0) {
 			tier = BigDecimal.valueOf(6);

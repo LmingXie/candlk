@@ -1,8 +1,6 @@
 package com.candlk.webapp.job;
 
 import java.math.*;
-import java.text.DecimalFormat;
-import java.text.NumberFormat;
 import java.util.*;
 import java.util.concurrent.ConcurrentMap;
 import java.util.concurrent.TimeUnit;
@@ -14,7 +12,6 @@ import com.candlk.context.web.Jsons;
 import com.github.benmanes.caffeine.cache.Cache;
 import com.github.benmanes.caffeine.cache.Caffeine;
 import lombok.extern.slf4j.Slf4j;
-import me.codeplayer.util.Arith;
 import org.checkerframework.checker.nullness.qual.PolyNull;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.scheduling.annotation.Scheduled;
@@ -34,25 +31,21 @@ public class XAIPowerJob {
 			file = "/mnt/xai_bot/power.json";
 
 	public final static BigDecimal esXAIWei = new BigDecimal(10000), keysWei = BigDecimal.ONE;
-	public final static NumberFormat FORMAT = DecimalFormat.getCurrencyInstance(Locale.US);
 
-	@Nullable
+	@Nonnull
 	public static PoolInfoVO getPoolInfo(String poolAddress, Web3j web3j, boolean flush) {
+		final Map<String, PoolInfoVO> infoMap = readLocalCache();
 		try {
-			final JSONObject root = XAIRedemptionJob.deserialization(file);
-			final Map<String, PoolInfoVO> infoMap = root.to(new TypeReference<>() {
-			});
 			if (flush) {
 				final PoolInfoVO poolInfo = PoolInfo.getPoolInfo(web3j, poolAddress).toVO();
 				log.info("正在强刷池子信息：poolAddress={}，keyCount={}", poolAddress, poolInfo.keyCount);
 				infoMap.put(poolAddress, poolInfo);
 				XAIRedemptionJob.serialization(file, JSON.parseObject(Jsons.encode(infoMap)));
 			}
-			return infoMap.get(poolAddress);
 		} catch (Exception e) {
 			log.error("获取池子信息失败", e);
-			return null;
 		}
+		return infoMap.get(poolAddress);
 	}
 
 	private static final Cache<String, Boolean> activeCaffeine = Caffeine.newBuilder()
@@ -77,8 +70,8 @@ public class XAIPowerJob {
 		}
 	}
 
-	public static boolean nonFlushActivePool(PoolInfoVO info) {
-		return getAndFlushActivePool(info, null, null, null, null, false);
+	public static boolean nonFlushActivePool(PoolInfoVO info, Web3j web3j) {
+		return getAndFlushActivePool(info, null, web3j, null, null, false);
 	}
 
 	public static boolean getAndFlushActivePool(PoolInfoVO info, RestTemplate restTemplate, Web3j web3j, BigInteger startBlockNumber, BigDecimal weakActiveThreshold, boolean flush) {
@@ -107,16 +100,23 @@ public class XAIPowerJob {
 		log.info("刷新本地文件缓存成功。当前存在【{}】个实例。", localCache.size());
 	}
 
+	public static Map<String, PoolInfoVO> readLocalCache() {
+		try {
+			final JSONObject root = XAIRedemptionJob.deserialization(file);
+			return root.to(new TypeReference<>() {
+			});
+		} catch (Exception ignored) {
+		}
+		return null;
+	}
+
 	@Scheduled(cron = "${service.cron.XAIPowerJob:0 0 1 * * ?}")
 	public void run() {
 		try {
-			final JSONObject root = XAIRedemptionJob.deserialization(file);
-			final Map<String, PoolInfoVO> infoMap = root.to(new TypeReference<>() {
-			});
 
 			final BigInteger poolsCount = PoolInfo.getPoolsCount(web3j, poolFactoryContractAddress);
 			log.info("正在刷新算力当前总池子数：{}", poolsCount);
-
+			final Map<String, PoolInfoVO> infoMap = readLocalCache();
 			final int size = infoMap.size(), newSize = poolsCount.intValue(), offset = newSize - infoMap.size();
 			if (offset > 0) {
 				for (int i = size; i < newSize; i++) {
@@ -136,7 +136,7 @@ public class XAIPowerJob {
 				final String oldDelegateAddress = oldPoolInfoVO == null ? null : oldPoolInfoVO.getDelegateAddress();
 				newPoolInfo.setDelegateAddress(oldDelegateAddress);
 				entry.setValue(newPoolInfo);
-				log.info("正在刷新算力【{}】 每1000EsXAI算力 -> {},每1Keys算力 -> {}", poolAddress, newPoolInfo.calcEsXAIPower(esXAIWei), newPoolInfo.calcKeysPower(BigDecimal.ONE));
+				log.info("正在刷新算力【{}】 每1000EsXAI算力 -> {},每1Keys算力 -> {}", poolAddress, newPoolInfo.calcEsXAIPower(esXAIWei), newPoolInfo.calcKeysPower(keysWei));
 			}
 
 			final int len = infoMap.size(), topN = web3JConfig.topN > len ? len : web3JConfig.topN;
@@ -149,7 +149,7 @@ public class XAIPowerJob {
 			for (int i = 1; i <= topN; i++) {
 				final PoolInfoVO info = esXAIPowerTopN.get(i - 1);
 				// 只刷新排行榜上池子的活跃状态，并更新委托人地址
-				final BigDecimal totalStakedAmount = new BigDecimal(info.totalStakedAmount).movePointLeft(18).setScale(0, RoundingMode.HALF_UP);
+				final BigDecimal totalStakedAmount = info.parseTotalStakedAmount();
 				final String poolName = Web3JConfig.getContractName(info.poolAddress),
 						total = totalStakedAmount.movePointLeft(4).setScale(0, RoundingMode.HALF_UP).toPlainString() + "w",
 						keyCount = info.keyCount.toString();
@@ -157,7 +157,7 @@ public class XAIPowerJob {
 						.append(" | [").append(outPoolName(poolName)).append("](https://app.xai.games/pool/").append(info.poolAddress).append("/summary)")
 						.append(info.getUpdateSharesTimestamp().compareTo(BigInteger.ZERO) > 0 ? "<font color=\"red\">变</font> | " : " | ")
 						.append(info.calcEsXAIPower(esXAIWei)).append(" | ")
-						.append("×").append(info.calcStakingTier(totalStakedAmount)).append(" | ")
+						.append("×").append(info.calcStakingTier()).append(" | ")
 						.append(total).append(" | ")
 						.append(keyCount).append(" | ")
 						.append(getAndFlushActivePool(info, web3JConfig.proxyRestTemplate, web3j, startBlockNumber, web3JConfig.weakActiveThreshold, true)
@@ -167,9 +167,9 @@ public class XAIPowerJob {
 						)
 						.append(" |   \n  ")
 				;
-				buildTgMsg(tgMsg, i, info, totalStakedAmount, poolName, keyCount, true);
+				buildTgMsg(tgMsg, i, info, poolName, keyCount, true);
 			}
-			log.info("EsXAI算力排行榜：{}\n{}", sb, tgMsg);
+			log.info("EsXAI算力排行榜：{}", sb);
 			web3JConfig.sendWarn("EsXAI算力排行榜", sb.toString(), tgMsg.toString());
 
 			final List<PoolInfoVO> keysIPowerTopN = infoMap.values().stream().sorted((o1, o2) -> o2.calcKeysPower(keysWei).compareTo(o1.calcKeysPower(keysWei))).toList();
@@ -184,14 +184,12 @@ public class XAIPowerJob {
 			for (int i = 1; i <= topN; i++) {
 				final PoolInfoVO info = keysIPowerTopN.get(i - 1);
 				// 只刷新排行榜上池子的活跃状态，并更新委托人地址
-				final BigDecimal totalStakedAmount = new BigDecimal(info.totalStakedAmount).movePointLeft(18).setScale(0, RoundingMode.HALF_UP);
-				final String poolName = Web3JConfig.getContractName(info.poolAddress),
-						keyCount = info.keyCount.toString();
+				final String poolName = Web3JConfig.getContractName(info.poolAddress), keyCount = info.keyCount.toString();
 				sb.append("| ").append(i)
 						.append(" | [").append(outPoolName(poolName)).append("](https://app.xai.games/pool/").append(info.poolAddress).append("/summary)")
 						.append(info.getUpdateSharesTimestamp().compareTo(BigInteger.ZERO) > 0 ? "<font color=\"red\">变</font> | " : " | ")
 						.append(info.calcKeysPower(keysWei)).append(" | ")
-						.append("×").append(info.calcStakingTier(totalStakedAmount)).append(" | ")
+						.append("×").append(info.calcStakingTier()).append(" | ")
 						.append(info.keyCount).append(" | ")
 						.append(getAndFlushActivePool(info, web3JConfig.proxyRestTemplate, web3j, startBlockNumber, web3JConfig.weakActiveThreshold, true)
 								// .append(nonFlushActivePool(info)
@@ -200,32 +198,32 @@ public class XAIPowerJob {
 						.append(" |   \n  ")
 				;
 
-				buildTgMsg(tgMsg, i, info, totalStakedAmount, poolName, keyCount, false);
+				buildTgMsg(tgMsg, i, info, poolName, keyCount, false);
 			}
 			// 持久化本地缓存文件
 			flushActivePoolLocalFile();
 			XAIRedemptionJob.serialization(file, JSON.parseObject(Jsons.encode(infoMap)));
-			log.info("Keys算力排行榜：{}\n{}", sb, tgMsg);
+			log.info("Keys算力排行榜：{}", sb);
 			web3JConfig.sendWarn("Keys算力排行榜", sb.toString(), tgMsg.toString());
 		} catch (Exception e) {
 			log.error("算力统计异常", e);
 		}
 	}
 
-	private void buildTgMsg(StringBuilder tgMsg, int i, PoolInfoVO info, BigDecimal totalStakedAmount, String poolName, String keyCount, boolean esXAIRank) {
-		final BigDecimal mAmount = totalStakedAmount.movePointLeft(6).setScale(2, RoundingMode.HALF_UP),
-				kAmount = totalStakedAmount.movePointLeft(3).setScale(0, RoundingMode.HALF_UP);
-		final boolean symbol = kAmount.compareTo(Arith.HUNDRED) >= 0;
-		String total = (symbol ? mAmount : kAmount).toPlainString();
+	public static String outputActive(PoolInfoVO info, Web3j web3j) {
+		return nonFlushActivePool(info, web3j)
+				? "[✅](https://arbiscan.io/address/" + info.getPoolAddress() + ")"
+				: "[❌](https://arbiscan.io/address/" + info.getPoolAddress() + "#tokentxns)";
+	}
+
+	private void buildTgMsg(StringBuilder tgMsg, int i, PoolInfoVO info, String poolName, String keyCount, boolean esXAIRank) {
+		final String total = info.outputExXAI();
 		tgMsg.append("*").append(i).append("*         ").append(i < 10 ? "  " : "")
 				.append(" 	  ").append(esXAIRank ? info.calcEsXAIPower(esXAIWei) : info.calcKeysPower(keysWei))
-				.append(" 	        ×").append(info.calcStakingTier(totalStakedAmount))
-				.append(" 	      ").append(total).append(symbol ? "M" : "K").append(total.length() > 3 ? "        " : "          ")
+				.append(" 	        ×").append(info.calcStakingTier())
+				.append(" 	      ").append(total).append(total.length() > 4 ? "        " : "          ")
 				.append(keyCount).append(keyCount.length() > 2 ? "        " : "          ")
-				.append(nonFlushActivePool(info)
-						? "[✅](arbiscan.io/address/" + info.getPoolAddress() + ")"
-						: "[❌](arbiscan.io/address/" + info.getPoolAddress() + "#tokentxns)"
-				).append("     [")
+				.append(outputActive(info, web3j)).append("     [")
 				.append(poolName.length() > 14 ? poolName.substring(0, 14) + "..." : poolName).append("](app.xai.games/pool/").append(info.poolAddress).append("/summary)")
 				.append(info.getUpdateSharesTimestamp().compareTo(BigInteger.ZERO) > 0 ? "‼\uFE0F" : "")
 				.append("\n")
@@ -258,7 +256,7 @@ public class XAIPowerJob {
 
 		System.out.println(Jsons.encode(poolInfo));
 		System.out.println("每1000EsXAI算力：" + poolInfo.calcEsXAIPower(esXAIWei));
-		System.out.println("每1Keys算力：" + poolInfo.calcKeysPower(BigDecimal.ONE));
+		System.out.println("每1Keys算力：" + poolInfo.calcKeysPower(keysWei));
 		XAIRedemptionJob.serialization(file, JSON.parseObject(Jsons.encode(infoMap)));
 	}
 

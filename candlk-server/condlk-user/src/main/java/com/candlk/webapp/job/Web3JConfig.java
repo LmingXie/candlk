@@ -31,6 +31,9 @@ import org.web3j.protocol.Web3j;
 import org.web3j.protocol.core.DefaultBlockParameterName;
 import org.web3j.protocol.http.HttpService;
 
+import static com.candlk.webapp.job.XAIPowerJob.esXAIWei;
+import static com.candlk.webapp.job.XAIPowerJob.keysWei;
+
 @Slf4j
 @Setter
 @Getter
@@ -138,6 +141,7 @@ public class Web3JConfig {
 	}
 
 	public void sendTelegramMessage(String content) {
+		log.info("正在想Telegram推送消息：{}", content);
 		final HttpEntity<JSONObject> httpEntity = new HttpEntity<>(JSONObject.of(
 				"chat_id", tgChatId,
 				"parse_mode", "Markdown",
@@ -206,9 +210,9 @@ public class Web3JConfig {
 								+ "[点击前往查看详情](https://arbiscan.io/tx/" + hash + ")",
 
 						"\uD83D\uDE80*Warn：Create Pool !* \n\n"
-								+ "Monitored [" + nickname + "](arbiscan.io/address/" + from + ") address creating a new pool.  \n"
+								+ "Monitored [" + nickname + "](https://arbiscan.io/address/" + from + ") address creating a new pool.  \n"
 								+ "Hash：*" + hash + "*  \n"
-								+ "[\uD83D\uDC49\uD83D\uDC49Click View](arbiscan.io/tx/" + hash + ")"
+								+ "[\uD83D\uDC49\uD83D\uDC49Click View](https://arbiscan.io/tx/" + hash + ")"
 				};
 			});
 			put(null, inputs -> {
@@ -224,12 +228,12 @@ public class Web3JConfig {
 								+ "[点击前往查看详情](https://arbiscan.io/tx/" + hash + ")",
 
 						"\uD83D\uDE80*Warn：Unrecognized call !* \n\n"
-								+ "Monitored [" + nickname + "](arbiscan.io/address/" + from + ") address made an unrecognized call. \n"
+								+ "Monitored [" + nickname + "](https://arbiscan.io/address/" + from + ") address made an unrecognized call. \n"
 								+ "From：" + from + "  \n"
 								+ "To：*" + to + "*  \n"
 								+ "Method：*" + method + "*  \n"
 								+ "Hash：" + hash + "  \n"
-								+ "[\uD83D\uDC49\uD83D\uDC49Click View](arbiscan.io/tx/" + hash + ")"
+								+ "[\uD83D\uDC49\uD83D\uDC49Click View](https://arbiscan.io/tx/" + hash + ")"
 
 				};
 			});
@@ -244,16 +248,32 @@ public class Web3JConfig {
 			}
 			if (!hasBigAmount || amount.compareTo(threshold) >= 0) {
 				final String poolContractAddress = new Address(input.substring(11, 74)).getValue(), poolName = getContractName(poolContractAddress);
+
+				final Web3j web3jProxy = SpringUtil.getBean(Web3j.class);
+				final PoolInfoVO info = XAIPowerJob.getPoolInfo(poolContractAddress, web3jProxy, true);
+				final String outputActive = XAIPowerJob.outputActive(info, web3jProxy);
 				return new String[] { x,
 						"### " + x + "！  \n  "
 								+ "识别到关注的【**[" + nickname + "](https://arbiscan.io/address/" + from + ")**】地址正在【**[" + poolName + "](https://app.xai.games/pool/" + poolContractAddress + "/summary)**】池进行" + type + "。  \n  "
-								+ type + "数量：**" + amount + x1
+								+ type + "数量：**" + amount + x1 + "  \n  "
+								+ "**Keys算力：" + info.calcKeysPower(keysWei) + "**  \n  "
+								+ "**esXAI算力：" + info.calcEsXAIPower(esXAIWei) + "**  \n  "
+								+ "阶梯：**" + info.calcStakingTier() + "**  \n  "
+								+ "esXAI总质押：**" + info.outputExXAI() + "**  \n  "
+								+ "Keys总质押：**" + info.keyCount + "**  \n  "
+								+ "活跃状态：**" + outputActive + "**  \n  "
 								+ "[点击前往查看详情](https://arbiscan.io/tx/" + hash + ")",
 
 						"\uD83D\uDE80*BlockTrade：" + typeEn + " !* \n\n"
-								+ "Monitored that address [" + nickname + "](arbiscan.io/address/" + from + ") in [" + poolName + "](app.xai.games/pool/" + poolContractAddress + "/summary) pool " + typeEn + " action.  \n"
+								+ "Monitored that address [" + nickname + "](https://arbiscan.io/address/" + from + ") in [" + poolName + "](app.xai.games/pool/" + poolContractAddress + "/summary) pool " + typeEn + " action.  \n"
 								+ typeEn + " Amount：*" + amount + x1.replaceAll("\\*\\*", "*") + " \n"
-								+ "[\uD83D\uDC49\uD83D\uDC49Click View](arbiscan.io/tx/" + hash + ")"
+								+ "*Tier：×" + info.calcStakingTier() + "* \n"
+								+ "*Keys Power：" + info.calcKeysPower(keysWei) + "* \n"
+								+ "*esXAI Power：" + info.calcEsXAIPower(esXAIWei) + "* \n"
+								+ "*esXAI Staked：" + info.outputExXAI() + "* \n "
+								+ "*Keys Staked：" + info.keyCount + "* \n"
+								+ "*Active：*" + outputActive + " \n "
+								+ "[\uD83D\uDC49\uD83D\uDC49Click View](https://arbiscan.io/tx/" + hash + ")"
 				};
 			}
 			return null;

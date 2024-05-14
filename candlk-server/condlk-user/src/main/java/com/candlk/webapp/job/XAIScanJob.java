@@ -21,6 +21,8 @@ import org.web3j.protocol.core.methods.response.EthBlock.TransactionResult;
 
 import static com.candlk.webapp.job.Web3JConfig.METHOD2TIP;
 import static com.candlk.webapp.job.Web3JConfig.getContractName;
+import static com.candlk.webapp.job.XAIPowerJob.esXAIWei;
+import static com.candlk.webapp.job.XAIPowerJob.keysWei;
 
 @Slf4j
 @Configuration
@@ -73,27 +75,26 @@ public class XAIScanJob {
 
 					// 算力大于阈值时触发提醒
 					final BigDecimal power;
-					if (poolInfo != null && poolInfo.keyCount.compareTo(new BigInteger("750")) < 0
-							&& (power = poolInfo.calcKeysPower(BigDecimal.ONE)).compareTo(web3JConfig.unstakeKeysThreshold) > 0) {
-						final BigDecimal totalStakedAmount = new BigDecimal(poolInfo.totalStakedAmount).movePointLeft(18).setScale(0, RoundingMode.HALF_UP);
+					if (poolInfo.keyCount.compareTo(new BigInteger("750")) < 0 && (power = poolInfo.calcKeysPower(BigDecimal.ONE)).compareTo(web3JConfig.unstakeKeysThreshold) > 0) {
 						web3JConfig.sendWarn("通知：满Keys池赎回提醒",
 								"### 通知：满Keys池赎回提醒！  \n  "
 										+ "顶级池【<font color=\"red\">**[" + poolName + "](https://app.xai.games/pool/" + poolContractAddress + "/summary)**</font>】存在空闲质押空间。  \n  "
 										+ "当前质押Keys：**<font color=\"red\">" + poolInfo.keyCount + "</font>**  \n  "
 										+ "当前质押EsXAI：**" + XAIRedemptionJob.formatAmount(new BigDecimal(poolInfo.totalStakedAmount)
 										.movePointLeft(18).setScale(2, RoundingMode.HALF_UP)) + "**  \n  "
-										+ "加成：**×" + poolInfo.calcStakingTier(totalStakedAmount) + "**  \n  "
+										+ "加成：**×" + poolInfo.calcStakingTier() + "**  \n  "
 										+ "算力值：**" + power + "**  \n  "
 										+ "[点击前往查看详情](https://arbiscan.io/tx/" + hash + ")",
 
 								"\uD83D\uDCAF*||Notify||：Full Keys Pool Redemption !*\n\n"
 										+ "Pool：[" + poolName + "](app.xai.games/pool/" + poolContractAddress + "/summary)  \n"
-										+ "Keys Staked：*" + poolInfo.keyCount + "*  \n "
-										+ "EsXAI Staked：*" + XAIRedemptionJob.formatAmount(new BigDecimal(poolInfo.totalStakedAmount)
-										.movePointLeft(18).setScale(2, RoundingMode.HALF_UP)) + "*  \n"
-										+ "Tier：*×" + poolInfo.calcStakingTier(totalStakedAmount) + "*  \n"
-										+ "Power：*" + power + "*  \n"
-										+ "[\uD83D\uDC49\uD83D\uDC49Click View](arbiscan.io/tx/" + hash + ")"
+										+ "*Tier：×" + poolInfo.calcStakingTier() + "* \n"
+										+ "*Keys Power：" + poolInfo.calcKeysPower(keysWei) + "* \n"
+										+ "*esXAI Power：" + poolInfo.calcEsXAIPower(esXAIWei) + "* \n"
+										+ "*esXAI Staked：" + poolInfo.outputExXAI() + "* \n "
+										+ "*Keys Staked：" + poolInfo.keyCount + "* \n"
+										+ "*Active：*" + XAIPowerJob.outputActive(poolInfo, web3j) + " \n"
+										+ "[\uD83D\uDC49\uD83D\uDC49Click View](https://arbiscan.io/tx/" + hash + ")"
 						);
 					}
 				}
@@ -149,7 +150,7 @@ public class XAIScanJob {
 													+ "Redemption Amount：*" + redemptionAmount.setScale(2, RoundingMode.HALF_UP) + " XAI*  \n"
 													+ "Burn Amount：*" + recycleAmount.setScale(2, RoundingMode.HALF_UP) + " XAI*  \n"
 													+ "Address：*" + redemptionTo.replaceAll("0x000000000000000000000000", "0x") + "*  \n"
-													+ "[\uD83D\uDC49\uD83D\uDC49Click View](arbiscan.io/tx/" + hash + ")");
+													+ "[\uD83D\uDC49\uD83D\uDC49Click View](https://arbiscan.io/tx/" + hash + ")");
 								}
 
 								// 汇总统计
