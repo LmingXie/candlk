@@ -155,8 +155,8 @@ public class XAIPowerJob {
 			sb.append("|:------:|:------|:-------:|:-----:|:-----:|:-----:|:-----:|  \n  ");
 			final StringBuilder tgMsg = new StringBuilder("*\uD83D\uDCB910000/EsXAI Stake Computing Power Rank *\n\n");
 			tgMsg.append("*Network EsXAI Pools Staked Total: * ").append(XAIRedemptionJob.formatAmount(totalEsXAIStaked)).append("esXAI \n")
-					.append("*Network Keys Pools Staked Total: * ").append(totalKeysStaked).append(" \n")
-					.append("*   Power    Tier   EsXAI      Keys    Active           Reward/Pool* \n\n");
+					.append("*Network Keys Pools Staked Total: * ").append(totalKeysStaked).append(" \n\n")
+					.append("*   Power    Tier   EsXAI      Keys    Active           Reward/Pool* \n");
 			for (int i = 1; i <= topN; i++) {
 				final PoolInfoVO info = esXAIPowerTopN.get(i - 1);
 				// 只刷新排行榜上池子的活跃状态，并更新委托人地址
