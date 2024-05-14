@@ -132,10 +132,16 @@ public class XAIPowerJob {
 
 			final BigInteger endBlockNumber = web3j.ethBlockNumber().send().getBlockNumber();
 
+			/*全网总质押*/
+			BigDecimal totalEsXAIStaked = BigDecimal.ZERO;
+			BigInteger totalKeysStaked = BigInteger.ONE;
 			for (Map.Entry<String, PoolInfoVO> entry : infoMap.entrySet()) {
 				final String poolAddress = entry.getKey();
 				final PoolInfoVO oldPoolInfoVO = entry.getValue(), newPoolInfo = PoolInfo.getPoolInfo(web3j, poolAddress).toVO();
 				final String oldDelegateAddress = oldPoolInfoVO == null ? null : oldPoolInfoVO.getDelegateAddress();
+				totalEsXAIStaked = totalEsXAIStaked.add(newPoolInfo.parseTotalStakedAmount());
+				totalKeysStaked = totalKeysStaked.add(newPoolInfo.keyCount);
+
 				newPoolInfo.setDelegateAddress(oldDelegateAddress);
 				entry.setValue(newPoolInfo);
 				log.info("正在刷新算力【{}】 每1000EsXAI算力 -> {},每1Keys算力 -> {}", poolAddress, newPoolInfo.calcEsXAIPower(esXAIWei), newPoolInfo.calcKeysPower(keysWei));
@@ -147,7 +153,10 @@ public class XAIPowerJob {
 			final StringBuilder sb = new StringBuilder("### 10000/EsXAI算力排行榜  \n  ");
 			sb.append("|  排名  |  池子  |  算力  |  加成   | EsXAI  | Keys  | 活跃  |   \n  ");
 			sb.append("|:------:|:------|:-------:|:-----:|:-----:|:-----:|:-----:|  \n  ");
-			final StringBuilder tgMsg = new StringBuilder("*\uD83D\uDCB910000/EsXAI Stake Computing Power Rank *\n\n*   Power    Tier   EsXAI      Keys    Active           Reward/Pool* \n");
+			final StringBuilder tgMsg = new StringBuilder("*\uD83D\uDCB910000/EsXAI Stake Computing Power Rank *\n\n");
+			tgMsg.append("*Network EsXAI Pools Staked Total: * ").append(XAIRedemptionJob.formatAmount(totalEsXAIStaked)).append("esXAI \n")
+					.append("*Network Keys Pools Staked Total: * ").append(totalKeysStaked).append(" \n")
+					.append("*   Power    Tier   EsXAI      Keys    Active           Reward/Pool* \n\n");
 			for (int i = 1; i <= topN; i++) {
 				final PoolInfoVO info = esXAIPowerTopN.get(i - 1);
 				// 只刷新排行榜上池子的活跃状态，并更新委托人地址
@@ -181,7 +190,10 @@ public class XAIPowerJob {
 			sb.append("|:------:|:------|:-------:|:-----:|:-----:|:-----:|  \n  ");
 
 			tgMsg.setLength(0);
-			tgMsg.append("*\uD83D\uDCB91/Keys Stake Computing Power Rank *\n\n*   Power    Tier   EsXAI      Keys    Active           Reward/Pool* \n");
+			tgMsg.append("*\uD83D\uDCB91/Keys Stake Computing Power Rank *\n\n");
+			tgMsg.append("*Network EsXAI Pools Staked Total: * ").append(XAIRedemptionJob.formatAmount(totalEsXAIStaked)).append("esXAI \n")
+					.append("*Network Keys Pools Staked Total: * ").append(totalKeysStaked).append("\n\n")
+					.append("*   Power    Tier   EsXAI      Keys    Active           Reward/Pool* \n");
 
 			for (int i = 1; i <= topN; i++) {
 				final PoolInfoVO info = keysIPowerTopN.get(i - 1);

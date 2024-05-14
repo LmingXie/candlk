@@ -70,7 +70,7 @@ public class PoolInfoVO extends StaticStruct {
 	public transient volatile BigDecimal totalStakedAmountVal;
 
 	public BigDecimal parseTotalStakedAmount() {
-		return totalStakedAmountVal != null ? totalStakedAmountVal : new BigDecimal(totalStakedAmount).movePointLeft(18).setScale(0, RoundingMode.HALF_UP);
+		return totalStakedAmountVal != null ? totalStakedAmountVal : (totalStakedAmountVal = new BigDecimal(totalStakedAmount).movePointLeft(18).setScale(0, RoundingMode.HALF_UP));
 	}
 
 	public transient volatile BigDecimal keysPower;
