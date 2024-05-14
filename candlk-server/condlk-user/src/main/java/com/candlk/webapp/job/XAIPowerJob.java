@@ -169,7 +169,7 @@ public class XAIPowerJob {
 				;
 				buildTgMsg(tgMsg, i, info, totalStakedAmount, poolName, keyCount, true);
 			}
-			log.info("EsXAI算力排行榜：{}", sb);
+			log.info("EsXAI算力排行榜：{}\n{}", sb, tgMsg);
 			web3JConfig.sendWarn("EsXAI算力排行榜", sb.toString(), tgMsg.toString());
 
 			final List<PoolInfoVO> keysIPowerTopN = infoMap.values().stream().sorted((o1, o2) -> o2.calcKeysPower(keysWei).compareTo(o1.calcKeysPower(keysWei))).toList();
@@ -205,7 +205,7 @@ public class XAIPowerJob {
 			// 持久化本地缓存文件
 			flushActivePoolLocalFile();
 			XAIRedemptionJob.serialization(file, JSON.parseObject(Jsons.encode(infoMap)));
-			log.info("Keys算力排行榜：{}", sb);
+			log.info("Keys算力排行榜：{}\n{}", sb, tgMsg);
 			web3JConfig.sendWarn("Keys算力排行榜", sb.toString(), tgMsg.toString());
 		} catch (Exception e) {
 			log.error("算力统计异常", e);
