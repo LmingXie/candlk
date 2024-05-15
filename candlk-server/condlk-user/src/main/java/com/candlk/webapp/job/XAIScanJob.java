@@ -78,17 +78,18 @@ public class XAIScanJob {
 					// 算力大于阈值时触发提醒
 					final BigDecimal power;
 					if (poolInfo.keyCount.compareTo(MAX_KEYS_CAPACITY) < 0 && (power = poolInfo.calcKeysPower(BigDecimal.ONE)).compareTo(web3JConfig.unstakeKeysThreshold) >= 0) {
-						web3JConfig.sendWarn("通知：满Keys池赎回提醒",
-								"### 通知：满Keys池赎回提醒！  \n  "
+						final String opType = method.equals("0x2f1a0b1c") ? "质押" : "赎回", opTypeEn = method.equals("0x2f1a0b1c") ? "Staked" : "Redemption";
+						web3JConfig.sendWarn("通知：满Keys池" + opType + "提醒",
+								"### 通知：满Keys池" + opType + "提醒！  \n  "
 										+ "顶级池【<font color=\"red\">**[" + poolName + "](https://app.xai.games/pool/" + poolContractAddress + "/summary)**</font>】存在空闲质押空间。  \n  "
-										+ "当前质押Keys：**<font color=\"red\">" + poolInfo.keyCount + "</font>**  \n  "
-										+ "当前质押EsXAI：**" + XAIRedemptionJob.formatAmount(new BigDecimal(poolInfo.totalStakedAmount)
+										+ "当前Keys：**<font color=\"red\">" + poolInfo.keyCount + "</font>**  \n  "
+										+ "当前EsXAI：**" + XAIRedemptionJob.formatAmount(new BigDecimal(poolInfo.totalStakedAmount)
 										.movePointLeft(18).setScale(2, RoundingMode.HALF_UP)) + "**  \n  "
 										+ "加成：**×" + poolInfo.calcStakingTier() + "**  \n  "
 										+ "算力值：**" + power + "**  \n  "
 										+ "[点击前往查看详情](https://arbiscan.io/tx/" + hash + ")",
 
-								"\uD83D\uDCAF*||Notify||：Full Keys Pool Redemption !*\n\n"
+								"\uD83D\uDCAF*||Notify||：Full Keys Pool " + opTypeEn + "! *\n\n"
 										+ "Full pool [" + poolName + "](app.xai.games/pool/" + poolContractAddress + "/summary) a stake may be made. \n"
 										+ "*Tier：×" + poolInfo.calcStakingTier() + "* \n"
 										+ "*Keys Power：" + poolInfo.calcKeysPower(keysWei) + "* \n"
