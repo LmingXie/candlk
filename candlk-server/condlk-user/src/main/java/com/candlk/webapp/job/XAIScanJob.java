@@ -92,10 +92,10 @@ public class XAIScanJob {
 								"\uD83D\uDCAF*||Notify||：Full Keys Pool " + opTypeEn + "! *\n\n"
 										+ "Full pool [" + poolName + "](app.xai.games/pool/" + poolContractAddress + "/summary) a stake may be made. \n"
 										+ "*Tier：×" + poolInfo.calcStakingTier() + "* \n"
-										+ "*Keys Power：" + poolInfo.calcKeysPower(keysWei) + "* \n"
-										+ "*esXAI Power：" + poolInfo.calcEsXAIPower(esXAIWei) + "* \n"
-										+ "*esXAI Staked：" + poolInfo.outputExXAI() + "* \n "
 										+ "*Keys Staked：" + poolInfo.keyCount + "* \n"
+										+ "*Keys Power：" + poolInfo.calcKeysPower(keysWei) + "* \n"
+										+ "esXAI Power：" + poolInfo.calcEsXAIPower(esXAIWei) + " \n"
+										+ "esXAI Staked：" + poolInfo.outputExXAI() + " \n "
 										+ "*Active：*" + outputActive(getAndFlushActivePool(poolInfo, web3JConfig.proxyRestTemplate, newWeb3j, lastBlock, web3JConfig.weakActiveThreshold, true), poolInfo.poolAddress) + " \n"
 										+ "[\uD83D\uDC49\uD83D\uDC49Click View](https://arbiscan.io/tx/" + hash + ")"
 						);
