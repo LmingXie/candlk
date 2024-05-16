@@ -228,7 +228,7 @@ public class XAIPowerJob {
 	}
 
 	public static String outputActive(boolean active, String poolAddress) {
-		return active ? "[✅](https://arbiscan.io/address/" + poolAddress + ")"
+		return active ? "[✅](https://arbiscan.io/address/" + poolAddress + "#tokentxns)"
 				: "[❌](https://arbiscan.io/address/" + poolAddress + "#tokentxns)";
 	}
 
