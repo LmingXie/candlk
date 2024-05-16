@@ -92,6 +92,9 @@ public class XAIPowerJob {
 			}
 			return active;
 		};
+		if (flush) {
+			activeCaffeine.put(info.poolAddress, function.apply(info.poolAddress));
+		}
 		return activeCaffeine.get(info.poolAddress, function);
 	}
 

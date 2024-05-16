@@ -141,19 +141,41 @@ public class Web3JConfig {
 		SpringUtil.asyncRun(() -> sendTelegramMessage(telegramMsg));
 	}
 
+	final List<String> failTgMsg = new ArrayList<>();
+
 	public void sendTelegramMessage(String content) {
 		log.info("正在向Telegram推送消息：{}", content);
-		final HttpEntity<JSONObject> httpEntity = new HttpEntity<>(JSONObject.of(
+		final HttpHeaders headers = new HttpHeaders();
+		HttpEntity<JSONObject> httpEntity = new HttpEntity<>(JSONObject.of(
 				"chat_id", tgChatId,
 				"parse_mode", "Markdown",
 				"text", content
-		), new HttpHeaders());
+		), headers);
 		try {
 			final JSONObject body = proxyRestTemplate.postForEntity(tgMsgHookUrl, httpEntity, JSONObject.class).getBody();
 			if (body == null || !body.getBoolean("ok")) {
 				log.error("发送Telegram消息失败：content={}，body={}", content, Jsons.encode(body));
 			}
+			if (!failTgMsg.isEmpty()) {
+				JSONObject data = new JSONObject();
+				data.put("chat_id", tgChatId);
+				data.put("parse_mode", "Markdown");
+				final Iterator<String> iterator = failTgMsg.iterator();
+				while (iterator.hasNext()) {
+					final String msg = iterator.next();
+					data.put("text", msg);
+					httpEntity = new HttpEntity<>(data, headers);
+
+					log.info("正在向Telegram推送补偿消息：{}", msg);
+					final JSONObject body1 = proxyRestTemplate.postForEntity(tgMsgHookUrl, httpEntity, JSONObject.class).getBody();
+					if (body1 == null || !body1.getBoolean("ok")) {
+						log.error("发送Telegram消息失败：content={}，body={}", content, Jsons.encode(body1));
+					}
+					iterator.remove(); // 删除消息
+				}
+			}
 		} catch (Exception e) {
+			failTgMsg.add(content);
 			log.error("发送Telegram消息异常：content={}", content, e);
 		}
 	}
