@@ -6,6 +6,7 @@ import java.util.List;
 import com.candlk.common.util.BeanUtil;
 import lombok.Getter;
 import lombok.Setter;
+import lombok.extern.slf4j.Slf4j;
 import org.web3j.abi.*;
 import org.web3j.abi.datatypes.*;
 import org.web3j.abi.datatypes.generated.Uint256;
@@ -17,6 +18,7 @@ import org.web3j.utils.Numeric;
 
 import static org.web3j.protocol.core.DefaultBlockParameterName.LATEST;
 
+@Slf4j
 @Getter
 @Setter
 public class PoolInfo extends StaticStruct {

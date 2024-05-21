@@ -31,9 +31,9 @@ public class XAIDataStatTest {
 	}
 
 	public static void main(String[] args) throws Exception {
-		final Triple<BigDecimal, BigDecimal, String> triple = append(23);
-		BigDecimal currentCompleteRedemptionAmount = new BigDecimal("838194.655871");
-		BigDecimal recycleAmount = new BigDecimal("1257291.983870");
+		final Triple<BigDecimal, BigDecimal, String> triple = append(37);
+		BigDecimal currentCompleteRedemptionAmount = new BigDecimal("1158508.012775");
+		BigDecimal recycleAmount = new BigDecimal("1737762.019336");
 		System.out.println("According to the on-chain data, @XAI_GAMES the last two days add complete redemption amount " + triple.getLeft() + " XAI, recycle amount " + triple.getMiddle() + " XAI.");
 		System.out.println("\nUp to now total complete redemption amount " + currentCompleteRedemptionAmount.add(triple.getLeft()) + " XAI, recycle total amount " + recycleAmount.add(triple.getMiddle()) + " XAI.");
 		System.out.println("\nsource link: https://arbiscan.io/advanced-filter?tkn=0x4cb9a7ae498cedcbb5eae9f25736ae7d428c9d66&txntype=2&mtd=0x840ecba0%7eComplete+Redemption");
@@ -110,7 +110,7 @@ public class XAIDataStatTest {
 	public static Triple<BigDecimal, BigDecimal, String> append(int currentId) throws Exception {
 		BigDecimal total = BigDecimal.ZERO, recycleTotal = BigDecimal.ZERO;
 		final String recycleAccount = "0x1F941F7Fb552215af81e6bE87F59578C18783483";
-		final String endTxHash = "0x04c74474e3146b95b615a4d4afa133b42596473a2784724bc63ebf3a83374b5c";
+		final String endTxHash = "0x942990ee9eaf20d6136d24ad3f22d57e360af8e926548bbeab2c9a7ae635e18d";
 		Document doc = Jsoup.parse(new File("D:\\xai\\advanced-filter" + currentId));
 		Elements tbody = doc.getElementsByTag("tbody");
 		Element body = tbody.get(0);

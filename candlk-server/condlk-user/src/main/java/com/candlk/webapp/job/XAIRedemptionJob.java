@@ -134,14 +134,14 @@ public class XAIRedemptionJob {
 		final String yyyyMMdd = Formats.getYyyyMMdd(d) + "", yyyyMM = Formats.getYyyyMM(d) + "", weeklyYyyyMMdd = Formats.getYyyyMMdd(d.addDay(1 - d.getWeekDay())) + "";
 
 		JSONObject root = deserialization("/mnt/xai_bot/stat.json");
-		root.put("totalRedemption", new BigDecimal("838194.65"));
-		root.put("totalRecycle", new BigDecimal("1257291.98"));
+		root.put("totalRedemption", new BigDecimal("1158525.280706"));
+		root.put("totalRecycle", new BigDecimal("1737787.921233"));
 
 		root.getJSONObject("D").getJSONObject(yyyyMMdd).put(totalRedemption, BigDecimal.ZERO);
 		root.getJSONObject("D").getJSONObject(yyyyMMdd).put(totalRecycle, BigDecimal.ZERO);
 
-		root.getJSONObject("W").getJSONObject(weeklyYyyyMMdd).put(totalRedemption, new BigDecimal("66383"));
-		root.getJSONObject("W").getJSONObject(weeklyYyyyMMdd).put(totalRecycle, new BigDecimal("99575"));
+		root.getJSONObject("W").getJSONObject(weeklyYyyyMMdd).put(totalRedemption, new BigDecimal("19049.35"));
+		root.getJSONObject("W").getJSONObject(weeklyYyyyMMdd).put(totalRecycle, new BigDecimal("28574"));
 
 		root.getJSONObject("M").getJSONObject(yyyyMM).put(totalRedemption, new BigDecimal("409244.65"));
 		root.getJSONObject("M").getJSONObject(yyyyMM).put(totalRecycle, new BigDecimal("613866.98"));

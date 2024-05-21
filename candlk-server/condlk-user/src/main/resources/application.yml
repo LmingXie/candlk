@@ -13,8 +13,8 @@ spring:
     allow-circular-references: true
   ### redis连接配置
   redis:
-    host: 175.178.150.79
-    port: 6380
+    host: 127.0.0.1
+    port: 6379
     password: admin@3069!
     database: 0
   ### common-config.yml 所有服务的公共配置
@@ -54,20 +54,19 @@ service:
     host: 127.0.0.1
     port: 10808
   cron:
-    XAIScanJob: "0 0/60 * * * ?"
-    XAIRedemptionJob: "0 0/60 * * * ?"
-    XAIPowerJob: "0 0 1 * * ?"
+    XAIScanJob: "0/5 * * * * ?"
+    XAIRedemptionJob: "0 0 0/3 * * ?"
+    XAIPowerJob: "0 0 0/1 * * ?"
   xai:
     dingTalkBotUrl: https://oapi.dingtalk.com/robot/send?access_token=0699ae605b56910e521bf8fea6104d028a1e724d068f8261a6271b2a877c783f
     tgMsgHookUrl: https://api.telegram.org/bot7098739919:AAG7V8jhpmhehF9Z5ZHL6YgA9qmmpkwV3Zg/sendMessage
     tgChatId: -1002081472730
-    #    web3jUrl: https://arb1.arbitrum.io/rpc
-    #    web3jUrl: https://arbitrum.llamarpc.com
-    web3jUrl: wss://arbitrum-one-rpc.publicnode.com
-    #    web3jUrl: wss://arbitrum-one.publicnode.com
-    #    web3jUrl: https://arbitrum.blockpi.network/v1/rpc/public
+    web3jUrl: https://rpc.ankr.com/arbitrum
     web3jUrlPool:
+      - https://arbitrum.llamarpc.com
       - https://arbitrum-one-rpc.publicnode.com
+      - https://api.zan.top/node/v1/arb/one/public
+      - https://arbitrum.drpc.org
       - https://arbitrum.meowrpc.com
       - wss://arbitrum-one.publicnode.com
       - https://arbitrum.rpc.subquery.network/public
@@ -81,12 +80,12 @@ service:
       - https://arbitrum-one.public.blastapi.io
       - wss://arbitrum-one-rpc.publicnode.com
       - https://endpoints.omniatech.io/v1/arbitrum/one/public
-    lastBlock: 211119834
+    lastBlock: 213428443
     # 大额赎回成功
-    redemptionThreshold: 5000
+    redemptionThreshold: 8000
     # 大额质押与赎回
-    esXAIThreshold: 10000
-    keysThreshold: 5
+    esXAIThreshold: 15000
+    keysThreshold: 10
     # 弱活跃度触发阈值（每次减半后需要进行调整，产出参考：https://arbiscan.io/address/0x958e5cc35fd7f95c135d55c7209fa972bdb68617#tokentxns）
     weakActiveThreshold: 2000
     # 顶级Keys算力池解除质押成功提醒
@@ -94,6 +93,6 @@ service:
     # 排行榜排名
     topN: 30
     # 监控的交易发送人地址
-    spyFroms:
-      "0xcd6100d7a6b120b7042ba09b787a1cb26a2e6ae1": Alpha-K1
-      "0xad490066fedddb64bafc266dca033a84ac5c900b": Alpha-K2
+    #spyFroms:
+      #"0xcd6100d7a6b120b7042ba09b787a1cb26a2e6ae1": Alpha-K1
+      #"0xad490066fedddb64bafc266dca033a84ac5c900b": Alpha-K2

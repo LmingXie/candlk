@@ -11,6 +11,7 @@ import com.candlk.common.web.Ready;
 import com.candlk.context.web.Jsons;
 import com.candlk.context.web.ProxyRequest;
 import com.candlk.webapp.job.XAIPowerJob;
+import com.candlk.webapp.job.XAIRedemptionJob;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.http.client.SimpleClientHttpRequestFactory;
 import org.springframework.web.bind.annotation.*;
@@ -27,6 +28,8 @@ public class TestAction {
 
 	@Resource
 	XAIPowerJob xaiPowerJob;
+	@Resource
+	XAIRedemptionJob xaiRedemptionJob;
 
 	@Ready("墙外访问测试")
 	@GetMapping("/ping")
@@ -42,8 +45,9 @@ public class TestAction {
 
 	@Ready("强刷排名")
 	@GetMapping("/flushPower")
-	public Messager<Void> flushPower(ProxyRequest q) {
+	public Messager<Void> flushPower(ProxyRequest q) throws Exception {
 		xaiPowerJob.run();
+		xaiRedemptionJob.run();
 		return Messager.OK();
 	}
 
