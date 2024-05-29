@@ -9,7 +9,6 @@ import javax.annotation.Resource;
 
 import com.alibaba.fastjson2.JSONObject;
 import com.candlk.common.util.Formats;
-import com.candlk.context.web.Jsons;
 import lombok.extern.slf4j.Slf4j;
 import me.codeplayer.util.EasyDate;
 import me.codeplayer.util.NumberUtil;
@@ -28,7 +27,7 @@ public class XAIRedemptionJob {
 	public void run() throws Exception {
 		final EasyDate d = new EasyDate();
 		final String yyyyMMdd = Formats.getYyyyMMdd(d) + "", yyyyMM = Formats.getYyyyMM(d) + "", outM = d.getYear() + "-" + d.getMonth(),
-				weeklyYyyyMMdd = Formats.getYyyyMMdd(d.addDay(1 - d.getWeekDay())) + "", outW = d.getYear() + "-" + d.getMonth() + "-" + d.getWeekDay();
+				weeklyYyyyMMdd = Formats.getYyyyMMdd(d.addDay(1 - d.getWeekDay())) + "", outW = d.getYear() + "-" + d.getMonth() + "-" + d.getDay();
 		final JSONObject root = deserialization(web3JConfig.statFilePath);
 
 		final JSONObject daily = root.getJSONObject("D").getJSONObject(yyyyMMdd),
@@ -143,12 +142,7 @@ public class XAIRedemptionJob {
 		root.getJSONObject("W").getJSONObject(weeklyYyyyMMdd).put(totalRedemption, new BigDecimal("19049.35"));
 		root.getJSONObject("W").getJSONObject(weeklyYyyyMMdd).put(totalRecycle, new BigDecimal("28574"));
 
-		root.getJSONObject("M").getJSONObject(yyyyMM).put(totalRedemption, new BigDecimal("409244.65"));
-		root.getJSONObject("M").getJSONObject(yyyyMM).put(totalRecycle, new BigDecimal("613866.98"));
-
-		System.out.println(Jsons.encode(root));
-
-		serialization("/mnt/xai_bot/stat.json", root);
+		// serialization("/mnt/xai_bot/stat.json", root);
 	}
 
 }

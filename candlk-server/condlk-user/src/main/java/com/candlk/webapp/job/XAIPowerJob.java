@@ -31,7 +31,10 @@ public class XAIPowerJob {
 
 	public final static String poolFactoryContractAddress = "0xF9E08660223E2dbb1c0b28c82942aB6B5E38b8E5", PowerCachePath = "/mnt/xai_bot/power.json";
 
-	public final static BigDecimal esXAIWei = new BigDecimal(10000), keysWei = BigDecimal.ONE;
+	public final static BigDecimal esXAIWei = new BigDecimal(10000),
+			esXAI10Wei = new BigDecimal(100000),
+			esXAI20Wei = new BigDecimal(200000),
+			keysWei = BigDecimal.ONE;
 
 	@Nonnull
 	public static PoolInfoVO getPoolInfo(String poolAddress, Web3j web3j, boolean flush) {
@@ -152,47 +155,17 @@ public class XAIPowerJob {
 
 			final int len = infoMap.size(), topN = web3JConfig.topN > len ? len : web3JConfig.topN;
 
-			final List<PoolInfoVO> esXAIPowerTopN = infoMap.values().stream().sorted((o1, o2) -> o2.calcEsXAIPower(esXAIWei).compareTo(o1.calcEsXAIPower(esXAIWei))).toList();
-			final StringBuilder sb = new StringBuilder("### 10000/EsXAI算力排行榜  \n  ");
-			sb.append("|  排名  |  池子  |  算力  |  加成   | EsXAI  | Keys  | 活跃  |   \n  ");
-			sb.append("|:------:|:------|:-------:|:-----:|:-----:|:-----:|:-----:|  \n  ");
-			final StringBuilder tgMsg = new StringBuilder("*\uD83D\uDCB910000/EsXAI Stake Computing Power Rank *\n\n");
-			tgMsg.append("*Network EsXAI Pools Staked Total: * ").append(XAIRedemptionJob.formatAmount(totalEsXAIStaked)).append("esXAI \n")
-					.append("*Network Keys Pools Staked Total: * ").append(totalKeysStaked).append(" \n\n")
-					.append("*   Power    Tier   EsXAI      Keys    Active           Reward/Pool* \n");
-			for (int i = 1; i <= topN; i++) {
-				final PoolInfoVO info = esXAIPowerTopN.get(i - 1);
-				// 只刷新排行榜上池子的活跃状态，并更新委托人地址
-				final BigDecimal totalStakedAmount = info.parseTotalStakedAmount();
-				final String poolName = Web3JConfig.getContractName(info.poolAddress),
-						total = totalStakedAmount.movePointLeft(4).setScale(0, RoundingMode.HALF_UP).toPlainString() + "w",
-						keyCount = info.keyCount.toString();
-				sb.append("| ").append(i)
-						.append(" | [").append(outPoolName(poolName)).append("](https://app.xai.games/pool/").append(info.poolAddress).append("/summary)")
-						.append(info.getUpdateSharesTimestamp().compareTo(BigInteger.ZERO) > 0 ? "<font color=\"red\">变</font> | " : " | ")
-						.append(info.calcEsXAIPower(esXAIWei)).append(" | ")
-						.append("×").append(info.calcStakingTier()).append(" | ")
-						.append(total).append(" | ")
-						.append(keyCount).append(" | ")
-						.append(getAndFlushActivePool(info, web3JConfig.proxyRestTemplate, web3j, endBlockNumber, web3JConfig.weakActiveThreshold, true)
-								// .append(nonFlushActivePool(info, web3j)
-								? "[<font color=\"green\">✔️</font>](https://arbiscan.io/address/" + info.getPoolAddress() + "#tokentxns)"
-								: "[<font color=\"red\">✘</font>](https://arbiscan.io/address/" + info.getPoolAddress() + "#tokentxns)"
-						)
-						.append(" |   \n  ")
-				;
-				buildTgMsg(tgMsg, i, info, poolName, keyCount, true);
-			}
-			log.info("EsXAI算力排行榜：{}", sb);
-			web3JConfig.sendWarn("EsXAI算力排行榜", sb.toString(), tgMsg.toString());
+			sendEsXAIRank(infoMap, totalEsXAIStaked, totalKeysStaked, topN, endBlockNumber, esXAIWei, true);
+			sendEsXAIRank(infoMap, totalEsXAIStaked, totalKeysStaked, topN, endBlockNumber, esXAI10Wei, false);
+			sendEsXAIRank(infoMap, totalEsXAIStaked, totalKeysStaked, topN, endBlockNumber, esXAI20Wei, false);
 
 			final List<PoolInfoVO> keysIPowerTopN = infoMap.values().stream().sorted((o1, o2) -> o2.calcKeysPower(keysWei).compareTo(o1.calcKeysPower(keysWei))).toList();
-			sb.setLength(0);
+			final StringBuilder sb = new StringBuilder();
 			sb.append("### 1/Keys算力排行榜  \n  ");
 			sb.append("|  排名  |   池子   |   算力   |  加成  | 总质押  | 活跃  |   \n  ");
 			sb.append("|:------:|:------|:-------:|:-----:|:-----:|:-----:|  \n  ");
 
-			tgMsg.setLength(0);
+			final StringBuilder tgMsg = new StringBuilder();
 			tgMsg.append("*\uD83D\uDCB91/Keys Stake Computing Power Rank *\n\n");
 			tgMsg.append("*Network EsXAI Pools Staked Total: * ").append(XAIRedemptionJob.formatAmount(totalEsXAIStaked)).append("esXAI \n")
 					.append("*Network Keys Pools Staked Total: * ").append(totalKeysStaked).append("\n\n")
@@ -215,7 +188,7 @@ public class XAIPowerJob {
 						.append(" |   \n  ")
 				;
 
-				buildTgMsg(tgMsg, i, info, poolName, keyCount, false);
+				buildTgMsg(tgMsg, i, info, poolName, keyCount, esXAIWei, false);
 			}
 			// 持久化本地缓存文件
 			flushActivePoolLocalFile();
@@ -227,12 +200,48 @@ public class XAIPowerJob {
 		}
 	}
 
+	private void sendEsXAIRank(Map<String, PoolInfoVO> infoMap, BigDecimal totalEsXAIStaked, BigInteger totalKeysStaked, int topN, BigInteger endBlockNumber, BigDecimal esXAIWei, boolean flush) {
+		final List<PoolInfoVO> esXAIPowerTopN = infoMap.values().stream().sorted((o1, o2) -> o2.calcEsXAIPower(esXAIWei).compareTo(o1.calcEsXAIPower(esXAIWei))).toList();
+		final StringBuilder sb = new StringBuilder("### " + esXAIWei + "/EsXAI算力排行榜  \n  ");
+		sb.append("|  排名  |  池子  |  算力  |  加成   | EsXAI  | Keys  | 活跃  |   \n  ");
+		sb.append("|:------:|:------|:-------:|:-----:|:-----:|:-----:|:-----:|  \n  ");
+		final StringBuilder tgMsg = new StringBuilder("*\uD83D\uDCB9" + esXAIWei + "/EsXAI Stake Computing Power Rank *\n\n");
+		tgMsg.append("*Network EsXAI Pools Staked Total: * ").append(XAIRedemptionJob.formatAmount(totalEsXAIStaked)).append("esXAI \n")
+				.append("*Network Keys Pools Staked Total: * ").append(totalKeysStaked).append(" \n\n")
+				.append("*   Power    Tier   EsXAI      Keys    Active           Reward/Pool* \n");
+		for (int i = 1; i <= topN; i++) {
+			final PoolInfoVO info = esXAIPowerTopN.get(i - 1);
+			// 只刷新排行榜上池子的活跃状态，并更新委托人地址
+			final BigDecimal totalStakedAmount = info.parseTotalStakedAmount();
+			final String poolName = Web3JConfig.getContractName(info.poolAddress),
+					total = totalStakedAmount.movePointLeft(4).setScale(0, RoundingMode.HALF_UP).toPlainString() + "w",
+					keyCount = info.keyCount.toString();
+			sb.append("| ").append(i)
+					.append(" | [").append(outPoolName(poolName)).append("](https://app.xai.games/pool/").append(info.poolAddress).append("/summary)")
+					.append(info.getUpdateSharesTimestamp().compareTo(BigInteger.ZERO) > 0 ? "<font color=\"red\">变</font> | " : " | ")
+					.append(info.calcEsXAIPower(esXAIWei)).append(" | ")
+					.append("×").append(info.calcStakingTier()).append(" | ")
+					.append(total).append(" | ")
+					.append(keyCount).append(" | ")
+					.append(getAndFlushActivePool(info, web3JConfig.proxyRestTemplate, web3j, endBlockNumber, web3JConfig.weakActiveThreshold, flush)
+							// .append(nonFlushActivePool(info, web3j)
+							? "[<font color=\"green\">✔️</font>](https://arbiscan.io/address/" + info.getPoolAddress() + "#tokentxns)"
+							: "[<font color=\"red\">✘</font>](https://arbiscan.io/address/" + info.getPoolAddress() + "#tokentxns)"
+					)
+					.append(" |   \n  ")
+			;
+			buildTgMsg(tgMsg, i, info, poolName, keyCount, esXAIWei, true);
+		}
+		log.info("EsXAI算力排行榜：{}", sb);
+		web3JConfig.sendWarn("EsXAI算力排行榜", sb.toString(), tgMsg.toString());
+	}
+
 	public static String outputActive(boolean active, String poolAddress) {
 		return active ? "[✅](https://arbiscan.io/address/" + poolAddress + "#tokentxns)"
 				: "[❌](https://arbiscan.io/address/" + poolAddress + "#tokentxns)";
 	}
 
-	private void buildTgMsg(StringBuilder tgMsg, int i, PoolInfoVO info, String poolName, String keyCount, boolean esXAIRank) {
+	private void buildTgMsg(StringBuilder tgMsg, int i, PoolInfoVO info, String poolName, String keyCount, BigDecimal esXAIWei, boolean esXAIRank) {
 		final String total = info.outputExXAI();
 		tgMsg.append("*").append(i).append("  ").append(i < 10 ? "  " : "")
 				.append("  ").append(esXAIRank ? info.calcEsXAIPower(esXAIWei) : info.calcKeysPower(keysWei))

@@ -48,23 +48,31 @@ public class PoolInfoVO extends StaticStruct {
 		return new BigDecimal(wei).movePointLeft(4).setScale(1, RoundingMode.DOWN).toPlainString().replaceAll("\\.0", "");
 	}
 
-	public transient volatile BigDecimal esXAIPower;
+	public transient volatile Map<BigDecimal, BigDecimal> esXAIPowerMap = new HashMap<>();
 
 	/**
-	 * esXAI算力 = 10000/esXAI总质押 * (keys总质押 * 阶梯加成 * esXAI分成比例 = esXAI池总算力)
+	 * esXAI算力 = 10000/(esXAI总质押 + 10000) * (keys总质押 * 阶梯加成 * esXAI分成比例 = esXAI池总算力)
 	 */
 	public synchronized BigDecimal calcEsXAIPower(BigDecimal wei) {
-		if (esXAIPower != null) {
-			return esXAIPower;
+		if (poolAddress.equalsIgnoreCase("0x03cedc27e3d6282cd99a565d824f67549e3c1d54")) {
+			System.out.println("目标地址");
+		}
+		final BigDecimal power = esXAIPowerMap.get(wei);
+		if (power != null) {
+			return power;
 		}
 		final BigDecimal totalStakedAmount = parseTotalStakedAmount();
 		final BigDecimal tier = calcStakingTier();
 		if (stakedBucketShare.compareTo(BigInteger.ZERO) <= 0 || wei.compareTo(totalStakedAmount) >= 0 || tier.compareTo(new BigDecimal(2)) < 0) { // 无配比
-			return esXAIPower = BigDecimal.ZERO;
+			esXAIPowerMap.put(wei, BigDecimal.ZERO);
+			return BigDecimal.ZERO;
 		}
-		final BigDecimal esXAIPoolTotalPower = new BigDecimal(keyCount).multiply(tier)
-				.multiply(new BigDecimal(stakedBucketShare).divide(percent, 18, RoundingMode.HALF_UP));
-		return esXAIPower = (wei.divide(totalStakedAmount, 18, RoundingMode.HALF_UP)).multiply(esXAIPoolTotalPower).setScale(2, RoundingMode.HALF_UP);
+		// keys总质押 * 阶梯加成 * esXAI分成比例 = esXAI池总算力
+		final BigDecimal esXAIPoolTotalPower = new BigDecimal(keyCount).multiply(tier).multiply(new BigDecimal(stakedBucketShare).divide(percent, 18, RoundingMode.HALF_UP)),
+				// wei / (esXAI总质押 + wei) * esXAI池总算力
+				esXAIPower = (wei.divide(totalStakedAmount.add(wei), 18, RoundingMode.HALF_UP)).multiply(esXAIPoolTotalPower).setScale(2, RoundingMode.HALF_UP);
+		esXAIPowerMap.put(wei, esXAIPower);
+		return esXAIPower;
 	}
 
 	public transient volatile BigDecimal totalStakedAmountVal;
