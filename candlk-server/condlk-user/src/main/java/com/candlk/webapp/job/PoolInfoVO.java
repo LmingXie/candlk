@@ -54,9 +54,6 @@ public class PoolInfoVO extends StaticStruct {
 	 * esXAI算力 = 10000/(esXAI总质押 + 10000) * (keys总质押 * 阶梯加成 * esXAI分成比例 = esXAI池总算力)
 	 */
 	public synchronized BigDecimal calcEsXAIPower(BigDecimal wei) {
-		if (poolAddress.equalsIgnoreCase("0x03cedc27e3d6282cd99a565d824f67549e3c1d54")) {
-			System.out.println("目标地址");
-		}
 		final BigDecimal power = esXAIPowerMap.get(wei);
 		if (power != null) {
 			return power;
