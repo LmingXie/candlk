@@ -120,24 +120,34 @@ public class Web3JConfig {
 		return web3jCache = Web3j.build(new HttpService(web3jUrl));
 	}
 
+	private static int counter = 2;
+
 	public void sendWarn(String title, String content, String telegramMsg) {
-		SpringUtil.asyncRun(() -> {
-			final HttpEntity<JSONObject> httpEntity = new HttpEntity<>(JSONObject.of(
-					"msgtype", "markdown",
-					"markdown", JSONObject.of(
-							"title", title,
-							"text", content
-					),
-					"at", JSONObject.of("isAtAll", "true")), new HttpHeaders());
-			final String body = restTemplate.postForEntity(dingTalkBotUrl, httpEntity, String.class)
-					.getBody();
-			final JSONObject resp = Jsons.parseObject(body);
-			if ("0".equals(resp.getString("errcode"))) {
-				log.warn("预警通知结果：{}", body);
+		if (content != null) {
+			if (counter > 0) {
+				SpringUtil.asyncRun(() -> {
+					final HttpEntity<JSONObject> httpEntity = new HttpEntity<>(JSONObject.of(
+							"msgtype", "markdown",
+							"markdown", JSONObject.of(
+									"title", title,
+									"text", content
+							),
+							"at", JSONObject.of("isAtAll", "true")), new HttpHeaders());
+					final String body = restTemplate.postForEntity(dingTalkBotUrl, httpEntity, String.class)
+							.getBody();
+					final JSONObject resp = Jsons.parseObject(body);
+					if ("0".equals(resp.getString("errcode"))) {
+						log.warn("预警通知结果：{}", body);
+					} else {
+						log.error("预警通知异常：body={},title={},text={}", body, title, content);
+					}
+				});
+				counter--;
 			} else {
-				log.error("预警通知异常：body={},title={},text={}", body, title, content);
+				counter = 2;
+
 			}
-		});
+		}
 		SpringUtil.asyncRun(() -> sendTelegramMessage(telegramMsg));
 	}
 

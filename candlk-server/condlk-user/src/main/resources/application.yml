@@ -56,7 +56,7 @@ service:
   cron:
     XAIScanJob: "0/5 * * * * ?"
     XAIRedemptionJob: "0 0 0/1 * * ?"
-    XAIPowerJob: "0 0 0/1 * * ?"
+    XAIPowerJob: "0 0 0/4 * * ?"
   xai:
     dingTalkBotUrl: https://oapi.dingtalk.com/robot/send?access_token=0699ae605b56910e521bf8fea6104d028a1e724d068f8261a6271b2a877c783f
     tgMsgHookUrl: https://api.telegram.org/bot7098739919:AAG7V8jhpmhehF9Z5ZHL6YgA9qmmpkwV3Zg/sendMessage
@@ -80,11 +80,11 @@ service:
       - https://arbitrum-one.public.blastapi.io
       - wss://arbitrum-one-rpc.publicnode.com
       - https://endpoints.omniatech.io/v1/arbitrum/one/public
-    lastBlock: 216156793
+    lastBlock: 217817527
     # 大额赎回成功
-    redemptionThreshold: 8000
+    redemptionThreshold: 50000
     # 大额质押与赎回
-    esXAIThreshold: 15000
+    esXAIThreshold: 30000
     keysThreshold: 10
     # 弱活跃度触发阈值（每次减半后需要进行调整，产出参考：https://arbiscan.io/address/0x958e5cc35fd7f95c135d55c7209fa972bdb68617#tokentxns）
     weakActiveThreshold: 2000
