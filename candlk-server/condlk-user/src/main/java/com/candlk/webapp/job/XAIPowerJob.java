@@ -32,8 +32,8 @@ public class XAIPowerJob {
 	public final static String poolFactoryContractAddress = "0xF9E08660223E2dbb1c0b28c82942aB6B5E38b8E5", PowerCachePath = "/mnt/xai_bot/power.json";
 
 	public final static BigDecimal esXAIWei = new BigDecimal(10000),
-			esXAI10Wei = new BigDecimal(100000),
-			esXAI20Wei = new BigDecimal(200000),
+			esXAI25Wei = new BigDecimal(250000),
+			esXAI50Wei = new BigDecimal(500000),
 			keysWei = BigDecimal.ONE;
 
 	@Nonnull
@@ -156,8 +156,8 @@ public class XAIPowerJob {
 			final int len = infoMap.size(), topN = web3JConfig.topN > len ? len : web3JConfig.topN;
 
 			sendEsXAIRank(infoMap, totalEsXAIStaked, totalKeysStaked, topN, endBlockNumber, esXAIWei, true);
-			sendEsXAIRank(infoMap, totalEsXAIStaked, totalKeysStaked, topN, endBlockNumber, esXAI10Wei, false);
-			sendEsXAIRank(infoMap, totalEsXAIStaked, totalKeysStaked, topN, endBlockNumber, esXAI20Wei, false);
+			sendEsXAIRank(infoMap, totalEsXAIStaked, totalKeysStaked, topN, endBlockNumber, esXAI25Wei, false);
+			sendEsXAIRank(infoMap, totalEsXAIStaked, totalKeysStaked, topN, endBlockNumber, esXAI50Wei, false);
 
 			final List<PoolInfoVO> keysIPowerTopN = infoMap.values().stream().sorted((o1, o2) -> o2.calcKeysPower(keysWei).compareTo(o1.calcKeysPower(keysWei))).toList();
 			final StringBuilder sb = new StringBuilder();
@@ -216,10 +216,14 @@ public class XAIPowerJob {
 			final String poolName = Web3JConfig.getContractName(info.poolAddress),
 					total = totalStakedAmount.movePointLeft(4).setScale(0, RoundingMode.HALF_UP).toPlainString() + "w",
 					keyCount = info.keyCount.toString();
+			final BigDecimal esXAIPower = info.calcEsXAIPower(esXAIWei);
+			if (esXAIPower.compareTo(BigDecimal.ZERO) <= 0) {
+				break;
+			}
 			sb.append("| ").append(i)
 					.append(" | [").append(outPoolName(poolName)).append("](https://app.xai.games/pool/").append(info.poolAddress).append("/summary)")
 					.append(info.getUpdateSharesTimestamp().compareTo(BigInteger.ZERO) > 0 ? "<font color=\"red\">变</font> | " : " | ")
-					.append(info.calcEsXAIPower(esXAIWei)).append(" | ")
+					.append(esXAIPower).append(" | ")
 					.append("×").append(info.calcStakingTier()).append(" | ")
 					.append(total).append(" | ")
 					.append(keyCount).append(" | ")
