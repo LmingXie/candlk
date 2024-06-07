@@ -105,11 +105,11 @@ public class PoolInfoVO extends StaticStruct {
 				.multiply(keysPoolTotalPower).setScale(2, RoundingMode.HALF_UP);
 	}
 
-	public final static BigDecimal Silver = new BigDecimal(10000),// Silver 白银
-			Gold = new BigDecimal(100000), // Gold 黄金
-			Platinum = new BigDecimal(500000), // Platinum 铂金
-			Diamond = new BigDecimal(5500000), // Diamond 钻石
-			percent = new BigDecimal(1000_000);
+	public final static BigDecimal Silver = new BigDecimal(30000),// Silver 白银
+			Gold = new BigDecimal(2000000), // Gold 黄金
+			Platinum = new BigDecimal(4000000), // Platinum 铂金
+			Diamond = new BigDecimal(8000000), // Diamond 钻石
+			percent = new BigDecimal(1000_000); // 百分比换算单位
 
 	public transient volatile BigDecimal tierCache;
 
@@ -120,7 +120,7 @@ public class PoolInfoVO extends StaticStruct {
 		final BigDecimal totalStakedAmount = parseTotalStakedAmount();
 		final BigDecimal tier; // Bronze 青铜
 		if (totalStakedAmount.compareTo(Diamond) >= 0) {
-			tier = BigDecimal.valueOf(6);
+			tier = BigDecimal.valueOf(7);
 		} else if (totalStakedAmount.compareTo(Platinum) >= 0) {
 			tier = BigDecimal.valueOf(3);
 		} else if (totalStakedAmount.compareTo(Gold) >= 0) {
