@@ -60,7 +60,7 @@ public class PoolInfoVO extends StaticStruct {
 		}
 		final BigDecimal totalStakedAmount = parseTotalStakedAmount();
 		final BigDecimal tier = calcStakingTier();
-		if (stakedBucketShare.compareTo(BigInteger.ZERO) <= 0 || wei.compareTo(totalStakedAmount) >= 0 || tier.compareTo(new BigDecimal(2)) < 0) { // 无配比
+		if (stakedBucketShare.compareTo(BigInteger.ZERO) <= 0 || wei.compareTo(totalStakedAmount) >= 0 || tier.compareTo(new BigDecimal("1.5")) < 0) { // 无配比
 			esXAIPowerMap.put(wei, BigDecimal.ZERO);
 			return BigDecimal.ZERO;
 		}
@@ -95,7 +95,7 @@ public class PoolInfoVO extends StaticStruct {
 		if (keysPower != null) {
 			return keysPower;
 		}
-		if (keyBucketShare.compareTo(BigInteger.ZERO) <= 0) { // 无配比
+		if (keyBucketShare.compareTo(BigInteger.ZERO) <= 0 || keyCount.compareTo(BigInteger.ZERO) == 0) { // 无配比
 			return keysPower = BigDecimal.ZERO;
 		}
 		final BigDecimal keyCount = new BigDecimal(this.keyCount);
