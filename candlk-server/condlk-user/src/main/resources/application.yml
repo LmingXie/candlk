@@ -80,7 +80,7 @@ service:
       - https://arbitrum-one.public.blastapi.io
       - wss://arbitrum-one-rpc.publicnode.com
       - https://endpoints.omniatech.io/v1/arbitrum/one/public
-    lastBlock: 222419967
+    lastBlock: 222635609
     # 大额赎回成功
     redemptionThreshold: 50000
     # 大额质押与赎回
@@ -93,6 +93,7 @@ service:
     # 排行榜排名
     topN: 30
     # 监控的交易发送人地址
-    #spyFroms:
-      #"0xcd6100d7a6b120b7042ba09b787a1cb26a2e6ae1": Alpha-K1
-      #"0xad490066fedddb64bafc266dca033a84ac5c900b": Alpha-K2
+    spyFroms:
+      "0x0e7CdB5FF1Ea75c5cc320B88b0c932aD3Ec65139": Hacked
+      "0x54BE3a794282C030b15E43aE2bB182E14c409C5e": 39联合319
+      "0xE0b73e751e7BbA93023c5c2275596ded8A17Ba30": TopOne1500

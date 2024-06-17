@@ -109,7 +109,7 @@ public class XAIScanJob {
 					}
 				}
 				// 只识别大额质押与赎回
-				else if ("0xf9e08660223e2dbb1c0b28c82942ab6b5e38b8e5".equalsIgnoreCase(to)) {
+				if ("0xf9e08660223e2dbb1c0b28c82942ab6b5e38b8e5".equalsIgnoreCase(to)) {
 					final Function<Object[], String[]> function = METHOD2TIP.get(method);
 					if (function != null) {
 						final String[] msg = function.apply(new Object[] { from, to, hash, input, from, method, web3JConfig.esXAIThreshold, web3JConfig.keysThreshold, lastBlock, "1" });
