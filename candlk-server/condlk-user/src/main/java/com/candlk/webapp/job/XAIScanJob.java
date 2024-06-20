@@ -56,7 +56,7 @@ public class XAIScanJob {
 		log.info("结束本次扫描，最后区块：{}", web3JConfig.lastBlock);
 	}
 
-	public static final BigInteger MAX_KEYS_CAPACITY = new BigInteger("750");
+	public static final BigInteger MAX_KEYS_CAPACITY = new BigInteger("1000");
 
 	private void exec(Web3j newWeb3j, BigInteger blockNumber, BigInteger lastBlock) throws Exception {
 		final EthBlock.Block block = newWeb3j.ethGetBlockByNumber(new DefaultBlockParameterNumber(blockNumber), true).send().getBlock();

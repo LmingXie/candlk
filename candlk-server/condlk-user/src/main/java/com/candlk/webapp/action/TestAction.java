@@ -47,7 +47,7 @@ public class TestAction {
 	@GetMapping("/flushPower")
 	public Messager<Void> flushPower(ProxyRequest q) throws Exception {
 		xaiPowerJob.run();
-		xaiRedemptionJob.run();
+		// xaiRedemptionJob.run();
 		return Messager.OK();
 	}
 

@@ -12,13 +12,12 @@ import com.candlk.context.web.Jsons;
 import com.github.benmanes.caffeine.cache.Cache;
 import com.github.benmanes.caffeine.cache.Caffeine;
 import lombok.extern.slf4j.Slf4j;
+import me.codeplayer.util.EasyDate;
 import org.checkerframework.checker.nullness.qual.PolyNull;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.web.client.RestTemplate;
 import org.web3j.protocol.Web3j;
-
-import static com.candlk.webapp.job.PoolInfoVO.parsePercent;
 
 @Slf4j
 @Configuration
@@ -169,7 +168,7 @@ public class XAIPowerJob {
 			tgMsg.append("*\uD83D\uDCB91/Keys Stake Computing Power Rank *\n\n");
 			tgMsg.append("*Network EsXAI Pools Staked Total: * ").append(XAIRedemptionJob.formatAmount(totalEsXAIStaked)).append("esXAI \n")
 					.append("*Network Keys Pools Staked Total: * ").append(totalKeysStaked).append("\n\n")
-					.append("*   Power    Tier   EsXAI      Keys    Active           Reward/Pool* \n");
+					.append("*  Power   Tier    EsXAI     Keys/Active        Pool/Risk/UpdateEndTime* \n");
 
 			for (int i = 1; i <= topN; i++) {
 				final PoolInfoVO info = keysIPowerTopN.get(i - 1);
@@ -194,7 +193,7 @@ public class XAIPowerJob {
 			flushActivePoolLocalFile();
 			XAIRedemptionJob.serialization(PowerCachePath, JSON.parseObject(Jsons.encode(infoMap)));
 			log.info("Keys算力排行榜：{}", sb);
-			web3JConfig.sendWarn("Keys算力排行榜", sb.toString(), tgMsg.toString());
+			web3JConfig.sendWarn("Keys算力排行榜", /*sb.toString()*/null, tgMsg.toString());
 		} catch (Exception e) {
 			log.error("算力统计异常", e);
 		}
@@ -208,7 +207,7 @@ public class XAIPowerJob {
 		final StringBuilder tgMsg = new StringBuilder("*\uD83D\uDCB9" + esXAIWei + "/EsXAI Stake Computing Power Rank *\n\n");
 		tgMsg.append("*Network EsXAI Pools Staked Total: * ").append(XAIRedemptionJob.formatAmount(totalEsXAIStaked)).append("esXAI \n")
 				.append("*Network Keys Pools Staked Total: * ").append(totalKeysStaked).append(" \n\n")
-				.append("*   Power    Tier   EsXAI      Keys    Active           Reward/Pool* \n");
+				.append("*  Power   Tier    EsXAI     Keys/Active        Pool/Risk/UpdateEndTime* \n");
 		for (int i = 1; i <= topN; i++) {
 			final PoolInfoVO info = esXAIPowerTopN.get(i - 1);
 			// 只刷新排行榜上池子的活跃状态，并更新委托人地址
@@ -246,17 +245,47 @@ public class XAIPowerJob {
 	}
 
 	private void buildTgMsg(StringBuilder tgMsg, int i, PoolInfoVO info, String poolName, String keyCount, BigDecimal esXAIWei, boolean esXAIRank) {
-		final String total = info.outputExXAI();
+		final String esXAITotal = info.outputExXAI();
+		final long updateSharesTimestamp = info.getUpdateSharesTimestamp().longValue();
+		final String stakingTier = info.calcStakingTier().toPlainString();
+		final String power = (esXAIRank ? info.calcEsXAIPower(esXAIWei) : info.calcKeysPower(keysWei)).toPlainString();
 		tgMsg.append("*").append(i).append("  ").append(i < 10 ? "  " : "")
-				.append("  ").append(esXAIRank ? info.calcEsXAIPower(esXAIWei) : info.calcKeysPower(keysWei))
-				.append("* 	   ×").append(info.calcStakingTier())
-				.append(" 	   ").append(total).append(total.length() > 4 ? "        " : "          ")
-				.append(keyCount).append(keyCount.length() > 2 ? "      " : "        ")
-				.append(outputActive(nonFlushActivePool(info, web3j), info.poolAddress)).append("     \\[")
-				.append(parsePercent(info.ownerShare)).append("/").append(parsePercent(info.keyBucketShare)).append("/").append(parsePercent(info.stakedBucketShare))
-				.append("][")
-				.append(poolName.length() > 14 ? poolName.substring(0, 14) : poolName).append("](app.xai.games/pool/").append(info.poolAddress).append("/summary)")
-				.append(info.getUpdateSharesTimestamp().compareTo(BigInteger.ZERO) > 0 ? "‼\uFE0F" : "")
+				// 算力
+				.append("  ").append(power).append("*")
+				// 加成阶梯
+				.append(switch (stakingTier.length()) {
+					case 3 -> " 	  ";
+					case 4 -> "   ";
+					case 5 -> "  ";
+					default -> " 	 ";
+				}).append(stakingTier)
+				// esXAI质押总量
+				.append(switch (stakingTier.length()) {
+					case 3 -> " 	";
+					case 4 -> "   ";
+					case 5 -> "  ";
+					default -> " 	   ";
+				}).append(esXAITotal).append(
+						switch (esXAITotal.length()) {
+							case 3 -> "        ";
+							case 4 -> "     ";
+							case 5 -> "    ";
+							case 6 -> "  ";
+							default -> "          ";
+						})
+				.append(keyCount)
+				.append(outputActive(nonFlushActivePool(info, web3j), info.poolAddress))
+				// 池子的分配比率
+				// .append("     \\[").append(parsePercent(info.ownerShare)).append("/").append(parsePercent(info.keyBucketShare)).append("/").append(parsePercent(info.stakedBucketShare)).append("]")
+				.append(switch (keyCount.length()) {
+							case 1 -> "              ";
+							case 2 -> "           ";
+							case 3 -> "         ";
+							default -> "      ";
+						}
+				)
+				.append("[").append(poolName.length() > 13 ? poolName.substring(0, 13) : poolName).append("](app.xai.games/pool/").append(info.poolAddress).append("/summary)")
+				.append(updateSharesTimestamp > 0 ? "‼\uFE0F" + new EasyDate(updateSharesTimestamp * 1000).toDateTimeString().replaceAll("2024-", "") : "")
 				.append("\n")
 		;
 	}

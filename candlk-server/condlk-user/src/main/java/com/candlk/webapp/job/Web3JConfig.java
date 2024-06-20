@@ -54,7 +54,7 @@ public class Web3JConfig {
 	/** 池子Keys大额 */
 	public BigDecimal keysThreshold = new BigDecimal(5);
 	/** 顶级Keys算力池解除质押成功提醒 */
-	public BigDecimal unstakeKeysThreshold = new BigDecimal("2.7");
+	public BigDecimal unstakeKeysThreshold = new BigDecimal("2");
 	/**
 	 * 相对较弱的活跃度检查阈值
 	 * TODO 每次减半后需要进行调整，产出参考：https://arbiscan.io/address/0x958e5cc35fd7f95c135d55c7209fa972bdb68617#tokentxns
