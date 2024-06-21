@@ -236,7 +236,17 @@ public class XAIPowerJob {
 			buildTgMsg(tgMsg, i, info, poolName, keyCount, esXAIWei, true);
 		}
 		log.info("EsXAI算力排行榜：{}", sb);
-		web3JConfig.sendWarn("EsXAI算力排行榜", flush ? sb.toString() : null, tgMsg.toString());
+		web3JConfig.sendWarn("EsXAI算力排行榜", flush && hasPushEsXAIRank() ? sb.toString() : null, tgMsg.toString());
+	}
+
+	private static int esXAIFlushCounter = 2;
+
+	public boolean hasPushEsXAIRank() {
+		if (esXAIFlushCounter-- > 0) {
+			return false;
+		}
+		esXAIFlushCounter = 2;
+		return true;
 	}
 
 	public static String outputActive(boolean active, String poolAddress) {
