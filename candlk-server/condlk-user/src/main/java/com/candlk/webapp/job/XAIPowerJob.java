@@ -18,6 +18,7 @@ import org.springframework.context.annotation.Configuration;
 import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.web.client.RestTemplate;
 import org.web3j.protocol.Web3j;
+import org.web3j.protocol.http.HttpService;
 
 @Slf4j
 @Configuration
@@ -176,7 +177,7 @@ public class XAIPowerJob {
 				final String poolName = Web3JConfig.getContractName(info.poolAddress), keyCount = info.keyCount.toString();
 				sb.append("| ").append(i)
 						.append(" | [").append(outPoolName(poolName)).append("](https://app.xai.games/pool/").append(info.poolAddress).append("/summary)")
-						.append(info.getUpdateSharesTimestamp().compareTo(BigInteger.ZERO) > 0 ? "<font color=\"red\">变</font> | " : " | ")
+						.append(info.hasUpdateSharesTimestamp() ? "<font color=\"red\">变</font> | " : " | ")
 						.append(info.calcKeysPower(keysWei)).append(" | ")
 						.append("×").append(info.calcStakingTier()).append(" | ")
 						.append(info.keyCount).append(" | ")
@@ -221,7 +222,7 @@ public class XAIPowerJob {
 			}
 			sb.append("| ").append(i)
 					.append(" | [").append(outPoolName(poolName)).append("](https://app.xai.games/pool/").append(info.poolAddress).append("/summary)")
-					.append(info.getUpdateSharesTimestamp().compareTo(BigInteger.ZERO) > 0 ? "<font color=\"red\">变</font> | " : " | ")
+					.append(info.hasUpdateSharesTimestamp() ? "<font color=\"red\">变</font> | " : " | ")
 					.append(esXAIPower).append(" | ")
 					.append("×").append(info.calcStakingTier()).append(" | ")
 					.append(total).append(" | ")
@@ -257,6 +258,7 @@ public class XAIPowerJob {
 	private void buildTgMsg(StringBuilder tgMsg, int i, PoolInfoVO info, String poolName, String keyCount, BigDecimal esXAIWei, boolean esXAIRank) {
 		final String esXAITotal = info.outputExXAI();
 		final long updateSharesTimestamp = info.getUpdateSharesTimestamp().longValue();
+		final boolean hasUpdateSharesTimestamp = info.hasUpdateSharesTimestamp();
 		final String stakingTier = info.calcStakingTier().toPlainString();
 		final String power = (esXAIRank ? info.calcEsXAIPower(esXAIWei) : info.calcKeysPower(keysWei)).toPlainString();
 		final String tierAndEsXAITotal = stakingTier + "/" + esXAITotal;
@@ -291,7 +293,7 @@ public class XAIPowerJob {
 						}
 				)
 				.append("[").append(poolName.length() > 13 ? poolName.substring(0, 13) : poolName).append("](app.xai.games/pool/").append(info.poolAddress).append("/summary)")
-				.append(updateSharesTimestamp > 0 ? "‼\uFE0F" + new EasyDate(updateSharesTimestamp * 1000).toDateTimeString().replaceAll("2024-", "") : "")
+				.append(hasUpdateSharesTimestamp ? "‼\uFE0F" + new EasyDate(updateSharesTimestamp * 1000).toDateTimeString().replaceAll("2024-", "") : "")
 				.append("\n")
 		;
 	}
@@ -306,8 +308,9 @@ public class XAIPowerJob {
 		System.out.println(outPoolName("ALPHA 5 - Franchisee"));
 		// System.out.println(new BigDecimal("744229").movePointLeft(4).setScale(0, RoundingMode.HALF_UP));
 
-		// final Web3j web3j1 = Web3j.build(new HttpService("https://arbitrum-one.public.blastapi.io"));
-		// initLocalFile(web3j1);
+		final Web3j web3j1 = Web3j.build(new HttpService("https://arb1.arbitrum.io/rpc"));
+		PoolInfoVO vo = PoolInfo.getPoolInfo(web3j1, "0xc4be9475778df18b6e2a5b9e74cb08a0dab54170").toVO();
+		System.out.println(Jsons.encode(vo));
 	}
 
 	private static void initLocalFile(Web3j web3j1) throws Exception {

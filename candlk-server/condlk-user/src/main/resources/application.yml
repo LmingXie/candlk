@@ -61,7 +61,7 @@ service:
     dingTalkBotUrl: https://oapi.dingtalk.com/robot/send?access_token=0699ae605b56910e521bf8fea6104d028a1e724d068f8261a6271b2a877c783f
     tgMsgHookUrl: https://api.telegram.org/bot7098739919:AAG7V8jhpmhehF9Z5ZHL6YgA9qmmpkwV3Zg/sendMessage
     tgChatId: -1002081472730
-    web3jUrl: https://rpc.ankr.com/arbitrum
+    web3jUrl: https://arb1.arbitrum.io/rpc
     web3jUrlPool:
       - https://arbitrum.llamarpc.com
       - https://arbitrum-one-rpc.publicnode.com
@@ -77,10 +77,9 @@ service:
       - https://arb1.arbitrum.io/rpc
       - https://rpc.ankr.com/arbitrum
       - https://arb-pokt.nodies.app
-      - https://arbitrum-one.public.blastapi.io
       - wss://arbitrum-one-rpc.publicnode.com
       - https://endpoints.omniatech.io/v1/arbitrum/one/public
-    lastBlock: 224378958
+    lastBlock: 224497993
     # 大额赎回成功
     redemptionThreshold: 50000
     # 大额质押与赎回
