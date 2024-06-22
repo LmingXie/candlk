@@ -32,7 +32,7 @@ public class XAIPowerJob {
 
 	public final static BigDecimal esXAIWei = new BigDecimal(10000),
 			esXAI5Wei = new BigDecimal(50000),
-			esXAI10Wei = new BigDecimal(1000000),
+			esXAI10Wei = new BigDecimal(100000),
 			keysWei = BigDecimal.ONE;
 
 	@Nonnull
