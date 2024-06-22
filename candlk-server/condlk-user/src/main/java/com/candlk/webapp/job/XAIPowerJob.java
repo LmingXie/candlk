@@ -193,7 +193,7 @@ public class XAIPowerJob {
 			flushActivePoolLocalFile();
 			XAIRedemptionJob.serialization(PowerCachePath, JSON.parseObject(Jsons.encode(infoMap)));
 			log.info("Keys算力排行榜：{}", sb);
-			web3JConfig.sendWarn("Keys算力排行榜", /*sb.toString()*/null, tgMsg.toString());
+			web3JConfig.sendWarn("Keys算力排行榜", sb.toString(), tgMsg.toString());
 		} catch (Exception e) {
 			log.error("算力统计异常", e);
 		}

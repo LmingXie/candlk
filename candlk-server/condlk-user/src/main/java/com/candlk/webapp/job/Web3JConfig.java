@@ -3,6 +3,8 @@ package com.candlk.webapp.job;
 import java.math.*;
 import java.net.InetSocketAddress;
 import java.net.Proxy;
+import java.nio.ByteBuffer;
+import java.nio.charset.StandardCharsets;
 import java.util.*;
 import java.util.concurrent.TimeUnit;
 import java.util.function.Function;
@@ -17,6 +19,7 @@ import com.github.benmanes.caffeine.cache.Caffeine;
 import lombok.Getter;
 import lombok.Setter;
 import lombok.extern.slf4j.Slf4j;
+import org.apache.commons.lang3.StringUtils;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.boot.context.properties.ConfigurationProperties;
 import org.springframework.context.annotation.Bean;
@@ -185,12 +188,46 @@ public class Web3JConfig {
 	private final static Function<String, String> initContractName = k -> {
 		final Web3j web3jProxy = SpringUtil.getBean(Web3j.class);
 		try {
-			return getContractName(web3jProxy, k);
+			final String contractName = getContractName(web3jProxy, k);
+			if (StringUtils.isNotEmpty(contractName)) {
+				return contractName.startsWith("ALPHA") ? contractName
+						// 非阿尔法过滤合约非UTF8编码字符
+						: filterOffUtf8Mb4(contractName).replaceAll("“", "").replaceAll("”", "")
+						.replaceAll("\\?", "")
+						.replaceAll("\\.", "");
+			}
+			return contractName;
 		} catch (Exception e) {
 			log.error("获取合约名称失败：" + e);
 		}
 		return k;
 	};
+
+	static public String filterOffUtf8Mb4(String text) {
+		final byte[] bytes = text.getBytes(StandardCharsets.UTF_8);
+		final ByteBuffer buffer = ByteBuffer.allocate(bytes.length);
+		int i = 0;
+		while (i < bytes.length) {
+			short b = bytes[i];
+			if (b > 0) {
+				buffer.put(bytes[i++]);
+				continue;
+			}
+			b += 256;
+			if ((b ^ 0xC0) >> 4 == 0) {
+				buffer.put(bytes, i, 2);
+				i += 2;
+			} else if ((b ^ 0xE0) >> 4 == 0) {
+				buffer.put(bytes, i, 3);
+				i += 3;
+			} else if ((b ^ 0xF0) >> 4 == 0) {
+				i += 4;
+			}
+		}
+		buffer.flip();
+		return new String(buffer.array(), StandardCharsets.UTF_8);
+	}
+
 	/**
 	 * 根据方法解释提示内容
 	 * <p>
