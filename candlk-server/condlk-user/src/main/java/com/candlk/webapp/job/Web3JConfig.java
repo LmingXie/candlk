@@ -190,11 +190,10 @@ public class Web3JConfig {
 		try {
 			final String contractName = getContractName(web3jProxy, k);
 			if (StringUtils.isNotEmpty(contractName)) {
-				return contractName.startsWith("ALPHA") ? contractName
-						// 非阿尔法过滤合约非UTF8编码字符
-						: filterOffUtf8Mb4(contractName).replaceAll("“", "").replaceAll("”", "")
+				return contractName.replaceAll("“", "").replaceAll("”", "")
 						.replaceAll("\\?", "")
-						.replaceAll("\\.", "");
+						.replaceAll("\\.", "")
+						.replaceAll("\uD83D\uDFE2", "");
 			}
 			return contractName;
 		} catch (Exception e) {
