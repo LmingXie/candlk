@@ -4,10 +4,12 @@ import java.math.*;
 import java.util.*;
 
 import com.alibaba.fastjson2.JSONObject;
+import com.candlk.common.util.Formats;
 import lombok.Getter;
 import lombok.Setter;
 import lombok.extern.slf4j.Slf4j;
 import me.codeplayer.util.Arith;
+import me.codeplayer.util.EasyDate;
 import org.apache.commons.lang3.StringUtils;
 import org.springframework.web.client.RestTemplate;
 import org.web3j.abi.datatypes.StaticStruct;
@@ -43,6 +45,18 @@ public class PoolInfoVO extends StaticStruct {
 
 	public BigInteger v6;
 	public String _name;
+	public transient volatile BigDecimal keyCountBigDecimal;
+
+	public BigDecimal parseKeyCount() {
+		if (keyCountBigDecimal == null) {
+			synchronized (this) {
+				if (keyCountBigDecimal == null) {
+					keyCountBigDecimal = new BigDecimal(keyCount);
+				}
+			}
+		}
+		return keyCountBigDecimal;
+	}
 
 	public boolean hasUpdateSharesTimestamp() {
 		return updateSharesTimestamp != null && updateSharesTimestamp.longValue() > (System.currentTimeMillis() / 1000);
@@ -50,6 +64,14 @@ public class PoolInfoVO extends StaticStruct {
 
 	public static String parsePercent(BigInteger wei) {
 		return new BigDecimal(wei).movePointLeft(4).setScale(1, RoundingMode.DOWN).toPlainString().replaceAll("\\.0", "");
+	}
+
+	public BigDecimal keyBucketShare() {
+		return new BigDecimal(keyBucketShare).movePointLeft(6).setScale(2, RoundingMode.DOWN);
+	}
+
+	public BigDecimal stakedBucketShare() {
+		return new BigDecimal(stakedBucketShare).movePointLeft(6).setScale(2, RoundingMode.DOWN);
 	}
 
 	public transient volatile Map<BigDecimal, BigDecimal> esXAIPowerMap = new HashMap<>();
@@ -69,7 +91,7 @@ public class PoolInfoVO extends StaticStruct {
 			return BigDecimal.ZERO;
 		}
 		// keys总质押 * 阶梯加成 * esXAI分成比例 = esXAI池总算力
-		final BigDecimal esXAIPoolTotalPower = new BigDecimal(keyCount).multiply(tier).multiply(new BigDecimal(stakedBucketShare).divide(percent, 18, RoundingMode.HALF_UP)),
+		final BigDecimal esXAIPoolTotalPower = parseKeyCount().multiply(tier).multiply(new BigDecimal(stakedBucketShare).divide(percent, 18, RoundingMode.HALF_UP)),
 				// wei / (esXAI总质押 + wei) * esXAI池总算力
 				esXAIPower = (wei.divide(totalStakedAmount.add(wei), 18, RoundingMode.HALF_UP)).multiply(esXAIPoolTotalPower).setScale(2, RoundingMode.HALF_UP);
 		esXAIPowerMap.put(wei, esXAIPower);
@@ -102,7 +124,7 @@ public class PoolInfoVO extends StaticStruct {
 		if (keyBucketShare.compareTo(BigInteger.ZERO) <= 0 || keyCount.compareTo(BigInteger.ZERO) == 0) { // 无配比
 			return keysPower = BigDecimal.ZERO;
 		}
-		final BigDecimal keyCount = new BigDecimal(this.keyCount);
+		final BigDecimal keyCount = parseKeyCount();
 		final BigDecimal keysPoolTotalPower = keyCount.multiply(calcStakingTier())
 				.multiply(new BigDecimal(keyBucketShare).divide(percent, 18, RoundingMode.HALF_UP));
 		return keysPower = wei.divide(keyCount, 18, RoundingMode.HALF_UP)
@@ -215,6 +237,67 @@ public class PoolInfoVO extends StaticStruct {
 			}
 		}
 		return false;
+	}
+
+	/** 产出 */
+	public transient BigDecimal yield, hourYield;
+
+	public void calcYield(Map<String, Map<Integer, BigInteger>> yieldStat, EasyDate now, int len) {
+		final Map<Integer, BigInteger> stat = yieldStat.get(poolAddress);
+		BigInteger total = BigInteger.ZERO;
+		if (stat != null) {
+			BigInteger reward = stat.get(Formats.getYyyyMMdd(now));
+			if (reward != null) {
+				total = total.add(reward);
+			}
+			if (len > 1) {
+				for (int i = 1; i < len; i++) {
+					reward = stat.get(Formats.getYyyyMMdd(now.addDay(-1)));
+					if (reward != null) {
+						total = total.add(reward);
+					}
+				}
+				now.addDay(len - 1);
+			}
+		}
+		yield = new BigDecimal(total).movePointLeft(18).setScale(2, RoundingMode.HALF_UP);
+
+		final BigDecimal day7Diff = new BigDecimal((24 * len) - (24 - now.getHour()));
+		// 1Keys的平均小时产出 = 单位天产出 / （小时数 * Keys总数）
+		hourYield = yield.divide(day7Diff, 18, RoundingMode.HALF_UP);
+	}
+
+	public transient BigDecimal keysYield;
+
+	public BigDecimal calcKeysYield() {
+		if (keysYield != null) {
+			return keysYield;
+		}
+		if (hourYield == null || keyCount.compareTo(BigInteger.ZERO) <= 0) {
+			return keysYield = BigDecimal.ZERO;
+		}
+		final BigDecimal keysShare = keyBucketShare();
+		// 小时总产出 * Keys配比 / Keys股权
+		return keysYield = hourYield.multiply(keysShare).divide(parseKeyCount(), 4, RoundingMode.HALF_UP);
+	}
+
+	public transient BigDecimal esXAIYield;
+
+	public BigDecimal calcEsXAIYield(BigDecimal wei) {
+		if (esXAIYield != null) {
+			return esXAIYield;
+		}
+		final BigDecimal parsedTotalStakedAmount = parseTotalStakedAmount();
+		if (hourYield == null // 没有计算小时产出
+				|| parsedTotalStakedAmount.compareTo(BigDecimal.ZERO) <= 0 // EsXAI质押没有配比
+				|| wei.compareTo(parsedTotalStakedAmount) >= 0) { // 质押量小于10K
+			return esXAIYield = BigDecimal.ZERO;
+		}
+		// 10K / esXAI总质押数 = esXAI股权
+		final BigDecimal esXAIShare = wei.divide(parsedTotalStakedAmount, 18, RoundingMode.HALF_UP);
+		// 小时总产出 * esXAI池配比 * esXAI股权
+		final BigDecimal weiEsXAIShare = hourYield.multiply(stakedBucketShare()).multiply(esXAIShare);
+		return esXAIYield = weiEsXAIShare.setScale(4, RoundingMode.HALF_UP);
 	}
 
 	@Setter

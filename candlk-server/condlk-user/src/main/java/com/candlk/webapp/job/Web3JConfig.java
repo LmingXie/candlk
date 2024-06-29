@@ -73,6 +73,7 @@ public class Web3JConfig {
 
 	private String tgMsgHookUrl;
 	private String tgChatId;
+	private String rankTgChatId;
 
 	/** 需要监听的发送者请求（小写）地址 -> 备注 */
 	public Map<String, String> spyFroms = new HashMap<>();
@@ -152,7 +153,7 @@ public class Web3JConfig {
 		log.info("正在向Telegram推送消息：{}", content);
 		final HttpHeaders headers = new HttpHeaders();
 		HttpEntity<JSONObject> httpEntity = new HttpEntity<>(JSONObject.of(
-				"chat_id", tgChatId,
+				"chat_id", (content.contains("排行榜") || content.contains("Rank")) ? rankTgChatId : tgChatId,
 				"parse_mode", "Markdown",
 				"text", content
 		), headers);

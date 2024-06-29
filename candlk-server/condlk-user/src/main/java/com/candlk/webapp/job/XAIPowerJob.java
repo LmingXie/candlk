@@ -106,7 +106,7 @@ public class XAIPowerJob {
 		final ConcurrentMap<String, Boolean> localCache = activeCaffeine.asMap();
 		try {
 			XAIRedemptionJob.serialization(activeCaffeineFile, JSON.parseObject(Jsons.encode(localCache)));
-		} catch (Exception e) {
+		} catch (Exception ignored) {
 		}
 		log.info("刷新本地文件缓存成功。当前存在【{}】个实例。", localCache.size());
 	}
@@ -142,18 +142,23 @@ public class XAIPowerJob {
 			BigDecimal totalEsXAIStaked = BigDecimal.ZERO;
 			BigInteger totalKeysStaked = BigInteger.ONE;
 			for (Map.Entry<String, PoolInfoVO> entry : infoMap.entrySet()) {
-				final String poolAddress = entry.getKey();
-				final PoolInfoVO oldPoolInfoVO = entry.getValue(), newPoolInfo = PoolInfo.getPoolInfo(web3j, poolAddress).toVO();
-				final String oldDelegateAddress = oldPoolInfoVO == null ? null : oldPoolInfoVO.getDelegateAddress();
-				totalEsXAIStaked = totalEsXAIStaked.add(newPoolInfo.parseTotalStakedAmount());
-				totalKeysStaked = totalKeysStaked.add(newPoolInfo.keyCount);
+				if (entry.getValue() == null) {
+					final String poolAddress = entry.getKey();
+					final PoolInfoVO oldPoolInfoVO = entry.getValue(), newPoolInfo = PoolInfo.getPoolInfo(web3j, poolAddress).toVO();
+					final String oldDelegateAddress = oldPoolInfoVO == null ? null : oldPoolInfoVO.getDelegateAddress();
+					totalEsXAIStaked = totalEsXAIStaked.add(newPoolInfo.parseTotalStakedAmount());
+					totalKeysStaked = totalKeysStaked.add(newPoolInfo.keyCount);
 
-				newPoolInfo.setDelegateAddress(oldDelegateAddress);
-				entry.setValue(newPoolInfo);
-				log.info("正在刷新算力【{}】 每1000EsXAI算力 -> {},每1Keys算力 -> {}", poolAddress, newPoolInfo.calcEsXAIPower(esXAIWei), newPoolInfo.calcKeysPower(keysWei));
+					newPoolInfo.setDelegateAddress(oldDelegateAddress);
+					entry.setValue(newPoolInfo);
+					log.info("正在刷新算力【{}】 每1000EsXAI算力 -> {},每1Keys算力 -> {}", poolAddress, newPoolInfo.calcEsXAIPower(esXAIWei), newPoolInfo.calcKeysPower(keysWei));
+				}
 			}
 
 			final int len = infoMap.size(), topN = web3JConfig.topN > len ? len : web3JConfig.topN;
+			final String[] tgYieldRankMsg = XAIScanJob.yieldRank(infoMap, topN, 1, esXAIWei);
+			web3JConfig.sendWarn("Keys产出排行榜", null, tgYieldRankMsg[0]);
+			web3JConfig.sendWarn("EsXAI产出排行榜", null, tgYieldRankMsg[1]);
 
 			sendEsXAIRank(infoMap, totalEsXAIStaked, totalKeysStaked, topN, endBlockNumber, esXAIWei, true);
 			sendEsXAIRank(infoMap, totalEsXAIStaked, totalKeysStaked, topN, endBlockNumber, esXAI5Wei, false);

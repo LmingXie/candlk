@@ -112,9 +112,13 @@ public class XAIRedemptionJob {
 		os.close();
 	}
 
-	public static synchronized JSONObject deserialization(String url) throws Exception {
-		FileInputStream fis = new FileInputStream(url);
-		ObjectInputStream is = new ObjectInputStream(fis);
+	public static synchronized JSONObject deserialization(String path) throws Exception {
+		final File file = new File(path);
+		if (!file.exists()) {
+			return null;
+		}
+		final FileInputStream fis = new FileInputStream(file);
+		final ObjectInputStream is = new ObjectInputStream(fis);
 		JSONObject data = null;
 		try {
 			data = (JSONObject) is.readObject();
