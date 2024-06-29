@@ -78,7 +78,7 @@ public class XAIScanJob {
 		while (lastBlock.compareTo(web3JConfig.lastBlock) > 0) {
 			final BigInteger blockNumber = web3JConfig.incrLastBlock();
 			SpringUtil.asyncRun(() -> {
-				int retry = 5;
+				int retry = 10;
 				while (retry-- > 0) {
 					try {
 						final Web3j newWeb3j = web3JConfig.pollingGetWeb3j();
