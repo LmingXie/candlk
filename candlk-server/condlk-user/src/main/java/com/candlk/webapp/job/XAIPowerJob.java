@@ -171,10 +171,10 @@ public class XAIPowerJob {
 			sb.append("|:------:|:------|:-------:|:-----:|:-----:|:-----:|  \n  ");
 
 			final StringBuilder tgMsg = new StringBuilder();
-			tgMsg.append("*\uD83D\uDCB91/Keys Stake Computing Power Rank *\n\n");
-			tgMsg.append("*Network EsXAI Pools Staked Total: * ").append(XAIRedemptionJob.formatAmount(totalEsXAIStaked)).append("esXAI \n")
-					.append("*Network Keys Pools Staked Total: * ").append(totalKeysStaked).append("\n\n")
-					.append("*  Power    Tier/EsXAI        Keys/Active        Pool/Risk/EffectiveTime* \n");
+			tgMsg.append("*\uD83D\uDCB91/Keys 质押算力排行榜 *\n\n");
+			tgMsg.append("*全网XAI池总质押量: * ").append(XAIRedemptionJob.formatAmount(totalEsXAIStaked)).append("esXAI \n")
+					.append("*全网Keys池总质押量: * ").append(totalKeysStaked).append("\n\n")
+					.append("*  算力    加成/EsXAI        Keys/活跃状态        池子/变动/生效时间* \n");
 
 			for (int i = 1; i <= topN; i++) {
 				final PoolInfoVO info = keysIPowerTopN.get(i - 1);
@@ -211,9 +211,9 @@ public class XAIPowerJob {
 		sb.append("|  排名  |  池子  |  算力  |  加成   | EsXAI  | Keys  | 活跃  |   \n  ");
 		sb.append("|:------:|:------|:-------:|:-----:|:-----:|:-----:|:-----:|  \n  ");
 		final StringBuilder tgMsg = new StringBuilder("*\uD83D\uDCB9" + esXAIWei + "/EsXAI Stake Computing Power Rank *\n\n");
-		tgMsg.append("*Network EsXAI Pools Staked Total: * ").append(XAIRedemptionJob.formatAmount(totalEsXAIStaked)).append("esXAI \n")
-				.append("*Network Keys Pools Staked Total: * ").append(totalKeysStaked).append(" \n\n")
-				.append("*  Power    Tier/EsXAI        Keys/Active        Pool/Risk/EffectiveTime* \n");
+		tgMsg.append("*全网XAI池总质押量: * ").append(XAIRedemptionJob.formatAmount(totalEsXAIStaked)).append("esXAI \n")
+				.append("*全网Keys池总质押量: * ").append(totalKeysStaked).append(" \n\n")
+				.append("*  算力    加成/EsXAI        Keys/活跃状态        池子/变动/生效时间* \n");
 		for (int i = 1; i <= topN; i++) {
 			final PoolInfoVO info = esXAIPowerTopN.get(i - 1);
 			// 只刷新排行榜上池子的活跃状态，并更新委托人地址

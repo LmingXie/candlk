@@ -152,7 +152,7 @@ public class XAIScanJob {
 					// 算力大于阈值时触发提醒
 					final BigDecimal power;
 					if (poolInfo.keyCount.compareTo(MAX_KEYS_CAPACITY) < 0 && (power = poolInfo.calcKeysPower(BigDecimal.ONE)).compareTo(web3JConfig.unstakeKeysThreshold) >= 0) {
-						final String opType = method.equals("0x2f1a0b1c") ? "质押" : "赎回", opTypeEn = method.equals("0x2f1a0b1c") ? "Staked" : "Redemption";
+						final String opType = method.equals("0x2f1a0b1c") ? "质押" : "赎回", opTypeEn = method.equals("0x2f1a0b1c") ? "质押" : "赎回";
 						web3JConfig.sendWarn("通知：满Keys池" + opType + "提醒",
 								"### 通知：满Keys池" + opType + "提醒！  \n  "
 										+ "顶级池【<font color=\"red\">**[" + poolName + "](https://app.xai.games/pool/" + poolContractAddress + "/summary)**</font>】存在空闲质押空间。  \n  "
@@ -163,15 +163,15 @@ public class XAIScanJob {
 										+ "算力值：**" + power + "**  \n  "
 										+ "[点击前往查看详情](https://arbiscan.io/tx/" + hash + ")",
 
-								"\uD83D\uDCAF*||Notify||：Full Keys Pool " + opTypeEn + "! *\n\n"
-										+ "Full pool [" + poolName + "](app.xai.games/pool/" + poolContractAddress + "/summary) a stake may be made. \n"
-										+ "*Tier：×" + poolInfo.calcStakingTier() + "* \n"
-										+ "*Keys Staked：" + poolInfo.keyCount + "* \n"
-										+ "*Keys Power：" + poolInfo.calcKeysPower(keysWei) + "* \n"
-										+ "esXAI Power：" + poolInfo.calcEsXAIPower(esXAIWei) + " \n"
-										+ "esXAI Staked：" + poolInfo.outputExXAI() + " \n "
-										+ "*Active：*" + outputActive(getAndFlushActivePool(poolInfo, web3JConfig.proxyRestTemplate, newWeb3j, lastBlock, web3JConfig.weakActiveThreshold, true), poolInfo.poolAddress) + " \n"
-										+ "[\uD83D\uDC49\uD83D\uDC49Click View](https://arbiscan.io/tx/" + hash + ")"
+								"\uD83D\uDCAF*||通知||：满Keys池 " + opTypeEn + "! *\n\n"
+										+ "满Keys池 [" + poolName + "](app.xai.games/pool/" + poolContractAddress + "/summary) 存在空闲质押空间。 \n"
+										+ "*加成：×" + poolInfo.calcStakingTier() + "* \n"
+										+ "*Keys总质押：" + poolInfo.keyCount + "* \n"
+										+ "*Keys算力：" + poolInfo.calcKeysPower(keysWei) + "* \n"
+										+ "esXAI算力：" + poolInfo.calcEsXAIPower(esXAIWei) + " \n"
+										+ "esXAI总质押：" + poolInfo.outputExXAI() + " \n "
+										+ "*活跃状态：*" + outputActive(getAndFlushActivePool(poolInfo, web3JConfig.proxyRestTemplate, newWeb3j, lastBlock, web3JConfig.weakActiveThreshold, true), poolInfo.poolAddress) + " \n"
+										+ "[\uD83D\uDC49\uD83D\uDC49前往查看详情](https://arbiscan.io/tx/" + hash + ")"
 						);
 					}
 				}
@@ -214,20 +214,20 @@ public class XAIScanJob {
 								if (redemptionAmount.compareTo(web3JConfig.redemptionThreshold) >= 0) {
 									final BigDecimal totalAmount = new BigDecimal(new BigInteger(logs.get(0).getData().substring(2), 16)).movePointLeft(18);
 									final String redemptionTo = redemption.getTopics().get(2);
-									web3JConfig.sendWarn("预警：XAI大额赎回领取事件",
-											"### 预警：XAI大额赎回领取事件！  \n  "
+									web3JConfig.sendWarn("预警：XAI大额赎回成功",
+											"### 预警：XAI大额赎回成功！  \n  "
 													+ "识别到【**" + this.getPeriod(redemptionAmount, totalAmount) + "**】天期限的赎回领取事件。  \n  "
 													+ "赎回数量：**" + redemptionAmount.setScale(2, RoundingMode.HALF_UP) + " XAI**  \n  "
 													+ "销毁数量：**" + recycleAmount.setScale(2, RoundingMode.HALF_UP) + " XAI**  \n  "
 													+ "赎回地址：**" + redemptionTo.replaceAll("0x000000000000000000000000", "0x") + "**  \n  "
 													+ "[点击前往查看详情](https://arbiscan.io/tx/" + hash + ")",
 
-											"\uD83D\uDE80*BlockTrade：XAI Complete Redemption !* \n\n"
-													+ "Monitored *" + this.getPeriod(redemptionAmount, totalAmount) + "* days of complete redemption collection event.  \n"
-													+ "Redemption Amount：*" + redemptionAmount.setScale(2, RoundingMode.HALF_UP) + " XAI*  \n"
-													+ "Burn Amount：*" + recycleAmount.setScale(2, RoundingMode.HALF_UP) + " XAI*  \n"
-													+ "Address：*" + redemptionTo.replaceAll("0x000000000000000000000000", "0x") + "*  \n"
-													+ "[\uD83D\uDC49\uD83D\uDC49Click View](https://arbiscan.io/tx/" + hash + ")");
+											"\uD83D\uDE80*大宗交易：XAI 大额赎回成功 !* \n\n"
+													+ "识别到*【" + this.getPeriod(redemptionAmount, totalAmount) + "】*天大额XAI赎回交易.  \n"
+													+ "赎回数量：*" + redemptionAmount.setScale(2, RoundingMode.HALF_UP) + " XAI*  \n"
+													+ "销毁数量：*" + recycleAmount.setScale(2, RoundingMode.HALF_UP) + " XAI*  \n"
+													+ "地址：*" + redemptionTo.replaceAll("0x000000000000000000000000", "0x") + "*  \n"
+													+ "[\uD83D\uDC49\uD83D\uDC49前往查看详情](https://arbiscan.io/tx/" + hash + ")");
 								}
 
 								// 汇总统计
@@ -317,7 +317,7 @@ public class XAIScanJob {
 						case 5 -> "           ";
 						case 6 -> "         ";
 						case 7 -> "      ";
-						default -> " 	   ";
+						default -> " 	  ";
 					})
 					// 单位时间总产出
 					.append("[").append(yieldStr).append("](https://arbiscan.io/address/").append(info.getPoolAddress()).append("#tokentxns)")
@@ -325,9 +325,9 @@ public class XAIScanJob {
 						case 2 -> "           ";
 						case 3 -> "         ";
 						case 4 -> "       ";
-						case 5 -> "      ";
-						case 6 -> "     ";
-						default -> " 	   ";
+						case 5 -> "     ";
+						case 6 -> "    ";
+						default -> " 	  ";
 					})
 					.append("     \\[").append(parsePercent(info.ownerShare)).append("/").append(parsePercent(info.keyBucketShare))
 					.append("/").append(parsePercent(info.stakedBucketShare)).append("]").append(" [")
@@ -357,7 +357,7 @@ public class XAIScanJob {
 						case 5 -> "           ";
 						case 6 -> "         ";
 						case 7 -> "      ";
-						default -> " 	   ";
+						default -> " 	  ";
 					})
 					// 单位时间总产出
 					.append("[").append(yieldStr).append("](https://arbiscan.io/address/").append(info.getPoolAddress()).append("#tokentxns)")
@@ -365,9 +365,9 @@ public class XAIScanJob {
 						case 2 -> "           ";
 						case 3 -> "         ";
 						case 4 -> "       ";
-						case 5 -> "      ";
-						case 6 -> "     ";
-						default -> " 	   ";
+						case 5 -> "     ";
+						case 6 -> "    ";
+						default -> " 	  ";
 					})
 					.append("     \\[").append(parsePercent(info.ownerShare)).append("/").append(parsePercent(info.keyBucketShare))
 					.append("/").append(parsePercent(info.stakedBucketShare)).append("]").append(" [")

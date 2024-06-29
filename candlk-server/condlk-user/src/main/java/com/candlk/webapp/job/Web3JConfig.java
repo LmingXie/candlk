@@ -249,20 +249,20 @@ public class Web3JConfig {
 							.setScale(2, RoundingMode.HALF_UP), " esXAI**  \n  ", "质押", "Staked", (BigDecimal) inputs[6]));
 
 			put("0xd4e44335", inputs -> parseStake(inputs, "通知：Keys 赎回申请", () -> new BigDecimal(new BigInteger(((String) inputs[3]).substring(74), 16)),
-					"**  \n  ", "赎回", "Approve Redemption", (BigDecimal) inputs[7]));
+					"**  \n  ", "赎回", "质押赎回申请", (BigDecimal) inputs[7]));
 
 			put("0x75710569", inputs -> parseStake(inputs, "通知：esXAI 赎回申请", () ->
 					new BigDecimal(new BigInteger(((String) inputs[3]).substring(74), 16)).movePointLeft(18)
-							.setScale(2, RoundingMode.HALF_UP), " esXAI**  \n  ", "赎回", "Approve Redemption", (BigDecimal) inputs[6]));
+							.setScale(2, RoundingMode.HALF_UP), " esXAI**  \n  ", "赎回", "质押赎回申请", (BigDecimal) inputs[6]));
 
 			// unstakeKeys
 			put("0x95003265", inputs -> parseStake(inputs, "预警：Keys 赎回成功", () -> new BigDecimal(new BigInteger(((String) inputs[3]).substring(202, 266), 16)),
-					"**  \n  ", "赎回", "Complete Redemption", (BigDecimal) inputs[7]));
+					"**  \n  ", "赎回", "质押赎回成功", (BigDecimal) inputs[7]));
 
 			// unstakeEsXai
 			put("0x68da34e6", inputs -> parseStake(inputs, "预警：esXAI 赎回成功", () ->
 							new BigDecimal(new BigInteger(((String) inputs[3]).substring(138, 202), 16)).movePointLeft(18).setScale(2, RoundingMode.HALF_UP),
-					" esXAI**  \n  ", "赎回", "Complete Redemption", (BigDecimal) inputs[6]));
+					" esXAI**  \n  ", "赎回", "质押赎回成功", (BigDecimal) inputs[6]));
 
 			put("0x098e8ae7", inputs -> {
 				final String from = (String) inputs[0], hash = (String) inputs[2], nickname = (String) inputs[4];
@@ -273,10 +273,10 @@ public class Web3JConfig {
 								+ "Hash：**" + hash + "**  \n  "
 								+ "[点击前往查看详情](https://arbiscan.io/tx/" + hash + ")",
 
-						"\uD83D\uDE80*Warn：Create Pool !* \n\n"
-								+ "Monitored [" + nickname + "](https://arbiscan.io/address/" + from + ") address creating a new pool.  \n"
+						"\uD83D\uDE80*预警：创建池子 !* \n\n"
+								+ "监控到 [" + nickname + "](https://arbiscan.io/address/" + from + ") 地址创建了一个新池子。  \n"
 								+ "Hash：*" + hash + "*  \n"
-								+ "[\uD83D\uDC49\uD83D\uDC49Click View](https://arbiscan.io/tx/" + hash + ")"
+								+ "[\uD83D\uDC49\uD83D\uDC49点击前往查看详情](https://arbiscan.io/tx/" + hash + ")"
 				};
 			});
 			put(null, inputs -> {
@@ -291,13 +291,13 @@ public class Web3JConfig {
 								+ "Hash：" + hash + "  \n  "
 								+ "[点击前往查看详情](https://arbiscan.io/tx/" + hash + ")",
 
-						"\uD83D\uDE80*Warn：Unrecognized call !* \n\n"
-								+ "Monitored [" + nickname + "](https://arbiscan.io/address/" + from + ") address made an unrecognized call. \n"
+						"\uD83D\uDE80*预警：无法识别的调用 !* \n\n"
+								+ "监听到 [" + nickname + "](https://arbiscan.io/address/" + from + ") 地址发起了一笔无法识别的调用. \n"
 								+ "From：" + from + "  \n"
 								+ "To：*" + to + "*  \n"
 								+ "Method：*" + method + "*  \n"
 								+ "Hash：" + hash + "  \n"
-								+ "[\uD83D\uDC49\uD83D\uDC49Click View](https://arbiscan.io/tx/" + hash + ")"
+								+ "[\uD83D\uDC49\uD83D\uDC49点击前往查看详情](https://arbiscan.io/tx/" + hash + ")"
 
 				};
 			});
@@ -329,15 +329,15 @@ public class Web3JConfig {
 								+ "活跃状态：**" + outputActive + "**  \n  "
 								+ "[点击前往查看详情](https://arbiscan.io/tx/" + hash + ")",
 
-						"\uD83D\uDE80*BlockTrade：" + typeEn + " !* \n\n"
-								+ "Monitored that address [" + nickname + "](https://arbiscan.io/address/" + from + ") in [" + poolName + "](app.xai.games/pool/" + poolContractAddress + "/summary) pool " + typeEn + " action.  \n"
+						"\uD83D\uDE80*大宗交易：" + typeEn + " !* \n\n"
+								+ "识别到关注的 [" + nickname + "](https://arbiscan.io/address/" + from + ") 地址正在 [" + poolName + "](app.xai.games/pool/" + poolContractAddress + "/summary) 池进行 " + typeEn + " action.  \n"
 								+ typeEn + " Amount：*" + amount + x1.replaceAll("\\*\\*", "*") + " \n"
-								+ "*Tier：×" + info.calcStakingTier() + "* \n"
-								+ "*Keys Power：" + info.calcKeysPower(keysWei) + "* \n"
-								+ "*esXAI Power：" + info.calcEsXAIPower(esXAIWei) + "* \n"
-								+ "*esXAI Staked：" + info.outputExXAI() + "* \n "
-								+ "*Keys Staked：" + info.keyCount + "* \n"
-								+ "*Active：*" + outputActive + " \n "
+								+ "*加成：×" + info.calcStakingTier() + "* \n"
+								+ "*Keys算力：" + info.calcKeysPower(keysWei) + "* \n"
+								+ "*esXAI算力：" + info.calcEsXAIPower(esXAIWei) + "* \n"
+								+ "*esXAI总质押：" + info.outputExXAI() + "* \n "
+								+ "*Keys总质押：" + info.keyCount + "* \n"
+								+ "*活跃状态：*" + outputActive + " \n "
 								+ "[\uD83D\uDC49\uD83D\uDC49Click View](https://arbiscan.io/tx/" + hash + ")"
 				};
 			}
