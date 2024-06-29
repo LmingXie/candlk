@@ -56,6 +56,8 @@ public class Web3JConfig {
 	public BigDecimal esXAIThreshold = new BigDecimal(50000);
 	/** 池子Keys大额 */
 	public BigDecimal keysThreshold = new BigDecimal(5);
+	/** XAI 开始赎回的触发阈值 */
+	public BigInteger startRedemptionThreshold = BigInteger.valueOf(100000L);
 	/** 顶级Keys算力池解除质押成功提醒 */
 	public BigDecimal unstakeKeysThreshold = new BigDecimal("2");
 	/**
@@ -153,7 +155,7 @@ public class Web3JConfig {
 		log.info("正在向Telegram推送消息：{}", content);
 		final HttpHeaders headers = new HttpHeaders();
 		HttpEntity<JSONObject> httpEntity = new HttpEntity<>(JSONObject.of(
-				"chat_id", (content.contains("排行榜") || content.contains("Rank")) ? rankTgChatId : tgChatId,
+				"chat_id", (content.contains("排行榜") || content.contains("Rank") || content.contains("Redemption Stat")) ? rankTgChatId : tgChatId,
 				"parse_mode", "Markdown",
 				"text", content
 		), headers);

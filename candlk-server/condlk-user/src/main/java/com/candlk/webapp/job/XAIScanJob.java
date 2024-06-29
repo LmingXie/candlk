@@ -22,7 +22,6 @@ import org.web3j.protocol.core.DefaultBlockParameterNumber;
 import org.web3j.protocol.core.methods.response.*;
 import org.web3j.protocol.core.methods.response.EthBlock.TransactionObject;
 import org.web3j.protocol.core.methods.response.EthBlock.TransactionResult;
-import org.web3j.protocol.http.HttpService;
 
 import static com.candlk.webapp.job.PoolInfoVO.parsePercent;
 import static com.candlk.webapp.job.Web3JConfig.METHOD2TIP;
@@ -43,6 +42,7 @@ public class XAIScanJob {
 	public static Map<String, Map<Integer, BigInteger>> yieldStatCache;
 	public static final Function<String, Map<Integer, BigInteger>> yieldStatBuilder = k -> new HashMap<>();
 	private static final String yieldStatFile = "/mnt/xai_bot/yieldStatCache";
+	public static final BigInteger pow18 = BigInteger.TEN.pow(18), SecondsDaily = BigInteger.valueOf(24 * 60 * 60L);
 
 	public static synchronized Map<String, Map<Integer, BigInteger>> getYieldStatCache() {
 		if (yieldStatCache == null) {
@@ -69,42 +69,6 @@ public class XAIScanJob {
 			}
 			log.info("【产量统计】刷新本地文件缓存成功。当前存在【{}】个实例。", yieldStatCache.size());
 		}
-	}
-
-	public static void main(String[] args) throws Exception {
-		final Web3j web3j1 = Web3j.build(new HttpService("https://arb1.arbitrum.io/rpc"));
-
-		final TransactionReceipt receipt = web3j1.ethGetTransactionReceipt("0x437e06e12c83529d8f5cdb82baac317e28da4a4f54be7f12fda53ba0348aab4f")
-				.send().getTransactionReceipt().get();
-		final List<Log> logs = receipt.getLogs();
-		Log log = logs.get(0);
-		final BigInteger reward = new BigInteger(log.getData().substring(2), 16);
-		System.out.println(reward);
-		List<String> topics = log.getTopics();
-		if (topics.size() == 3 && log.getAddress().equalsIgnoreCase("0x4C749d097832DE2FEcc989ce18fDc5f1BD76700c")) {
-			System.out.println("reward = " + reward);
-		}
-		final String poolContractAddress = new Address(topics.get(2)).getValue();
-		System.out.println("poolContractAddress = " + poolContractAddress);
-		final EasyDate now = new EasyDate();
-		final int yyyyMMdd = Formats.getYyyyMMdd(now);
-		// syncUpdate(poolContractAddress, yyyyMMdd, reward);
-		System.out.println(Jsons.encode(yieldStatCache));
-		// flushYieldStatLocalFile();
-		// 7日产出 + Keys时产估算 + 10K EsXAI时产估算     T+1产出 + Keys时产估算 + 10K EsXAI时产估算
-		final Map<String, PoolInfoVO> infoMap = readLocalCache();
-		Map<String, Map<Integer, BigInteger>> yieldStat = getYieldStatCache();
-		for (Map.Entry<String, PoolInfoVO> entry : infoMap.entrySet()) {
-			entry.getValue().calcYield(yieldStat, now, 7);
-		}
-		final List<PoolInfoVO> esXAIPowerTopN = infoMap.values().stream().sorted((o1, o2) -> o2.yield.compareTo(o1.yield)).toList();
-		for (PoolInfoVO poolInfoVO : esXAIPowerTopN) {
-			if (poolInfoVO.getPoolAddress().equalsIgnoreCase("0x124efad83c11cb1112a8a342e83233619b41a992")) {
-				System.out.println(poolInfoVO);
-			}
-		}
-		System.out.println(esXAIPowerTopN);
-		System.out.println(now.getHour());
 	}
 
 	@Scheduled(cron = "${service.cron.XAIScanJob:0/5 * * * * ?}")
@@ -154,7 +118,8 @@ public class XAIScanJob {
 		log.info("正在执行扫描区块：{}", blockNumber);
 		final List<TransactionResult> txs = block.getTransactions();
 		if (!CollectionUtils.isEmpty(txs)) {
-			final int yyyyMMdd = Formats.getYyyyMMdd(new EasyDate());
+			final EasyDate now = new EasyDate();
+			final int yyyyMMdd = Formats.getYyyyMMdd(now);
 			for (TransactionResult txR : txs) {
 				final TransactionObject tx = (TransactionObject) txR.get();
 				final Transaction info = tx.get();
@@ -235,7 +200,7 @@ public class XAIScanJob {
 				}
 				// esXAI 合约监控
 				if ("0x4c749d097832de2fecc989ce18fdc5f1bd76700c".equalsIgnoreCase(to)) {
-					if ("0x840ecba0".equalsIgnoreCase(method)) { // 大额赎回的领取
+					if ("0x840ecba0".equalsIgnoreCase(method)) { // XAI大额赎回的领取
 						SpringUtil.asyncRun(() -> {
 							final TransactionReceipt receipt = getTransactionReceipt(hash);
 							final List<Log> logs = receipt.getLogs();
@@ -269,6 +234,35 @@ public class XAIScanJob {
 								xaiRedemptionJob.incrStat(redemptionAmount, recycleAmount);
 							}
 						});
+					} else if ("0x1ef306e3".equalsIgnoreCase(method)) { // XAI大额赎回
+						if (input.length() == 138) {
+							final BigInteger amount = new BigInteger(input.substring(11, 74), 16).divide(pow18);
+							if (amount.compareTo(web3JConfig.startRedemptionThreshold) >= 0) {
+								final BigInteger duration = new BigInteger(input.substring(74), 16).divide(SecondsDaily);
+								final BigDecimal amountBig = new BigDecimal(amount), redemptionAmount = amountBig.multiply(duration.compareTo(PERIOD15D) == 0
+										? PERIOD15 : duration.compareTo(PERIOD90D) == 0 ? PERIOD90 : PERIOD180).setScale(0, RoundingMode.DOWN);
+								final BigDecimal recycleAmount = amountBig.subtract(redemptionAmount).setScale(0, RoundingMode.DOWN);
+								final int day = duration.intValue();
+								final String dateTimeString = now.addDay(day).toDateTimeString();
+								now.addDay(-day);
+								web3JConfig.sendWarn("预警：大额XAI赎回开始",
+										"### 预警：大额XAI赎回开始！  \n  "
+												+ "识别到【**" + duration + "**】天期限的XAI大额赎回开始。  \n  "
+												+ "赎回数量：**" + redemptionAmount + " XAI**  \n  "
+												+ "销毁数量：**" + recycleAmount + " XAI**  \n  "
+												+ "到期时间：**" + dateTimeString + "**  \n  "
+												+ "赎回地址：**[" + from + "](https://arbiscan.io/address/" + from + ")**  \n  "
+												+ "[点击前往查看详情](https://arbiscan.io/tx/" + hash + ")",
+
+										"⛑⛑*预警：大额XAI赎回开始！* \n\n"
+												+ "识别到 *【" + duration + "】*天期限的XAI大额赎回开始。  \n"
+												+ "赎回地址：[" + from + "](https://arbiscan.io/address/" + from + ")  \n"
+												+ "赎回数量：*" + redemptionAmount + " XAI*  \n"
+												+ "销毁数量：*" + recycleAmount + " XAI*  \n"
+												+ "到期时间：*" + dateTimeString + "*  \n"
+												+ "[\uD83D\uDC49\uD83D\uDC49点击前往查看详情](https://arbiscan.io/tx/" + hash + ")");
+							}
+						}
 					}
 				}
 			}
@@ -281,6 +275,8 @@ public class XAIScanJob {
 	}
 
 	private final static BigDecimal PERIOD15 = new BigDecimal("0.25"), PERIOD90 = new BigDecimal("0.625"), PERIOD180 = BigDecimal.ONE;
+
+	public final static BigInteger PERIOD15D = BigInteger.valueOf(15L), PERIOD90D = BigInteger.valueOf(90L), PERIOD180D = BigInteger.valueOf(180L);
 
 	private String getPeriod(BigDecimal redemptionAmount, BigDecimal totalAmount) {
 		final BigDecimal div = redemptionAmount.divide(totalAmount);
@@ -315,24 +311,16 @@ public class XAIScanJob {
 
 			final String yieldStr = info.yield.setScale(0, RoundingMode.DOWN).toPlainString(),
 					hourKeyYieldStr = info.keysYield.toPlainString();
-			tgMsg.append("*")
-					.append(i)
-					.append("    ")
-					.append(i < 10 ? "  *" : "*")
+			tgMsg.append("*").append(i).append("    ").append(i < 10 ? "  *" : "*")
 					// Keys时产
-					.append(hourKeyYieldStr)
-					.append(switch (hourKeyYieldStr.length()) {
+					.append(hourKeyYieldStr).append(switch (hourKeyYieldStr.length()) {
 						case 5 -> "           ";
 						case 6 -> "         ";
 						case 7 -> "      ";
 						default -> " 	   ";
 					})
 					// 单位时间总产出
-					.append("[")
-					.append(yieldStr)
-					.append("](https://arbiscan.io/address/")
-					.append(info.getPoolAddress())
-					.append("#tokentxns)")
+					.append("[").append(yieldStr).append("](https://arbiscan.io/address/").append(info.getPoolAddress()).append("#tokentxns)")
 					.append(switch (yieldStr.length()) {
 						case 2 -> "           ";
 						case 3 -> "         ";
@@ -341,18 +329,10 @@ public class XAIScanJob {
 						case 6 -> "     ";
 						default -> " 	   ";
 					})
-					.append("     \\[")
-					.append(parsePercent(info.ownerShare))
-					.append("/")
-					.append(parsePercent(info.keyBucketShare))
-					.append("/")
-					.append(parsePercent(info.stakedBucketShare))
-					.append("]")
-					.append(" [")
-					.append(poolName.length() > 13 ? poolName.substring(0, 13) : poolName)
-					.append("](app.xai.games/pool/")
-					.append(info.poolAddress)
-					.append("/summary)")
+					.append("     \\[").append(parsePercent(info.ownerShare)).append("/").append(parsePercent(info.keyBucketShare))
+					.append("/").append(parsePercent(info.stakedBucketShare)).append("]").append(" [")
+					.append(poolName.length() > 13 ? poolName.substring(0, 13) : poolName).append("](app.xai.games/pool/")
+					.append(info.poolAddress).append("/summary)")
 					.append(hasUpdateSharesTimestamp ? "‼\uFE0F" + new EasyDate(updateSharesTimestamp * 1000).toDateTimeString().replaceAll("2024-", "") : "")
 					.append("\n");
 		}
@@ -371,24 +351,16 @@ public class XAIScanJob {
 
 			final String yieldStr = info.yield.setScale(0, RoundingMode.DOWN).toPlainString(),
 					hourEsXAIYieldStr = info.esXAIYield.toPlainString();
-			tgMsg.append("*")
-					.append(i)
-					.append("    ")
-					.append(i < 10 ? "  *" : "*")
+			tgMsg.append("*").append(i).append("    ").append(i < 10 ? "  *" : "*")
 					// 10K EsXAI 试产
-					.append(hourEsXAIYieldStr)
-					.append(switch (hourEsXAIYieldStr.length()) {
+					.append(hourEsXAIYieldStr).append(switch (hourEsXAIYieldStr.length()) {
 						case 5 -> "           ";
 						case 6 -> "         ";
 						case 7 -> "      ";
 						default -> " 	   ";
 					})
 					// 单位时间总产出
-					.append("[")
-					.append(yieldStr)
-					.append("](https://arbiscan.io/address/")
-					.append(info.getPoolAddress())
-					.append("#tokentxns)")
+					.append("[").append(yieldStr).append("](https://arbiscan.io/address/").append(info.getPoolAddress()).append("#tokentxns)")
 					.append(switch (yieldStr.length()) {
 						case 2 -> "           ";
 						case 3 -> "         ";
@@ -397,18 +369,10 @@ public class XAIScanJob {
 						case 6 -> "     ";
 						default -> " 	   ";
 					})
-					.append("     \\[")
-					.append(parsePercent(info.ownerShare))
-					.append("/")
-					.append(parsePercent(info.keyBucketShare))
-					.append("/")
-					.append(parsePercent(info.stakedBucketShare))
-					.append("]")
-					.append(" [")
-					.append(poolName.length() > 13 ? poolName.substring(0, 13) : poolName)
-					.append("](app.xai.games/pool/")
-					.append(info.poolAddress)
-					.append("/summary)")
+					.append("     \\[").append(parsePercent(info.ownerShare)).append("/").append(parsePercent(info.keyBucketShare))
+					.append("/").append(parsePercent(info.stakedBucketShare)).append("]").append(" [")
+					.append(poolName.length() > 13 ? poolName.substring(0, 13) : poolName).append("](app.xai.games/pool/")
+					.append(info.poolAddress).append("/summary)")
 					.append(hasUpdateSharesTimestamp ? "‼\uFE0F" + new EasyDate(updateSharesTimestamp * 1000).toDateTimeString().replaceAll("2024-", "") : "")
 					.append("\n");
 		}
