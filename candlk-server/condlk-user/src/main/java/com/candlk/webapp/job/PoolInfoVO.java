@@ -273,7 +273,7 @@ public class PoolInfoVO extends StaticStruct {
 		if (keysYield != null) {
 			return keysYield;
 		}
-		if (hourYield == null || keyCount.compareTo(BigInteger.ZERO) <= 0) {
+		if (hourYield == null || keyCount.compareTo(BigInteger.valueOf(5L)) <= 0) {
 			return keysYield = BigDecimal.ZERO;
 		}
 		final BigDecimal keysShare = keyBucketShare();
