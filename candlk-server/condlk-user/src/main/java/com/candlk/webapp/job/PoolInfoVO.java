@@ -262,9 +262,9 @@ public class PoolInfoVO extends StaticStruct {
 		}
 		yield = new BigDecimal(total).movePointLeft(18).setScale(2, RoundingMode.HALF_UP);
 
-		final BigDecimal day7Diff = new BigDecimal((24 * len) - (24 - now.getHour()));
+		final BigDecimal hourDiff = new BigDecimal((24 * len) - (24 - now.getHour()));
 		// 1Keys的平均小时产出 = 单位天产出 / （小时数 * Keys总数）
-		hourYield = yield.divide(day7Diff, 18, RoundingMode.HALF_UP);
+		hourYield = yield.divide(hourDiff, 18, RoundingMode.HALF_UP);
 	}
 
 	public transient BigDecimal keysYield;

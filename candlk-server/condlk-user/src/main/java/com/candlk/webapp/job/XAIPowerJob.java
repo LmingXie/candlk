@@ -154,7 +154,7 @@ public class XAIPowerJob {
 			}
 
 			final int len = infoMap.size(), topN = web3JConfig.topN > len ? len : web3JConfig.topN;
-			final String[] tgYieldRankMsg = XAIScanJob.yieldRank(infoMap, topN, 1, esXAIWei);
+			final String[] tgYieldRankMsg = XAIScanJob.yieldRank(infoMap, topN, 2, esXAIWei);
 			web3JConfig.sendWarn("Keys产出排行榜", null, tgYieldRankMsg[0]);
 			web3JConfig.sendWarn("EsXAI产出排行榜", null, tgYieldRankMsg[1]);
 

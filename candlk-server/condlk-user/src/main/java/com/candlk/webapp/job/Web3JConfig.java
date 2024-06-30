@@ -242,11 +242,11 @@ public class Web3JConfig {
 		{
 			put("0x57634198", inputs -> new String[] { "普通消息：从池子中领取奖励", null });
 			put("0x2f1a0b1c", inputs -> parseStake(inputs, "预警：Keys质押", () -> new BigDecimal(new BigInteger(((String) inputs[3]).substring(138, 202), 16)),
-					"**  \n  ", "质押", "Staked", (BigDecimal) inputs[7]));
+					"**  \n  ", "质押", "质押", (BigDecimal) inputs[7]));
 
 			put("0xa528916d", inputs -> parseStake(inputs, "预警：esXAI质押", () ->
 					new BigDecimal(new BigInteger(((String) inputs[3]).substring(74), 16)).movePointLeft(18)
-							.setScale(2, RoundingMode.HALF_UP), " esXAI**  \n  ", "质押", "Staked", (BigDecimal) inputs[6]));
+							.setScale(2, RoundingMode.HALF_UP), " esXAI**  \n  ", "质押", "质押", (BigDecimal) inputs[6]));
 
 			put("0xd4e44335", inputs -> parseStake(inputs, "通知：Keys 赎回申请", () -> new BigDecimal(new BigInteger(((String) inputs[3]).substring(74), 16)),
 					"**  \n  ", "赎回", "质押赎回申请", (BigDecimal) inputs[7]));
@@ -330,8 +330,8 @@ public class Web3JConfig {
 								+ "[点击前往查看详情](https://arbiscan.io/tx/" + hash + ")",
 
 						"\uD83D\uDE80*大宗交易：" + typeEn + " !* \n\n"
-								+ "识别到关注的 [" + nickname + "](https://arbiscan.io/address/" + from + ") 地址正在 [" + poolName + "](app.xai.games/pool/" + poolContractAddress + "/summary) 池进行 " + typeEn + " action.  \n"
-								+ typeEn + " Amount：*" + amount + x1.replaceAll("\\*\\*", "*") + " \n"
+								+ "识别到关注的 [" + nickname + "](https://arbiscan.io/address/" + from + ") 地址正在 [" + poolName + "](app.xai.games/pool/" + poolContractAddress + "/summary) 池进行 " + typeEn + "。  \n\n"
+								+ typeEn + "数量：*" + amount + x1.replaceAll("\\*\\*", "*") + " \n"
 								+ "*加成：×" + info.calcStakingTier() + "* \n"
 								+ "*Keys算力：" + info.calcKeysPower(keysWei) + "* \n"
 								+ "*esXAI算力：" + info.calcEsXAIPower(esXAIWei) + "* \n"

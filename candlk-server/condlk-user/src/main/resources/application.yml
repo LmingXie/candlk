@@ -80,7 +80,8 @@ service:
       - https://arb-pokt.nodies.app
       - wss://arbitrum-one-rpc.publicnode.com
       - https://endpoints.omniatech.io/v1/arbitrum/one/public
-    lastBlock: 226948227
+      - https://arb-mainnet-public.unifra.io
+    lastBlock: 227134910
     # 大额赎回成功
     redemptionThreshold: 50000
     # 大额质押与赎回
