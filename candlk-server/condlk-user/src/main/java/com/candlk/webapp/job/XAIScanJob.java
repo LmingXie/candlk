@@ -22,6 +22,7 @@ import org.web3j.protocol.core.DefaultBlockParameterNumber;
 import org.web3j.protocol.core.methods.response.*;
 import org.web3j.protocol.core.methods.response.EthBlock.TransactionObject;
 import org.web3j.protocol.core.methods.response.EthBlock.TransactionResult;
+import org.web3j.protocol.http.HttpService;
 
 import static com.candlk.webapp.job.PoolInfoVO.parsePercent;
 import static com.candlk.webapp.job.Web3JConfig.METHOD2TIP;
@@ -93,6 +94,24 @@ public class XAIScanJob {
 		log.info("结束本次扫描，最后区块：{}", web3JConfig.lastBlock);
 	}
 
+	public static void main(String[] args) throws Exception {
+		final Web3j web3j1 = Web3j.build(new HttpService("https://arb1.arbitrum.io/rpc"));
+
+		final TransactionReceipt receipt = web3j1.ethGetTransactionReceipt("0xd9ced2936d73b6540b5aa740a7a9e7ba8333fa5ca403ca338d070bb23de3bfae")
+				.send().getTransactionReceipt().get();
+		for (Log l : receipt.getLogs()) {
+			final List<String> topics = l.getTopics();
+			if (topics.size() == 3 && l.getAddress().equalsIgnoreCase("0x4C749d097832DE2FEcc989ce18fDc5f1BD76700c")) {
+				final String poolContractAddress = new Address(topics.get(2)).getValue();
+				final BigInteger reward = new BigInteger(l.getData().substring(2), 16).divide(pow18);
+				// 分池子 分天统计池子的实际产出
+				System.out.println("扫描到池子领取奖励。poolContractAddress = " + poolContractAddress + "，reward = " + reward);
+				log.info("扫描到池子领取奖励。poolContractAddress={}，reward={}", poolContractAddress, reward);
+				break;
+			}
+		}
+	}
+
 	public TransactionReceipt getTransactionReceipt(String hash) {
 		int retry = 20;
 		TransactionReceipt receipt = null;
@@ -137,7 +156,7 @@ public class XAIScanJob {
 							final BigInteger reward = new BigInteger(l.getData().substring(2), 16);
 							// 分池子 分天统计池子的实际产出
 							syncUpdate(poolContractAddress, yyyyMMdd, reward);
-							log.info("扫描到池子领取奖励。poolContractAddress={}，reward={}，hash={}", poolContractAddress, reward, hash);
+							log.info("扫描到池子领取奖励。poolContractAddress={}，reward={}，hash={}", poolContractAddress, reward.divide(pow18), hash);
 							break;
 						}
 					}
