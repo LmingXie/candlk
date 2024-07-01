@@ -66,6 +66,7 @@ public class Web3JConfig {
 	 */
 	public BigDecimal weakActiveThreshold = new BigDecimal(2000);
 	public String statFilePath = "/mnt/xai_bot/stat.json";
+	public Integer yieldLen = 3;
 	/** 取排名多少 */
 	public Integer topN = 20;
 	@Value("${service.proxy.host}")
