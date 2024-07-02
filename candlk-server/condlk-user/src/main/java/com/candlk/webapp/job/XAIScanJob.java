@@ -321,7 +321,7 @@ public class XAIScanJob {
 
 		String[] result = new String[2];
 		List<PoolInfoVO> esXAIPowerTopN = infoMap.values().stream().sorted((o1, o2) -> o2.calcKeysYield().compareTo(o1.calcKeysYield())).toList();
-		StringBuilder tgMsg = new StringBuilder("*\uD83D\uDCB9 Keys 【").append(len).append("】日平均产出排行榜 *\n\n");
+		StringBuilder tgMsg = new StringBuilder("*\uD83D\uDCB9 Keys 【").append(len).append("】日平均小时产出排行榜 *\n\n");
 		tgMsg.append("*     1Keys时产     总产出        配比 / 池子 / 变动 * \n");
 
 		for (int i = 1; i <= topN; i++) {
@@ -361,7 +361,7 @@ public class XAIScanJob {
 
 		esXAIPowerTopN = infoMap.values().stream().sorted((o1, o2) -> o2.calcEsXAIYield(wei).compareTo(o1.calcEsXAIYield(wei))).toList();
 		tgMsg.setLength(0);
-		tgMsg.append("*\uD83D\uDCB9 10K EsXAI【").append(len).append("】日平均产出排行榜 *\n\n");
+		tgMsg.append("*\uD83D\uDCB9 10K EsXAI【").append(len).append("】日平均小时产出排行榜 *\n\n");
 		tgMsg.append("*     10K时产     总产出        配比 / 池子 / 变动 * \n");
 
 		for (int i = 1; i <= topN; i++) {

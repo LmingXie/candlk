@@ -81,7 +81,7 @@ service:
       - wss://arbitrum-one-rpc.publicnode.com
       - https://endpoints.omniatech.io/v1/arbitrum/one/public
       - https://arb-mainnet-public.unifra.io
-    lastBlock: 227472677
+    lastBlock: 227825102
     # 大额赎回成功
     redemptionThreshold: 50000
     # 大额质押与赎回
@@ -93,7 +93,8 @@ service:
     weakActiveThreshold: 2000
     # 顶级Keys算力池解除质押成功提醒
     unstakeKeysThreshold: 2
-    yieldLen: 3
+    # 产量排名天数
+    yieldLen: 4
     # 排行榜排名
     topN: 30
     # 监控的交易发送人地址
