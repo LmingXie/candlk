@@ -234,15 +234,15 @@ public class XAIScanJob {
 									final BigDecimal totalAmount = new BigDecimal(new BigInteger(logs.get(0).getData().substring(2), 16)).movePointLeft(18);
 									final String redemptionTo = redemption.getTopics().get(2);
 									final String formattedAmount = XAIRedemptionJob.formatAmount(redemptionAmount);
-									web3JConfig.sendWarn("大宗交易：XAI大额赎回成功",
-											"### 大宗交易：XAI大额赎回成功！  \n  "
+									web3JConfig.sendWarn("预警：【XAI】大额赎回成功",
+											"### 预警：【XAI】大额赎回成功！  \n  "
 													+ "识别到【**" + this.getPeriod(redemptionAmount, totalAmount) + "**】天期限的赎回领取事件。  \n  "
 													+ "赎回数量：**" + formattedAmount + " XAI**  \n  "
 													+ "销毁数量：**" + recycleAmount + " XAI**  \n  "
 													+ "赎回地址：**" + redemptionTo.replaceAll("0x000000000000000000000000", "0x") + "**  \n  "
 													+ "[点击前往查看详情](https://arbiscan.io/tx/" + hash + ")",
 
-											"\uD83D\uDE80*大宗交易：XAI 大额赎回成功 !* \n\n"
+											"\uD83D\uDCA2\uD83D\uDCA2*预警：XAI 大额赎回成功 !* \n\n"
 													+ "识别到*【" + this.getPeriod(redemptionAmount, totalAmount) + "】*天大额XAI赎回交易.  \n"
 													+ "赎回数量：*" + formattedAmount + " XAI*  \n"
 													+ "销毁数量：*" + recycleAmount + " XAI*  \n"
