@@ -322,7 +322,7 @@ public class XAIScanJob {
 		String[] result = new String[2];
 		List<PoolInfoVO> esXAIPowerTopN = infoMap.values().stream().sorted((o1, o2) -> o2.calcKeysYield().compareTo(o1.calcKeysYield())).toList();
 		StringBuilder tgMsg = new StringBuilder("*\uD83D\uDCB9 Keys 【").append(len).append("】日平均小时产出排行榜 *\n\n");
-		tgMsg.append("*     1Keys时产     总产出        配比 / 池子 / 变动 * \n");
+		tgMsg.append("*     1Keys时产     总产出        keys / 配比 / 池子 / 变动 * \n");
 
 		for (int i = 1; i <= topN; i++) {
 			final PoolInfoVO info = esXAIPowerTopN.get(i - 1);
@@ -343,14 +343,14 @@ public class XAIScanJob {
 					// 单位时间总产出
 					.append("[").append(yieldStr).append("](https://arbiscan.io/address/").append(info.getPoolAddress()).append("#tokentxns)")
 					.append(switch (yieldStr.length()) {
-						case 2 -> "           ";
-						case 3 -> "         ";
-						case 4 -> "       ";
+						case 2 -> "             ";
+						case 3 -> "           ";
+						case 4 -> "         ";
 						case 5 -> "     ";
 						case 6 -> "    ";
 						default -> " 	  ";
 					})
-					.append("     \\[").append(parsePercent(info.ownerShare)).append("/").append(parsePercent(info.keyBucketShare))
+					.append(info.keyCount).append(" ").append("\\[").append(parsePercent(info.ownerShare)).append("/").append(parsePercent(info.keyBucketShare))
 					.append("/").append(parsePercent(info.stakedBucketShare)).append("]").append(" [")
 					.append(poolName.length() > 13 ? poolName.substring(0, 13) : poolName).append("](app.xai.games/pool/")
 					.append(info.poolAddress).append("/summary)")

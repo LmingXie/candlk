@@ -106,10 +106,13 @@ public class XAIRedemptionJob {
 	}
 
 	public static synchronized void serialization(String url, JSONObject data) throws Exception {
-		FileOutputStream fos = new FileOutputStream(url);
-		ObjectOutputStream os = new ObjectOutputStream(fos);
-		os.writeObject(data);
-		os.close();
+		final File file = new File(url);
+		if (file.exists() || file.getParentFile().mkdirs()) {
+			FileOutputStream fos = new FileOutputStream(file);
+			ObjectOutputStream os = new ObjectOutputStream(fos);
+			os.writeObject(data);
+			os.close();
+		}
 	}
 
 	public static synchronized JSONObject deserialization(String path) throws Exception {
