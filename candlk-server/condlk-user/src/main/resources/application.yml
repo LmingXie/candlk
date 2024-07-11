@@ -66,6 +66,8 @@ service:
     web3jUrlPool:
       - https://arbitrum.llamarpc.com
       - https://arbitrum-one-rpc.publicnode.com
+      - https://go.getblock.io/5da38620ee764a558fe561ced07a5911
+      - https://arbitrum-mainnet.infura.io/v3/a558309c0e324da786bc651eb48c082e
       - https://api.zan.top/node/v1/arb/one/public
       - https://arbitrum.drpc.org
       - https://arbitrum.meowrpc.com
@@ -81,7 +83,8 @@ service:
       - wss://arbitrum-one-rpc.publicnode.com
       - https://endpoints.omniatech.io/v1/arbitrum/one/public
       - https://arb-mainnet-public.unifra.io
-    lastBlock: 229192329
+      - https://1rpc.io/arb
+    lastBlock: 230932442
     # 大额赎回成功
     redemptionThreshold: 50000
     # 大额质押与赎回

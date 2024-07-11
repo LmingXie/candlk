@@ -95,7 +95,7 @@ public class XAIScanJob {
 	}
 
 	public static void main(String[] args) throws Exception {
-		final Web3j web3j1 = Web3j.build(new HttpService("https://arb1.arbitrum.io/rpc"));
+		final Web3j web3j1 = Web3j.build(new HttpService("https://arbitrum-mainnet.infura.io/v3/a558309c0e324da786bc651eb48c082e"));
 
 		final TransactionReceipt receipt = web3j1.ethGetTransactionReceipt("0xd9ced2936d73b6540b5aa740a7a9e7ba8333fa5ca403ca338d070bb23de3bfae")
 				.send().getTransactionReceipt().get();
@@ -319,10 +319,13 @@ public class XAIScanJob {
 			entry.getValue().calcYield(yieldStat, now, len);
 		}
 
-		String[] result = new String[2];
+		String[] result = new String[4];
 		List<PoolInfoVO> esXAIPowerTopN = infoMap.values().stream().sorted((o1, o2) -> o2.calcKeysYield().compareTo(o1.calcKeysYield())).toList();
-		StringBuilder tgMsg = new StringBuilder("*\uD83D\uDCB9 Keys 【").append(len).append("】日平均小时产出排行榜 *\n\n");
+		final StringBuilder tgMsg = new StringBuilder("*\uD83D\uDCB9 Keys 【").append(len).append("】日平均小时产出排行榜 *\n\n");
 		tgMsg.append("*     1Keys时产     总产出        keys / 配比 / 池子 / 变动 * \n");
+		final StringBuilder ddMsg = new StringBuilder("### Keys【").append(len).append("】日平均小时产出排行榜  \n  ")
+				.append("|  1Keys时产  |   总产出   |   keys/配比/池子/变动   |   \n  ")
+				.append("|:------:|:------|:-------:|  \n  ");
 
 		for (int i = 1; i <= topN; i++) {
 			final PoolInfoVO info = esXAIPowerTopN.get(i - 1);
@@ -332,6 +335,14 @@ public class XAIScanJob {
 
 			final String yieldStr = info.yield.setScale(0, RoundingMode.DOWN).toPlainString(),
 					hourKeyYieldStr = info.keysYield.toPlainString();
+			ddMsg.append("| ").append(hourKeyYieldStr).append(" | ")
+					// 单位时间总产出
+					.append("[").append(yieldStr).append("](https://arbiscan.io/address/").append(info.getPoolAddress()).append("#tokentxns)").append(" | ")
+					.append(info.keyCount).append("/").append(parsePercent(info.keyBucketShare)).append("%/[")
+					.append(poolName.length() > 13 ? poolName.substring(0, 13) : poolName).append("](https://app.xai.games/pool/").append(info.poolAddress).append("/summary)")
+					.append(hasUpdateSharesTimestamp ? "‼\uFE0F" + new EasyDate(updateSharesTimestamp * 1000).toDateTimeString().replaceAll("2024-", "") : "")
+					.append(" |   \n  ");
+
 			tgMsg.append("*").append(i).append("    ").append(i < 10 ? "  *" : "*")
 					// Keys时产
 					.append(hourKeyYieldStr).append(switch (hourKeyYieldStr.length()) {
@@ -358,12 +369,17 @@ public class XAIScanJob {
 					.append("\n");
 		}
 		result[0] = tgMsg.toString();
+		result[2] = ddMsg.toString();
 
 		esXAIPowerTopN = infoMap.values().stream().sorted((o1, o2) -> o2.calcEsXAIYield(wei).compareTo(o1.calcEsXAIYield(wei))).toList();
 		tgMsg.setLength(0);
 		tgMsg.append("*\uD83D\uDCB9 10K EsXAI【").append(len).append("】日平均小时产出排行榜 *\n\n");
 		tgMsg.append("*     10K时产     总产出        配比 / 池子 / 变动 * \n");
 
+		ddMsg.setLength(0);
+		ddMsg.append("### 10K EsXAI【").append(len).append("】日平均小时产出排行榜  \n  ")
+				.append("|  10K时产  |   总产出   |   配比/池子/变动   |   \n  ")
+				.append("|:------:|:------|:-------:|  \n  ");
 		for (int i = 1; i <= topN; i++) {
 			final PoolInfoVO info = esXAIPowerTopN.get(i - 1);
 			final String poolName = Web3JConfig.getContractName(info.poolAddress);
@@ -372,6 +388,15 @@ public class XAIScanJob {
 
 			final String yieldStr = info.yield.setScale(0, RoundingMode.DOWN).toPlainString(),
 					hourEsXAIYieldStr = info.esXAIYield.toPlainString();
+
+			ddMsg.append("| ").append(hourEsXAIYieldStr).append(" | ")
+					.append("[").append(yieldStr).append("](https://arbiscan.io/address/").append(info.getPoolAddress()).append("#tokentxns)").append(" | ")
+
+					.append(parsePercent(info.stakedBucketShare)).append("%/[")
+					.append(poolName.length() > 13 ? poolName.substring(0, 13) : poolName).append("](https://app.xai.games/pool/")
+					.append(info.poolAddress).append("/summary)")
+					.append(hasUpdateSharesTimestamp ? "/" + new EasyDate(updateSharesTimestamp * 1000).toDateTimeString().replaceAll("2024-", "") : "")
+					.append(" |   \n  ");
 			tgMsg.append("*").append(i).append("    ").append(i < 10 ? "  *" : "*")
 					// 10K EsXAI 试产
 					.append(hourEsXAIYieldStr).append(switch (hourEsXAIYieldStr.length()) {
@@ -398,6 +423,7 @@ public class XAIScanJob {
 					.append("\n");
 		}
 		result[1] = tgMsg.toString();
+		result[3] = ddMsg.toString();
 		return result;
 	}
 

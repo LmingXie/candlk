@@ -154,12 +154,13 @@ public class XAIPowerJob {
 			}
 
 			final int len = infoMap.size(), topN = web3JConfig.topN > len ? len : web3JConfig.topN;
-			final String[] tgYieldRankMsg2 = XAIScanJob.yieldRank(infoMap, topN, 2, esXAIWei);
-			web3JConfig.sendWarn("Keys 2日产出排行榜", null, tgYieldRankMsg2[0]);
-			web3JConfig.sendWarn("EsXAI 2日产出排行榜", null, tgYieldRankMsg2[1]);
+			final int len1 = 3;
+			final String[] tgYieldRankMsg2 = XAIScanJob.yieldRank(infoMap, topN, len1, esXAIWei);
+			web3JConfig.sendWarn("Keys【" + len1 + "】日平均小时产出排行榜", tgYieldRankMsg2[2], tgYieldRankMsg2[0]);
+			web3JConfig.sendWarn("EsXAI【" + len1 + "】日平均小时产出排行榜", tgYieldRankMsg2[3], tgYieldRankMsg2[1]);
 			final String[] tgYieldRankMsg = XAIScanJob.yieldRank(infoMap, topN, web3JConfig.yieldLen, esXAIWei);
-			web3JConfig.sendWarn("Keys产出排行榜", null, tgYieldRankMsg[0]);
-			web3JConfig.sendWarn("EsXAI产出排行榜", null, tgYieldRankMsg[1]);
+			web3JConfig.sendWarn("Keys【" + web3JConfig.yieldLen + "】日平均小时产出排行榜", null, tgYieldRankMsg[0]);
+			web3JConfig.sendWarn("EsXAI【" + web3JConfig.yieldLen + "】日平均小时产出排行榜", null, tgYieldRankMsg[1]);
 
 			sendEsXAIRank(infoMap, totalEsXAIStaked, totalKeysStaked, topN, endBlockNumber, esXAIWei, true);
 			// sendEsXAIRank(infoMap, totalEsXAIStaked, totalKeysStaked, topN, endBlockNumber, esXAI5Wei, false);
