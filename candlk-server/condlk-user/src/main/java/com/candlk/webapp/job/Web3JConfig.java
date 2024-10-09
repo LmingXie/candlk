@@ -3,7 +3,7 @@ package com.candlk.webapp.job;
 import java.math.*;
 import java.net.InetSocketAddress;
 import java.net.Proxy;
-import java.nio.ByteBuffer;
+import java.nio.charset.CharsetEncoder;
 import java.nio.charset.StandardCharsets;
 import java.util.*;
 import java.util.concurrent.TimeUnit;
@@ -194,41 +194,35 @@ public class Web3JConfig {
 		try {
 			final String contractName = getContractName(web3jProxy, k);
 			if (StringUtils.isNotEmpty(contractName)) {
-				return filterOffUtf8Mb4(contractName.replaceAll("“", "").replaceAll("”", "")
+				return filterInvalidUtf8(contractName.replaceAll("“", "").replaceAll("”", "")
 						.replaceAll("\\?", "")
 						.replaceAll("\\.", "")
 						.replaceAll("\uD83D\uDFE2", ""));
 			}
 			return contractName;
 		} catch (Exception e) {
-			log.error("获取合约名称失败：" + e);
+			log.error("获取合约名称失败：", e);
 		}
 		return k;
 	};
 
-	static public String filterOffUtf8Mb4(String text) {
-		final byte[] bytes = text.getBytes(StandardCharsets.UTF_8);
-		final ByteBuffer buffer = ByteBuffer.allocate(bytes.length);
-		int i = 0;
-		while (i < bytes.length) {
-			short b = bytes[i];
-			if (b > 0) {
-				buffer.put(bytes[i++]);
-				continue;
-			}
-			b += 256;
-			if ((b ^ 0xC0) >> 4 == 0) {
-				buffer.put(bytes, i, 2);
-				i += 2;
-			} else if ((b ^ 0xE0) >> 4 == 0) {
-				buffer.put(bytes, i, 3);
-				i += 3;
-			} else if ((b ^ 0xF0) >> 4 == 0) {
-				i += 4;
+	public static String filterInvalidUtf8(String input) {
+		// 创建一个 UTF-8 编码器
+		CharsetEncoder encoder = StandardCharsets.UTF_8.newEncoder();
+		StringBuilder filtered = new StringBuilder();
+
+		// 遍历输入字符串的每个字符
+		for (int i = 0; i < input.length(); i++) {
+			char ch = input.charAt(i);
+			// 检查当前字符是否可以被 UTF-8 编码
+			if (encoder.canEncode(ch)) {
+				filtered.append(ch);
+			} else {
+				// 如果不能编码为 UTF-8，则用 '?' 代替
+				filtered.append('?');
 			}
 		}
-		buffer.flip();
-		return new String(buffer.array(), StandardCharsets.UTF_8);
+		return filtered.toString();
 	}
 
 	/**

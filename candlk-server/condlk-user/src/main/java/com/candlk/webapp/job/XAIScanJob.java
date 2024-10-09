@@ -1,6 +1,9 @@
 package com.candlk.webapp.job;
 
+import java.io.*;
 import java.math.*;
+import java.nio.file.Files;
+import java.nio.file.Paths;
 import java.util.*;
 import java.util.function.Function;
 import javax.annotation.Resource;
@@ -42,7 +45,7 @@ public class XAIScanJob {
 
 	public static Map<String, Map<Integer, BigInteger>> yieldStatCache;
 	public static final Function<String, Map<Integer, BigInteger>> yieldStatBuilder = k -> new HashMap<>();
-	private static final String yieldStatFile = "/mnt/xai_bot/yieldStatCache";
+	public static final String yieldStatFile = "/mnt/xai_bot/yieldStatCache.json";
 	public static final BigInteger pow18 = BigInteger.TEN.pow(18), SecondsDaily = BigInteger.valueOf(24 * 60 * 60L);
 
 	public static synchronized Map<String, Map<Integer, BigInteger>> getYieldStatCache() {
@@ -92,24 +95,6 @@ public class XAIScanJob {
 			});
 		}
 		log.info("结束本次扫描，最后区块：{}", web3JConfig.lastBlock);
-	}
-
-	public static void main(String[] args) throws Exception {
-		final Web3j web3j1 = Web3j.build(new HttpService("https://arbitrum-mainnet.infura.io/v3/a558309c0e324da786bc651eb48c082e"));
-
-		final TransactionReceipt receipt = web3j1.ethGetTransactionReceipt("0xd9ced2936d73b6540b5aa740a7a9e7ba8333fa5ca403ca338d070bb23de3bfae")
-				.send().getTransactionReceipt().get();
-		for (Log l : receipt.getLogs()) {
-			final List<String> topics = l.getTopics();
-			if (topics.size() == 3 && l.getAddress().equalsIgnoreCase("0x4C749d097832DE2FEcc989ce18fDc5f1BD76700c")) {
-				final String poolContractAddress = new Address(topics.get(2)).getValue();
-				final BigInteger reward = new BigInteger(l.getData().substring(2), 16).divide(pow18);
-				// 分池子 分天统计池子的实际产出
-				System.out.println("扫描到池子领取奖励。poolContractAddress = " + poolContractAddress + "，reward = " + reward);
-				log.info("扫描到池子领取奖励。poolContractAddress={}，reward={}", poolContractAddress, reward);
-				break;
-			}
-		}
 	}
 
 	public TransactionReceipt getTransactionReceipt(String hash) {

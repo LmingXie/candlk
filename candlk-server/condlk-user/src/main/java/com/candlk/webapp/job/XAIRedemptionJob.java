@@ -2,6 +2,7 @@ package com.candlk.webapp.job;
 
 import java.io.*;
 import java.math.BigDecimal;
+import java.nio.charset.StandardCharsets;
 import java.text.DecimalFormat;
 import java.text.NumberFormat;
 import java.util.Locale;
@@ -12,6 +13,7 @@ import com.candlk.common.util.Formats;
 import lombok.extern.slf4j.Slf4j;
 import me.codeplayer.util.EasyDate;
 import me.codeplayer.util.NumberUtil;
+import org.apache.commons.io.FileUtils;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.scheduling.annotation.Scheduled;
 
@@ -105,31 +107,14 @@ public class XAIRedemptionJob {
 		root.put(key, dailyStat);
 	}
 
+	// 持久化数据为 JSON 文件
 	public static synchronized void serialization(String url, JSONObject data) throws Exception {
-		final File file = new File(url);
-		if (file.exists() || file.getParentFile().mkdirs()) {
-			FileOutputStream fos = new FileOutputStream(file);
-			ObjectOutputStream os = new ObjectOutputStream(fos);
-			os.writeObject(data);
-			os.close();
-		}
+		FileUtils.writeStringToFile(new File(url), data.toJSONString(), StandardCharsets.UTF_8);
 	}
 
+	// 读取 JSON 文件并反序列化为 JSONObject
 	public static synchronized JSONObject deserialization(String path) throws Exception {
-		final File file = new File(path);
-		if (!file.exists()) {
-			return null;
-		}
-		final FileInputStream fis = new FileInputStream(file);
-		final ObjectInputStream is = new ObjectInputStream(fis);
-		JSONObject data = null;
-		try {
-			data = (JSONObject) is.readObject();
-		} catch (ClassNotFoundException ignored) {
-		}
-
-		is.close();
-		return data;
+		return JSONObject.parseObject(FileUtils.readFileToString(new File(path), StandardCharsets.UTF_8));
 	}
 
 }

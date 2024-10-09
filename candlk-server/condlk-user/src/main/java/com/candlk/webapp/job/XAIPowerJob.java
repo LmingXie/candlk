@@ -1,5 +1,7 @@
 package com.candlk.webapp.job;
 
+import java.io.File;
+import java.io.IOException;
 import java.math.*;
 import java.util.*;
 import java.util.concurrent.ConcurrentMap;
@@ -9,16 +11,20 @@ import javax.annotation.*;
 
 import com.alibaba.fastjson2.*;
 import com.candlk.context.web.Jsons;
+import com.candlk.webapp.action.TestAction;
 import com.github.benmanes.caffeine.cache.Cache;
 import com.github.benmanes.caffeine.cache.Caffeine;
 import lombok.extern.slf4j.Slf4j;
 import me.codeplayer.util.EasyDate;
+import org.apache.commons.io.FileUtils;
 import org.checkerframework.checker.nullness.qual.PolyNull;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.web.client.RestTemplate;
 import org.web3j.protocol.Web3j;
 import org.web3j.protocol.http.HttpService;
+
+import static com.candlk.webapp.job.XAIScanJob.yieldStatFile;
 
 @Slf4j
 @Configuration
@@ -119,6 +125,16 @@ public class XAIPowerJob {
 		} catch (Exception ignored) {
 		}
 		return null;
+	}
+
+	@Scheduled(cron = "${service.cron.bak:0 45 * * * ?}")
+	public void bak() throws IOException {
+		log.info("开始全部数据文件...");
+		FileUtils.copyFile(new File(activeCaffeineFile), new File("/mnt/xai_bot/bak/active.json"));
+		FileUtils.copyFile(new File(PowerCachePath), new File("/mnt/xai_bot/bak/power.json"));
+		FileUtils.copyFile(new File(web3JConfig.statFilePath), new File("/mnt/xai_bot/bak/stat.json"));
+		FileUtils.copyFile(new File(yieldStatFile), new File("/mnt/xai_bot/bak/yieldStatCache.json"));
+		log.info("备份全部数据文件成功...");
 	}
 
 	@Scheduled(cron = "${service.cron.XAIPowerJob:0 0 1 * * ?}")

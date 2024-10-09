@@ -2,7 +2,6 @@ package com.candlk.webapp.action;
 
 import java.net.InetSocketAddress;
 import java.net.Proxy;
-
 import javax.annotation.Resource;
 
 import com.alibaba.fastjson2.JSONObject;
@@ -28,8 +27,6 @@ public class TestAction {
 
 	@Resource
 	XAIPowerJob xaiPowerJob;
-	@Resource
-	XAIRedemptionJob xaiRedemptionJob;
 
 	@Ready("墙外访问测试")
 	@GetMapping("/ping")
@@ -47,8 +44,14 @@ public class TestAction {
 	@GetMapping("/flushPower")
 	public Messager<Void> flushPower(ProxyRequest q) throws Exception {
 		xaiPowerJob.run();
-		// xaiRedemptionJob.run();
 
+		return Messager.OK();
+	}
+
+	@Ready("强刷排名")
+	@GetMapping("bak")
+	public Messager<Void> bak(ProxyRequest q) throws Exception {
+		xaiPowerJob.bak();
 		return Messager.OK();
 	}
 
