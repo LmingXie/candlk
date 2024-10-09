@@ -194,10 +194,10 @@ public class Web3JConfig {
 		try {
 			final String contractName = getContractName(web3jProxy, k);
 			if (StringUtils.isNotEmpty(contractName)) {
-				return contractName.replaceAll("“", "").replaceAll("”", "")
+				return filterOffUtf8Mb4(contractName.replaceAll("“", "").replaceAll("”", "")
 						.replaceAll("\\?", "")
 						.replaceAll("\\.", "")
-						.replaceAll("\uD83D\uDFE2", "");
+						.replaceAll("\uD83D\uDFE2", ""));
 			}
 			return contractName;
 		} catch (Exception e) {
