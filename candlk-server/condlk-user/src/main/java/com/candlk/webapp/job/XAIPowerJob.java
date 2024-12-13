@@ -39,7 +39,7 @@ public class XAIPowerJob {
 	public final static BigDecimal esXAIWei = new BigDecimal(10000),
 			esXAI5Wei = new BigDecimal(50000),
 			esXAI10Wei = new BigDecimal(100000),
-			keysWei = new BigDecimal(50);
+			keysWei = new BigDecimal(100);
 
 	@Nonnull
 	public static PoolInfoVO getPoolInfo(String poolAddress, Web3j web3j, boolean flush) {
@@ -183,12 +183,12 @@ public class XAIPowerJob {
 
 			final List<PoolInfoVO> keysIPowerTopN = infoMap.values().stream().sorted((o1, o2) -> o2.calcKeysPower(keysWei).compareTo(o1.calcKeysPower(keysWei))).toList();
 			final StringBuilder sb = new StringBuilder();
-			sb.append("### 50/Keys算力排行榜  \n  ");
+			sb.append("### 100/Keys算力排行榜  \n  ");
 			sb.append("|  排名  |   池子   |   算力   |  加成  | 总质押  | 活跃  |   \n  ");
 			sb.append("|:------:|:------|:-------:|:-----:|:-----:|:-----:|  \n  ");
 
 			final StringBuilder tgMsg = new StringBuilder();
-			tgMsg.append("*\uD83D\uDCB950/Keys 质押算力排行榜 *\n\n");
+			tgMsg.append("*\uD83D\uDCB9100/Keys 质押算力排行榜 *\n\n");
 			tgMsg.append("*全网XAI池总质押量: * ").append(XAIRedemptionJob.formatAmount(totalEsXAIStaked)).append("esXAI \n")
 					.append("*全网Keys池总质押量: * ").append(totalKeysStaked).append("\n\n")
 					.append("*  算力    加成/EsXAI        Keys/活跃状态        池子/变动/生效时间* \n");

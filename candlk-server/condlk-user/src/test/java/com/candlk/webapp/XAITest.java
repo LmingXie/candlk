@@ -17,6 +17,8 @@ import org.springframework.web.client.RestTemplate;
 import org.web3j.protocol.Web3j;
 import org.web3j.protocol.http.HttpService;
 
+import static com.candlk.webapp.job.XAIPowerJob.keysWei;
+
 @SpringBootTest(classes = UserApplication.class)
 @ExtendWith({ SpringExtension.class, MockitoExtension.class })
 public class XAITest {
@@ -53,11 +55,11 @@ public class XAITest {
 	@Test
 	public void hasActivePoolTest() throws IOException {
 		Web3j web3j1 = Web3j.build(new HttpService("https://arbitrum-one-rpc.publicnode.com"));
-		final PoolInfoVO poolInfo = XAIPowerJob.getPoolInfo("0x9a0aa81a7a6c0c82e72b91244bcab051033fa42a", web3j1, true);
+		final PoolInfoVO poolInfo = XAIPowerJob.getPoolInfo("0x255d8393c5a343f4040c31f3acd38a44d5d3245e", web3j1, true);
 		System.out.println(Jsons.encode(poolInfo));
 
-		BigDecimal keysPower = poolInfo.calcKeysPower(BigDecimal.ONE);
-		System.out.println(keysPower);
+		BigDecimal keysPower = poolInfo.calcKeysPower(keysWei);
+		System.out.println("keysPower：" + keysPower);
 		String delegateOwner = poolInfo.getDelegateAddress(web3j1, true);
 		// 0x1b7bc8a49acd1fd9cf7f9cdfb9251230128bb4e2
 		System.out.println("代理地址：" + delegateOwner);

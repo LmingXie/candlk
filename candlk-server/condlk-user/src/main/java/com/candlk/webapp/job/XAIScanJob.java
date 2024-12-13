@@ -74,21 +74,21 @@ public class XAIScanJob {
 	@Scheduled(cron = "${service.cron.XAIScanJob:0/5 * * * * ?}")
 	public void run() throws Exception {
 		getYieldStatCache();
-		final BigInteger lastBlock = web3j.ethBlockNumber().send().getBlockNumber();
+		final BigInteger lastBlock =/* web3j.ethBlockNumber().send().getBlockNumber()*/new BigInteger("284209437");
 		while (lastBlock.compareTo(web3JConfig.lastBlock) > 0) {
 			final BigInteger blockNumber = web3JConfig.incrLastBlock();
-			SpringUtil.asyncRun(() -> {
-				int retry = 10;
-				while (retry-- > 0) {
-					try {
-						final Web3j newWeb3j = web3JConfig.pollingGetWeb3j();
-						this.exec(newWeb3j, blockNumber, lastBlock);
-						break;
-					} catch (Exception e) {
-						log.info("接口被限制，进行重试");
-					}
+			// SpringUtil.asyncRun(() -> {
+			int retry = 10;
+			while (retry-- > 0) {
+				try {
+					final Web3j newWeb3j = web3JConfig.pollingGetWeb3j();
+					this.exec(newWeb3j, blockNumber, lastBlock);
+					break;
+				} catch (Exception e) {
+					log.info("接口被限制，进行重试");
 				}
-			});
+			}
+			// });
 		}
 		log.info("结束本次扫描，最后区块：{}", web3JConfig.lastBlock);
 	}
@@ -150,7 +150,7 @@ public class XAIScanJob {
 					final String poolContractAddress = new Address(input.substring(11, 74)).getValue(), poolName = getContractName(poolContractAddress);
 					final PoolInfoVO poolInfo = XAIPowerJob.getPoolInfo(poolContractAddress, newWeb3j, true);
 
-					// 算力大于阈值时触发提醒
+					// 算力大于阈值200时触发提醒
 					final BigDecimal power;
 					if (poolInfo.keyCount.compareTo(MAX_KEYS_CAPACITY) < 0 && (power = poolInfo.calcKeysPower(KEYS_100)).compareTo(web3JConfig.unstakeKeysThreshold) >= 0) {
 						final String opType = method.equals("0x2f1a0b1c") ? "质押" : "赎回", opTypeEn = method.equals("0x2f1a0b1c") ? "质押" : "赎回";

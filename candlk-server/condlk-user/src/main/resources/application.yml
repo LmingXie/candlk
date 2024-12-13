@@ -13,9 +13,9 @@ spring:
     allow-circular-references: true
   ### redis连接配置
   redis:
-    host: 192.168.0.99
+    host: 127.0.0.1
     port: 6379
-    password: sakFsl#89jflka
+    password: 123456
     database: 0
   ### common-config.yml 所有服务的公共配置
   messages:
@@ -84,18 +84,18 @@ service:
       - https://endpoints.omniatech.io/v1/arbitrum/one/public
       - https://arb-mainnet-public.unifra.io
       - https://1rpc.io/arb
-    lastBlock: 261887783
+    lastBlock: 284209436
     # 大额赎回成功
     redemptionThreshold: 50000
     # 大额质押与赎回
     esXAIThreshold: 30000
-    keysThreshold: 10
+    keysThreshold: 1000
     # 大额XAI开始赎回阈值
     startRedemptionThreshold: 100000
     # 弱活跃度触发阈值（每次减半后需要进行调整，产出参考：https://arbiscan.io/address/0x958e5cc35fd7f95c135d55c7209fa972bdb68617#tokentxns）
     weakActiveThreshold: 2000
     # 顶级Keys算力池解除质押成功提醒
-    unstakeKeysThreshold: 2
+    unstakeKeysThreshold: 200
     # 产量排名天数
     yieldLen: 7
     # 排行榜排名
