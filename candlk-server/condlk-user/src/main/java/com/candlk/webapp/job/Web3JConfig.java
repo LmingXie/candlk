@@ -55,7 +55,7 @@ public class Web3JConfig {
 	/** 池子esXAI大额 */
 	public BigDecimal esXAIThreshold = new BigDecimal(50000);
 	/** 池子Keys大额 */
-	public BigDecimal keysThreshold = new BigDecimal(5);
+	public BigDecimal keysThreshold = new BigDecimal(1000);
 	/** XAI 开始赎回的触发阈值 */
 	public BigInteger startRedemptionThreshold = BigInteger.valueOf(100000L);
 	/** 顶级Keys算力池解除质押成功提醒 */

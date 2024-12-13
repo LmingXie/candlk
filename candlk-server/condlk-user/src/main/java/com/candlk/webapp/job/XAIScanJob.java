@@ -1,9 +1,6 @@
 package com.candlk.webapp.job;
 
-import java.io.*;
 import java.math.*;
-import java.nio.file.Files;
-import java.nio.file.Paths;
 import java.util.*;
 import java.util.function.Function;
 import javax.annotation.Resource;
@@ -25,7 +22,6 @@ import org.web3j.protocol.core.DefaultBlockParameterNumber;
 import org.web3j.protocol.core.methods.response.*;
 import org.web3j.protocol.core.methods.response.EthBlock.TransactionObject;
 import org.web3j.protocol.core.methods.response.EthBlock.TransactionResult;
-import org.web3j.protocol.http.HttpService;
 
 import static com.candlk.webapp.job.PoolInfoVO.parsePercent;
 import static com.candlk.webapp.job.Web3JConfig.METHOD2TIP;
@@ -115,7 +111,8 @@ public class XAIScanJob {
 		return receipt;
 	}
 
-	public static final BigInteger MAX_KEYS_CAPACITY = new BigInteger("1000");
+	public static final BigInteger MAX_KEYS_CAPACITY = new BigInteger("100000");
+	public static final BigDecimal KEYS_100 = new BigDecimal("100");
 
 	private void exec(Web3j newWeb3j, BigInteger blockNumber, BigInteger lastBlock) throws Exception {
 		final EthBlock.Block block = newWeb3j.ethGetBlockByNumber(new DefaultBlockParameterNumber(blockNumber), true).send().getBlock();
@@ -155,7 +152,7 @@ public class XAIScanJob {
 
 					// 算力大于阈值时触发提醒
 					final BigDecimal power;
-					if (poolInfo.keyCount.compareTo(MAX_KEYS_CAPACITY) < 0 && (power = poolInfo.calcKeysPower(BigDecimal.ONE)).compareTo(web3JConfig.unstakeKeysThreshold) >= 0) {
+					if (poolInfo.keyCount.compareTo(MAX_KEYS_CAPACITY) < 0 && (power = poolInfo.calcKeysPower(KEYS_100)).compareTo(web3JConfig.unstakeKeysThreshold) >= 0) {
 						final String opType = method.equals("0x2f1a0b1c") ? "质押" : "赎回", opTypeEn = method.equals("0x2f1a0b1c") ? "质押" : "赎回";
 						web3JConfig.sendWarn("通知：满Keys池" + opType + "提醒",
 								"### 通知：满Keys池" + opType + "提醒！  \n  "
@@ -307,9 +304,9 @@ public class XAIScanJob {
 		String[] result = new String[4];
 		List<PoolInfoVO> esXAIPowerTopN = infoMap.values().stream().sorted((o1, o2) -> o2.calcKeysYield().compareTo(o1.calcKeysYield())).toList();
 		final StringBuilder tgMsg = new StringBuilder("*\uD83D\uDCB9 Keys 【").append(len).append("】日平均小时产出排行榜 *\n\n");
-		tgMsg.append("*     1Keys时产     总产出        keys / 配比 / 池子 / 变动 * \n");
+		tgMsg.append("*     100Keys时产     总产出        keys / 配比 / 池子 / 变动 * \n");
 		final StringBuilder ddMsg = new StringBuilder("### Keys【").append(len).append("】日平均小时产出排行榜  \n  ")
-				.append("|  1Keys时产  |   总产出   |   keys/配比/池子/变动   |   \n  ")
+				.append("|  100Keys时产  |   总产出   |   keys/配比/池子/变动   |   \n  ")
 				.append("|:------:|:------|:-------:|  \n  ");
 
 		for (int i = 1; i <= topN; i++) {
