@@ -74,21 +74,21 @@ public class XAIScanJob {
 	@Scheduled(cron = "${service.cron.XAIScanJob:0/5 * * * * ?}")
 	public void run() throws Exception {
 		getYieldStatCache();
-		final BigInteger lastBlock =/* web3j.ethBlockNumber().send().getBlockNumber()*/new BigInteger("284209437");
+		final BigInteger lastBlock = web3j.ethBlockNumber().send().getBlockNumber();
 		while (lastBlock.compareTo(web3JConfig.lastBlock) > 0) {
 			final BigInteger blockNumber = web3JConfig.incrLastBlock();
-			// SpringUtil.asyncRun(() -> {
-			int retry = 10;
-			while (retry-- > 0) {
-				try {
-					final Web3j newWeb3j = web3JConfig.pollingGetWeb3j();
-					this.exec(newWeb3j, blockNumber, lastBlock);
-					break;
-				} catch (Exception e) {
-					log.info("接口被限制，进行重试");
+			SpringUtil.asyncRun(() -> {
+				int retry = 10;
+				while (retry-- > 0) {
+					try {
+						final Web3j newWeb3j = web3JConfig.pollingGetWeb3j();
+						this.exec(newWeb3j, blockNumber, lastBlock);
+						break;
+					} catch (Exception e) {
+						log.info("接口被限制，进行重试");
+					}
 				}
-			}
-			// });
+			});
 		}
 		log.info("结束本次扫描，最后区块：{}", web3JConfig.lastBlock);
 	}
