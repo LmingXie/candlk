@@ -15,6 +15,8 @@ import org.springframework.web.client.RestTemplate;
 import org.web3j.abi.datatypes.StaticStruct;
 import org.web3j.protocol.Web3j;
 
+import static com.candlk.webapp.job.XAIPowerJob.keysWei;
+
 @Slf4j
 @Getter
 @Setter
@@ -278,7 +280,7 @@ public class PoolInfoVO extends StaticStruct {
 		}
 		final BigDecimal keysShare = keyBucketShare();
 		// 小时总产出 * Keys配比 / Keys股权
-		return keysYield = hourYield.multiply(keysShare).divide(parseKeyCount(), 4, RoundingMode.HALF_UP);
+		return keysYield = hourYield.multiply(keysShare).multiply(keysWei).divide(parseKeyCount(), 4, RoundingMode.HALF_UP);
 	}
 
 	public transient BigDecimal esXAIYield;
