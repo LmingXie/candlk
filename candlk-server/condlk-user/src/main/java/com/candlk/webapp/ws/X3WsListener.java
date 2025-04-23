@@ -4,6 +4,7 @@ import java.net.URI;
 import java.net.http.HttpClient;
 import java.net.http.WebSocket;
 import java.net.http.WebSocket.Listener;
+import java.util.UUID;
 import java.util.concurrent.CompletionStage;
 
 import com.alibaba.fastjson2.JSON;
@@ -33,7 +34,7 @@ public class X3WsListener implements Listener, WsListenerApi {
 		this.webSocket = client.newWebSocketBuilder()
 				.header("Origin", "https://www.x3.pro")
 				.header("User-Agent", "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/135.0.0.0 Safari/537.36")
-				.buildAsync(URI.create("wss://www.x3.pro/api/ws?Authorization=006a90e6-52f0-4497-af6c-e9db41ae3641"), listener)
+				.buildAsync(URI.create("wss://www.x3.pro/api/ws?Authorization=" + UUID.randomUUID()), listener)
 				.join();
 	}
 
