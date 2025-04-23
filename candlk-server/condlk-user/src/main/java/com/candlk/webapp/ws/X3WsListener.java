@@ -6,6 +6,8 @@ import java.net.http.WebSocket;
 import java.net.http.WebSocket.Listener;
 import java.util.concurrent.CompletionStage;
 
+import com.alibaba.fastjson2.JSON;
+import com.alibaba.fastjson2.JSONObject;
 import com.candlk.webapp.user.model.WsListenerType;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
@@ -62,6 +64,10 @@ public class X3WsListener implements Listener, WsListenerApi {
 		// 并发处理消息（交给线程池）
 		WS_EXECUTOR.submit(() -> {
 			System.out.println("[Message] " + data);
+			JSONObject postInfo = JSON.parseObject((String) data);
+			if ("1".equals(postInfo.getString("msgType"))) {
+				JSONObject postData = postInfo.getJSONObject("data").getJSONObject("data");
+			}
 
 		});
 		return Listener.super.onText(webSocket, data, last);
@@ -69,7 +75,7 @@ public class X3WsListener implements Listener, WsListenerApi {
 
 	@Override
 	public CompletionStage<?> onClose(WebSocket webSocket, int statusCode, String reason) {
-		System.out.printf("[WebSocket] Closed. Code: %d, Reason: %s%n", statusCode, reason);
+		reConnection(webSocket, statusCode, reason);
 		return Listener.super.onClose(webSocket, statusCode, reason);
 	}
 

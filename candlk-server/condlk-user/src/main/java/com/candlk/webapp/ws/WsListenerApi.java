@@ -1,5 +1,6 @@
 package com.candlk.webapp.ws;
 
+import java.net.http.WebSocket;
 import java.nio.ByteBuffer;
 import java.nio.charset.StandardCharsets;
 import java.util.*;
@@ -57,6 +58,19 @@ public interface WsListenerApi {
 
 	/** 建立连接 */
 	void connection();
+
+	/** 重新连接 */
+	default void reConnection(WebSocket webSocket, int statusCode, String reason) {
+		log.warn("【{}】 连接关闭，尝试重新连接中...Code={}, Reason={}", getProvider(), statusCode, reason);
+		// 显式释放当前连接资源
+		webSocket.abort();  // 或者 webSocket.sendClose(1000, "Normal Closure");
+		try {
+			// TODO: 2025/4/23 邮箱、页面 预警
+			this.connection();
+		} catch (Exception e) {
+			log.error("【{}】 重新连接失败！", getProvider());
+		}
+	}
 
 	// 工具函数：从 Set-Cookie 中提取所有 key=value
 	static Map<String, String> parseCookies(List<String> cookies) {

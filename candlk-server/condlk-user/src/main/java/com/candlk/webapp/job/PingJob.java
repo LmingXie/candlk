@@ -33,9 +33,8 @@ public class PingJob {
 					log.warn("监听器【{}】心跳检测失败！", entry.getKey());
 				}
 			}
-
 		}
-		log.info("结束执行心跳任务。");
+		// log.info("结束执行心跳任务。");
 	}
 
 }

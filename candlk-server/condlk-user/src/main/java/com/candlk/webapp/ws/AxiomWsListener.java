@@ -160,7 +160,7 @@ public class AxiomWsListener implements Listener, WsListenerApi {
 
 	@Override
 	public CompletionStage<?> onClose(WebSocket webSocket, int statusCode, String reason) {
-		System.out.printf("[WebSocket] Closed. Code: %d, Reason: %s%n", statusCode, reason);
+		reConnection(webSocket, statusCode, reason);
 		return Listener.super.onClose(webSocket, statusCode, reason);
 	}
 
