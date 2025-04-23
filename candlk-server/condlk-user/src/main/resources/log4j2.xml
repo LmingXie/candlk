@@ -1,0 +1,53 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<Configuration status="error">
+
+	<Properties>
+		<property name="appName" value="${spring:spring.application.name}-${spring:spring.profiles.active}"/>
+		<Property name="LOG_EXCEPTION_CONVERSION_WORD">%xwEx</Property>
+		<Property name="LOG_LEVEL_PATTERN">%5p</Property>
+		<Property name="LOG_DATEFORMAT_PATTERN">yyyy-MM-dd HH:mm:ss.SSS</Property>
+		<Property name="PATTERN">%d{${LOG_DATEFORMAT_PATTERN}} ${sys:LOG_LEVEL_PATTERN} ${appName} %c - %m%n</Property>
+		<Property name="JSON_LOG_PATTERN">%m%n</Property>
+		<Property name="CONSOLE_LOG_PATTERN">%clr{%d{${sys:LOG_DATEFORMAT_PATTERN}}}{faint} %clr{${sys:LOG_LEVEL_PATTERN}} %clr{%pid}{magenta} %clr{---}{faint} %clr{[%15.15t]}{faint} %clr{%-40.40c{1.}}{cyan} %clr{:}{faint} %m%n${sys:LOG_EXCEPTION_CONVERSION_WORD}</Property>
+		<Property name="ERROR_LOG_PATTERN">%d{${LOG_DATEFORMAT_PATTERN}} ${LOG_LEVEL_PATTERN} %pid --- [%t] %-40.40c{1.} : %m%n${sys:LOG_EXCEPTION_CONVERSION_WORD}</Property>
+		<Property name="LOG_DIR">logs</Property>
+	</Properties>
+
+	<Appenders>
+		<Console name="Console" target="SYSTEM_OUT" follow="true">
+			<PatternLayout pattern="${sys:CONSOLE_LOG_PATTERN}"/>
+		</Console>
+
+		<RollingRandomAccessFile name="webappLog" fileName="${LOG_DIR}/webapp.log" filePattern="${LOG_DIR}/webapp-%d{yyyy-MM-dd}.log.gz">
+			<PatternLayout pattern="${PATTERN}"/>
+			<!-- 每天生成一次归档日志文件 -->
+			<TimeBasedTriggeringPolicy modulate="true"/>
+		</RollingRandomAccessFile>
+
+		<RollingRandomAccessFile name="requestLog" fileName="${LOG_DIR}/request.json" filePattern="${LOG_DIR}/request-%d{yyyy-MM-dd}.log.gz">
+			<PatternLayout pattern="${JSON_LOG_PATTERN}"/>
+			<!-- 每天生成一次归档日志文件 -->
+			<TimeBasedTriggeringPolicy modulate="true"/>
+		</RollingRandomAccessFile>
+
+	</Appenders>
+
+	<!-- Logger -->
+	<Loggers>
+		<Root level="info">
+			<AppenderRef ref="webappLog"/>
+			<AppenderRef ref="Console"/>
+		</Root>
+
+		<Logger name="com.candlk" level="debug" additivity="false">
+			<AppenderRef ref="webappLog" level="info"/>
+			<AppenderRef ref="Console"/>
+		</Logger>
+
+		<Logger name="com.candlk.common.web.Logs" level="info" additivity="false">
+			<AppenderRef ref="requestLog"/>
+			<AppenderRef ref="Console"/>
+		</Logger>
+	</Loggers>
+
+</Configuration>

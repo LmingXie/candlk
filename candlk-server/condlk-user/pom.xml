@@ -20,6 +20,21 @@
 
 	<dependencies>
 		<dependency>
+			<groupId>software.sava</groupId>
+			<artifactId>sava-core</artifactId>
+			<version>1.17.32</version>
+			<scope>system</scope>
+			<systemPath>${project.basedir}\lib\sava-core-1.17.32.jar</systemPath>
+		</dependency>
+		<dependency>
+			<groupId>software.sava</groupId>
+			<artifactId>sava-rpc</artifactId>
+			<version>1.17.32</version>
+			<scope>system</scope>
+			<systemPath>${project.basedir}\lib\sava-rpc-1.17.32.jar</systemPath>
+		</dependency>
+
+		<dependency>
 			<groupId>com.candlk</groupId>
 			<artifactId>base</artifactId>
 			<version>${env-version}</version>
@@ -67,7 +82,6 @@
 
 	<build>
 		<plugins>
-
 			<plugin>
 				<groupId>org.apache.maven.plugins</groupId>
 				<artifactId>maven-jar-plugin</artifactId>

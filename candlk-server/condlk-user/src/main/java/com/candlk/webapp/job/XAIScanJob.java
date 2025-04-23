@@ -29,7 +29,7 @@ import static com.candlk.webapp.job.Web3JConfig.getContractName;
 import static com.candlk.webapp.job.XAIPowerJob.*;
 
 @Slf4j
-@Configuration
+// @Configuration
 public class XAIScanJob {
 
 	@Resource

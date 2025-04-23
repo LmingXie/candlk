@@ -17,6 +17,7 @@ public abstract class BaseApplication {
 
 	protected static ConfigurableApplicationContext startup(Class<?> primarySource, String[] args) {
 		System.setProperty("dubbo.application.qos-enable", "false"); // 禁止 Dubbo 的 QoS Server 服务
+		System.setProperty("nacos.logging.config", "classpath:log4j2-spring.xml");
 		// 国际化信息 初始化设置
 		I18N.setLocaleSupplier(() -> RequestContextImpl.get().sessionLanguage().getLocale());
 		ValidateHelper.PHONE_MATCHER = phone -> Context.get().matchPhone(phone);

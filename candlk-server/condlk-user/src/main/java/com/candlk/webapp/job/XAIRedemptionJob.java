@@ -18,7 +18,7 @@ import org.springframework.context.annotation.Configuration;
 import org.springframework.scheduling.annotation.Scheduled;
 
 @Slf4j
-@Configuration
+// @Configuration
 public class XAIRedemptionJob {
 
 	@Resource

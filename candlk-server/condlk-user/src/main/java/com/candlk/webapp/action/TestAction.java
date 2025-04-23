@@ -25,8 +25,6 @@ public class TestAction {
 	@Value("${service.proxy.port}")
 	private Integer port;
 
-	@Resource
-	XAIPowerJob xaiPowerJob;
 
 	@Ready("墙外访问测试")
 	@GetMapping("/ping")
@@ -43,15 +41,6 @@ public class TestAction {
 	@Ready("强刷排名")
 	@GetMapping("/flushPower")
 	public Messager<Void> flushPower(ProxyRequest q) throws Exception {
-		xaiPowerJob.run();
-
-		return Messager.OK();
-	}
-
-	@Ready("强刷排名")
-	@GetMapping("bak")
-	public Messager<Void> bak(ProxyRequest q) throws Exception {
-		xaiPowerJob.bak();
 		return Messager.OK();
 	}
 

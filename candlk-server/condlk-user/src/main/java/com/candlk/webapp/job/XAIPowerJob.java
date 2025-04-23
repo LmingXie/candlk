@@ -26,7 +26,7 @@ import org.web3j.protocol.http.HttpService;
 import static com.candlk.webapp.job.XAIScanJob.yieldStatFile;
 
 @Slf4j
-@Configuration
+// @Configuration
 public class XAIPowerJob {
 
 	@Resource
