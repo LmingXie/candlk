@@ -1,5 +1,8 @@
 package com.candlk.context;
 
+import java.util.EnumMap;
+import java.util.Map;
+import java.util.function.Function;
 import java.util.function.Supplier;
 import javax.annotation.Nonnull;
 import javax.annotation.Nullable;
@@ -7,6 +10,7 @@ import javax.servlet.ServletContext;
 import javax.servlet.http.HttpServletRequest;
 
 import com.candlk.common.context.Context;
+import com.candlk.common.context.Env;
 import com.candlk.common.model.AnyRunnable;
 import com.candlk.common.util.SpringUtil;
 import com.candlk.context.model.Country;
@@ -93,6 +97,24 @@ public class ContextImpl extends Context implements ServletContextAware {
 				removeCurrentMerchantId(); // 清除商户ID
 			}
 		}, null, SpringUtil.log, errorMsg);
+	}
+
+	/** 从 Spring 容器中获取指定枚举对应的接口实现实例集合 */
+	public static <K extends Enum<K>, V> EnumMap<K, V> newEnumImplMap(Class<K> enumClass, Class<V> interfaceClass, Function<? super V, ? extends K> keyMapper, boolean unique) {
+		final Map<String, V> beans = SpringUtil.getBeansOfType(interfaceClass);
+		final EnumMap<K, V> map = new EnumMap<>(enumClass);
+		for (V impl : beans.values()) {
+			V old = map.put(keyMapper.apply(impl), impl);
+			if (unique && old != null) {
+				throw new IllegalStateException("Found duplicate: " + keyMapper.apply(impl));
+			}
+		}
+		return map;
+	}
+
+	/** 从 Spring 容器中获取指定枚举对应的接口实现实例集合 */
+	public static <K extends Enum<K>, V> EnumMap<K, V> newEnumImplMap(Class<K> enumClass, Class<V> interfaceClass, Function<? super V, ? extends K> keyMapper) {
+		return newEnumImplMap(enumClass, interfaceClass, keyMapper, Env.inner());  // 线上环境无需检查重复
 	}
 
 	@Override

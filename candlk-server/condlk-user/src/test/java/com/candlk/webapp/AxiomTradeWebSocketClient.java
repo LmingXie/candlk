@@ -10,14 +10,13 @@ import com.alibaba.fastjson2.JSON;
 import com.alibaba.fastjson2.JSONObject;
 import com.candlk.context.web.Jsons;
 import com.candlk.webapp.ws.AxiomWsListener;
+import com.candlk.webapp.ws.WsListenerApi;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.http.*;
 import org.springframework.util.CollectionUtils;
 import org.springframework.web.client.RestTemplate;
 import software.sava.core.accounts.Signer;
 import software.sava.core.encoding.Base58;
-
-import static com.candlk.webapp.ws.AxiomWsListener.AXIOM_EXECUTOR;
 
 @Slf4j
 public class AxiomTradeWebSocketClient {
@@ -74,7 +73,7 @@ public class AxiomTradeWebSocketClient {
 
 			final List<String> cookieList = headers.get(HttpHeaders.SET_COOKIE);
 			if (!CollectionUtils.isEmpty(cookieList)) {
-				Map<String, String> tokenMap = parseCookies(cookieList);
+				Map<String, String> tokenMap = WsListenerApi.parseCookies(cookieList);
 				final String accessToken = tokenMap.get("auth-access-token");
 				final String refreshToken = tokenMap.get("auth-refresh-token");
 				log.info("Access Token: {}  Refresh Token: {}", accessToken, refreshToken);
@@ -86,7 +85,7 @@ public class AxiomTradeWebSocketClient {
 
 	public static void runListener(String accessToken, String refreshToken) throws InterruptedException {
 		// 构建 HttpClient 并设置线程池
-		HttpClient client = HttpClient.newBuilder().executor(AXIOM_EXECUTOR).build();
+		HttpClient client = HttpClient.newBuilder().executor(WsListenerApi.WS_EXECUTOR).build();
 
 		// 建立连接
 		client.newWebSocketBuilder()
@@ -98,21 +97,6 @@ public class AxiomTradeWebSocketClient {
 
 		// 阻塞主线程
 		Thread.currentThread().join();
-	}
-
-	// 工具函数：从 Set-Cookie 中提取所有 key=value
-	public static Map<String, String> parseCookies(List<String> cookies) {
-		Map<String, String> tokenMap = new HashMap<>();
-		for (String cookie : cookies) {
-			String[] parts = cookie.split(";");
-			if (parts.length > 0) {
-				String[] kv = parts[0].split("=", 2); // 只分割前两个，防止 token 中含有 =
-				if (kv.length == 2) {
-					tokenMap.put(kv[0].trim(), kv[1].trim());
-				}
-			}
-		}
-		return tokenMap;
 	}
 
 }
