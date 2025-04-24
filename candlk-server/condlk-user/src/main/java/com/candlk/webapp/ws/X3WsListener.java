@@ -40,7 +40,7 @@ public class X3WsListener implements Listener, WsListenerApi {
 
 	@Override
 	public boolean ping() {
-		this.webSocket.sendPing(PING);
+		webSocket.sendText("ping", true);
 		return true;
 	}
 
@@ -49,11 +49,15 @@ public class X3WsListener implements Listener, WsListenerApi {
 		System.out.println("[WebSocket] Connected.");
 
 		// 订阅：包含CA的所有帖子
-		webSocket.sendText("{\"action\":1,\"topic\":\"CA_ALL\"}", true);
+		// webSocket.sendText("{\"action\":1,\"topic\":\"CA_ALL\"}", true);
+		// 订阅：焦点帖子
+		// webSocket.sendText("{\"action\":1,\"topic\":\"FOCUS\"}", true);
+		// 订阅：账号监听帖子
+		// webSocket.sendText("{\"action\":1,\"topic\":\"MONITOR\"}", true);
 		// 订阅：实时帖子
 		webSocket.sendText("{\"action\":1,\"topic\":\"REALTIME\"}", true);
-		// 订阅：实时帖子
-		webSocket.sendText("{\"action\":1,\"topic\":\"REALTIME\"}", true);
+		// 订阅：账号剃刀帖子
+		// webSocket.sendText("{\"action\":1,\"topic\":\"SCRAPER_NOTICE\"}", true);
 
 		// 定时任务间隔1分钟发送一次ping心跳
 

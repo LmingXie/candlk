@@ -22,7 +22,7 @@ public class PingJob {
 		}
 	}
 
-	@Scheduled(cron = "${service.cron.PingJob:0 0/1 * * * ?}")
+	@Scheduled(cron = "${service.cron.PingJob:0/55 * * * * ?}")
 	public void run() throws Exception {
 		log.info("开始执行心跳任务...");
 		EnumMap<WsListenerType, WsListenerApi> map = WsListenerApi.implMapRef.get();
