@@ -6,16 +6,26 @@ import java.net.http.WebSocket;
 import java.net.http.WebSocket.Listener;
 import java.nio.charset.StandardCharsets;
 import java.security.GeneralSecurityException;
+import java.text.ParseException;
+import java.text.SimpleDateFormat;
 import java.util.*;
 import java.util.concurrent.CompletionStage;
+import javax.annotation.Resource;
 
-import com.alibaba.fastjson2.JSON;
-import com.alibaba.fastjson2.JSONObject;
+import com.alibaba.fastjson2.*;
+import com.candlk.common.redis.RedisUtil;
 import com.candlk.common.security.AES;
+import com.candlk.context.model.RedisKey;
 import com.candlk.context.web.Jsons;
 import com.candlk.webapp.user.entity.AxiomTwitter;
+import com.candlk.webapp.user.entity.Tweet;
 import com.candlk.webapp.user.model.TweetProvider;
+import com.candlk.webapp.user.model.TweetType;
+import com.candlk.webapp.user.service.TweetService;
+import com.candlk.webapp.user.service.TweetUserService;
 import lombok.extern.slf4j.Slf4j;
+import me.codeplayer.util.EasyDate;
+import org.springframework.dao.DuplicateKeyException;
 import org.springframework.http.*;
 import org.springframework.stereotype.Service;
 import org.springframework.util.CollectionUtils;
@@ -31,6 +41,10 @@ public class AxiomTweetWsProvider implements Listener, TweetWsApi {
 	public static final AES aes = new AES(key);
 	public static final Base64.Decoder decoder = Base64.getDecoder();
 	private WebSocket webSocket;
+	@Resource
+	TweetService tweetService;
+	@Resource
+	TweetUserService tweetUserService;
 
 	@Override
 	public TweetProvider getProvider() {
@@ -128,6 +142,8 @@ public class AxiomTweetWsProvider implements Listener, TweetWsApi {
 			"profile.pinned.update" // 置顶推文
 	);
 
+	public static final SimpleDateFormat SDF = new SimpleDateFormat("EEE MMM dd HH:mm:ss Z yyyy", Locale.ENGLISH);
+
 	@Override
 	public CompletionStage<?> onText(WebSocket webSocket, CharSequence data, boolean last) {
 		// 并发处理消息（交给线程池）
@@ -136,24 +152,83 @@ public class AxiomTweetWsProvider implements Listener, TweetWsApi {
 
 			AxiomTwitter axiomTwitter = Jsons.parseObject(data.toString(), AxiomTwitter.class);
 			if (axiomTwitter != null) {
-				final String event = axiomTwitter.content.event;
+				AxiomTwitter.Content content = axiomTwitter.content;
+				final String event = content.event;
 				String[] split = event.split(":");
 				byte[] iv = decoder.decode(split[0]);
 				try {
 					final byte[] decrypt = aes.decrypt(decoder.decode(split[1]), iv);
 					JSONObject postInfo = JSON.parseObject(decrypt);
 					// System.out.println("解密：" + Jsons.encode(postInfo));
-					final String eventType = axiomTwitter.content.eventType;
+					final String eventType = content.eventType;
 					if (eventTypes.contains(eventType)) {
-						log.info("账户={} 订阅类型={} 事件ID={} 事件内容={}", axiomTwitter.content.handle, axiomTwitter.content.subscriptionType, axiomTwitter.content.eventId, Jsons.encode(postInfo));
+						log.info("账户={} 订阅类型={} 事件ID={} 事件内容={}", content.handle, content.subscriptionType, content.eventId, Jsons.encode(postInfo));
 					} else {
-						log.warn("未知事件类型：账户={} 订阅类型={} 事件ID={} 事件内容={}", axiomTwitter.content.handle, axiomTwitter.content.subscriptionType, axiomTwitter.content.eventId, Jsons.encode(postInfo));
+						log.warn("未知事件类型：账户={} 订阅类型={} 事件ID={} 事件内容={}", content.handle, content.subscriptionType, content.eventId, Jsons.encode(postInfo));
+					}
+					switch (eventType) {
+						case "tweet.update" -> {
+							JSONObject tweet = postInfo.getJSONObject("tweet");
+							if (tweet != null) {
+								// 解析并推文数据
+								final String tweetId = tweet.getString("id");
+								TweetType tweetType = TweetType.of(tweet.getString("type").toLowerCase());
+								final String author = axiomTwitter.content.handle;
+								JSONObject body = tweet.getJSONObject("body");
+								// 使用正则表达式去除以 https://t.co/ 开头的推文尾部 短链接
+								final String text = body.getString("text").replaceAll("https://t\\.co/\\S+", "").trim();
+
+								JSONObject media = tweet.getJSONObject("media");
+								// 引用图片
+								JSONArray images = media.getJSONArray("images");
+								// 引用的视频
+								JSONArray videos = media.getJSONArray("videos");
+
+								final Date now = new Date();
+								Tweet tweetInfo = new Tweet()
+										.setProviderType(TweetProvider.AXIOM)
+										.setType(tweetType)
+										.setUsername(author)
+										.setTweetId(tweetId)
+										.setText(text)
+										.setOrgMsg(postInfo.toJSONString())
+										.setImages(images == null ? "" : images.toJSONString())
+										.setVideos(videos == null ? "" : videos.toJSONString())
+										.setUpdateTime(now);
+								try {
+									// 默认返回 0 时区时间
+									Date date = SDF.parse(tweet.getString("created_at"));
+									tweetInfo.setAddTime(date);
+								} catch (Exception e) {
+									log.error("【{}】解析日期失败：", getProvider(), e);
+									tweetInfo.setAddTime(now);
+								}
+								try {
+									// 添加推文
+									tweetService.save(tweetInfo);
+
+									if (!tweetUserService.updateTweetLastTime(author, tweetInfo.getAddTime())) {
+										// Redis 记录新用户
+										RedisUtil.getStringRedisTemplate().opsForSet().add(RedisKey.TWEET_NEW_USERS, author);
+									}
+
+									// TODO AI 分词并提取 代币名称和简称
+
+									// TODO 分词匹配
+								} catch (DuplicateKeyException e) { // 违反唯一约束
+									log.warn("【{}】推文已存在：{}", getProvider(), tweetId);
+								}
+
+							}
+						}
+						case "following.update" -> {
+							// TODO 更新账号统计数据
+						}
 					}
 				} catch (GeneralSecurityException e) {
 					log.error("解密失败：", e);
 				}
 			}
-			// 可扩展：解析 JSON、分类路由等逻辑
 		});
 		return Listener.super.onText(webSocket, data, last);
 	}
@@ -164,9 +239,19 @@ public class AxiomTweetWsProvider implements Listener, TweetWsApi {
 		return Listener.super.onClose(webSocket, statusCode, reason);
 	}
 
+	public static void main(String[] args) throws ParseException {
+		String input = "Wed Apr 23 01:27:57 +0000 2025";
+
+		// 用 SimpleDateFormat 解析
+		SimpleDateFormat sdf = new SimpleDateFormat("EEE MMM dd HH:mm:ss Z yyyy", Locale.ENGLISH);
+		Date date = sdf.parse(input);
+
+		System.out.println(new EasyDate(date).toDateTimeString());
+	}
+
 	@Override
 	public void onError(WebSocket webSocket, Throwable error) {
-		System.err.println("[WebSocket] Error: " + error.getMessage());
+		log.error("【{}】 Ws Error: ", getProvider(), error);
 		Listener.super.onError(webSocket, error);
 	}
 

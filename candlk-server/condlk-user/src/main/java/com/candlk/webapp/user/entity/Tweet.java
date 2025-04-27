@@ -1,26 +1,32 @@
 package com.candlk.webapp.user.entity;
 
-import com.baomidou.mybatisplus.annotation.TableName;
-import com.candlk.webapp.base.entity.BaseEntity;
 import java.util.Date;
+
+import com.candlk.webapp.base.entity.BaseEntity;
+import com.candlk.webapp.user.model.TweetProvider;
+import com.candlk.webapp.user.model.TweetType;
 import lombok.Getter;
 import lombok.Setter;
+import lombok.experimental.Accessors;
 
 /**
-* 推文信息表
-* @author 
-* @since 2025-04-27
-*/
+ * 推文信息表
+ *
+ * @since 2025-04-27
+ */
 @Setter
 @Getter
+@Accessors(chain = true)
 public class Tweet extends BaseEntity {
 
 	/** 推文ID */
 	String tweetId;
 	/** 推文类型：0=发帖；1=回复；2=引用；3=转发 */
-	Integer type;
+	TweetType type;
 	/** 推文来源厂商类型 */
-	Integer providerType;
+	TweetProvider providerType;
+	/** 推特用户账号名 */
+	String username;
 	/** 推文内容 */
 	String text;
 	/** 推文实体：urls=引用图片/视频；mentions=提及的人；hashtags=被识别的标签文本； */
@@ -45,9 +51,24 @@ public class Tweet extends BaseEntity {
 	Date addTime;
 	/** 最后更新时间 */
 	Date updateTime;
-	/** 推特用户账号名 */
-	String author;
+	/** 推文图片 */
+	String images;
+	/** 推文视频 */
+	String videos;
 
+	public static Tweet of(TweetProvider providerType, TweetType tweetType, String author, String tweetId, String text, String entities, String orgMsg, Date addTime) {
+		Tweet tweet = new Tweet();
+		tweet.setProviderType(providerType);
+		tweet.setType(tweetType);
+		tweet.setUsername(author);
+		tweet.setTweetId(tweetId);
+		tweet.setText(text);
+		tweet.setEntities(entities);
+		tweet.setOrgMsg(orgMsg);
+		tweet.setAddTime(addTime);
+		tweet.setUpdateTime(addTime);
+		return tweet;
+	}
 
 	public static final String TWEETID = "tweetId";
 	public static final String TYPE = "type";
@@ -64,5 +85,6 @@ public class Tweet extends BaseEntity {
 	public static final String BIZ_FLAG = "biz_flag";
 	public static final String ADD_TIME = "add_time";
 	public static final String UPDATE_TIME = "update_time";
-	public static final String AUTHOR = "author";
+	public static final String USERNAME = "username";
+
 }

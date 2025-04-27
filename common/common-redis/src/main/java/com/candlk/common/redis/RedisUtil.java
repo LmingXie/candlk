@@ -15,11 +15,16 @@ import javax.annotation.Nullable;
 import com.alibaba.fastjson2.JSON;
 import com.alibaba.fastjson2.JSONReader;
 import com.candlk.common.model.Messager;
+import com.github.benmanes.caffeine.cache.Cache;
+import com.github.benmanes.caffeine.cache.Caffeine;
+import lombok.Getter;
+import lombok.extern.slf4j.Slf4j;
 import me.codeplayer.util.X;
 import org.redisson.api.*;
 import org.redisson.client.codec.StringCodec;
 import org.springframework.dao.DataAccessException;
 import org.springframework.data.redis.connection.DataType;
+import org.springframework.data.redis.connection.RedisTxCommands;
 import org.springframework.data.redis.connection.convert.Converters;
 import org.springframework.data.redis.core.*;
 import org.springframework.data.redis.serializer.RedisSerializer;
@@ -27,6 +32,7 @@ import org.springframework.data.redis.serializer.RedisSerializer;
 /**
  * Redis 工具方法类
  */
+@Slf4j
 public abstract class RedisUtil {
 
 	public static <T> Supplier<T> wrapTask(Runnable task) {
@@ -36,24 +42,24 @@ public abstract class RedisUtil {
 		};
 	}
 
+	static final Cache<String, String> localLockCache = Caffeine.newBuilder().initialCapacity(8).maximumSize(40960).expireAfterAccess(10, TimeUnit.SECONDS).build();
+
+	@Getter
+	static RedissonClient client;
+	@Getter
 	static StringRedisTemplate stringRedisTemplate;
 	static HashOperations<String, String, String> redisHash;
-	static RedissonClient client;
-
-	public static RedissonClient getClient() {
-		return client;
-	}
 
 	public static void setClient(RedissonClient client) {
 		RedisUtil.client = client;
 	}
 
-	public static StringRedisTemplate getStringRedisTemplate() {
-		return stringRedisTemplate;
-	}
-
 	public static HashOperations<String, String, String> opsForHash() {
 		return redisHash;
+	}
+
+	public static StringRedisTemplate template() {
+		return stringRedisTemplate;
 	}
 
 	public static void setStringRedisTemplate(StringRedisTemplate stringRedisTemplate) {
@@ -62,39 +68,49 @@ public abstract class RedisUtil {
 	}
 
 	public static void doInLock(String key, long expireTimeInMs, Runnable task) {
-		loadInLock(key, expireTimeInMs, wrapTask(task));
+		loadInLock(key, expireTimeInMs, wrapTask(task), true);
 	}
 
 	public static void doInLock(String key, Runnable task) {
-		loadInLock(key, 30_000L, wrapTask(task));
+		loadInLock(key, 30_000L, wrapTask(task), true);
 	}
 
 	public static <T> T loadInLock(String key, Supplier<T> task) {
-		return loadInLock(key, 30_000L, task);
-	}
-
-	public static <T> T loadInLock(String key, long expireTimeInMs, Supplier<T> task) {
-		final RLock lock = client.getLock(key);
-		try {
-			lock.lock(expireTimeInMs, TimeUnit.MILLISECONDS);
-			return task.get();
-		} finally {
-			lock.unlock();
-		}
+		return loadInLock(key, 30_000L, task, true);
 	}
 
 	/**
-	 * 原子性依次执行指定的任务，并屏蔽解锁异常
+	 * @param unlockSilently 是否静默解锁
 	 */
-	public static <T> T loadInLockAndUnlockSilently(String key, long expireTimeInMs, Supplier<T> task) {
-		final RLock lock = client.getLock(key);
-		try {
-			lock.lock(expireTimeInMs, TimeUnit.MILLISECONDS);
-			return task.get();
-		} finally {
+	public static <T> T loadInLock(String key, Supplier<T> task, final boolean unlockSilently) {
+		return loadInLock(key, 30_000L, task, unlockSilently);
+	}
+
+	public static <T> T loadInLock(String key, long lockTimeInMs, Supplier<T> task) {
+		return loadInLock(key, lockTimeInMs, task, true);
+	}
+
+	/**
+	 * @param lockTimeInMs 默认加锁时间
+	 * @param unlockSilently 是否静默解锁
+	 */
+	public static <T> T loadInLock(String key, long lockTimeInMs, Supplier<T> task, final boolean unlockSilently) {
+		final String sharedLoclKey = localLockCache.get(key, k -> key);
+		synchronized (sharedLoclKey) {
+			final RLock lock = client.getLock(key);
 			try {
-				lock.unlock();
-			} catch (Exception ignore) {
+				lock.lock(lockTimeInMs, TimeUnit.MILLISECONDS);
+				return task.get();
+			} finally {
+				if (unlockSilently) {
+					try {
+						lock.unlock();
+					} catch (Throwable e) {
+						log.warn("Redis分布式锁释放异常：" + key, e);
+					}
+				} else {
+					lock.unlock();
+				}
 			}
 		}
 	}
@@ -111,13 +127,10 @@ public abstract class RedisUtil {
 		boolean locked = getStringRedisTemplate().opsForValue().setIfAbsent(key, "1", minIntervalInMs, TimeUnit.MILLISECONDS);
 		if (locked) { // 拿到了锁
 			try {
-				T val = task.get();
-				locked = false; // 成功执行完毕，没有报错，则释放锁
-				return val;
-			} finally {
-				if (!locked) {
-					getStringRedisTemplate().delete(key);
-				}
+				return task.get();
+			} catch (RuntimeException e) {
+				getStringRedisTemplate().delete(key);
+				throw e;
 			}
 		}
 		return defaultVal == null ? null : defaultVal.get();
@@ -154,7 +167,10 @@ public abstract class RedisUtil {
 			}
 			return defaultVal == null ? null : defaultVal.get();
 		} catch (InterruptedException e) {
-			throw new IllegalStateException(e);
+			Thread.currentThread().interrupt();
+			IllegalThreadStateException ex = new IllegalThreadStateException();
+			ex.initCause(e);
+			throw ex;
 		} finally {
 			if (locked) {
 				lock.unlock();
@@ -224,19 +240,69 @@ public abstract class RedisUtil {
 
 	/**
 	 * @param dataType 为 null 则表示所有数据类型
+	 * @param maxCount -1 表示不限制
 	 */
-	public static Cursor<String> scan(RedisTemplate<String, ?> redisTemplate, @Nullable DataType dataType, String pattern, int maxCount) {
-		final ScanOptions.ScanOptionsBuilder builder = ScanOptions.scanOptions().match(pattern).count(maxCount);
+	public static Cursor<String> scanKeys(RedisOperations<String, ?> redisOps, @Nullable DataType dataType, String pattern, int maxCount) {
+		final ScanOptions.ScanOptionsBuilder builder = ScanOptions.scanOptions().match(pattern);
+		if (maxCount > 0) {
+			builder.count(maxCount);
+		}
 		if (dataType != null) {
 			builder.type(dataType);
 		}
 		ScanOptions scanOptions = builder.build();
-		return scan(redisTemplate, scanOptions);
+		return scanKeys(redisOps, scanOptions);
 	}
 
-	public static Cursor<String> scan(RedisTemplate<String, ?> redisTemplate, ScanOptions scanOptions) {
-		RedisSerializer<String> redisSerializer = X.castType(redisTemplate.getKeySerializer());
-		return redisTemplate.executeWithStickyConnection(conn -> new ConvertingCursor<>(conn.scan(scanOptions), redisSerializer::deserialize));
+	/**
+	 * @param dataType 为 null 则表示所有数据类型
+	 * @param maxCount -1 表示不限制
+	 */
+	public static Cursor<String> scanKeys(@Nullable DataType dataType, String pattern, int maxCount) {
+		return scanKeys(stringRedisTemplate, dataType, pattern, maxCount);
+	}
+
+	public static Cursor<String> scanKeys(RedisOperations<String, ?> redisOps, ScanOptions scanOptions) {
+		RedisSerializer<String> redisSerializer = X.castType(redisOps.getKeySerializer());
+		return redisOps.executeWithStickyConnection(conn -> new ConvertingCursor<>(conn.scan(scanOptions), redisSerializer::deserialize));
+	}
+
+	public static Cursor<String> scanKeys(ScanOptions scanOptions) {
+		return scanKeys(stringRedisTemplate, scanOptions);
+	}
+
+	/**
+	 * @param cursor RedisCursor
+	 */
+	public static <T> List<T> scanToList(final Cursor<T> cursor) {
+		final List<T> keys = new ArrayList<>();
+		try (cursor) {
+			while (cursor.hasNext()) {
+				keys.add(cursor.next());
+			}
+		}
+		return keys;
+	}
+
+	public static List<String> scanToKeys(ScanOptions scanOptions) {
+		return scanToList(stringRedisTemplate.scan(scanOptions));
+	}
+
+	/**
+	 * @param dataType 为 null 则表示所有数据类型
+	 * @param maxCount -1 表示不限制
+	 */
+	public static List<String> scanToKeys(RedisTemplate<String, ?> redisTemplate, @Nullable DataType dataType, String pattern, int maxCount) {
+		final Cursor<String> cursor = scanKeys(redisTemplate, dataType, pattern, maxCount);
+		return scanToList(cursor);
+	}
+
+	/**
+	 * @param dataType 为 null 则表示所有数据类型
+	 * @param maxCount -1 表示不限制
+	 */
+	public static List<String> scanToKeys(@Nullable DataType dataType, String pattern, int maxCount) {
+		return scanToKeys(stringRedisTemplate, dataType, pattern, maxCount);
 	}
 
 	/**
@@ -333,6 +399,9 @@ public abstract class RedisUtil {
 	@Nullable
 	public static Double score(@Nullable Double val, int scale) {
 		if (val != null) {
+			if (val == val.longValue()) {
+				return val;
+			}
 			BigDecimal d = new BigDecimal(val);
 			if (d.scale() <= scale) {
 				return val;
@@ -384,6 +453,8 @@ public abstract class RedisUtil {
 	/**
 	 * 取 Redis ZSet 指定成员的 score
 	 * 如果成员不存在时，默认返回 0
+	 *
+	 * @param scale 指定最多保留的小数位数，超过将四舍五入
 	 */
 	public static double score(String redisKey, String member, int scale) {
 		return scoreVal(score(redisKey, member), scale);
@@ -391,22 +462,56 @@ public abstract class RedisUtil {
 
 	/**
 	 * 取 Redis ZSet 指定成员的 score
-	 * 如果成员不存在时，默认返回 null
+	 * 如果成员不存在时，默认返回 0
 	 */
-	@Nullable
-	public static BigDecimal unboxScore(String redisKey, String member, int scale) {
+	public static long scoreLong(String redisKey, String member) {
+		Double score = score(redisKey, member);
+		return scoreLong(score);
+	}
+
+	/**
+	 * 将指定 Double 转为 long
+	 *
+	 * @return 如果为 null，则返回 0
+	 */
+	public static long scoreLong(Double score) {
+		return score == null ? 0L : score.longValue();
+	}
+
+	/**
+	 * 取 Redis ZSet 指定成员的 score，并将存储的 long 转为对应小数位数的 BigDecimal
+	 * 如果成员不存在时，默认返回 null
+	 *
+	 * @param unboxScale 指定拆箱的小数位数。如果为 2 则表示最后2位整数表示小数，即会将 10000 的 score 转为 100.00 并返回
+	 */
+	public static BigDecimal unboxScore(String redisKey, String member, int unboxScale, @Nullable BigDecimal defaultValue) {
 		Double score = score(redisKey, member);
 		if (score == null) {
-			return null;
+			return defaultValue;
 		}
-		return BigDecimal.valueOf(score).movePointLeft(scale);
+		final long val = score.longValue();
+		if (val == score) {
+			return BigDecimal.valueOf(val).movePointLeft(unboxScale);
+		}
+		return BigDecimal.valueOf(score).movePointLeft(unboxScale);
+	}
+
+	/**
+	 * 取 Redis ZSet 指定成员的 score，并将存储的 long 转为对应小数位数的 BigDecimal
+	 * 如果成员不存在时，默认返回 0
+	 *
+	 * @param unboxScale 指定拆箱的小数位数。如果为 2 则表示最后2位整数表示小数，即会将 10000 的 score 转为 100.00 并返回
+	 */
+	@Nonnull
+	public static BigDecimal unboxScore(String redisKey, String member, int unboxScale) {
+		return unboxScore(redisKey, member, unboxScale, BigDecimal.ZERO);
 	}
 
 	/**
 	 * 在 Redis 事务中执行批处理操作（内部会自动开启、提交事务，抛异常时撤销事务）
 	 */
 	@Nullable
-	public static List<Object> runInTransaction(final Consumer<RedisOperations<String, String>> redisOpsConsumer) {
+	public static List<Object> execInTransaction(final Consumer<RedisOperations<String, String>> redisOpsConsumer) {
 		return stringRedisTemplate.execute(new SessionCallback<>() {
 			@Override
 			public <K, V> List<Object> execute(RedisOperations<K, V> operations) throws DataAccessException {
@@ -419,12 +524,108 @@ public abstract class RedisUtil {
 	}
 
 	/**
-	 * 当 Redis key 存在时才设置指定值，并保持过期时间不变
+	 * 在 Redis 事务中执行批处理操作（内部会自动开启、提交事务，抛异常时撤销事务）
+	 * 【注意】本方法【不会】处理也【不会】返回事务的执行结果
 	 */
-	public static boolean setIfPresentKeepTtl(RedisTemplate<String, ?> redisTemplate, String redisKey, String value) {
+	public static void doInTransaction(final Consumer<RedisOperations<String, String>> redisOpsConsumer) {
+		stringRedisTemplate.execute(new SessionCallback<>() {
+			@Override
+			public <K, V> List<Object> execute(RedisOperations<K, V> operations) throws DataAccessException {
+				RedisOperations<String, String> redisOps = X.castType(operations);
+				redisOps.multi();
+				redisOpsConsumer.accept(redisOps);
+				// 不需要对返回数据作进一步转换处理
+				return redisOps.execute(RedisTxCommands::exec);
+			}
+		});
+	}
+
+	/**
+	 * 在 Redis 【管道】中执行批处理操作
+	 */
+	public static List<Object> execInPipeline(final Consumer<RedisOperations<String, String>> redisOpsConsumer) {
+		return stringRedisTemplate.executePipelined(new SessionCallback<>() {
+			@Override
+			public <K, V> List<Object> execute(RedisOperations<K, V> operations) throws DataAccessException {
+				RedisOperations<String, String> redisOps = X.castType(operations);
+				redisOpsConsumer.accept(redisOps);
+				return null;
+			}
+		});
+	}
+
+	/**
+	 * 当 Redis key 存在时才设置指定值，并保持过期时间不变<p>
+	 * 即执行：<code>SET key value XX KEEPTTL</code>
+	 *
+	 * @return 如果 key 存在则返回 true
+	 */
+	public static boolean setIfPresentKeepTtl(final RedisOperations<String, ?> redisOps, String redisKey, String value) {
 		// SET key value XX KEEPTTL
 		//noinspection ConstantConditions
-		return redisTemplate.execute(conn -> Converters.stringToBoolean((String) conn.execute("SET", redisKey.getBytes(StandardCharsets.UTF_8), value.getBytes(StandardCharsets.UTF_8), "XX".getBytes(StandardCharsets.UTF_8), "KEEPTTL".getBytes(StandardCharsets.UTF_8))), true);
+		return redisOps.execute((RedisCallback<Boolean>) conn -> Converters.stringToBoolean((String)
+				conn.execute("SET",
+						redisKey.getBytes(StandardCharsets.UTF_8),
+						value.getBytes(StandardCharsets.UTF_8),
+						"XX".getBytes(StandardCharsets.UTF_8),
+						"KEEPTTL".getBytes(StandardCharsets.UTF_8)
+				)));
+	}
+
+	/**
+	 * 执行指定的函数调用<p>
+	 * 执行命令：<code>FCALL function numkeys [key [key ...]] [arg [arg ...]]</code>
+	 *
+	 * @param mode 函数模式：READ=只读；WRITE=读写
+	 * @param funcName 函数名称，例如："hello"
+	 * @param keys Redis Key 集合
+	 * @param args Redis 参数集合
+	 * @since Redis 7.0.0
+	 */
+	public static Object fcall(final RedisOperations<String, ?> redisOps, FunctionMode mode, String funcName, List<String> keys, Object... args) {
+		// FCALL function numkeys [key [key ...]] [arg [arg ...]]
+		//noinspection ConstantConditions
+		return redisOps.execute((RedisCallback<Object>) conn -> {
+			final int keySize = X.size(keys), argsSize = X.size(args);
+			final byte[][] byteArgs = new byte[2 + keySize + argsSize][];
+			byteArgs[0] = funcName.getBytes(StandardCharsets.UTF_8); // 函数名称
+			byteArgs[1] = toString(keySize).getBytes(StandardCharsets.UTF_8); // numkeys
+			int pos = 2;
+			for (int i = 0; i < keySize; i++) {
+				byteArgs[pos++] = keys.get(i).getBytes(StandardCharsets.UTF_8);
+			}
+			for (int i = 0; i < argsSize; i++) {
+				byteArgs[pos++] = String.valueOf(args[i]).getBytes(StandardCharsets.UTF_8);
+			}
+			return conn.execute(mode == FunctionMode.READ ? "FCALL_RO" : "FCALL", byteArgs);
+		});
+	}
+
+	/**
+	 * 将整数转为字符串
+	 * 这里的目的主要是避免常用数字的 toString() 会 new 出新的字符串
+	 */
+	static String toString(final int val) {
+		return switch (val) {
+			case 0 -> "0";
+			case 1 -> "1";
+			case 2 -> "2";
+			case 3 -> "3";
+			default -> Integer.toString(val);
+		};
+	}
+
+	/**
+	 * 执行指定的函数调用 <p>
+	 * 执行命令：<code>FCALL function numkeys [key [key ...]] [arg [arg ...]]</code>
+	 *
+	 * @param funcName 函数名称，例如："hello"
+	 * @param keys Redis Key 集合
+	 * @param args Redis 参数集合
+	 * @since Redis 7.0.0
+	 */
+	public static Object fcall(final RedisOperations<String, ?> redisOps, String funcName, List<String> keys, Object... args) {
+		return fcall(redisOps, FunctionMode.WRITE, funcName, keys, args);
 	}
 
 }

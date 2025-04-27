@@ -2,7 +2,6 @@ package com.candlk.webapp.user.service;
 
 import com.candlk.common.dao.SmartQueryWrapper;
 import com.candlk.common.model.TimeInterval;
-import com.candlk.common.model.ValueProxyImpl;
 import com.candlk.common.web.Page;
 import com.candlk.webapp.base.service.BaseServiceImpl;
 import com.candlk.webapp.user.dao.TweetDao;

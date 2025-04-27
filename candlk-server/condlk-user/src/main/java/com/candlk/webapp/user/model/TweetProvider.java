@@ -13,9 +13,9 @@ import org.apache.commons.lang3.EnumUtils;
 @Getter
 public enum TweetProvider implements ValueProxyImpl<TweetProvider, String> {
 	/** <a href="https://axiom.trade/trackers">Axiom</a> */
-	AXIOM("Axiom", false),
+	AXIOM("Axiom"),
 	/** <a href="https://www.x3.pro/trending-tweets">X3</a> */
-	X3("X3"),
+	X3("X3", false),
 	;
 
 	@EnumValue
