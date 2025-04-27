@@ -16,8 +16,6 @@ import com.github.benmanes.caffeine.cache.Caffeine;
 import lombok.extern.slf4j.Slf4j;
 import me.codeplayer.util.EasyDate;
 import org.apache.commons.io.FileUtils;
-import org.checkerframework.checker.nullness.qual.PolyNull;
-import org.springframework.context.annotation.Configuration;
 import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.web.client.RestTemplate;
 import org.web3j.protocol.Web3j;
@@ -89,7 +87,7 @@ public class XAIPowerJob {
 		if (info.delegateAddress == null) {
 			info.getDelegateAddress(web3j, flush);
 		}
-		final Function<String, @PolyNull Boolean> function = k -> {
+		final Function<String, Boolean> function = k -> {
 			// Arbitrum 平均 0.26s一个区块，1小时 = 14400 区块，这里取最近15000个区块，1小时内未领奖则算不活跃的池子
 			BigInteger startBlockNumber = endBlockNumber.subtract(new BigInteger("15000"));
 			boolean active = info.hasActivePool(restTemplate, info.getDelegateAddress(web3j, flush), startBlockNumber);

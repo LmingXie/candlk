@@ -13,7 +13,6 @@ import org.springframework.stereotype.Service;
 /**
  * 推文信息表 服务实现类
  *
- * @author
  * @since 2025-04-27
  */
 @Service

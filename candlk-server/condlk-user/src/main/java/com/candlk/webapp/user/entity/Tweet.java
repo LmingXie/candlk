@@ -56,11 +56,11 @@ public class Tweet extends BaseEntity {
 	/** 推文视频 */
 	String videos;
 
-	public static Tweet of(TweetProvider providerType, TweetType tweetType, String author, String tweetId, String text, String entities, String orgMsg, Date addTime) {
+	public static Tweet of(TweetProvider providerType, TweetType tweetType, String username, String tweetId, String text, String entities, String orgMsg, Date addTime) {
 		Tweet tweet = new Tweet();
 		tweet.setProviderType(providerType);
 		tweet.setType(tweetType);
-		tweet.setUsername(author);
+		tweet.setUsername(username);
 		tweet.setTweetId(tweetId);
 		tweet.setText(text);
 		tweet.setEntities(entities);

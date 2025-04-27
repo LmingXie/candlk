@@ -6,7 +6,6 @@ import java.net.http.WebSocket;
 import java.net.http.WebSocket.Listener;
 import java.nio.charset.StandardCharsets;
 import java.security.GeneralSecurityException;
-import java.text.ParseException;
 import java.text.SimpleDateFormat;
 import java.util.*;
 import java.util.concurrent.CompletionStage;
@@ -24,7 +23,6 @@ import com.candlk.webapp.user.model.TweetType;
 import com.candlk.webapp.user.service.TweetService;
 import com.candlk.webapp.user.service.TweetUserService;
 import lombok.extern.slf4j.Slf4j;
-import me.codeplayer.util.EasyDate;
 import org.springframework.dao.DuplicateKeyException;
 import org.springframework.http.*;
 import org.springframework.stereotype.Service;
@@ -117,7 +115,7 @@ public class AxiomTweetWsProvider implements Listener, TweetWsApi {
 						.header("Origin", "https://axiom.trade")
 						.header("cookie", "auth-refresh-token=" + refreshToken + "; auth-access-token=" + accessToken + ";")
 						.header("User-Agent", "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/135.0.0.0 Safari/537.36")
-						.buildAsync(URI.create("wss://cluster3.axiom.trade/"), new AxiomTweetWsProvider())
+						.buildAsync(URI.create("wss://cluster3.axiom.trade/"), this)
 						.join();
 			}
 		}
@@ -141,8 +139,6 @@ public class AxiomTweetWsProvider implements Listener, TweetWsApi {
 			"profile.update", // 用户的资料信息有变更
 			"profile.pinned.update" // 置顶推文
 	);
-
-	public static final SimpleDateFormat SDF = new SimpleDateFormat("EEE MMM dd HH:mm:ss Z yyyy", Locale.ENGLISH);
 
 	@Override
 	public CompletionStage<?> onText(WebSocket webSocket, CharSequence data, boolean last) {
@@ -170,10 +166,13 @@ public class AxiomTweetWsProvider implements Listener, TweetWsApi {
 						case "tweet.update" -> {
 							JSONObject tweet = postInfo.getJSONObject("tweet");
 							if (tweet != null) {
+								TweetType tweetType = TweetType.of(tweet.getString("type"));
+								if (tweetType == null || !tweetType.open) {
+									return;
+								}
 								// 解析并推文数据
 								final String tweetId = tweet.getString("id");
-								TweetType tweetType = TweetType.of(tweet.getString("type").toLowerCase());
-								final String author = axiomTwitter.content.handle;
+								final String author = axiomTwitter.content.handle.trim();
 								JSONObject body = tweet.getJSONObject("body");
 								// 使用正则表达式去除以 https://t.co/ 开头的推文尾部 短链接
 								final String text = body.getString("text").replaceAll("https://t\\.co/\\S+", "").trim();
@@ -195,12 +194,14 @@ public class AxiomTweetWsProvider implements Listener, TweetWsApi {
 										.setImages(images == null ? "" : images.toJSONString())
 										.setVideos(videos == null ? "" : videos.toJSONString())
 										.setUpdateTime(now);
+								final String createdAt = tweet.getString("created_at");
 								try {
 									// 默认返回 0 时区时间
-									Date date = SDF.parse(tweet.getString("created_at"));
+									SimpleDateFormat SDF = new SimpleDateFormat("EEE MMM dd HH:mm:ss Z yyyy", Locale.ENGLISH);
+									Date date = SDF.parse(createdAt);
 									tweetInfo.setAddTime(date);
 								} catch (Exception e) {
-									log.error("【{}】解析日期失败：", getProvider(), e);
+									log.error("【{}】解析日期失败：{}", getProvider(), createdAt, e);
 									tweetInfo.setAddTime(now);
 								}
 								try {
@@ -217,6 +218,8 @@ public class AxiomTweetWsProvider implements Listener, TweetWsApi {
 									// TODO 分词匹配
 								} catch (DuplicateKeyException e) { // 违反唯一约束
 									log.warn("【{}】推文已存在：{}", getProvider(), tweetId);
+								} catch (Exception e) {
+									log.error("【{}】保存推文失败：{}", getProvider(), tweetId, e);
 								}
 
 							}
@@ -237,16 +240,6 @@ public class AxiomTweetWsProvider implements Listener, TweetWsApi {
 	public CompletionStage<?> onClose(WebSocket webSocket, int statusCode, String reason) {
 		reConnection(webSocket, statusCode, reason);
 		return Listener.super.onClose(webSocket, statusCode, reason);
-	}
-
-	public static void main(String[] args) throws ParseException {
-		String input = "Wed Apr 23 01:27:57 +0000 2025";
-
-		// 用 SimpleDateFormat 解析
-		SimpleDateFormat sdf = new SimpleDateFormat("EEE MMM dd HH:mm:ss Z yyyy", Locale.ENGLISH);
-		Date date = sdf.parse(input);
-
-		System.out.println(new EasyDate(date).toDateTimeString());
 	}
 
 	@Override

@@ -16,10 +16,10 @@ import org.springframework.stereotype.Service;
 @Service
 public class TweetUserService extends BaseServiceImpl<TweetUser, TweetUserDao, Long> {
 
-	public boolean updateTweetLastTime(String author, Date now) {
+	public boolean updateTweetLastTime(String username, Date now) {
 		return update(new UpdateWrapper<TweetUser>()
 				.set(TweetUser.TWEET_LAST_TIME, now)
-				.eq(TweetUser.AUTHOR, author)
+				.eq(TweetUser.USERNAME, username)
 		) > 0;
 	}
 

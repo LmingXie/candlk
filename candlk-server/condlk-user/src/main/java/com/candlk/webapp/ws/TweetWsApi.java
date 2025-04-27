@@ -53,7 +53,7 @@ public interface TweetWsApi {
 
 	/** 调用ping指令 */
 	default boolean ping() {
-		return false;
+		return true;
 	}
 
 	/** 建立连接 */

@@ -114,7 +114,7 @@ public class DefaultAutoLoginHandler implements AutoLoginHandler, InitializingBe
 			int pos = tokenVal.indexOf(sessionIdSep);
 			final String tokenId = pos == -1 ? Encrypter.md5(tokenVal) : tokenVal.substring(0, pos);
 			final String finalTokenVal = pos == -1 ? tokenVal : tokenVal.substring(pos + 1);
-			Member member = RedisUtil.loadInLockAndUnlockSilently(CONCURRENT_LOGIN_LOCK_PREFIX + tokenId, 10_000L, () -> {
+			Member member = RedisUtil.loadInLock(CONCURRENT_LOGIN_LOCK_PREFIX + tokenId, 10_000L, () -> {
 				final String redisKey = CONCURRENT_SESSION_USER_PREFIX + tokenId;
 				String memberJson = stringRedisTemplate.opsForValue().get(redisKey);
 				Member m = null;

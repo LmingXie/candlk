@@ -11,7 +11,7 @@ import org.apache.commons.lang3.EnumUtils;
  * 第三方推文厂商类型
  */
 @Getter
-public enum TweetProvider implements ValueProxyImpl<TweetProvider, String> {
+public enum TweetProvider implements ValueProxyImpl<TweetProvider, Integer> {
 	/** <a href="https://axiom.trade/trackers">Axiom</a> */
 	AXIOM("Axiom"),
 	/** <a href="https://www.x3.pro/trending-tweets">X3</a> */
@@ -19,13 +19,13 @@ public enum TweetProvider implements ValueProxyImpl<TweetProvider, String> {
 	;
 
 	@EnumValue
-	public final String value;
+	public final Integer value;
 	public final String label;
 	public final boolean open;
-	final ValueProxy<TweetProvider, String> proxy;
+	final ValueProxy<TweetProvider, Integer> proxy;
 
 	TweetProvider(String label, boolean open) {
-		this.value = name();
+		this.value = ordinal();
 		this.label = label;
 		this.open = open;
 		this.proxy = new ValueProxy<>(this, value, label);

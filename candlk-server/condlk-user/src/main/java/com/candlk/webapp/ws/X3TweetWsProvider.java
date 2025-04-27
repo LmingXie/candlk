@@ -30,11 +30,10 @@ public class X3TweetWsProvider implements Listener, TweetWsApi {
 		HttpClient client = HttpClient.newBuilder().executor(WS_EXECUTOR).build();
 
 		// 建立连接
-		X3TweetWsProvider listener = new X3TweetWsProvider();
 		this.webSocket = client.newWebSocketBuilder()
 				.header("Origin", "https://www.x3.pro")
 				.header("User-Agent", "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/135.0.0.0 Safari/537.36")
-				.buildAsync(URI.create("wss://www.x3.pro/api/ws?Authorization=" + UUID.randomUUID()), listener)
+				.buildAsync(URI.create("wss://www.x3.pro/api/ws?Authorization=" + UUID.randomUUID()), this)
 				.join();
 	}
 

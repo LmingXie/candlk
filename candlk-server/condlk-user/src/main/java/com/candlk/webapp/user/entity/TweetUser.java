@@ -22,7 +22,7 @@ public class TweetUser extends TimeBasedEntity {
 	/** 推特昵称 */
 	String nickname;
 	/** 推特头像 */
-	String avatar;
+	String username;
 	/** 推特简介 */
 	String description;
 	/** 关注该用户的用户数 */
@@ -42,7 +42,7 @@ public class TweetUser extends TimeBasedEntity {
 
 
 	public static final String USERID = "userId";
-	public static final String AUTHOR = "author";
+	public static final String USERNAME = "username";
 	public static final String NICKNAME = "nickname";
 	public static final String AVATAR = "avatar";
 	public static final String DESCRIPTION = "description";
