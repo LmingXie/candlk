@@ -9,19 +9,19 @@ import java.util.concurrent.CompletionStage;
 
 import com.alibaba.fastjson2.JSON;
 import com.alibaba.fastjson2.JSONObject;
-import com.candlk.webapp.user.model.WsListenerType;
+import com.candlk.webapp.user.model.TweetProvider;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
 
 @Slf4j
 @Service
-public class X3WsListener implements Listener, WsListenerApi {
+public class X3TweetWsProvider implements Listener, TweetWsApi {
 
 	public WebSocket webSocket;
 
 	@Override
-	public WsListenerType getProvider() {
-		return WsListenerType.X3;
+	public TweetProvider getProvider() {
+		return TweetProvider.X3;
 	}
 
 	@Override
@@ -30,7 +30,7 @@ public class X3WsListener implements Listener, WsListenerApi {
 		HttpClient client = HttpClient.newBuilder().executor(WS_EXECUTOR).build();
 
 		// 建立连接
-		X3WsListener listener = new X3WsListener();
+		X3TweetWsProvider listener = new X3TweetWsProvider();
 		this.webSocket = client.newWebSocketBuilder()
 				.header("Origin", "https://www.x3.pro")
 				.header("User-Agent", "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/135.0.0.0 Safari/537.36")
@@ -69,9 +69,10 @@ public class X3WsListener implements Listener, WsListenerApi {
 		// 并发处理消息（交给线程池）
 		WS_EXECUTOR.submit(() -> {
 			System.out.println("[Message] " + data);
-			JSONObject postInfo = JSON.parseObject((String) data);
+			JSONObject postInfo = JSON.parseObject(data.toString());
 			if ("1".equals(postInfo.getString("msgType"))) {
-				JSONObject postData = postInfo.getJSONObject("data").getJSONObject("data");
+				JSONObject postData = postInfo.getJSONObject("data");
+				log.info("帖子消息：{}", postData.toJSONString());
 			}
 
 		});

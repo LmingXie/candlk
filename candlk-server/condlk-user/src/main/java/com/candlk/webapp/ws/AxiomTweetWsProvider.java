@@ -14,7 +14,7 @@ import com.alibaba.fastjson2.JSONObject;
 import com.candlk.common.security.AES;
 import com.candlk.context.web.Jsons;
 import com.candlk.webapp.user.entity.AxiomTwitter;
-import com.candlk.webapp.user.model.WsListenerType;
+import com.candlk.webapp.user.model.TweetProvider;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.http.*;
 import org.springframework.stereotype.Service;
@@ -25,7 +25,7 @@ import software.sava.core.encoding.Base58;
 
 @Slf4j
 @Service
-public class AxiomWsListener implements Listener, WsListenerApi {
+public class AxiomTweetWsProvider implements Listener, TweetWsApi {
 
 	public static final byte[] key = "Z>vB5uO^yJ/JQf#|w6p:=Va!fY_8W+IA".getBytes(StandardCharsets.UTF_8);
 	public static final AES aes = new AES(key);
@@ -33,8 +33,8 @@ public class AxiomWsListener implements Listener, WsListenerApi {
 	private WebSocket webSocket;
 
 	@Override
-	public WsListenerType getProvider() {
-		return WsListenerType.AXIOM;
+	public TweetProvider getProvider() {
+		return TweetProvider.AXIOM;
 	}
 
 	@Override
@@ -90,20 +90,20 @@ public class AxiomWsListener implements Listener, WsListenerApi {
 
 			final List<String> cookieList = headers.get(HttpHeaders.SET_COOKIE);
 			if (!CollectionUtils.isEmpty(cookieList)) {
-				Map<String, String> tokenMap = WsListenerApi.parseCookies(cookieList);
+				Map<String, String> tokenMap = TweetWsApi.parseCookies(cookieList);
 				final String accessToken = tokenMap.get("auth-access-token");
 				final String refreshToken = tokenMap.get("auth-refresh-token");
 				log.info("Access Token: {}  Refresh Token: {}", accessToken, refreshToken);
 
 				// 构建 HttpClient 并设置线程池
-				HttpClient client = HttpClient.newBuilder().executor(WsListenerApi.WS_EXECUTOR).build();
+				HttpClient client = HttpClient.newBuilder().executor(TweetWsApi.WS_EXECUTOR).build();
 
 				// 建立连接
 				this.webSocket = client.newWebSocketBuilder()
 						.header("Origin", "https://axiom.trade")
 						.header("cookie", "auth-refresh-token=" + refreshToken + "; auth-access-token=" + accessToken + ";")
 						.header("User-Agent", "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/135.0.0.0 Safari/537.36")
-						.buildAsync(URI.create("wss://cluster3.axiom.trade/"), new AxiomWsListener())
+						.buildAsync(URI.create("wss://cluster3.axiom.trade/"), new AxiomTweetWsProvider())
 						.join();
 			}
 		}
@@ -121,7 +121,7 @@ public class AxiomWsListener implements Listener, WsListenerApi {
 		Listener.super.onOpen(webSocket);
 	}
 
-	List<String> eventTypes = List.of(
+	public static final List<String> eventTypes = List.of(
 			"tweet.update", // 帖子变更事件（活跃账户）
 			"following.update", // 账户关注列表变更
 			"profile.update", // 用户的资料信息有变更

@@ -8,10 +8,10 @@ import me.codeplayer.util.ArrayUtil;
 import org.apache.commons.lang3.EnumUtils;
 
 /**
- * 第三方WebSocket监听器类型
+ * 第三方推文厂商类型
  */
 @Getter
-public enum WsListenerType implements ValueProxyImpl<WsListenerType, String> {
+public enum TweetProvider implements ValueProxyImpl<TweetProvider, String> {
 	/** <a href="https://axiom.trade/trackers">Axiom</a> */
 	AXIOM("Axiom", false),
 	/** <a href="https://www.x3.pro/trending-tweets">X3</a> */
@@ -22,23 +22,23 @@ public enum WsListenerType implements ValueProxyImpl<WsListenerType, String> {
 	public final String value;
 	public final String label;
 	public final boolean open;
-	final ValueProxy<WsListenerType, String> proxy;
+	final ValueProxy<TweetProvider, String> proxy;
 
-	WsListenerType(String label, boolean open) {
+	TweetProvider(String label, boolean open) {
 		this.value = name();
 		this.label = label;
 		this.open = open;
 		this.proxy = new ValueProxy<>(this, value, label);
 	}
 
-	WsListenerType(String label) {
+	TweetProvider(String label) {
 		this(label, true);
 	}
 
-	public static final WsListenerType[] CACHE = ArrayUtil.filter(values(), WsListenerType::isOpen);
+	public static final TweetProvider[] CACHE = ArrayUtil.filter(values(), TweetProvider::isOpen);
 
-	public static WsListenerType of(String value) {
-		return EnumUtils.getEnum(WsListenerType.class, value);
+	public static TweetProvider of(String value) {
+		return EnumUtils.getEnum(TweetProvider.class, value);
 	}
 
 }

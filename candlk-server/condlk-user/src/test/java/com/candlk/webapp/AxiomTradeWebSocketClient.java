@@ -9,8 +9,8 @@ import java.util.*;
 import com.alibaba.fastjson2.JSON;
 import com.alibaba.fastjson2.JSONObject;
 import com.candlk.context.web.Jsons;
-import com.candlk.webapp.ws.AxiomWsListener;
-import com.candlk.webapp.ws.WsListenerApi;
+import com.candlk.webapp.ws.AxiomTweetWsProvider;
+import com.candlk.webapp.ws.TweetWsApi;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.http.*;
 import org.springframework.util.CollectionUtils;
@@ -73,7 +73,7 @@ public class AxiomTradeWebSocketClient {
 
 			final List<String> cookieList = headers.get(HttpHeaders.SET_COOKIE);
 			if (!CollectionUtils.isEmpty(cookieList)) {
-				Map<String, String> tokenMap = WsListenerApi.parseCookies(cookieList);
+				Map<String, String> tokenMap = TweetWsApi.parseCookies(cookieList);
 				final String accessToken = tokenMap.get("auth-access-token");
 				final String refreshToken = tokenMap.get("auth-refresh-token");
 				log.info("Access Token: {}  Refresh Token: {}", accessToken, refreshToken);
@@ -85,14 +85,14 @@ public class AxiomTradeWebSocketClient {
 
 	public static void runListener(String accessToken, String refreshToken) throws InterruptedException {
 		// 构建 HttpClient 并设置线程池
-		HttpClient client = HttpClient.newBuilder().executor(WsListenerApi.WS_EXECUTOR).build();
+		HttpClient client = HttpClient.newBuilder().executor(TweetWsApi.WS_EXECUTOR).build();
 
 		// 建立连接
 		client.newWebSocketBuilder()
 				.header("Origin", "https://axiom.trade")
 				.header("cookie", "auth-refresh-token=" + refreshToken + "; auth-access-token=" + accessToken + ";")
 				.header("User-Agent", "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/135.0.0.0 Safari/537.36")
-				.buildAsync(URI.create("wss://cluster3.axiom.trade/"), new AxiomWsListener())
+				.buildAsync(URI.create("wss://cluster3.axiom.trade/"), new AxiomTweetWsProvider())
 				.join();
 
 		// 阻塞主线程

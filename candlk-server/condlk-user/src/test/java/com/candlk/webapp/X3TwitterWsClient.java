@@ -2,17 +2,16 @@ package com.candlk.webapp;
 
 import java.net.URI;
 import java.net.http.HttpClient;
-import java.security.GeneralSecurityException;
 
-import com.candlk.webapp.ws.X3WsListener;
+import com.candlk.webapp.ws.X3TweetWsProvider;
 import lombok.extern.slf4j.Slf4j;
 
-import static com.candlk.webapp.ws.WsListenerApi.WS_EXECUTOR;
+import static com.candlk.webapp.ws.TweetWsApi.WS_EXECUTOR;
 
 @Slf4j
 public class X3TwitterWsClient {
 
-	public static void main(String[] args) throws InterruptedException, GeneralSecurityException {
+	public static void main(String[] args) throws InterruptedException {
 
 		runListener();
 	}
@@ -25,7 +24,7 @@ public class X3TwitterWsClient {
 		client.newWebSocketBuilder()
 				.header("Origin", "https://www.x3.pro")
 				.header("User-Agent", "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/135.0.0.0 Safari/537.36")
-				.buildAsync(URI.create("wss://www.x3.pro/api/ws?Authorization=006a90e6-52f0-4497-af6c-e9db41ae3641"), new X3WsListener())
+				.buildAsync(URI.create("wss://www.x3.pro/api/ws?Authorization=006a90e6-52f0-4497-af6c-e9db41ae3641"), new X3TweetWsProvider())
 				.join();
 
 		// 阻塞主线程

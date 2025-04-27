@@ -8,7 +8,7 @@ import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 
 import com.candlk.context.ContextImpl;
-import com.candlk.webapp.user.model.WsListenerType;
+import com.candlk.webapp.user.model.TweetProvider;
 import me.codeplayer.util.LazyCacheLoader;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -16,18 +16,18 @@ import org.slf4j.LoggerFactory;
 /**
  * 第三方WebSocket监听器
  */
-public interface WsListenerApi {
+public interface TweetWsApi {
 
-	Logger log = LoggerFactory.getLogger(WsListenerApi.class);
+	Logger log = LoggerFactory.getLogger(TweetWsApi.class);
 
 	/** 生产厂商 */
-	WsListenerType getProvider();
+	TweetProvider getProvider();
 
 	/** 初始化全部已开启的监听器 */
-	private static EnumMap<WsListenerType, WsListenerApi> init() {
-		EnumMap<WsListenerType, WsListenerApi> map = ContextImpl.newEnumImplMap(WsListenerType.class, WsListenerApi.class, WsListenerApi::getProvider);
-		for (Map.Entry<WsListenerType, WsListenerApi> entry : map.entrySet()) {
-			WsListenerType type = entry.getKey();
+	private static EnumMap<TweetProvider, TweetWsApi> init() {
+		EnumMap<TweetProvider, TweetWsApi> map = ContextImpl.newEnumImplMap(TweetProvider.class, TweetWsApi.class, TweetWsApi::getProvider);
+		for (Map.Entry<TweetProvider, TweetWsApi> entry : map.entrySet()) {
+			TweetProvider type = entry.getKey();
 			if (type.isOpen()) {
 				try {
 					entry.getValue().connection();
@@ -40,10 +40,10 @@ public interface WsListenerApi {
 		return map;
 	}
 
-	LazyCacheLoader<EnumMap<WsListenerType, WsListenerApi>> implMapRef = new LazyCacheLoader<>(WsListenerApi::init);
+	LazyCacheLoader<EnumMap<TweetProvider, TweetWsApi>> implMapRef = new LazyCacheLoader<>(TweetWsApi::init);
 
-	static WsListenerApi getInstance(WsListenerType wsListenerType) {
-		return implMapRef.get().get(wsListenerType);
+	static TweetWsApi getInstance(TweetProvider tweetProvider) {
+		return implMapRef.get().get(tweetProvider);
 	}
 
 	// 使用固定线程池（核心线程数可以按实际 CPU 或事件处理量设定）

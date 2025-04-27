@@ -5,8 +5,8 @@ import java.util.Map;
 
 import javax.annotation.PostConstruct;
 
-import com.candlk.webapp.user.model.WsListenerType;
-import com.candlk.webapp.ws.WsListenerApi;
+import com.candlk.webapp.user.model.TweetProvider;
+import com.candlk.webapp.ws.TweetWsApi;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.scheduling.annotation.Scheduled;
@@ -17,16 +17,16 @@ public class PingJob {
 
 	@PostConstruct
 	public void init() {
-		for (WsListenerType type : WsListenerType.CACHE) {
-			WsListenerApi.getInstance(type);
+		for (TweetProvider type : TweetProvider.CACHE) {
+			TweetWsApi.getInstance(type);
 		}
 	}
 
 	@Scheduled(cron = "${service.cron.PingJob:0/55 * * * * ?}")
 	public void run() throws Exception {
 		log.info("开始执行心跳任务...");
-		EnumMap<WsListenerType, WsListenerApi> map = WsListenerApi.implMapRef.get();
-		for (Map.Entry<WsListenerType, WsListenerApi> entry : map.entrySet()) {
+		EnumMap<TweetProvider, TweetWsApi> map = TweetWsApi.implMapRef.get();
+		for (Map.Entry<TweetProvider, TweetWsApi> entry : map.entrySet()) {
 			if (entry.getKey().isOpen()) {
 				boolean ping = entry.getValue().ping();
 				if (!ping) {
