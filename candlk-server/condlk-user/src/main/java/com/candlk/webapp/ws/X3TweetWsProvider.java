@@ -4,13 +4,22 @@ import java.net.URI;
 import java.net.http.HttpClient;
 import java.net.http.WebSocket;
 import java.net.http.WebSocket.Listener;
-import java.util.UUID;
+import java.util.*;
 import java.util.concurrent.CompletionStage;
+import javax.annotation.Resource;
 
 import com.alibaba.fastjson2.JSON;
 import com.alibaba.fastjson2.JSONObject;
+import com.candlk.context.web.Jsons;
+import com.candlk.webapp.user.entity.Tweet;
+import com.candlk.webapp.user.entity.TweetUser;
 import com.candlk.webapp.user.model.TweetProvider;
+import com.candlk.webapp.user.model.TweetType;
+import com.candlk.webapp.user.service.TweetService;
+import com.candlk.webapp.user.service.TweetUserService;
 import lombok.extern.slf4j.Slf4j;
+import me.codeplayer.util.EasyDate;
+import org.apache.commons.lang3.StringUtils;
 import org.springframework.stereotype.Service;
 
 @Slf4j
@@ -18,6 +27,10 @@ import org.springframework.stereotype.Service;
 public class X3TweetWsProvider implements Listener, TweetWsApi {
 
 	public WebSocket webSocket;
+	@Resource
+	TweetService tweetService;
+	@Resource
+	TweetUserService tweetUserService;
 
 	@Override
 	public TweetProvider getProvider() {
@@ -63,15 +76,76 @@ public class X3TweetWsProvider implements Listener, TweetWsApi {
 		Listener.super.onOpen(webSocket);
 	}
 
+	public static final String CDN = "https://x3-media-pro-1.oss-cn-hongkong.aliyuncs.com/";
+
 	@Override
 	public CompletionStage<?> onText(WebSocket webSocket, CharSequence data, boolean last) {
 		// 并发处理消息（交给线程池）
 		WS_EXECUTOR.submit(() -> {
-			System.out.println("[Message] " + data);
-			JSONObject postInfo = JSON.parseObject(data.toString());
-			if ("1".equals(postInfo.getString("msgType"))) {
-				JSONObject postData = postInfo.getJSONObject("data");
-				log.info("帖子消息：{}", postData.toJSONString());
+			TweetProvider provider = getProvider();
+			log.info("【{}】事件内容：{}", provider, data);
+			JSONObject tweetData = JSON.parseObject(data.toString());
+			if ("1".equals(tweetData.getString("msgType"))) {
+
+				try {
+					List<JSONObject> posts = tweetData.getJSONObject("data").getList("data", JSONObject.class);
+
+					final Date now = new Date();
+					for (JSONObject post : posts) {
+						// 排除包含 CA 的推文
+						final String tokens = post.getString("tokens");
+						if (StringUtils.isNotEmpty(tokens)) {
+							continue;
+						}
+						JSONObject originPost = post.getJSONObject("originPost");
+						TweetType tweetType = originPost == null ? TweetType.TWEET : TweetType.QUOTE;
+
+						JSONObject authorInfo = post.getJSONObject("author");
+						final String author = authorInfo.getString("screenName");
+						final String tweetId = post.getString("id").replaceFirst("x_", "");
+
+						List<JSONObject> medias = post.getList("medias", JSONObject.class);
+						// 引用图片 和 视频
+						List<String> images = new ArrayList<>(), videos = new ArrayList<>();
+
+						if (medias != null) {
+							for (JSONObject media : medias) {
+								Integer type = media.getInteger("type");
+								(type.equals(2) ? videos : images).add(CDN + media.getString("path"));
+							}
+						}
+						Long createTime = post.getLong("createTime");
+						Tweet tweetInfo = new Tweet()
+								.setProviderType(provider)
+								.setType(tweetType)
+								.setUsername(author)
+								.setTweetId(tweetId)
+								.setText(post.getString("content"))
+								.setOrgMsg(post.toJSONString())
+								.setImages(Jsons.encode(images))
+								.setVideos(Jsons.encode(videos))
+								.setUpdateTime(now)
+								.setAddTime(createTime == null ? now : new EasyDate(createTime * 1000).toDate());
+						tweetService.saveTweet(tweetInfo, author, provider, tweetId);
+
+						TweetUser tweetUser = new TweetUser()
+								.setProviderType(provider)
+								.setUserId(authorInfo.getString("id").replaceFirst("x_", ""))
+								.setUsername(author)
+								.setNickname(authorInfo.getString("name"))
+								.setAvatar(CDN + authorInfo.getString("avatar"))
+								.setBanner(CDN + authorInfo.getString("bk"))
+								.setDescription(JSONObject.of("text", authorInfo.getString("introduction")).toJSONString())
+								.setFollowers(authorInfo.getInteger("fanCount"))
+								.setFollowing(authorInfo.getInteger("focusCount"));
+						createTime = authorInfo.getLong("createTime");
+						tweetUser.setAddTime(createTime == null ? now : new EasyDate(createTime * 1000).toDate());
+						tweetUser.setUpdateTime(now);
+						tweetUserService.updateStat(tweetUser);
+					}
+				} catch (Exception e) {
+					log.error("【{}】解析数据失败：", provider, e);
+				}
 			}
 
 		});
