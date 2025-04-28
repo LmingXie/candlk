@@ -6,6 +6,7 @@ import javax.annotation.Nullable;
 
 import me.codeplayer.util.*;
 import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.core.io.InputStreamSource;
 import org.springframework.core.io.Resource;
 import org.springframework.core.io.support.EncodedResource;
@@ -13,7 +14,7 @@ import org.springframework.core.io.support.PropertiesLoaderUtils;
 
 public class EncryptedPropertiesResolver {
 
-	static final Logger LOGGER = X.getLogger();
+	static final Logger LOGGER = LoggerFactory.getLogger(EncryptedPropertiesResolver.class);
 	static final String DEFAULT_SALT = "DjS$5M&F2vIiJ**g%IC#m0B6.8zMS^T|zx*1vlCNX-l|IW/NT";
 
 	protected String encryptDelimiterStart = "$(";

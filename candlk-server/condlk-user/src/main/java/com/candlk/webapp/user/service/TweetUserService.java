@@ -21,7 +21,7 @@ import org.springframework.transaction.annotation.Transactional;
 public class TweetUserService extends BaseServiceImpl<TweetUser, TweetUserDao, Long> {
 
 	public boolean updateTweetLastTime(String username, Date now) {
-		return update(new UpdateWrapper<TweetUser>()
+		return super.update(new UpdateWrapper<TweetUser>()
 				.set(TweetUser.TWEET_LAST_TIME, now)
 				.eq(TweetUser.USERNAME, username)
 		) > 0;
@@ -30,7 +30,7 @@ public class TweetUserService extends BaseServiceImpl<TweetUser, TweetUserDao, L
 	@Transactional
 	public void updateStat(TweetUser tweetUser) {
 		final String userId = tweetUser.getUserId();
-		int num = update(tweetUser, new UpdateWrapper<TweetUser>().eq(TweetUser.USERID, userId));
+		int num = super.update(tweetUser, new UpdateWrapper<TweetUser>().eq(TweetUser.USERID, userId));
 		if (num < 1) {
 			log.info("【推特用户】新增用户数据：{}", userId);
 			tweetUser.setType(TweetUserType.SPECIAL);

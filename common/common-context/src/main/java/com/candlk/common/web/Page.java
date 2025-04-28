@@ -6,7 +6,6 @@ import java.util.function.*;
 import javax.annotation.Nullable;
 
 import com.alibaba.fastjson2.annotation.JSONField;
-import com.baomidou.mybatisplus.core.metadata.OrderItem;
 import com.candlk.common.util.BeanUtil;
 import com.candlk.common.util.Common;
 import me.codeplayer.util.X;
@@ -73,7 +72,7 @@ public class Page<T> extends com.baomidou.mybatisplus.extension.plugins.paginati
 
 	@Override
 	public boolean hasNext() {
-		final int listSize = X.size(getList());
+		final int listSize = X.size(this.records);
 		final long total = getTotal();
 		return listSize > 0 && listSize == size && (total == 0 || Math.max(current - 1, 0) * size + listSize < total);
 	}
@@ -140,13 +139,7 @@ public class Page<T> extends com.baomidou.mybatisplus.extension.plugins.paginati
 
 	@JSONField(serialize = false)
 	@Override
-	public boolean isOptimizeJoinOfCountSql() {
-		return super.isOptimizeJoinOfCountSql();
-	}
-
-	@JSONField(serialize = false)
-	@Override
-	public List<OrderItem> getOrders() {
+	public List<com.baomidou.mybatisplus.core.metadata.OrderItem> getOrders() {
 		return super.getOrders();
 	}
 

@@ -9,9 +9,7 @@ import javax.sql.DataSource;
 
 import com.baomidou.mybatisplus.generator.FastAutoGenerator;
 import com.baomidou.mybatisplus.generator.config.DataSourceConfig;
-import com.baomidou.mybatisplus.generator.config.TemplateType;
-import com.baomidou.mybatisplus.generator.config.rules.DateType;
-import com.baomidou.mybatisplus.generator.config.rules.NamingStrategy;
+import com.baomidou.mybatisplus.generator.config.rules.*;
 import com.baomidou.mybatisplus.generator.engine.FreemarkerTemplateEngine;
 import lombok.Getter;
 import lombok.Setter;
@@ -31,7 +29,7 @@ public class MvcTemplateGenerator {
 	 * 需要修改 mybatis-plus-generator.properties 内部配置文件
 	 */
 	public static void main(String[] args) {
-		generate("lgy", null, "dt_verify_reason");
+		generate("author", null, "t_user");
 	}
 
 	public static void generate(String author, @Nullable GeneratorConfig generatorConfig, String... tableNames) {
@@ -47,10 +45,19 @@ public class MvcTemplateGenerator {
 						.author(author)
 						.commentDate("yyyy-MM-dd")
 						.dateType(DateType.ONLY_DATE)
-						.fileOverride()
 						.outputDir(config.getOutputDir())
 						.disableOpenDir()
 						.enableSwagger())
+				.dataSourceConfig(builder -> builder
+						.typeConvertHandler((globalConfig, typeRegistry, metaInfo) ->
+								switch (metaInfo.getJdbcType()) {
+									case TINYINT, SMALLINT -> DbColumnType.INTEGER;
+									case INTEGER -> metaInfo.getColumnName().endsWith("id")
+											&& metaInfo.getTypeName().equalsIgnoreCase("INT UNSIGNED")
+											? DbColumnType.LONG : DbColumnType.INTEGER;
+									default -> typeRegistry.getColumnType(metaInfo);
+								})
+				)
 				.packageConfig(builder -> builder
 						.parent(config.getParentPackage())
 						.controller("action")
@@ -63,35 +70,38 @@ public class MvcTemplateGenerator {
 						.addInclude(tableNames) // 需要生成的表
 						.enableCapitalMode()
 						//
-						.entityBuilder().superClass("com.candlk.webapp.base.entity.BaseEntity")
+						.entityBuilder()
+						.enableFileOverride()
+						.superClass("com.candlk.webapp.base.entity.BaseEntity")
 						.enableLombok()
 						.naming(NamingStrategy.underline_to_camel)
 						.columnNaming(NamingStrategy.underline_to_camel)
 						.enableColumnConstant()
+						.addIgnoreColumns("id")
+						.javaTemplate("/templates/entity")
 						//
-						.mapperBuilder().superClass("com.candlk.webapp.base.dao.BaseDao")
-						.enableMapperAnnotation()
+						.mapperBuilder()
+						.enableFileOverride()
+						.superClass("com.candlk.webapp.base.dao.BaseDao")
 						.enableBaseColumnList()
 						.enableBaseResultMap()
 						.formatMapperFileName("%sDao")
 						.formatXmlFileName("%sMapper")
+						.mapperTemplate("/templates/dao")
 						//
-						.serviceBuilder().superServiceClass("com.candlk.webapp.base.service.BaseServiceImpl")
-						.formatServiceFileName("%sService")
+						.serviceBuilder()
+						.enableFileOverride()
+						.disableService()
 						.superServiceImplClass("com.candlk.webapp.base.service.BaseServiceImpl")
 						.formatServiceImplFileName("%sService")
+						.serviceImplTemplate("/templates/service.impl")
 						//
-						.controllerBuilder().superClass("com.candlk.webapp.base.action.BaseAction")
+						.controllerBuilder()
+						.enableFileOverride()
+						.superClass("com.candlk.webapp.base.action.BaseAction")
 						.enableRestStyle()
 						.formatFileName("%sAction")
-				)
-				.templateConfig(builder -> builder
-						.entity("templates/entity")
-						.mapper("templates/dao")
-						.service("templates/service")
-						.disable(TemplateType.SERVICE)
-						.serviceImpl("templates/service.impl")
-						.controller("templates/action")
+						.template("/templates/action")
 				)
 				.templateEngine(new FreemarkerTemplateEngine());
 
@@ -140,9 +150,9 @@ public class MvcTemplateGenerator {
 		public static DataSourceProperties getDefaultDataSourceProperties() {
 			DataSourceProperties ds = new DataSourceProperties();
 			ds.setDriverClassName("com.mysql.cj.jdbc.Driver");
-			ds.setUrl("jdbc:mysql:///test?useUnicode=true&characterEncoding=utf-8&allowMultiQueries=true&useSSL=false&serverTimezone=Asia/Shanghai");
+			ds.setUrl("jdbc:mysql:///127.0.0.1:3306?useUnicode=true&characterEncoding=utf-8&allowMultiQueries=true&useSSL=false&serverTimezone=Asia/Shanghai");
 			ds.setUsername("root");
-			ds.setPassword("Bj@#2023");
+			ds.setPassword("123456");
 			return ds;
 		}
 

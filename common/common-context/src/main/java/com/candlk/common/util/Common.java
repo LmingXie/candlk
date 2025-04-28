@@ -2,13 +2,13 @@ package com.candlk.common.util;
 
 import java.io.Serializable;
 import java.math.BigDecimal;
+import java.math.RoundingMode;
 import java.util.*;
 import java.util.concurrent.ThreadLocalRandom;
 import java.util.function.*;
 import javax.annotation.Nonnull;
 import javax.annotation.Nullable;
 
-import com.candlk.common.context.Context;
 import com.candlk.common.model.*;
 import me.codeplayer.util.*;
 import org.apache.commons.lang3.StringUtils;
@@ -29,13 +29,17 @@ public class Common {
 	}
 
 	/**
-	 * 将指定的URL尽可能解析为相对根目录的URL
+	 * 将指定的用于LIKE语句的字符串转义，以防止SQL语句注入<br>
+	 * 该方法默认使用'\'进行转义操作
+	 *
+	 * @param likeStr 指定的字符串
 	 */
-	public static String parseToRelativeURL(@Nullable String url) {
-		if (StringUtil.isEmpty(url)) {
-			return "#";
+	@Nullable
+	public static String escapeSQLLike(@Nullable String likeStr) {
+		if (StringUtil.isBlank(likeStr)) {
+			return likeStr;
 		}
-		return StringUtils.removeStart(url, Context.nav().getSiteURL());
+		return StringUtil.escapeSQLLike(likeStr, '\\', false);
 	}
 
 	/**
@@ -130,22 +134,7 @@ public class Common {
 	 * 返回从指定集合过滤并映射后的新集合
 	 */
 	public static <T, R> List<R> filterAndMap(@Nullable Collection<T> list, final Predicate<? super T> filter, final Function<? super T, R> mapper) {
-		final int size = X.size(list);
-		if (size > 0) {
-			List<R> result = null;
-			for (T t : list) {
-				if (filter.test(t)) {
-					if (result == null) {
-						result = size > 10 ? new ArrayList<>() : new ArrayList<>(size);
-					}
-					result.add(mapper.apply(t));
-				}
-			}
-			if (result != null) {
-				return result;
-			}
-		}
-		return Collections.emptyList();
+		return CollectionUtil.filterAndMap(list, filter, mapper);
 	}
 
 	public static Integer[] toIntIds(Collection<? extends Bean<Integer>> list) {
@@ -218,18 +207,32 @@ public class Common {
 		return new ArrayList<>(collection);
 	}
 
-	public static <E, R> List<R> toList(Collection<E> c, Function<? super E, R> converter, boolean allowNull) {
+	public static <E> String[] toStrArray(Collection<E> c, @Nullable Function<E, String> converter) {
 		if (c == null) {
 			return null;
 		}
-		List<R> list = new ArrayList<>(c.size());
-		for (E t : c) {
-			R val = converter.apply(t);
-			if (allowNull || val != null) {
-				list.add(val);
-			}
+		final String[] array = new String[c.size()];
+		int i = 0;
+		for (E e : c) {
+			array[i++] = converter == null ? e.toString() : converter.apply(e);
 		}
-		return list;
+		return array;
+	}
+
+	public static <E> String[] toStrArray(Collection<E> c) {
+		return toStrArray(c, null);
+	}
+
+	public static <E, R> ArrayList<R> toList(Collection<E> c, Function<? super E, R> converter, boolean allowNull) {
+		return CollectionUtil.toList(c, converter, allowNull);
+	}
+
+	public static <E, R> HashSet<R> toSet(Collection<E> c, Function<? super E, R> converter, boolean allowNull) {
+		return CollectionUtil.toSet(c, converter, allowNull);
+	}
+
+	public static <E, R> HashSet<R> toSet(Collection<E> c, Function<? super E, R> converter) {
+		return toSet(c, converter, true);
 	}
 
 	public static <E, R> List<R> toList(Collection<E> c, Function<? super E, R> converter) {
@@ -242,24 +245,6 @@ public class Common {
 
 	public static <K extends Serializable, T extends Bean<K>> boolean containsById(final Collection<T> range, final K idToFind) {
 		return findAnyById(range, idToFind) != null;
-	}
-
-	/**
-	 * 指示是否匹配指定的条件
-	 *
-	 * @return {@code base && a || !base && b }
-	 */
-	public static boolean matchOr(final boolean base, Supplier<Boolean> a, Supplier<Boolean> b) {
-		return base && a.get() || !base && b.get();
-	}
-
-	/**
-	 * 指示是否匹配指定的条件
-	 *
-	 * @return {@code base && a || !base && b }
-	 */
-	public static boolean matchOr(final boolean base, boolean a, boolean b) {
-		return base && a || !base && b;
 	}
 
 	/**
@@ -289,7 +274,25 @@ public class Common {
 	 * @param delimiter 分隔符
 	 */
 	public static <E> String join(Collection<E> c, Function<E, Object> getter, String delimiter) {
-		return StringUtil.join(c, (sb, t) -> sb.append(getter.apply(t)), delimiter);
+		return StringUtil.join(c, getter, delimiter);
+	}
+
+	/**
+	 * 将集合的指定属性或输出拼接为字符串
+	 *
+	 * @param delimiter 分隔符
+	 */
+	public static <E> String joins(Collection<E> c, String delimiter) {
+		return StringUtil.joins(c, delimiter);
+	}
+
+	/**
+	 * 将集合的指定属性或输出拼接为字符串
+	 *
+	 * @param delimiter 分隔符
+	 */
+	public static <E> String join(@Nullable E[] array, String delimiter) {
+		return array == null || array.length == 0 ? "" : joins(Arrays.asList(array), delimiter);
 	}
 
 	/**
@@ -298,7 +301,7 @@ public class Common {
 	 * @param delimiter 分隔符
 	 */
 	public static String join(Collection<? extends Number> c, String delimiter) {
-		return StringUtil.join(c, (sb, t) -> sb.append(t.longValue()), delimiter);
+		return StringUtil.joinAppend(c, (sb, t) -> sb.append(t.longValue()), delimiter);
 	}
 
 	/**
@@ -307,7 +310,7 @@ public class Common {
 	 * @param delimiter 分隔符
 	 */
 	public static <T extends Bean<? extends Number>> String joinId(Collection<T> c, String delimiter) {
-		return StringUtil.join(c, (sb, t) -> sb.append(t.getId().longValue()), delimiter);
+		return StringUtil.joinAppend(c, (sb, t) -> sb.append(t.getId().longValue()), delimiter);
 	}
 
 	/**
@@ -316,7 +319,7 @@ public class Common {
 	 * @param delimiter 分隔符
 	 */
 	public static <T> String joinId(Collection<T> c, ToLongFunction<? super T> idMapper, String delimiter) {
-		return StringUtil.join(c, (sb, t) -> sb.append(idMapper.applyAsLong(t)), delimiter);
+		return StringUtil.joinLongValue(c, idMapper, delimiter);
 	}
 
 	/**
@@ -344,6 +347,10 @@ public class Common {
 			}
 		}
 		return MutablePair.of(addList, new LinkedList<>(oldRange));
+	}
+
+	public static <T> T get(@Nullable List<T> list, int index) {
+		return CollectionUtil.get(list, index);
 	}
 
 	/**
@@ -542,6 +549,61 @@ public class Common {
 				yield val;
 			}
 		};
+	}
+
+	/**
+	 * 对指定数值进行保留指定小数位数的四舍五入处理
+	 */
+	public static BigDecimal round(final double val, final int scale) {
+		BigDecimal d = new BigDecimal(val);
+		return d.scale() <= scale ? d : d.setScale(scale, RoundingMode.HALF_UP);
+	}
+
+	/**
+	 * 对指定数值进行保留指定小数位数的向下舍去处理
+	 */
+	public static BigDecimal floor(final double val, final int scale) {
+		BigDecimal d = new BigDecimal(val);
+		return d.scale() <= scale ? d : d.setScale(scale, RoundingMode.FLOOR);
+	}
+
+	private static final String[] intStrCache = { "0", "1", "2", "3", "4", "5", "6", "7", "8", "9", "10" };
+
+	/**
+	 * 将整数转为字符串
+	 * 这里的目的主要是避免常用数字的 toString() 会 new 出新的字符串
+	 */
+	public static String toString(final int val) {
+		return val >= 0 && val <= 10 ? intStrCache[val] : Integer.toString(val);
+	}
+
+	/**
+	 * 为集合分组准备每个分组所需的 List 集合
+	 *
+	 * @param maxSize 预期的最大容量
+	 */
+	public static <K, T> Function<K, List<T>> newArrayList(int maxSize) {
+		return k -> maxSize >= 10 ? new ArrayList<>() : new ArrayList<>(maxSize);
+	}
+
+	public static <K, T> Function<K, List<T>> newArrayList() {
+		return newArrayList(10);
+	}
+
+	/**
+	 * 对集合按照指定的维度进行分组
+	 */
+	public static <K, V> Map<K, List<V>> groupBy(@Nullable final Collection<V> c, final Function<? super V, ? extends K> keyMapper) {
+		return CollectionUtil.groupBy(c, keyMapper);
+	}
+
+	public static Pair<BigDecimal, BigDecimal> rangeOf(long min, long max) {
+		return Pair.of(toDecimal(min), toDecimal(max));
+	}
+
+	public static BigDecimal toDecimal(long val) {
+		final int intVal = (int) val;
+		return intVal == val ? Arith.toBigDecimal(intVal) : BigDecimal.valueOf(val);
 	}
 
 }

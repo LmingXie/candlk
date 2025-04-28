@@ -31,8 +31,8 @@ public class ApifoxDocsGenerator {
 	public static void exportToDoc(Class<?> clazz) {
 		List<DocField> fields = new LinkedList<>();
 		classFieldsExportToDoc(fields, clazz, null);
-		Map<String, Map<String, Object>> fieldMap = CollectionUtil.toHashMap(fields, DocField::getKey, f -> CollectionUtil.ofHashMap("type", f.getType(), "description", f.getDesc(), "title", f.getTitle()));
-		System.out.println(JSON.toJSONString(CollectionUtil.ofHashMap("type", "object", "properties", fieldMap)));
+		Map<String, Map<String, Object>> fieldMap = CollectionUtil.toHashMap(fields, DocField::getKey, f -> CollectionUtil.asHashMap("type", f.getType(), "description", f.getDesc(), "title", f.getTitle()));
+		System.out.println(JSON.toJSONString(CollectionUtil.asHashMap("type", "object", "properties", fieldMap)));
 	}
 
 	public static void classFieldsExportToDoc(List<DocField> fields, Class<?> clazz, String prefix) {
@@ -93,7 +93,7 @@ public class ApifoxDocsGenerator {
 			this.title = title;
 		}
 
-		static Map<Class<?>, String> typeMap = CollectionUtil.ofHashMap(
+		static Map<Class<?>, String> typeMap = CollectionUtil.asHashMap(
 				String.class, "string",
 				Integer.class, "integer",
 				int.class, "integer",

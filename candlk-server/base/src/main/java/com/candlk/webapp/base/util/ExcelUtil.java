@@ -15,20 +15,19 @@ import com.candlk.common.util.Formats;
 import com.candlk.common.util.PropertyBean;
 import com.candlk.common.web.ServletUtil;
 import com.candlk.context.web.RequestContextImpl;
+import lombok.extern.slf4j.Slf4j;
 import me.codeplayer.util.*;
 import org.apache.commons.lang3.StringUtils;
 import org.apache.commons.lang3.time.FastDateFormat;
 import org.apache.poi.hssf.usermodel.HSSFCellStyle;
 import org.apache.poi.hssf.usermodel.HSSFWorkbook;
 import org.apache.poi.ss.usermodel.*;
-import org.slf4j.Logger;
 
 /**
  * Excel导出
  */
+@Slf4j
 public final class ExcelUtil {
-
-	private static final Logger LOGGER = X.getLogger();
 
 	/**
 	 * @param list 表格内容
@@ -121,13 +120,13 @@ public final class ExcelUtil {
 				try {
 					os.close();
 				} catch (IOException e) {
-					LOGGER.error("关闭Excel输出流时出现异常", e);
+					log.error("关闭Excel输出流时出现异常", e);
 				}
 			}
 			try {
 				wb.close();
 			} catch (IOException e) {
-				LOGGER.error("关闭workBook出现异常", e);
+				log.error("关闭workBook出现异常", e);
 			}
 		}
 	}

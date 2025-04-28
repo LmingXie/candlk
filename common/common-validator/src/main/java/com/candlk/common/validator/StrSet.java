@@ -26,7 +26,7 @@ public @interface StrSet {
 		@Override
 		public void init(StrSet rule) {
 			String[] values = rule.value();
-			range = CollectionUtil.ofHashSet(values);
+			range = CollectionUtil.asHashSet(values);
 		}
 
 		@Override

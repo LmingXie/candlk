@@ -78,7 +78,7 @@ public interface FormHelper {
 	 * 断言两个等价于 boolean 值的条件是互斥（若一个为 true，则另一个必定为 false）的
 	 */
 	default void assertMutex(boolean a, boolean b, Object error) {
-		if (!X.isMutex(a, b)) {
+		if (a == b) {
 			throw new IllegalArgumentException((String) X.tryUnwrap(error));
 		}
 	}

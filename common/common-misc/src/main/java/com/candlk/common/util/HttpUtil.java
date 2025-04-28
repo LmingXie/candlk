@@ -31,7 +31,6 @@ import org.apache.http.util.EntityUtils;
 /**
  * HTTP请求相关处理工具类
  *
-
  * @since 2014年11月1日
  */
 @Slf4j

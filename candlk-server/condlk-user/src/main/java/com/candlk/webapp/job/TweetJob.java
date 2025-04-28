@@ -1,8 +1,5 @@
 package com.candlk.webapp.job;
 
-import java.util.EnumMap;
-import java.util.Map;
-
 import javax.annotation.PostConstruct;
 
 import com.candlk.webapp.user.model.TweetProvider;
@@ -13,7 +10,7 @@ import org.springframework.scheduling.annotation.Scheduled;
 
 @Slf4j
 @Configuration
-public class PingJob {
+public class TweetJob {
 
 	@PostConstruct
 	public void init() {
@@ -22,18 +19,12 @@ public class PingJob {
 		}
 	}
 
-	@Scheduled(cron = "${service.cron.PingJob:0/55 * * * * ?}")
+	/**
+	 * 同步推文信息（生产：1 m/次；本地：15 m/次）
+	 */
+	@Scheduled(cron = "${service.cron.TweetJob:0 0/1 * * * ?}")
 	public void run() {
 		log.info("开始执行心跳任务...");
-		EnumMap<TweetProvider, TweetWsApi> map = TweetWsApi.implMapRef.get();
-		for (Map.Entry<TweetProvider, TweetWsApi> entry : map.entrySet()) {
-			if (entry.getKey().isOpen()) {
-				boolean ping = entry.getValue().ping();
-				if (!ping) {
-					log.warn("监听器【{}】心跳检测失败！", entry.getKey());
-				}
-			}
-		}
 		// log.info("结束执行心跳任务。");
 	}
 
