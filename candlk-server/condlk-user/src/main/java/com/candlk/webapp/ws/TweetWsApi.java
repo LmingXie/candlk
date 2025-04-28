@@ -4,10 +4,10 @@ import java.net.http.WebSocket;
 import java.nio.ByteBuffer;
 import java.nio.charset.StandardCharsets;
 import java.util.*;
-import java.util.concurrent.ExecutorService;
-import java.util.concurrent.Executors;
+import java.util.concurrent.ThreadPoolExecutor;
 
 import com.candlk.context.ContextImpl;
+import com.candlk.context.web.TaskUtils;
 import com.candlk.webapp.user.model.TweetProvider;
 import me.codeplayer.util.LazyCacheLoader;
 import org.slf4j.Logger;
@@ -46,8 +46,8 @@ public interface TweetWsApi {
 		return implMapRef.get().get(tweetProvider);
 	}
 
-	// 使用固定线程池（核心线程数可以按实际 CPU 或事件处理量设定）
-	ExecutorService WS_EXECUTOR = Executors.newFixedThreadPool(8);
+	/** 固定线程池，用于处理推特WS消息 */
+	ThreadPoolExecutor WS_EXECUTOR = TaskUtils.newThreadPool(4, 8, 2048, "tweet-ws-task");
 
 	ByteBuffer PING = ByteBuffer.wrap("ping".getBytes(StandardCharsets.UTF_8));
 
