@@ -52,7 +52,7 @@ CREATE TABLE `x_tweet_user` (
     `following` int(10) unsigned NOT NULL DEFAULT '0' COMMENT '该用户关注的用户数',
     `media` int(10) unsigned NOT NULL DEFAULT '0' COMMENT '该用户发布的媒体数',
     `tweet_last_time` datetime DEFAULT NULL COMMENT '最后一次发帖时间',
-    `type` tinyint(3) unsigned NOT NULL DEFAULT '1' COMMENT '事件类型：0=特殊关注账号；1=普通账号',
+    `type` tinyint(3) unsigned NOT NULL DEFAULT '1' COMMENT '账号类型：0=普通账号；1=特殊关注账号；2=二级账号；',
     `biz_flag` smallint(5) unsigned NOT NULL DEFAULT '0' COMMENT '业务标识',
     `add_time` datetime NOT NULL COMMENT '推特账号创建时间',
     `update_time` datetime NOT NULL DEFAULT CURRENT_TIMESTAMP COMMENT '最后更新时间',

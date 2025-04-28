@@ -6,6 +6,7 @@ import com.baomidou.mybatisplus.core.conditions.update.UpdateWrapper;
 import com.candlk.webapp.base.service.BaseServiceImpl;
 import com.candlk.webapp.user.dao.TweetUserDao;
 import com.candlk.webapp.user.entity.TweetUser;
+import com.candlk.webapp.user.model.TweetUserType;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -32,6 +33,7 @@ public class TweetUserService extends BaseServiceImpl<TweetUser, TweetUserDao, L
 		int num = update(tweetUser, new UpdateWrapper<TweetUser>().eq(TweetUser.USERID, userId));
 		if (num < 1) {
 			log.info("【推特用户】新增用户数据：{}", userId);
+			tweetUser.setType(TweetUserType.SPECIAL);
 			super.save(tweetUser);
 		} else {
 			log.info("【推特用户】更新用户数据：{}", userId);

@@ -4,14 +4,16 @@ import java.util.Date;
 
 import com.candlk.webapp.base.entity.TimeBasedEntity;
 import com.candlk.webapp.user.model.TweetProvider;
+import com.candlk.webapp.user.model.TweetUserType;
 import lombok.Getter;
 import lombok.Setter;
 import lombok.experimental.Accessors;
 
 /**
-* 推特用户表
-* @since 2025-04-27
-*/
+ * 推特用户表
+ *
+ * @since 2025-04-27
+ */
 @Setter
 @Getter
 @Accessors(chain = true)
@@ -45,11 +47,10 @@ public class TweetUser extends TimeBasedEntity {
 	Integer media;
 	/** 最后一次发帖时间 */
 	Date tweetLastTime;
-	/** 事件类型：0=特殊关注账号；1=普通账号 */
-	Integer type;
+	/** 账号类型：0=普通账号；1=特殊关注账号；2=二级账号； */
+	TweetUserType type;
 	/** 业务标识 */
 	Integer bizFlag;
-
 
 	public static final String LOCATION = "location";
 	public static final String BANNER = "banner";
@@ -66,4 +67,5 @@ public class TweetUser extends TimeBasedEntity {
 	public static final String TWEET_LAST_TIME = "tweet_last_time";
 	public static final String TYPE = "type";
 	public static final String BIZ_FLAG = "biz_flag";
+
 }
