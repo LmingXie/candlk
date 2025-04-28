@@ -1,7 +1,9 @@
 package com.candlk.webapp.user.service;
 
+import java.util.List;
 import javax.annotation.Resource;
 
+import com.baomidou.mybatisplus.core.conditions.query.QueryWrapper;
 import com.candlk.common.dao.SmartQueryWrapper;
 import com.candlk.common.model.TimeInterval;
 import com.candlk.common.redis.RedisUtil;
@@ -54,6 +56,13 @@ public class TweetService extends BaseServiceImpl<Tweet, TweetDao, Long> {
 		} catch (Exception e) {
 			log.error("【{}】保存推文失败：{}", provider, tweetId, e);
 		}
+	}
+
+	public List<Tweet> lastList(Integer limit) {
+		return selectList(new QueryWrapper<Tweet>()
+				.orderByDesc(Tweet.ADD_TIME)
+				.last("LIMIT " + 100)
+		);
 	}
 
 }

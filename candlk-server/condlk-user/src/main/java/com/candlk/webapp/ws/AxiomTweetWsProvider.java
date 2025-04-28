@@ -234,7 +234,7 @@ public class AxiomTweetWsProvider implements Listener, TweetWsApi {
 		return Listener.super.onText(webSocket, data, last);
 	}
 
-	private static Date parseDate(String createdAt, Date now) {
+	public static Date parseDate(String createdAt, Date now) {
 		if (createdAt != null) {
 			try {
 				// 默认返回 0 时区时间
