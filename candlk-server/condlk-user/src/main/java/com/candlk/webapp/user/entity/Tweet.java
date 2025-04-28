@@ -70,7 +70,7 @@ public class Tweet extends BaseEntity {
 		return tweet;
 	}
 
-	public static final String TWEETID = "tweetId";
+	public static final String TWEET_ID = "tweet_id";
 	public static final String TYPE = "type";
 	public static final String PROVIDER_TYPE = "provider_type";
 	public static final String TEXT = "text";

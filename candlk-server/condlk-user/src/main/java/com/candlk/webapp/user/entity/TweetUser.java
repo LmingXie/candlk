@@ -5,24 +5,31 @@ import java.util.Date;
 import com.candlk.webapp.base.entity.TimeBasedEntity;
 import lombok.Getter;
 import lombok.Setter;
+import lombok.experimental.Accessors;
 
 /**
 * 推特用户表
-* @author 
 * @since 2025-04-27
 */
 @Setter
 @Getter
+@Accessors(chain = true)
 public class TweetUser extends TimeBasedEntity {
 
 	/** 推特用户ID */
 	String userId;
 	/** 推特用户账号名 */
-	String author;
+	String username;
 	/** 推特昵称 */
 	String nickname;
 	/** 推特头像 */
-	String username;
+	String avatar;
+	/** 推特横幅 */
+	String banner;
+	/** 置顶推文（JSON） */
+	String pinned;
+	/** 地区 */
+	String location;
 	/** 推特简介 */
 	String description;
 	/** 关注该用户的用户数 */
@@ -41,7 +48,10 @@ public class TweetUser extends TimeBasedEntity {
 	Integer bizFlag;
 
 
-	public static final String USERID = "userId";
+	public static final String LOCATION = "location";
+	public static final String BANNER = "banner";
+	public static final String PINNED = "pinned";
+	public static final String USERID = "user_id";
 	public static final String USERNAME = "username";
 	public static final String NICKNAME = "nickname";
 	public static final String AVATAR = "avatar";

@@ -41,19 +41,23 @@ CREATE TABLE `x_tweet_user` (
     `user_id` varchar(20) CHARACTER SET latin1 NOT NULL COMMENT '推特用户ID',
     `username` varchar(100) NOT NULL COMMENT '推特用户账号名',
     `nickname` varchar(255) DEFAULT NULL COMMENT '推特昵称',
-    `avatar` varchar(1000) CHARACTER SET latin1 DEFAULT NULL COMMENT '推特头像',
+    `avatar` varchar(255) CHARACTER SET latin1 DEFAULT NULL COMMENT '推特头像',
+    `banner` varchar(255) CHARACTER SET latin1 DEFAULT NULL COMMENT '推特横幅',
+    `pinned` varchar(255) CHARACTER SET latin1 DEFAULT NULL COMMENT '指定推特',
+    `location` varchar(255) CHARACTER SET latin1 DEFAULT NULL COMMENT '地区',
     `description` json DEFAULT NULL COMMENT '推特简介',
     `followers` int(10) unsigned NOT NULL DEFAULT '0' COMMENT '关注该用户的用户数',
     `tweets` int(10) unsigned NOT NULL DEFAULT '0' COMMENT '该用户发布的帖子数（包括转推）',
     `following` int(10) unsigned NOT NULL DEFAULT '0' COMMENT '该用户关注的用户数',
     `media` int(10) unsigned NOT NULL DEFAULT '0' COMMENT '该用户发布的媒体数',
     `tweet_last_time` datetime DEFAULT NULL COMMENT '最后一次发帖时间',
-    `type` tinyint(3) unsigned NOT NULL COMMENT '事件类型：0=特殊关注账号；1=普通账号',
+    `type` tinyint(3) unsigned NOT NULL DEFAULT '1' COMMENT '事件类型：0=特殊关注账号；1=普通账号',
     `biz_flag` smallint(5) unsigned NOT NULL DEFAULT '0' COMMENT '业务标识',
     `add_time` datetime NOT NULL COMMENT '推特账号创建时间',
     `update_time` datetime NOT NULL DEFAULT CURRENT_TIMESTAMP COMMENT '最后更新时间',
     PRIMARY KEY (`id`),
-    UNIQUE KEY `uk_username` (`username`) USING BTREE
+    UNIQUE KEY `uk_username` (`username`) USING BTREE,
+    UNIQUE KEY `uk_userId` (`user_id`) USING BTREE
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COMMENT='推特用户表';
 
 CREATE TABLE `x_tweet_word` (

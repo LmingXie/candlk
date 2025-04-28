@@ -5,25 +5,20 @@ import java.net.http.HttpClient;
 import java.net.http.WebSocket;
 import java.net.http.WebSocket.Listener;
 import java.nio.charset.StandardCharsets;
-import java.security.GeneralSecurityException;
 import java.text.SimpleDateFormat;
 import java.util.*;
 import java.util.concurrent.CompletionStage;
 import javax.annotation.Resource;
 
 import com.alibaba.fastjson2.*;
-import com.candlk.common.redis.RedisUtil;
 import com.candlk.common.security.AES;
-import com.candlk.context.model.RedisKey;
 import com.candlk.context.web.Jsons;
-import com.candlk.webapp.user.entity.AxiomTwitter;
-import com.candlk.webapp.user.entity.Tweet;
+import com.candlk.webapp.user.entity.*;
 import com.candlk.webapp.user.model.TweetProvider;
 import com.candlk.webapp.user.model.TweetType;
 import com.candlk.webapp.user.service.TweetService;
 import com.candlk.webapp.user.service.TweetUserService;
 import lombok.extern.slf4j.Slf4j;
-import org.springframework.dao.DuplicateKeyException;
 import org.springframework.http.*;
 import org.springframework.stereotype.Service;
 import org.springframework.util.CollectionUtils;
@@ -144,8 +139,6 @@ public class AxiomTweetWsProvider implements Listener, TweetWsApi {
 	public CompletionStage<?> onText(WebSocket webSocket, CharSequence data, boolean last) {
 		// 并发处理消息（交给线程池）
 		WS_EXECUTOR.submit(() -> {
-			// System.out.println("[Message] " + data);
-
 			AxiomTwitter axiomTwitter = Jsons.parseObject(data.toString(), AxiomTwitter.class);
 			if (axiomTwitter != null) {
 				AxiomTwitter.Content content = axiomTwitter.content;
@@ -162,6 +155,8 @@ public class AxiomTweetWsProvider implements Listener, TweetWsApi {
 					} else {
 						log.warn("未知事件类型：账户={} 订阅类型={} 事件ID={} 事件内容={}", content.handle, content.subscriptionType, content.eventId, Jsons.encode(postInfo));
 					}
+					TweetProvider provider = getProvider();
+					final Date now = new Date();
 					switch (eventType) {
 						case "tweet.update" -> {
 							JSONObject tweet = postInfo.getJSONObject("tweet");
@@ -183,9 +178,8 @@ public class AxiomTweetWsProvider implements Listener, TweetWsApi {
 								// 引用的视频
 								JSONArray videos = media.getJSONArray("videos");
 
-								final Date now = new Date();
 								Tweet tweetInfo = new Tweet()
-										.setProviderType(TweetProvider.AXIOM)
+										.setProviderType(provider)
 										.setType(tweetType)
 										.setUsername(author)
 										.setTweetId(tweetId)
@@ -193,47 +187,59 @@ public class AxiomTweetWsProvider implements Listener, TweetWsApi {
 										.setOrgMsg(postInfo.toJSONString())
 										.setImages(images == null ? "" : images.toJSONString())
 										.setVideos(videos == null ? "" : videos.toJSONString())
-										.setUpdateTime(now);
-								final String createdAt = tweet.getString("created_at");
-								try {
-									// 默认返回 0 时区时间
-									SimpleDateFormat SDF = new SimpleDateFormat("EEE MMM dd HH:mm:ss Z yyyy", Locale.ENGLISH);
-									Date date = SDF.parse(createdAt);
-									tweetInfo.setAddTime(date);
-								} catch (Exception e) {
-									log.error("【{}】解析日期失败：{}", getProvider(), createdAt, e);
-									tweetInfo.setAddTime(now);
-								}
-								try {
-									// 添加推文
-									tweetService.save(tweetInfo);
-
-									if (!tweetUserService.updateTweetLastTime(author, tweetInfo.getAddTime())) {
-										// Redis 记录新用户
-										RedisUtil.getStringRedisTemplate().opsForSet().add(RedisKey.TWEET_NEW_USERS, author);
-									}
-
-									// TODO AI 分词并提取 代币名称和简称
-
-									// TODO 分词匹配
-								} catch (DuplicateKeyException e) { // 违反唯一约束
-									log.warn("【{}】推文已存在：{}", getProvider(), tweetId);
-								} catch (Exception e) {
-									log.error("【{}】保存推文失败：{}", getProvider(), tweetId, e);
-								}
-
+										.setUpdateTime(now)
+										.setAddTime(parseDate(tweet.getString("created_at"), now));
+								tweetService.saveTweet(tweetInfo, author, provider, tweetId);
 							}
 						}
 						case "following.update" -> {
-							// TODO 更新账号统计数据
+							// 更新账号数据
+							JSONObject user = postInfo.getJSONObject("user");
+							TweetUser tweetUser = new TweetUser()
+									.setUserId(user.getString("id"))
+									.setUsername(user.getString("handle"))
+									.setDescription(user.getString("description"));
+							tweetUser.setAddTime(parseDate(user.getString("created_at"), now));
+							tweetUser.setUpdateTime(now);
+
+							JSONObject profile = user.getJSONObject("profile");
+							if (profile != null) {
+								tweetUser.setNickname(profile.getString("name"))
+										.setAvatar(profile.getString("avatar"))
+										.setBanner(profile.getString("banner"))
+										.setPinned(profile.getString("pinned"))
+										.setLocation(profile.getString("location"))
+										.setDescription(profile.getString("description"));
+							}
+							JSONObject metrics = user.getJSONObject("metrics");
+							if (metrics != null) {
+								tweetUser.setFollowers(metrics.getInteger("followers"))
+										.setTweets(metrics.getInteger("tweets"))
+										.setFollowing(metrics.getInteger("following"))
+										.setMedia(metrics.getInteger("media"));
+							}
+							tweetUserService.updateStat(tweetUser);
 						}
 					}
-				} catch (GeneralSecurityException e) {
-					log.error("解密失败：", e);
+				} catch (Exception e) {
+					log.error("解析数据失败：", e);
 				}
 			}
 		});
 		return Listener.super.onText(webSocket, data, last);
+	}
+
+	private static Date parseDate(String createdAt, Date now) {
+		if (createdAt != null) {
+			try {
+				// 默认返回 0 时区时间
+				SimpleDateFormat SDF = new SimpleDateFormat("EEE MMM dd HH:mm:ss Z yyyy", Locale.ENGLISH);
+				return SDF.parse(createdAt);
+			} catch (Exception e) {
+				log.error("【Axiom】解析日期失败：{}", createdAt, e);
+			}
+		}
+		return now;
 	}
 
 	@Override

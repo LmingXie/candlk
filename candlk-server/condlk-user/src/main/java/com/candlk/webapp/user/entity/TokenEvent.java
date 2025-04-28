@@ -1,9 +1,5 @@
 package com.candlk.webapp.user.entity;
 
-import com.baomidou.mybatisplus.annotation.TableName;
-import com.candlk.webapp.base.entity.BaseEntity;
-import java.util.Date;
-
 import com.candlk.webapp.base.entity.TimeBasedEntity;
 import lombok.Getter;
 import lombok.Setter;
@@ -33,7 +29,7 @@ public class TokenEvent extends TimeBasedEntity {
 	Integer status;
 
 
-	public static final String TWEETID = "tweetId";
+	public static final String TWEET_ID = "tweet_id";
 	public static final String TYPE = "type";
 	public static final String COIN = "coin";
 	public static final String SYMBOL = "symbol";
