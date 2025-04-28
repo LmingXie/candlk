@@ -3,6 +3,7 @@ package com.candlk.webapp.user.entity;
 import java.util.Date;
 
 import com.candlk.webapp.base.entity.TimeBasedEntity;
+import com.candlk.webapp.user.model.TweetProvider;
 import lombok.Getter;
 import lombok.Setter;
 import lombok.experimental.Accessors;
@@ -16,6 +17,8 @@ import lombok.experimental.Accessors;
 @Accessors(chain = true)
 public class TweetUser extends TimeBasedEntity {
 
+	/** 推文来源厂商类型 */
+	TweetProvider providerType;
 	/** 推特用户ID */
 	String userId;
 	/** 推特用户账号名 */

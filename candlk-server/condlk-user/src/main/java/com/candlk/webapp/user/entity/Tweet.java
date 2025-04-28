@@ -21,10 +21,10 @@ public class Tweet extends BaseEntity {
 
 	/** 推文ID */
 	String tweetId;
-	/** 推文类型：0=发帖；1=回复；2=引用；3=转发 */
-	TweetType type;
 	/** 推文来源厂商类型 */
 	TweetProvider providerType;
+	/** 推文类型：0=发帖；1=回复；2=引用；3=转发 */
+	TweetType type;
 	/** 推特用户账号名 */
 	String username;
 	/** 推文内容 */

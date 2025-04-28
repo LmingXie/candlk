@@ -196,6 +196,7 @@ public class AxiomTweetWsProvider implements Listener, TweetWsApi {
 							// 更新账号数据
 							JSONObject user = postInfo.getJSONObject("user");
 							TweetUser tweetUser = new TweetUser()
+									.setProviderType(provider)
 									.setUserId(user.getString("id"))
 									.setUsername(user.getString("handle"))
 									.setDescription(user.getString("description"));

@@ -14,9 +14,9 @@ CREATE TABLE `x_token_event` (
 
 CREATE TABLE `x_tweet` (
        `id` int(10) unsigned NOT NULL AUTO_INCREMENT COMMENT '主键ID',
+       `provider_type` tinyint(3) unsigned NOT NULL COMMENT '推文来源厂商类型',
        `tweet_id` varchar(20) CHARACTER SET latin1 NOT NULL COMMENT '推文ID',
        `type` tinyint(3) unsigned NOT NULL COMMENT '推文类型：0=发帖；1=回复；2=引用；3=转发',
-       `provider_type` tinyint(3) unsigned NOT NULL COMMENT '推文来源厂商类型',
        `text` text NOT NULL COMMENT '推文内容',
        `entities` json DEFAULT NULL COMMENT '推文实体：urls=引用图片/视频；mentions=提及的人；hashtags=被识别的标签文本；',
        `org_msg` text NOT NULL COMMENT '原始推文数据',
@@ -38,13 +38,14 @@ CREATE TABLE `x_tweet` (
 
 CREATE TABLE `x_tweet_user` (
     `id` int(10) unsigned NOT NULL AUTO_INCREMENT COMMENT '主键ID',
+    `provider_type` tinyint(3) unsigned NOT NULL COMMENT '推文来源厂商类型',
     `user_id` varchar(20) CHARACTER SET latin1 NOT NULL COMMENT '推特用户ID',
     `username` varchar(100) NOT NULL COMMENT '推特用户账号名',
     `nickname` varchar(255) DEFAULT NULL COMMENT '推特昵称',
     `avatar` varchar(255) CHARACTER SET latin1 DEFAULT NULL COMMENT '推特头像',
     `banner` varchar(255) CHARACTER SET latin1 DEFAULT NULL COMMENT '推特横幅',
     `pinned` varchar(255) CHARACTER SET latin1 DEFAULT NULL COMMENT '指定推特',
-    `location` varchar(255) CHARACTER SET latin1 DEFAULT NULL COMMENT '地区',
+    `location` varchar(255) DEFAULT NULL COMMENT '地区',
     `description` json DEFAULT NULL COMMENT '推特简介',
     `followers` int(10) unsigned NOT NULL DEFAULT '0' COMMENT '关注该用户的用户数',
     `tweets` int(10) unsigned NOT NULL DEFAULT '0' COMMENT '该用户发布的帖子数（包括转推）',
@@ -58,7 +59,7 @@ CREATE TABLE `x_tweet_user` (
     PRIMARY KEY (`id`),
     UNIQUE KEY `uk_username` (`username`) USING BTREE,
     UNIQUE KEY `uk_userId` (`user_id`) USING BTREE
-) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COMMENT='推特用户表';
+) ENGINE=InnoDB AUTO_INCREMENT=10 DEFAULT CHARSET=utf8mb4 COMMENT='推特用户表';
 
 CREATE TABLE `x_tweet_word` (
     `id` int(10) unsigned NOT NULL AUTO_INCREMENT COMMENT '主键ID',
