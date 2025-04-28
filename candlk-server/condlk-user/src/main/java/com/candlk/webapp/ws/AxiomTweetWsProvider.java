@@ -19,6 +19,7 @@ import com.candlk.webapp.user.model.TweetType;
 import com.candlk.webapp.user.service.TweetService;
 import com.candlk.webapp.user.service.TweetUserService;
 import lombok.extern.slf4j.Slf4j;
+import org.apache.commons.lang3.StringUtils;
 import org.springframework.http.*;
 import org.springframework.stereotype.Service;
 import org.springframework.util.CollectionUtils;
@@ -171,6 +172,9 @@ public class AxiomTweetWsProvider implements Listener, TweetWsApi {
 								JSONObject body = tweet.getJSONObject("body");
 								// 使用正则表达式去除以 https://t.co/ 开头的推文尾部 短链接
 								final String text = body.getString("text").replaceAll("https://t\\.co/\\S+", "").trim();
+								if (StringUtils.isEmpty(text)) {
+									return;
+								}
 
 								JSONObject media = tweet.getJSONObject("media");
 								// 引用图片

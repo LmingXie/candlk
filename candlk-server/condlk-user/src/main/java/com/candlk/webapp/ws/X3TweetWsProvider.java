@@ -115,18 +115,21 @@ public class X3TweetWsProvider implements Listener, TweetWsApi {
 							}
 						}
 						Long createTime = post.getLong("createTime");
-						Tweet tweetInfo = new Tweet()
-								.setProviderType(provider)
-								.setType(tweetType)
-								.setUsername(author)
-								.setTweetId(tweetId)
-								.setText(post.getString("content"))
-								.setOrgMsg(post.toJSONString())
-								.setImages(Jsons.encode(images))
-								.setVideos(Jsons.encode(videos))
-								.setUpdateTime(now)
-								.setAddTime(createTime == null ? now : new EasyDate(createTime * 1000).toDate());
-						tweetService.saveTweet(tweetInfo, author, provider, tweetId);
+						final String content = post.getString("content");
+						if (StringUtils.isNotEmpty(content)) {
+							Tweet tweetInfo = new Tweet()
+									.setProviderType(provider)
+									.setType(tweetType)
+									.setUsername(author)
+									.setTweetId(tweetId)
+									.setText(content.trim())
+									.setOrgMsg(post.toJSONString())
+									.setImages(Jsons.encode(images))
+									.setVideos(Jsons.encode(videos))
+									.setUpdateTime(now)
+									.setAddTime(createTime == null ? now : new EasyDate(createTime * 1000).toDate());
+							tweetService.saveTweet(tweetInfo, author, provider, tweetId);
+						}
 
 						TweetUser tweetUser = new TweetUser()
 								.setProviderType(provider)
