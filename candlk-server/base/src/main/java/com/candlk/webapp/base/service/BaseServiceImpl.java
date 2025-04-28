@@ -2,16 +2,25 @@ package com.candlk.webapp.base.service;
 
 import java.io.Serializable;
 import java.util.*;
-import javax.annotation.*;
+import java.util.concurrent.ConcurrentHashMap;
+import java.util.concurrent.ConcurrentMap;
+import java.util.function.Function;
+import javax.annotation.Nonnull;
+import javax.annotation.Nullable;
 
+import com.baomidou.mybatisplus.core.conditions.AbstractWrapper;
 import com.baomidou.mybatisplus.core.conditions.Wrapper;
 import com.baomidou.mybatisplus.core.conditions.query.QueryWrapper;
 import com.baomidou.mybatisplus.core.conditions.update.UpdateWrapper;
 import com.baomidou.mybatisplus.core.enums.SqlMethod;
+import com.baomidou.mybatisplus.core.plugins.InterceptorIgnoreHelper;
 import com.baomidou.mybatisplus.core.toolkit.Constants;
 import com.baomidou.mybatisplus.core.toolkit.reflect.GenericTypeUtils;
 import com.baomidou.mybatisplus.extension.service.IService;
 import com.baomidou.mybatisplus.extension.toolkit.SqlHelper;
+import com.candlk.common.context.Env;
+import com.candlk.common.dao.MybatisUtil;
+import com.candlk.common.dao.SmartQueryWrapper;
 import com.candlk.common.model.*;
 import com.candlk.common.util.SpringUtil;
 import com.candlk.common.web.Page;
@@ -27,13 +36,11 @@ import org.apache.ibatis.logging.Log;
 import org.apache.ibatis.logging.LogFactory;
 import org.apache.ibatis.session.SqlSessionFactory;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.transaction.annotation.Propagation;
 import org.springframework.transaction.annotation.Transactional;
 
-@Transactional
 public abstract class BaseServiceImpl<T extends Bean<K>, D extends BaseDao<T>, K extends Serializable> implements BaseService<T, K> {
 
-	static final Log log = LogFactory.getLog(BaseService.class);
+	protected static final Log mbpLog = LogFactory.getLog(BaseService.class);
 
 	private static SqlSessionFactory sqlSessionFactory;
 
@@ -58,16 +65,11 @@ public abstract class BaseServiceImpl<T extends Bean<K>, D extends BaseDao<T>, K
 		this.baseDao = baseDao;
 	}
 
-	private static SqlSessionFactory getSqlSessionFactory() {
+	protected static SqlSessionFactory getSqlSessionFactory() {
 		if (sqlSessionFactory == null) {
 			sqlSessionFactory = SpringUtil.getBeanByNameFirst(SqlSessionFactory.class);
 		}
 		return sqlSessionFactory;
-	}
-
-	@Resource
-	public void setSqlSessionFactory(SqlSessionFactory factory) {
-		sqlSessionFactory = factory;
 	}
 
 	protected static void checkIdRequired(ID entity) {
@@ -75,7 +77,6 @@ public abstract class BaseServiceImpl<T extends Bean<K>, D extends BaseDao<T>, K
 	}
 
 	@Override
-	@Transactional(propagation = Propagation.SUPPORTS)
 	public T get(K id) {
 		if (id == null) {
 			return null;
@@ -83,10 +84,21 @@ public abstract class BaseServiceImpl<T extends Bean<K>, D extends BaseDao<T>, K
 		return baseDao.selectById(id);
 	}
 
+	public T getWithoutTenant(K id) {
+		if (id == null) {
+			return null;
+		}
+		try {
+			InterceptorIgnoreHelper.handle(MybatisUtil.ignoreTenant);
+			return baseDao.selectById(id);
+		} finally {
+			InterceptorIgnoreHelper.clearIgnoreStrategy();
+		}
+	}
+
 	/**
 	 * 根据 指定的 主键ID 和 商户ID 查询符合条件的实体
 	 */
-	@Transactional(propagation = Propagation.SUPPORTS)
 	public T getByIdAndMid(K id, Long merchantId) {
 		if (id == null) {
 			return null;
@@ -98,7 +110,6 @@ public abstract class BaseServiceImpl<T extends Bean<K>, D extends BaseDao<T>, K
 	}
 
 	@Override
-	@Transactional(propagation = Propagation.SUPPORTS)
 	public T getAny() {
 		return getBaseDao().selectOne(new QueryWrapper<T>().last("LIMIT 1"));
 	}
@@ -109,8 +120,8 @@ public abstract class BaseServiceImpl<T extends Bean<K>, D extends BaseDao<T>, K
 			return null;
 		}
 		QueryWrapper<T> wrapper = new QueryWrapper<T>()
-				.eq("id", id)
-				.last(" FOR UPDATE");
+				.eq(BaseEntity.ID, id)
+				.last("FOR UPDATE");
 
 		return baseDao.selectOne(wrapper);
 	}
@@ -118,7 +129,6 @@ public abstract class BaseServiceImpl<T extends Bean<K>, D extends BaseDao<T>, K
 	/**
 	 * 根据主键ID数组获取对应的实体数据
 	 */
-	@Transactional(propagation = Propagation.SUPPORTS)
 	@Override
 	public List<T> findByIds(K... ids) {
 		return findByIds(Arrays.asList(ids));
@@ -128,7 +138,6 @@ public abstract class BaseServiceImpl<T extends Bean<K>, D extends BaseDao<T>, K
 	 * 根据主键ID数组获取对应的实体数据
 	 */
 	@Override
-	@Transactional(propagation = Propagation.SUPPORTS)
 	public List<T> findByIds(Collection<K> ids) {
 		if (ids.isEmpty()) {
 			return new ArrayList<>();
@@ -165,7 +174,6 @@ public abstract class BaseServiceImpl<T extends Bean<K>, D extends BaseDao<T>, K
 	/**
 	 * 获取指定实体类的所有实体对象的集合，并以指定的方式进行排序
 	 */
-	@Transactional(propagation = Propagation.SUPPORTS)
 	public List<T> findAll() {
 		return baseDao.selectList(null);
 	}
@@ -173,23 +181,30 @@ public abstract class BaseServiceImpl<T extends Bean<K>, D extends BaseDao<T>, K
 	/**
 	 * 添加指定的对象(到对应的数据库表中)
 	 */
+	@Transactional
 	public void save(T entity) {
 		baseDao.insert(entity);
 	}
 
+	@Transactional
 	public boolean saveBatch(Collection<T> list) {
 		return saveBatch(list, IService.DEFAULT_BATCH_SIZE);
 	}
 
+	@Transactional
 	public boolean saveBatch(Collection<T> list, int batchSize) {
+		if (list.isEmpty()) {
+			return false;
+		}
 		String sqlStatement = SqlHelper.getSqlStatement(mapperClass, SqlMethod.INSERT_ONE);
-		return SqlHelper.executeBatch(getSqlSessionFactory(), log, list, batchSize, (sqlSession, entity) -> sqlSession.insert(sqlStatement, entity));
+		return SqlHelper.executeBatch(getSqlSessionFactory(), mbpLog, list, batchSize, (sqlSession, entity) -> sqlSession.insert(sqlStatement, entity));
 	}
 
 	/**
 	 * 更新指定的对象
 	 */
 	@Override
+	@Transactional
 	public int update(T entity) {
 		return baseDao.updateById(entity);
 	}
@@ -198,30 +213,35 @@ public abstract class BaseServiceImpl<T extends Bean<K>, D extends BaseDao<T>, K
 	 * 更新指定的对象
 	 */
 	@Override
+	@Transactional
 	public int update(T entity, Wrapper<T> updateWrapper) {
 		return baseDao.update(entity, updateWrapper);
 	}
 
+	@Transactional
 	public boolean updateBatchById(Collection<T> list) {
 		return updateBatchById(list, IService.DEFAULT_BATCH_SIZE);
 	}
 
+	@Transactional
 	public boolean updateBatchById(Collection<T> list, int batchSize) {
 		String sqlStatement = SqlHelper.getSqlStatement(mapperClass, SqlMethod.UPDATE_BY_ID);
-		return SqlHelper.executeBatch(getSqlSessionFactory(), log, list, batchSize, (sqlSession, entity) -> {
+		return SqlHelper.executeBatch(getSqlSessionFactory(), mbpLog, list, batchSize, (sqlSession, entity) -> {
 			MapperMethod.ParamMap<T> param = new MapperMethod.ParamMap<>();
 			param.put(Constants.ENTITY, entity);
 			sqlSession.update(sqlStatement, param);
 		});
 	}
 
+	@Transactional
 	public boolean updateBatchByWrappers(Collection<UpdateWrapper<T>> wrappers) {
 		return updateBatchByWrappers(wrappers, IService.DEFAULT_BATCH_SIZE);
 	}
 
+	@Transactional
 	public boolean updateBatchByWrappers(Collection<UpdateWrapper<T>> wrappers, int batchSize) {
 		final String sqlStatement = SqlHelper.getSqlStatement(mapperClass, SqlMethod.UPDATE);
-		return SqlHelper.executeBatch(getSqlSessionFactory(), log, wrappers, batchSize,
+		return SqlHelper.executeBatch(getSqlSessionFactory(), mbpLog, wrappers, batchSize,
 				(sqlSession, wrapper) -> sqlSession.update(sqlStatement, Map.of(Constants.WRAPPER, wrapper)));
 	}
 
@@ -245,8 +265,8 @@ public abstract class BaseServiceImpl<T extends Bean<K>, D extends BaseDao<T>, K
 	 */
 	protected void saveOrUpdate(T entity, boolean hasId, Object... fieldAndValues) {
 		if (hasId) {
-			UpdateWrapper<T> wrapper = new UpdateWrapper<>();
-			wrapper.eq("id", entity.getId());
+			UpdateWrapper<T> wrapper = new UpdateWrapper<T>()
+					.eq(BaseEntity.ID, entity.getId());
 			if (X.isValid(fieldAndValues)) {
 				for (int i = 0; i < fieldAndValues.length; i++) {
 					wrapper.set((String) fieldAndValues[i++], fieldAndValues[i]);
@@ -265,6 +285,10 @@ public abstract class BaseServiceImpl<T extends Bean<K>, D extends BaseDao<T>, K
 		return baseDao.selectOne(queryWrapper);
 	}
 
+	public T getFirst(QueryWrapper<T> wrapper) {
+		return getBaseDao().selectOne(wrapper.last("LIMIT 1"));
+	}
+
 	/**
 	 * 根据条件查询对应的实体数
 	 */
@@ -275,11 +299,24 @@ public abstract class BaseServiceImpl<T extends Bean<K>, D extends BaseDao<T>, K
 	/**
 	 * 指示是否存在符合条件的记录
 	 */
-	protected boolean exists(QueryWrapper<T> queryWrapper) {
-		queryWrapper
-				.select("1")
-				.last("LIMIT 1");
+	@SuppressWarnings({ "rawtypes", "unchecked" })
+	protected boolean doExists(AbstractWrapper queryWrapper) {
+		queryWrapper.last("LIMIT 1");
 		return !baseDao.selectObjs(queryWrapper).isEmpty();
+	}
+
+	/**
+	 * 指示是否存在符合条件的记录
+	 */
+	public boolean exists(QueryWrapper<T> queryWrapper) {
+		return doExists(queryWrapper.select("1"));
+	}
+
+	/**
+	 * 指示是否存在符合条件的记录
+	 */
+	public boolean exists(SmartQueryWrapper<T> queryWrapper) {
+		return doExists(queryWrapper.select("1"));
 	}
 
 	/**
@@ -304,6 +341,7 @@ public abstract class BaseServiceImpl<T extends Bean<K>, D extends BaseDao<T>, K
 	/**
 	 * 从数据存储中移除指定的实体对象
 	 */
+	@Transactional
 	public boolean delete(T entity) {
 		Assert.notNull(Bean.idOf(entity));
 		return deleteById(entity.getId());
@@ -312,6 +350,7 @@ public abstract class BaseServiceImpl<T extends Bean<K>, D extends BaseDao<T>, K
 	/**
 	 * 从数据存储中移除指定的实体对象
 	 */
+	@Transactional
 	public boolean deleteById(K id) {
 		return baseDao.deleteById(id) > 0;
 	}
@@ -321,19 +360,32 @@ public abstract class BaseServiceImpl<T extends Bean<K>, D extends BaseDao<T>, K
 	 *
 	 * @throws PermissionException 如果删除失败，则抛出权限异常
 	 */
-	public void deleteByIdAndMid(K id, Long merchantId) throws PermissionException {
+	@Transactional
+	public int deleteByIdAndMid(K id, Long merchantId, boolean throwEx) throws PermissionException {
 		UpdateWrapper<T> wrapper = new UpdateWrapper<T>()
 				.eq(BaseEntity.ID, id)
 				.eq(WithMerchant.MERCHANT_ID, merchantId);
-		boolean success = baseDao.delete(wrapper) > 0;
-		if (!success) {
+		final int deleted = baseDao.delete(wrapper);
+		if (throwEx && deleted == 0) {
 			throw new PermissionException();
 		}
+		return deleted;
+	}
+
+	/**
+	 * 删除符合 指定的 主键ID 和 商户ID 的实体数据
+	 *
+	 * @throws PermissionException 如果删除失败，则抛出权限异常
+	 */
+	@Transactional
+	public boolean deleteByIdAndMid(K id, Long merchantId) throws PermissionException {
+		return this.deleteByIdAndMid(id, merchantId, true) > 0;
 	}
 
 	/**
 	 * 从数据存储中批量移除指定的实体对象
 	 */
+	@Transactional
 	public int deleteByIds(K... ids) {
 		return deleteByIds(Arrays.asList(ids));
 	}
@@ -341,6 +393,7 @@ public abstract class BaseServiceImpl<T extends Bean<K>, D extends BaseDao<T>, K
 	/**
 	 * 从数据存储中批量移除指定的实体对象
 	 */
+	@Transactional
 	public int deleteByIds(Collection<K> ids) {
 		return baseDao.deleteBatchIds(ids);
 	}
@@ -371,14 +424,14 @@ public abstract class BaseServiceImpl<T extends Bean<K>, D extends BaseDao<T>, K
 	/**
 	 * 判断对象表中是否存在指定属性的值
 	 *
-	 * @param fieldAndValues 键值对(键必须为字符串)
+	 * @param moreFieldAndValues 键值对(键必须为字符串)
 	 * @since 1.0
 	 */
-	@Transactional(propagation = Propagation.SUPPORTS, readOnly = true)
-	public boolean exists(Object... fieldAndValues) {
-		QueryWrapper<T> wrapper = new QueryWrapper<>();
-		for (int i = 0; i < fieldAndValues.length; i++) {
-			wrapper.eq((String) fieldAndValues[i++], fieldAndValues[i]);
+	public boolean exists(String field, Object value, Object... moreFieldAndValues) {
+		var wrapper = new QueryWrapper<T>()
+				.eq(field, value);
+		for (int i = 0; i < moreFieldAndValues.length; i++) {
+			wrapper.eq((String) moreFieldAndValues[i++], moreFieldAndValues[i]);
 		}
 		return exists(wrapper);
 	}
@@ -386,13 +439,14 @@ public abstract class BaseServiceImpl<T extends Bean<K>, D extends BaseDao<T>, K
 	/**
 	 * 乐观锁更新业务状态
 	 */
-	public int updateStatus(Integer newStatus, Integer oldStatus, Long id, @Nullable Date now) {
+	@Transactional
+	public int updateStatus(Integer newStatus, @Nullable Date now, Long id, @Nullable Integer oldStatus) {
 		UpdateWrapper<T> wrapper = new UpdateWrapper<T>()
 				.set(BizEntity.STATUS, newStatus)
 				.set(now != null, BizEntity.UPDATE_TIME, now)
 
 				.eq(BizEntity.ID, id)
-				.eq(BizEntity.STATUS, oldStatus);
+				.eq(oldStatus != null, BizEntity.STATUS, oldStatus);
 
 		return baseDao.update(null, wrapper);
 	}
@@ -401,12 +455,72 @@ public abstract class BaseServiceImpl<T extends Bean<K>, D extends BaseDao<T>, K
 		return t == null ? null : t.getValue();
 	}
 
-	protected static <T> void incrSetIfHasValue(UpdateWrapper<T> wrapper, @Nonnull String column, @Nullable Number value) {
-		if (value == null) {
+	private static final ConcurrentMap<String, String> incrExprMap = new ConcurrentHashMap<>();
+	private static final Function<String, String> exprFunction = f -> f + "=" + f + "+ {0}";
+
+	protected static <T> void incrSetIfHasValue(UpdateWrapper<T> wrapper, @Nonnull String column, @Nullable Number delta) {
+		if (delta == null) {
 			return;
 		}
 		// a = a + {0} 使 MySQL 缓存最近最常用的SQL
-		wrapper.setSql(true, column + "=" + column + "+ {0}", value);
+		wrapper.setSql(true, incrExprMap.computeIfAbsent(column, exprFunction), delta);
+	}
+
+	protected static <T> void incrSetValue(UpdateWrapper<T> wrapper, @Nonnull String column, @Nonnull Number delta) {
+		// a = a + {0} 使 MySQL 缓存最近最常用的SQL
+		wrapper.setSql(true, incrExprMap.computeIfAbsent(column, exprFunction), delta);
+	}
+
+	static final int SINGLE_QUERY_SIZE = Env.inProduction() ? 10000 : 500;
+
+	/**
+	 * 根据传入的参数列表进行分批查询，避免参数列表过多单次查询超时，一般用于导出全量数据的情况
+	 */
+	protected <E, R> List<R> batchFind(@Nonnull Collection<E> all, @Nonnull Function<List<E>, List<R>> queryHandler) {
+		final int totalSize = X.size(all);
+		if (totalSize == 0) {
+			return Collections.emptyList();
+		}
+		final List<R> result = new ArrayList<>(totalSize);
+		final List<E> part = new ArrayList<>(Math.min(SINGLE_QUERY_SIZE, totalSize));
+		int i = 0;
+		for (E param : all) {
+			part.add(param);
+			if (++i % SINGLE_QUERY_SIZE == 0 || i == totalSize) {
+				List<R> list = queryHandler.apply(part);
+				if (X.isValid(list)) {
+					result.addAll(list);
+				}
+				part.clear();
+			}
+		}
+		return result;
+	}
+
+	/**
+	 * 根据传入的参数列表进行分批查询，适用于参数拼接的方式
+	 */
+	protected <R> List<R> batchAppendFind(@Nonnull Collection<Long> ids, @Nonnull Function<String, List<R>> findFunc) {
+		final int totalSize = X.size(ids);
+		if (totalSize == 0) {
+			return Collections.emptyList();
+		}
+		List<R> result = new ArrayList<>(totalSize);
+		final StringBuilder sb = new StringBuilder(Math.min(SINGLE_QUERY_SIZE, totalSize) * 6);
+		int i = 0;
+		for (Long id : ids) {
+			sb.append(id.longValue());
+			if (++i % SINGLE_QUERY_SIZE == 0 || totalSize == i) {
+				List<R> list = findFunc.apply(sb.toString());
+				if (X.isValid(list)) {
+					result.addAll(list);
+				}
+				sb.setLength(0);
+			} else {
+				sb.append(",");
+			}
+		}
+		return result;
 	}
 
 }

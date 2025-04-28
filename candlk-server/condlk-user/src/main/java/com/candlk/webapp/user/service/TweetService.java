@@ -48,9 +48,6 @@ public class TweetService extends BaseServiceImpl<Tweet, TweetDao, Long> {
 				RedisUtil.getStringRedisTemplate().opsForSet().add(RedisKey.TWEET_NEW_USERS, author);
 			}
 
-			// TODO AI 分词并提取 代币名称和简称
-
-			// TODO 分词匹配
 		} catch (DuplicateKeyException e) { // 违反唯一约束
 			log.warn("【{}】推文已存在：{}", provider, tweetId);
 		} catch (Exception e) {

@@ -7,12 +7,10 @@ import javax.annotation.Nonnull;
 import javax.annotation.Nullable;
 
 import com.baomidou.mybatisplus.core.conditions.AbstractWrapper;
-import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
 import com.baomidou.mybatisplus.core.conditions.query.QueryWrapper;
 import com.baomidou.mybatisplus.core.enums.SqlKeyword;
 import com.baomidou.mybatisplus.core.plugins.IgnoreStrategy;
 import com.baomidou.mybatisplus.core.plugins.InterceptorIgnoreHelper;
-import com.baomidou.mybatisplus.core.toolkit.support.SFunction;
 import com.candlk.common.model.TimeInterval;
 import me.codeplayer.util.*;
 import org.apache.ibatis.jdbc.SQL;
@@ -69,6 +67,13 @@ public abstract class MybatisUtil {
 		doAddSql(sql, column, key, value, valueExpr);
 	}
 
+	public static void addLikeRightIfHasValue(@Nonnull SQL sql, @Nonnull String column, @Nullable String value, String valueExpr) {
+		if (value == null || value.isBlank()) {
+			return;
+		}
+		sql.WHERE(column + " LIKE CONCAT(" + valueExpr + ", '%')");
+	}
+
 	public static void addEqIfHasValue(@Nonnull SQL sql, @Nonnull String column, @Nullable Object value, String valueExpr) {
 		addIfHasValue(sql, column, SqlKeyword.EQ, value, valueExpr);
 	}
@@ -83,45 +88,34 @@ public abstract class MybatisUtil {
 		}
 	}
 
-	public static void addInSql(@Nonnull SQL sql, @Nonnull String column, Object array, boolean isInclude, boolean isString) {
+	public static void addInSql(@Nonnull SQL sql, @Nonnull String column, Number[] array, boolean isInclude, boolean isString) {
 		if (X.isValid(array)) {
 			sql.WHERE(ArrayUtil.getInSQL(new StringBuilder(column), array, isInclude, isString).toString());
 		}
 	}
 
-	public static void addInIdSql(@Nonnull SQL sql, @Nonnull String column, Object array) {
+	public static void addInIdSql(@Nonnull SQL sql, @Nonnull String column, Number[] array) {
 		addInSql(sql, column, array, true, false);
 	}
 
-	public static String inIdSql(@Nonnull String column, Object array) {
+	public static String inIdSql(@Nonnull String column, Number[] array) {
 		if (X.isValid(array)) {
 			return ArrayUtil.getInSQL(new StringBuilder(column), array, true, false).toString();
 		}
 		return null;
 	}
 
-	public static String inStrSql(@Nonnull String column, Object array) {
-		if (X.isValid(array)) {
-			return ArrayUtil.getInSQL(new StringBuilder(column), array, true, true).toString();
-		}
-		return null;
-	}
-
-	public static void addInStrSql(@Nonnull SQL sql, @Nonnull String column, Object array) {
-		addInSql(sql, column, array, true, true);
-	}
-
-	public static String sqlSegment(@Nonnull String column, @Nonnull SqlKeyword key, @Nullable Object value, String valueExpr) {
+	protected static String sqlSegment(@Nonnull String column, @Nonnull SqlKeyword key, @Nullable Object value, String valueExpr) {
 		return switch (key) {
 			case EQ, NE, GT, GE, LT, LE -> column + " " + key.getSqlSegment() + X.expectNotNull(valueExpr, value);
-			case LIKE, NOT_LIKE -> column + " " + key.getSqlSegment() + " CONCAT('%', '" + X.expectNotNull(valueExpr, value) + "', '%')";
+			case LIKE, NOT_LIKE -> column + " " + key.getSqlSegment() + " CONCAT('%', " + valueExpr + ", '%')";
 			case IN, NOT_IN -> column + " " + key.getSqlSegment() + " ('" + X.expectNotNull(valueExpr, value) + "') ";
 			case IS_NOT_NULL -> column + " " + key.getSqlSegment();
 			default -> throw new UnsupportedOperationException();
 		};
 	}
 
-	public static void doAddSql(@Nonnull SQL sql, @Nonnull String column, @Nonnull SqlKeyword key, @Nullable Object value, String valueExpr) {
+	protected static void doAddSql(@Nonnull SQL sql, @Nonnull String column, @Nonnull SqlKeyword key, @Nullable Object value, String valueExpr) {
 		sql.WHERE(sqlSegment(column, key, value, valueExpr));
 	}
 
@@ -134,29 +128,21 @@ public abstract class MybatisUtil {
 		}
 	}
 
-	public static <T> void wrapperInOrEq(@Nonnull QueryWrapper<T> wrapper, @Nullable String column, @Nullable Object[] types) {
-		if (types != null) {
-			if (X.size(types) == 1) {
-				wrapper.eq(X.isValid(types[0]), column, types[0]);
+	public static <T> void wrapperInOrEq(@Nonnull QueryWrapper<T> wrapper, @Nullable String column, @Nullable Object[] values) {
+		final int size = X.size(values);
+		if (size > 0) {
+			if (size == 1) {
+				wrapper.eq(values[0] != null, column, values[0]);
 				return;
 			}
-			wrapper.in(X.isValid(types), column, types);
-		}
-	}
-
-	public static <T> void wrapperInterval(@Nonnull LambdaQueryWrapper<T> wrapper, SFunction<T, ?> column, @Nullable TimeInterval interval) {
-		if (interval != null) {
-			Date finalBegin = interval.getFinalBegin();
-			wrapper.ge(finalBegin != null, column, finalBegin);
-			Date finalEnd = interval.getFinalEnd();
-			wrapper.le(finalEnd != null, column, finalEnd);
+			wrapper.in(column, values);
 		}
 	}
 
 	/**
 	 * 为不支持毫秒级的低精度 MySQL 日期数据类型提供时间范围的查询条件封装
 	 */
-	public static <T> void wrapperIntervalLowScale(@Nonnull AbstractWrapper<?, String, ?> wrapper, @Nullable String column, @Nullable TimeInterval interval) {
+	public static void wrapperIntervalLowScale(@Nonnull AbstractWrapper<?, String, ?> wrapper, @Nullable String column, @Nullable TimeInterval interval) {
 		if (interval != null) {
 			Date finalBegin = interval.getFinalBegin();
 			wrapper.ge(finalBegin != null, column, finalBegin);
@@ -176,13 +162,15 @@ public abstract class MybatisUtil {
 		}
 	}
 
+	public static final IgnoreStrategy ignoreTenant = IgnoreStrategy.builder().tenantLine(true).build();
+
 	/**
 	 * 临时忽略多租户策略，并执行指定的数据访问任务
 	 * 执行完毕后，将恢复原状
 	 */
 	public static <T> T runWithIgnoreTenant(Supplier<T> task) {
 		// 设置忽略租户插件
-		InterceptorIgnoreHelper.handle(IgnoreStrategy.builder().tenantLine(true).build());
+		InterceptorIgnoreHelper.handle(ignoreTenant);
 		try {
 			return task.get();
 		} finally {
@@ -197,7 +185,7 @@ public abstract class MybatisUtil {
 	 */
 	public static void runWithIgnoreTenant(Runnable task) {
 		// 设置忽略租户插件
-		InterceptorIgnoreHelper.handle(IgnoreStrategy.builder().tenantLine(true).build());
+		InterceptorIgnoreHelper.handle(ignoreTenant);
 		try {
 			task.run();
 		} finally {
