@@ -55,6 +55,10 @@ public class Tweet extends BaseEntity {
 	String images;
 	/** 推文视频 */
 	String videos;
+	/** 业务状态：0=初始录入；1=同步推文；2=正在进行分析；3=分析结束 */
+	Integer status;
+
+	public static final int INIT = 0, SYNC = 1, ANALYZING = 2, ANALYZED = 3;
 
 	public static Tweet of(TweetProvider providerType, TweetType tweetType, String username, String tweetId, String text, String entities, String orgMsg, Date addTime) {
 		Tweet tweet = new Tweet();
@@ -86,5 +90,6 @@ public class Tweet extends BaseEntity {
 	public static final String ADD_TIME = "add_time";
 	public static final String UPDATE_TIME = "update_time";
 	public static final String USERNAME = "username";
+	public static final String STATUS = "status";
 
 }

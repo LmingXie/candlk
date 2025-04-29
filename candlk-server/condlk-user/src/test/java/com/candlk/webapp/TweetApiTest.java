@@ -1,15 +1,17 @@
 package com.candlk.webapp;
 
+import java.io.File;
 import java.util.List;
 import javax.annotation.Resource;
 
+import com.alibaba.fastjson2.*;
 import com.candlk.common.model.Messager;
 import com.candlk.context.web.Jsons;
 import com.candlk.webapp.api.TweetApi;
 import com.candlk.webapp.api.TweetInfo;
-import com.candlk.webapp.user.entity.Tweet;
 import com.candlk.webapp.user.service.TweetService;
 import lombok.extern.slf4j.Slf4j;
+import me.codeplayer.util.FileUtil;
 import me.codeplayer.util.StringUtil;
 import org.junit.jupiter.api.BeforeAll;
 import org.junit.jupiter.api.Test;
@@ -36,11 +38,19 @@ public class TweetApiTest {
 
 	@Test
 	public void test() {
-		List<Tweet> tweetList = tweetService.lastList(100);
-		final String tweetIds = StringUtil.join(tweetList, Tweet::getTweetId, ",");
+		List<String> tweetList = tweetService.lastList(100);
+		final String tweetIds = StringUtil.joins(tweetList, ",");
 		log.info("推文ID：{}", tweetIds);
 		Messager<List<TweetInfo>> tweets = tweetApi.tweets(tweetIds);
 		log.info("推文：{}", Jsons.encode(tweets));
+	}
+
+	@Test
+	public void testSync() {
+		final String jsonData = FileUtil.readContent(new File("D:\\tweet2.json"));
+		JSONObject data = Jsons.parseObject(jsonData);
+		List<TweetInfo> tweets = data.getList("data", TweetInfo.class);
+		tweetService.sync(tweets);
 	}
 
 }

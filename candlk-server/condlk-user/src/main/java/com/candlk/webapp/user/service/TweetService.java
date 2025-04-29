@@ -1,14 +1,18 @@
 package com.candlk.webapp.user.service;
 
+import java.util.ArrayList;
 import java.util.List;
 import javax.annotation.Resource;
 
 import com.baomidou.mybatisplus.core.conditions.query.QueryWrapper;
+import com.baomidou.mybatisplus.core.conditions.update.UpdateWrapper;
 import com.candlk.common.dao.SmartQueryWrapper;
 import com.candlk.common.model.TimeInterval;
 import com.candlk.common.redis.RedisUtil;
 import com.candlk.common.web.Page;
 import com.candlk.context.model.RedisKey;
+import com.candlk.context.web.Jsons;
+import com.candlk.webapp.api.TweetInfo;
 import com.candlk.webapp.base.service.BaseServiceImpl;
 import com.candlk.webapp.user.dao.TweetDao;
 import com.candlk.webapp.user.entity.Tweet;
@@ -16,6 +20,7 @@ import com.candlk.webapp.user.form.TweetQuery;
 import com.candlk.webapp.user.model.TweetProvider;
 import com.candlk.webapp.user.vo.TweetVO;
 import lombok.extern.slf4j.Slf4j;
+import me.codeplayer.util.X;
 import org.springframework.dao.DuplicateKeyException;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -55,11 +60,44 @@ public class TweetService extends BaseServiceImpl<Tweet, TweetDao, Long> {
 		}
 	}
 
-	public List<Tweet> lastList(Integer limit) {
-		return selectList(new QueryWrapper<Tweet>()
+	public List<String> lastList(Integer limit) {
+		return baseDao.lastList(new QueryWrapper<Tweet>()
 				.orderByDesc(Tweet.ADD_TIME)
-				.last("LIMIT " + 100)
+				.last("LIMIT " + limit)
 		);
+	}
+
+	@Transactional
+	public void sync(List<TweetInfo> tweets) {
+		if (!tweets.isEmpty()) {
+			List<UpdateWrapper<Tweet>> wrappers = new ArrayList<>(tweets.size());
+			for (TweetInfo tweet : tweets) {
+				UpdateWrapper<Tweet> wrapper = new UpdateWrapper<Tweet>()
+						.set(Tweet.ORG_MSG, Jsons.encode(tweet))
+						.set(Tweet.STATUS, Tweet.SYNC)
+						.eq(Tweet.TWEET_ID, tweet.id)
+						.eq(Tweet.STATUS, Tweet.INIT);
+				if (tweet.noteTweet != null && X.isValid(tweet.noteTweet.text)) {
+					wrapper.set(Tweet.TEXT, tweet.noteTweet.text);
+				} else if (X.isValid(tweet.text)) {
+					wrapper.set(Tweet.TEXT, tweet.text);
+				} else {
+					log.warn("【{}】推文无内容：{}", tweet.id, Jsons.encode(tweet));
+				}
+				if (tweet.publicMetrics != null) {
+					wrapper.set(X.isValid(tweet.publicMetrics.retweetCount), Tweet.RETWEET, tweet.publicMetrics.retweetCount)
+							.set(X.isValid(tweet.publicMetrics.replyCount), Tweet.REPLY, tweet.publicMetrics.replyCount)
+							.set(X.isValid(tweet.publicMetrics.likeCount), Tweet.LIKES, tweet.publicMetrics.likeCount)
+							.set(X.isValid(tweet.publicMetrics.quoteCount), Tweet.QUOTE, tweet.publicMetrics.quoteCount)
+							.set(X.isValid(tweet.publicMetrics.bookmarkCount), Tweet.BOOKMARK, tweet.publicMetrics.bookmarkCount)
+							.set(X.isValid(tweet.publicMetrics.impressionCount), Tweet.IMPRESSION, tweet.publicMetrics.impressionCount);
+				} else {
+					log.warn("【{}】推文无统计数据：{}", tweet.id, Jsons.encode(tweet));
+				}
+				wrappers.add(wrapper);
+			}
+			super.updateBatchByWrappers(wrappers);
+		}
 	}
 
 }

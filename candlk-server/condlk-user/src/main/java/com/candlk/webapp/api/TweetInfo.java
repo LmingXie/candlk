@@ -3,6 +3,7 @@ package com.candlk.webapp.api;
 import java.util.Date;
 import java.util.List;
 
+import com.alibaba.fastjson2.annotation.JSONField;
 import lombok.*;
 
 @Setter
@@ -12,38 +13,50 @@ public class TweetInfo {
 	/** 推文ID */
 	public String id;
 	/** 作者用户ID */
+	@JSONField(name = "author_id")
 	public String authorId;
 	/** 内容文本（摘要 280） */
 	public String text;
 	/** 推文的全部内容，包括超过 280 个字符的文本。 */
+	@JSONField(name = "note_tweet")
 	public NoteTweet noteTweet;
 	/** 创建时间 */
+	@JSONField(name = "created_at")
 	public Date createdAt;
 	/** 公共指标 */
+	@JSONField(name = "public_metrics")
 	public PublicMetrics publicMetrics;
 	/** 附件实体 */
 	public Entities entities;
 
 	/** 回复目标用户ID */
+	@JSONField(name = "in_reply_to_user_id")
 	public String inReplyToUserId;
 	/** 回复的帖子ID */
+	@JSONField(name = "conversation_id")
 	public String conversationId;
 	/** 引用帖子信息 */
+	@JSONField(name = "referenced_tweets")
 	public List<ReferencedTweets> referencedTweets;
 
 	/** 历史编辑的推文ID */
+	@JSONField(name = "edit_history_tweet_ids")
 	public List<String> editHistoryTweetIds;
 	/** 敏感标识 */
+	@JSONField(name = "possibly_sensitive")
 	public Boolean possiblySensitive;
 	/** 语言 */
 	public String lang;
 	/** 媒体的元数据 */
+	@JSONField(name = "media_metadata")
 	public List<MediaMetadata> mediaMetadata;
 	/** 编辑空间 */
+	@JSONField(name = "edit_controls")
 	public EditControls editControls;
 	/** 附件 */
 	public Attachments attachments;
 	/** 显示文本范围 */
+	@JSONField(name = "display_text_range")
 	public List<Integer> displayTextRange;
 	/**
 	 * 从推文文本推断出的注释：主要是用来提供推文内容的语义背景的
@@ -61,50 +74,61 @@ public class TweetInfo {
 	 * 给广告投放、趋势分析提供更多背景数据。
 	 * </pre>
 	 */
+	@JSONField(name = "context_annotations")
 	public List<ContextAnnotations> contextAnnotations;
 
-	@NoArgsConstructor
-	@Data
+	@Getter
+	@Setter
 	public static class EditControls {
 
 		/** 编辑剩余次数 */
+		@JSONField(name = "edits_remaining")
 		public Integer editsRemaining;
 		/** 编辑合格吗？ */
+		@JSONField(name = "is_edit_eligible")
 		public Boolean isEditEligible;
 		/** 可编辑的,直到 */
+		@JSONField(name = "editable_until")
 		public String editableUntil;
 
 	}
 
-	@NoArgsConstructor
-	@Data
+	@Getter
+	@Setter
 	public static class Attachments {
 
+		@JSONField(name = "media_keys")
 		public List<String> mediaKeys;
 
 	}
 
-	@NoArgsConstructor
-	@Data
+	@Getter
+	@Setter
 	public static class PublicMetrics {
 
 		/** 转发数 */
+		@JSONField(name = "retweet_count")
 		public Integer retweetCount;
 		/** 回复数 */
+		@JSONField(name = "reply_count")
 		public Integer replyCount;
 		/** 点赞 */
+		@JSONField(name = "like_count")
 		public Integer likeCount;
 		/** 引用数 */
+		@JSONField(name = "quote_count")
 		public Integer quoteCount;
 		/** 书签数 */
+		@JSONField(name = "bookmark_count")
 		public Integer bookmarkCount;
 		/** 浏览数 */
+		@JSONField(name = "impression_count")
 		public Integer impressionCount;
 
 	}
 
-	@NoArgsConstructor
-	@Data
+	@Getter
+	@Setter
 	public static class Entities {
 
 		/** 附件URL */
@@ -112,8 +136,8 @@ public class TweetInfo {
 		/** 提及的用户 */
 		public List<Mentions> mentions;
 
-		@NoArgsConstructor
-		@Data
+		@Getter
+		@Setter
 		public static class Urls {
 
 			public Integer start;
@@ -121,16 +145,19 @@ public class TweetInfo {
 			/** 短链接URL */
 			public String url;
 			/** 完整URL */
+			@JSONField(name = "expanded_url")
 			public String expandedUrl;
 			/** 显示URL */
+			@JSONField(name = "display_url")
 			public String displayUrl;
 			/** 媒体Key */
+			@JSONField(name = "media_key")
 			public String mediaKey;
 
 		}
 
-		@NoArgsConstructor
-		@Data
+		@Getter
+		@Setter
 		public static class Mentions {
 
 			public Integer start;
@@ -144,24 +171,25 @@ public class TweetInfo {
 
 	}
 
-	@NoArgsConstructor
-	@Data
+	@Getter
+	@Setter
 	public static class NoteTweet {
 
 		public String text;
 
 	}
 
-	@NoArgsConstructor
-	@Data
+	@Getter
+	@Setter
 	public static class MediaMetadata {
 
+		@JSONField(name = "media_key")
 		public String mediaKey;
 
 	}
 
-	@NoArgsConstructor
-	@Data
+	@Getter
+	@Setter
 	public static class ReferencedTweets {
 
 		/** 引用类型：quoted=引用；replied_to=回复； */
@@ -171,16 +199,16 @@ public class TweetInfo {
 
 	}
 
-	@NoArgsConstructor
-	@Data
+	@Getter
+	@Setter
 	public static class ContextAnnotations {
 
 		/** 表示上下文注释域的数据 */
 		public Domain domain;
 		public Entity entity;
 
-		@NoArgsConstructor
-		@Data
+		@Getter
+		@Setter
 		public static class Domain {
 
 			/** 上下文注释域的唯一 ID */
@@ -192,8 +220,8 @@ public class TweetInfo {
 
 		}
 
-		@NoArgsConstructor
-		@Data
+		@Getter
+		@Setter
 		public static class Entity {
 
 			public String id;
