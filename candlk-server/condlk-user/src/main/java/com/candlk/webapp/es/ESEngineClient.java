@@ -15,12 +15,12 @@ import co.elastic.clients.transport.TransportUtils;
 import com.candlk.context.web.Jsons;
 import com.candlk.webapp.base.entity.BaseEntity;
 import com.candlk.webapp.user.entity.StopWord;
-import com.candlk.webapp.user.model.ESIndexType;
+import com.candlk.webapp.user.model.ESIndex;
 import com.cybozu.labs.langdetect.LangDetectException;
 import lombok.extern.slf4j.Slf4j;
 
 @Slf4j
-public class ESOptimizedSearchEngine {
+public class ESEngineClient {
 
 	private static final String serverUrl = "https://localhost:9200";
 	private static final String fingerprint = "008d29b8ca1324053f3cc196ae88e9e2dc865463053f0880f9c5cf708588f818";
@@ -30,7 +30,7 @@ public class ESOptimizedSearchEngine {
 	/** 停用词本地缓存 */
 	public final Set<String> stopWordsCache;
 
-	public ESOptimizedSearchEngine() throws LangDetectException, IOException {
+	public ESEngineClient() throws LangDetectException, IOException {
 
 		SSLContext sslContext = TransportUtils
 				.sslContextFromCaFingerprint(fingerprint);
@@ -48,7 +48,7 @@ public class ESOptimizedSearchEngine {
 	/** 初始化时从 stopwords_index 加载所有停用词到缓存 */
 	private void loadStopWordsToCache() throws IOException {
 		SearchResponse<StopWord> response = client.search(s -> s
-						.index(ESIndexType.STOP_WORDS_INDEX.value)
+						.index(ESIndex.STOP_WORDS_INDEX.value)
 						.query(q -> q.matchAll(m -> m))
 						.size(10000), // 设置足够大的 size，覆盖大部分停用词
 				StopWord.class);
@@ -64,7 +64,7 @@ public class ESOptimizedSearchEngine {
 	}
 
 	/** 批量添加文档数据 */
-	public <T extends BaseEntity> void bulkAddDoc(ESIndexType type, List<T> keyWords) throws Exception {
+	public <T extends BaseEntity> void bulkAddDoc(ESIndex type, List<T> keyWords) throws Exception {
 		if (keyWords == null || keyWords.isEmpty()) {
 			return;
 		}
@@ -75,7 +75,7 @@ public class ESOptimizedSearchEngine {
 					.index(op -> op.index(type.value)
 							.id(keyword.getId().toString()) // 自定义ID
 							.document(keyword))));
-			if (type == ESIndexType.STOP_WORDS_INDEX) {
+			if (type == ESIndex.STOP_WORDS_INDEX) {
 				// 更新缓存
 				stopWordsCache.add(((StopWord) keyword).getWords());
 			}
@@ -105,7 +105,7 @@ public class ESOptimizedSearchEngine {
 	 * @param sortOrder 排序顺序（"asc" 或 "desc"），可为 null
 	 * @return 关键词列表
 	 */
-	public <T extends BaseEntity> List<T> searchKeywords(ESIndexType type, Class<T> clazz, int page, int pageSize, String sortField, String sortOrder) throws Exception {
+	public <T extends BaseEntity> List<T> searchKeywords(ESIndex type, Class<T> clazz, int page, int pageSize, String sortField, String sortOrder) throws Exception {
 		if (page < 1 || pageSize < 1) {
 			throw new IllegalArgumentException("页码和页面大小必须大于 0");
 		}

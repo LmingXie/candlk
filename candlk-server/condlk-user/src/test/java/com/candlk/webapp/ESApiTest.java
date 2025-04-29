@@ -7,7 +7,7 @@ import com.candlk.context.web.Jsons;
 import com.candlk.webapp.es.*;
 import com.candlk.webapp.user.entity.StopWord;
 import com.candlk.webapp.user.entity.TweetWord;
-import com.candlk.webapp.user.model.ESIndexType;
+import com.candlk.webapp.user.model.ESIndex;
 import com.cybozu.labs.langdetect.LangDetectException;
 import lombok.extern.slf4j.Slf4j;
 import org.junit.jupiter.api.BeforeAll;
@@ -16,11 +16,11 @@ import org.junit.jupiter.api.Test;
 @Slf4j
 public class ESApiTest {
 
-	static ESOptimizedSearchEngine engine;
+	static ESEngineClient engine;
 
 	@BeforeAll
 	public static void init() throws IOException, LangDetectException {
-		engine = new ESOptimizedSearchEngine();
+		engine = new ESEngineClient();
 	}
 
 	@Test
@@ -37,7 +37,7 @@ public class ESApiTest {
 		for (int i = 0; i < keyWords.size(); i++) {
 			keyWords.get(i).setId(i + 1L);
 		}
-		engine.bulkAddDoc(ESIndexType.KEYWORDS_INDEX, keyWords);
+		engine.bulkAddDoc(ESIndex.KEYWORDS_INDEX, keyWords);
 	}
 
 	@Test
@@ -52,7 +52,7 @@ public class ESApiTest {
 		for (int i = 0; i < stopWords.size(); i++) {
 			stopWords.get(i).setId(i + 1L);
 		}
-		engine.bulkAddDoc(ESIndexType.STOP_WORDS_INDEX, stopWords);
+		engine.bulkAddDoc(ESIndex.STOP_WORDS_INDEX, stopWords);
 		// 验证停用词缓存
 		System.out.println("停用词缓存: " + engine.stopWordsCache);
 	}
@@ -60,7 +60,7 @@ public class ESApiTest {
 	@Test
 	public void searchKeywords() throws Exception {
 		// 示例：查询关键词（第 1 页，每页 2 条，按 priority 降序）
-		List<TweetWord> results = engine.searchKeywords(ESIndexType.STOP_WORDS_INDEX, TweetWord.class,
+		List<TweetWord> results = engine.searchKeywords(ESIndex.STOP_WORDS_INDEX, TweetWord.class,
 				1, 2, "id", "desc");
 		log.info("查询关键词: {}", Jsons.encode(results));
 	}
