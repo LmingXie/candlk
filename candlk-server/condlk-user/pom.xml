@@ -19,6 +19,44 @@
 	</properties>
 
 	<dependencies>
+		<!-- ES 客户端 -->
+		<dependency>
+			<groupId>co.elastic.clients</groupId>
+			<artifactId>elasticsearch-java</artifactId>
+			<version>9.0.0</version>
+		</dependency>
+		<!-- ES 引擎依赖httpclient实现通讯 -->
+		<dependency>
+			<groupId>org.apache.httpcomponents.core5</groupId>
+			<artifactId>httpcore5</artifactId>
+			<version>5.3.3</version>
+		</dependency>
+
+		<!-- HTTP Client 5 (for connection management) -->
+		<dependency>
+			<groupId>org.apache.httpcomponents.client5</groupId>
+			<artifactId>httpclient5</artifactId>
+			<version>5.4.2</version>
+		</dependency>
+		<dependency>
+			<groupId>org.apache.httpcomponents.core5</groupId>
+			<artifactId>httpcore5-h2</artifactId>
+			<version>5.3.3</version>
+		</dependency>
+
+		<!-- ES 引擎基于此解析数据 -->
+		<dependency>
+			<groupId>jakarta.json</groupId>
+			<artifactId>jakarta.json-api</artifactId>
+			<version>2.1.3</version>
+		</dependency>
+		<!-- 自动识别语言 10ms开销 -->
+		<dependency>
+			<groupId>com.cybozu.labs</groupId>
+			<artifactId>langdetect</artifactId>
+			<version>1.1-20120112</version>
+		</dependency>
+
 		<dependency>
 			<groupId>software.sava</groupId>
 			<artifactId>sava-core</artifactId>

@@ -76,7 +76,7 @@ public class TweetUserService extends BaseServiceImpl<TweetUser, TweetUserDao, L
 							.set(X.isValid(user.publicMetrics.listedCount), TweetUser.LISTED, user.publicMetrics.listedCount)
 							.set(X.isValid(user.publicMetrics.likeCount), TweetUser.LIKES, user.publicMetrics.likeCount);
 				} else {
-					log.warn("【{}】推文无统计数据：{}", user.id, Jsons.encode(user));
+					log.warn("【{}】用户无统计数据：{}", user.id, Jsons.encode(user));
 				}
 				wrappers.add(wrapper);
 			}

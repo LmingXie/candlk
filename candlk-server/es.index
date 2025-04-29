@@ -1,0 +1,77 @@
+
+// 关键词 索引
+{
+  "settings": {
+    "number_of_shards": 5,
+    "number_of_replicas": 0,
+    "analysis": {
+      "analyzer": {
+        "chinese_analyzer": {
+          "type": "custom",
+          "tokenizer": "smartcn_tokenizer"
+        },
+        "english_analyzer": {
+          "type": "english"
+        },
+        "french_analyzer": {
+          "type": "french"
+        },
+        "spanish_analyzer": {
+          "type": "spanish"
+        }
+      }
+    }
+  },
+  "mappings": {
+    "properties": {
+      "words": { "type": "keyword" },
+      "type": { "type": "integer" },
+      "priority": { "type": "integer" },
+      "count": { "type": "long" },
+      "addTime": { "type": "date" },
+      "updateTime": { "type": "date" }
+    }
+  }
+}
+
+// 停用词 索引
+{
+  "settings": {
+    "number_of_shards": 1,
+    "number_of_replicas": 1,
+    "analysis": {
+      "analyzer": {
+        "stopwords_analyzer": {
+          "type": "custom",
+          "tokenizer": "smartcn_tokenizer",
+          "filter": [
+            "lowercase",
+            "stopwords_filter"
+          ]
+        },
+        "english_stopwords_analyzer": {
+          "type": "english"
+        }
+      },
+      "filter": {
+        "stopwords_filter": {
+          "type": "stop",
+          "stopwords": ["的", "了", "是", "我", "你", "和", "在", "这", "那"]
+        }
+      }
+    }
+  },
+  "mappings": {
+    "properties": {
+      "words": {
+        "type": "keyword"
+      },
+      "add_time": {
+        "type": "date"
+      },
+      "update_time": {
+        "type": "date"
+      }
+    }
+  }
+}
