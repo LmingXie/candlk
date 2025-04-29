@@ -63,7 +63,12 @@ public class ESEngineClient {
 		log.info("成功加载停用词：{} {}", stopWordsCache.size(), Jsons.encode(stopWordsCache));
 	}
 
-	/** 批量添加文档数据 */
+	/**
+	 * 批量添加文档数据
+	 * <p><a href="https://www.elastic.co/docs/reference/elasticsearch/clients/java/usage/indexing-bulk#_indexing_application_objects">
+	 * 关于Bulk 批量操作API
+	 * </a></p>
+	 */
 	public <T extends BaseEntity> void bulkAddDoc(ESIndex type, List<T> keyWords) throws Exception {
 		if (keyWords == null || keyWords.isEmpty()) {
 			return;
@@ -98,6 +103,9 @@ public class ESEngineClient {
 
 	/**
 	 * 查询关键词，支持分页
+	 * <p><a href="https://www.elastic.co/docs/reference/elasticsearch/clients/java/getting-started#_searching_documents">
+	 * 关于文档的增删改查
+	 * </a></p>
 	 *
 	 * @param page 从 1 开始的页码
 	 * @param pageSize 每页大小
