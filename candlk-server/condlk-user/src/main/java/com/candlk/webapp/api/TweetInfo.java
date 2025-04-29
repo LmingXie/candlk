@@ -20,6 +20,11 @@ public class TweetInfo {
 	/** 推文的全部内容，包括超过 280 个字符的文本。 */
 	@JSONField(name = "note_tweet")
 	public NoteTweet noteTweet;
+
+	public String getText() {
+		return noteTweet == null ? text : noteTweet.text;
+	}
+
 	/** 创建时间 */
 	@JSONField(name = "created_at")
 	public Date createdAt;

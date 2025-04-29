@@ -21,6 +21,7 @@ import com.candlk.webapp.user.model.TweetProvider;
 import com.candlk.webapp.user.vo.TweetVO;
 import lombok.extern.slf4j.Slf4j;
 import me.codeplayer.util.X;
+import org.apache.commons.lang3.StringUtils;
 import org.springframework.dao.DuplicateKeyException;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -77,10 +78,9 @@ public class TweetService extends BaseServiceImpl<Tweet, TweetDao, Long> {
 						.set(Tweet.STATUS, Tweet.SYNC)
 						.eq(Tweet.TWEET_ID, tweet.id)
 						.eq(Tweet.STATUS, Tweet.INIT);
-				if (tweet.noteTweet != null && X.isValid(tweet.noteTweet.text)) {
-					wrapper.set(Tweet.TEXT, tweet.noteTweet.text);
-				} else if (X.isValid(tweet.text)) {
-					wrapper.set(Tweet.TEXT, tweet.text);
+				final String text = tweet.getText();
+				if (StringUtils.isNotEmpty(text)) {
+					wrapper.set(Tweet.TEXT, text);
 				} else {
 					log.warn("【{}】推文无内容：{}", tweet.id, Jsons.encode(tweet));
 				}

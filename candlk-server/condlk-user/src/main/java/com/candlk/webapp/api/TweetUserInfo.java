@@ -2,6 +2,7 @@ package com.candlk.webapp.api;
 
 import java.util.List;
 
+import com.alibaba.fastjson2.JSONObject;
 import com.alibaba.fastjson2.annotation.JSONField;
 import lombok.*;
 
@@ -81,7 +82,7 @@ public class TweetUserInfo {
 		/** 该用户创建的赞数 */
 		@JSONField(name = "like_count")
 		public Integer likeCount;
-		/** 媒体算 */
+		/** 媒体数 */
 		@JSONField(name = "media_count")
 		public Integer mediaCount;
 
@@ -95,6 +96,16 @@ public class TweetUserInfo {
 		@JSONField(name = "subscribes_to_you")
 		public Boolean subscribesToYou;
 
+	}
+
+	public JSONObject toDescription() {
+		JSONObject json = new JSONObject(4);
+		json.put("text", this.description);
+		if (this.entities != null && this.entities.description != null) {
+			json.put("urls", this.entities.description.urls);
+			json.put("mentions", this.entities.description.mentions);
+		}
+		return json;
 	}
 
 	@Getter

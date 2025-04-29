@@ -4,12 +4,12 @@ import java.io.File;
 import java.util.List;
 import javax.annotation.Resource;
 
-import com.alibaba.fastjson2.*;
+import com.alibaba.fastjson2.JSONObject;
 import com.candlk.common.model.Messager;
 import com.candlk.context.web.Jsons;
-import com.candlk.webapp.api.TweetApi;
-import com.candlk.webapp.api.TweetInfo;
+import com.candlk.webapp.api.*;
 import com.candlk.webapp.user.service.TweetService;
+import com.candlk.webapp.user.service.TweetUserService;
 import lombok.extern.slf4j.Slf4j;
 import me.codeplayer.util.FileUtil;
 import me.codeplayer.util.StringUtil;
@@ -27,6 +27,8 @@ public class TweetApiTest {
 
 	@Resource
 	TweetService tweetService;
+	@Resource
+	TweetUserService tweetUserService;
 
 	static TweetApi tweetApi;
 
@@ -51,6 +53,15 @@ public class TweetApiTest {
 		JSONObject data = Jsons.parseObject(jsonData);
 		List<TweetInfo> tweets = data.getList("data", TweetInfo.class);
 		tweetService.sync(tweets);
+	}
+
+	@Test
+	public void testSyncUserInfo() {
+		final String jsonData = FileUtil.readContent(new File("D:\\tweetUser.json"));
+		JSONObject data = Jsons.parseObject(jsonData);
+		// 同步用户信息数据
+		List<TweetUserInfo> tweets = data.getList("data", TweetUserInfo.class);
+		tweetUserService.sync(tweets);
 	}
 
 }

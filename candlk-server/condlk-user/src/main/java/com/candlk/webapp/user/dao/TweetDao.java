@@ -20,7 +20,7 @@ public interface TweetDao extends BaseDao<Tweet> {
 	@Select("SELECT * FROM x_tweet ${ew.customSqlSegment}")
 	Page<TweetVO> findPage(Page<?> page, @Param("ew") Wrapper<?> wrapper);
 
-	@Select("SELECT tweetId FROM x_tweet ${ew.customSqlSegment}")
+	@Select("SELECT tweet_id FROM x_tweet ${ew.customSqlSegment}")
 	List<String> lastList(@Param("ew") Wrapper<?> wrapper);
 
 }

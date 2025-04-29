@@ -45,6 +45,10 @@ public class TweetUser extends TimeBasedEntity {
 	Integer following;
 	/** 该用户发布的媒体数 */
 	Integer media;
+	/** 包含该用户的列表数量 */
+	Integer listed;
+	/** 该用户创建的赞数 */
+	Integer likes;
 	/** 最后一次发帖时间 */
 	Date tweetLastTime;
 	/** 账号类型：0=普通账号；1=特殊关注账号；2=二级账号； */
@@ -64,6 +68,8 @@ public class TweetUser extends TimeBasedEntity {
 	public static final String TWEETS = "tweets";
 	public static final String FOLLOWING = "following";
 	public static final String MEDIA = "media";
+	public static final String LISTED = "listed";
+	public static final String LIKES = "likes";
 	public static final String TWEET_LAST_TIME = "tweet_last_time";
 	public static final String TYPE = "type";
 	public static final String BIZ_FLAG = "biz_flag";

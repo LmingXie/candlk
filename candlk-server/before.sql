@@ -1,40 +1,41 @@
 CREATE TABLE `x_token_event` (
-     `id` int(10) unsigned NOT NULL AUTO_INCREMENT COMMENT '主键ID',
-     `tweet_id` int(10) NOT NULL COMMENT '推文ID',
-     `type` tinyint(3) unsigned NOT NULL COMMENT '事件类型：0=特殊关注账号；1=热门推文；2=浏览量猛增；',
-     `coin` varchar(100) NOT NULL DEFAULT '' COMMENT '代币名称',
-     `symbol` varchar(100) NOT NULL DEFAULT '' COMMENT '代币简称',
-     `ca` varchar(100) CHARACTER SET latin1 NOT NULL DEFAULT '' COMMENT '代币地址',
-     `desc` varchar(1000) NOT NULL DEFAULT '' COMMENT '代币简介',
-     `status` tinyint(4) NOT NULL COMMENT '业务状态',
-     `add_time` datetime NOT NULL DEFAULT CURRENT_TIMESTAMP COMMENT '添加时间',
-     `update_time` datetime NOT NULL DEFAULT CURRENT_TIMESTAMP COMMENT '最后更新时间',
-     PRIMARY KEY (`id`)
+ `id` int(10) unsigned NOT NULL AUTO_INCREMENT COMMENT '主键ID',
+ `tweet_id` int(10) unsigned NOT NULL COMMENT '推文ID',
+ `type` tinyint(3) unsigned NOT NULL COMMENT '事件类型：0=特殊关注账号；1=热门推文；2=浏览量猛增；',
+ `coin` varchar(100) NOT NULL DEFAULT '' COMMENT '代币名称',
+ `symbol` varchar(100) NOT NULL DEFAULT '' COMMENT '代币简称',
+ `ca` varchar(100) CHARACTER SET latin1 NOT NULL DEFAULT '' COMMENT '代币地址',
+ `desc` varchar(1000) NOT NULL DEFAULT '' COMMENT '代币简介',
+ `status` tinyint(4) unsigned NOT NULL COMMENT '业务状态',
+ `add_time` datetime NOT NULL DEFAULT CURRENT_TIMESTAMP COMMENT '添加时间',
+ `update_time` datetime NOT NULL DEFAULT CURRENT_TIMESTAMP COMMENT '最后更新时间',
+ PRIMARY KEY (`id`)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COMMENT='代币事件表';
 
 CREATE TABLE `x_tweet` (
-       `id` int(10) unsigned NOT NULL AUTO_INCREMENT COMMENT '主键ID',
-       `provider_type` tinyint(3) unsigned NOT NULL COMMENT '推文来源厂商类型',
-       `tweet_id` varchar(20) CHARACTER SET latin1 NOT NULL COMMENT '推文ID',
-       `type` tinyint(3) unsigned NOT NULL COMMENT '推文类型：0=发帖；1=回复；2=引用；3=转发',
-       `text` text NOT NULL COMMENT '推文内容',
-       `entities` json DEFAULT NULL COMMENT '推文实体：urls=引用图片/视频；mentions=提及的人；hashtags=被识别的标签文本；',
-       `org_msg` text NOT NULL COMMENT '原始推文数据',
-       `retweet` int(10) unsigned NOT NULL DEFAULT '0' COMMENT '此推文被转发的次数',
-       `reply` int(10) unsigned NOT NULL DEFAULT '0' COMMENT '此推文被回复的次数',
-       `likes` int(10) unsigned NOT NULL DEFAULT '0' COMMENT '此推文被点赞的次数',
-       `quote` int(10) unsigned NOT NULL DEFAULT '0' COMMENT '此推文被引用的次数',
-       `bookmark` int(10) unsigned NOT NULL DEFAULT '0' COMMENT '此推文被收藏的次数',
-       `impression` int(10) unsigned NOT NULL DEFAULT '0' COMMENT '此推文被浏览的次数',
-       `biz_flag` smallint(5) unsigned NOT NULL DEFAULT '0' COMMENT '业务标识',
-       `add_time` datetime NOT NULL COMMENT '推文发布时间',
-       `update_time` datetime NOT NULL DEFAULT CURRENT_TIMESTAMP COMMENT '最后更新时间',
-       `username` varchar(100) CHARACTER SET latin1 NOT NULL COMMENT '推特用户账号名',
-       `images` json NOT NULL COMMENT '图片',
-       `videos` json NOT NULL COMMENT '视频',
-       PRIMARY KEY (`id`),
-       UNIQUE KEY `uk_tweet_id` (`tweet_id`) USING BTREE
-) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COMMENT='推文信息表';
+   `id` int(10) unsigned NOT NULL AUTO_INCREMENT COMMENT '主键ID',
+   `tweet_id` varchar(20) CHARACTER SET latin1 NOT NULL COMMENT '推文ID',
+   `type` tinyint(3) unsigned NOT NULL COMMENT '推文类型：0=发帖；1=回复；2=引用；3=转发',
+   `provider_type` tinyint(3) unsigned NOT NULL COMMENT '推文来源厂商类型',
+   `text` text NOT NULL COMMENT '推文内容',
+   `entities` json DEFAULT NULL COMMENT '推文实体：urls=引用图片/视频；mentions=提及的人；hashtags=被识别的标签文本；',
+   `org_msg` text NOT NULL COMMENT '原始推文数据',
+   `retweet` int(10) unsigned NOT NULL DEFAULT '0' COMMENT '此推文被转发的次数',
+   `reply` int(10) unsigned NOT NULL DEFAULT '0' COMMENT '此推文被回复的次数',
+   `likes` int(10) unsigned NOT NULL DEFAULT '0' COMMENT '此推文被点赞的次数',
+   `quote` int(10) unsigned NOT NULL DEFAULT '0' COMMENT '此推文被引用的次数',
+   `bookmark` int(10) unsigned NOT NULL DEFAULT '0' COMMENT '此推文被收藏的次数',
+   `impression` int(10) unsigned NOT NULL DEFAULT '0' COMMENT '此推文被浏览的次数',
+   `biz_flag` smallint(5) unsigned NOT NULL DEFAULT '0' COMMENT '业务标识',
+   `add_time` datetime NOT NULL COMMENT '推文发布时间',
+   `update_time` datetime NOT NULL DEFAULT CURRENT_TIMESTAMP COMMENT '最后更新时间',
+   `username` varchar(100) CHARACTER SET latin1 NOT NULL COMMENT '推特用户账号名',
+   `images` json NOT NULL COMMENT '图片',
+   `videos` json NOT NULL COMMENT '视频',
+   `status` tinyint(4) unsigned NOT NULL DEFAULT '0' COMMENT '业务状态',
+   PRIMARY KEY (`id`),
+   UNIQUE KEY `uk_tweetId` (`tweet_id`) USING BTREE
+) ENGINE=InnoDB AUTO_INCREMENT=59790 DEFAULT CHARSET=utf8mb4 COMMENT='推文信息表';
 
 CREATE TABLE `x_tweet_user` (
     `id` int(10) unsigned NOT NULL AUTO_INCREMENT COMMENT '主键ID',
@@ -51,6 +52,8 @@ CREATE TABLE `x_tweet_user` (
     `tweets` int(10) unsigned NOT NULL DEFAULT '0' COMMENT '该用户发布的帖子数（包括转推）',
     `following` int(10) unsigned NOT NULL DEFAULT '0' COMMENT '该用户关注的用户数',
     `media` int(10) unsigned NOT NULL DEFAULT '0' COMMENT '该用户发布的媒体数',
+    `listed` int(10) unsigned NOT NULL DEFAULT '0' COMMENT '包含该用户的列表数量',
+    `likes` int(10) unsigned NOT NULL DEFAULT '0' COMMENT '该用户创建的赞数',
     `tweet_last_time` datetime DEFAULT NULL COMMENT '最后一次发帖时间',
     `type` tinyint(3) unsigned NOT NULL DEFAULT '1' COMMENT '账号类型：0=普通账号；1=特殊关注账号；2=二级账号；',
     `biz_flag` smallint(5) unsigned NOT NULL DEFAULT '0' COMMENT '业务标识',
@@ -59,7 +62,7 @@ CREATE TABLE `x_tweet_user` (
     PRIMARY KEY (`id`),
     UNIQUE KEY `uk_username` (`username`) USING BTREE,
     UNIQUE KEY `uk_userId` (`user_id`) USING BTREE
-) ENGINE=InnoDB AUTO_INCREMENT=10 DEFAULT CHARSET=utf8mb4 COMMENT='推特用户表';
+) ENGINE=InnoDB AUTO_INCREMENT=1097 DEFAULT CHARSET=utf8mb4 COMMENT='推特用户表';
 
 CREATE TABLE `x_tweet_word` (
     `id` int(10) unsigned NOT NULL AUTO_INCREMENT COMMENT '主键ID',
