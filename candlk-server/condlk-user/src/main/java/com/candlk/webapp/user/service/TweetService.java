@@ -157,7 +157,7 @@ public class TweetService extends BaseServiceImpl<Tweet, TweetDao, Long> {
 			}
 			return score;
 		} finally {
-			log.info("【{}】推文评分耗时：{}", tweetInfo.getTweetId(), System.currentTimeMillis() - start);
+			log.info("【{}】推文评分耗时：{} ms", tweetInfo.getTweetId(), System.currentTimeMillis() - start);
 		}
 	}
 

@@ -70,17 +70,10 @@ CREATE TABLE `x_tweet_user` (
 CREATE TABLE `x_tweet_word` (
     `id` int(10) unsigned NOT NULL AUTO_INCREMENT COMMENT '主键ID',
     `words` varchar(255) NOT NULL COMMENT '词组',
-    `type` tinyint(3) unsigned NOT NULL COMMENT '事件类型：0=热门词；1=二级词；2=普通词；',
+    `type` tinyint(3) unsigned NOT NULL COMMENT '类型：0=热门词；1=二级词；2=普通词；3=停用词',
     `priority` int(8) unsigned NOT NULL DEFAULT '0' COMMENT '优先级',
     `add_time` datetime NOT NULL COMMENT '添加时间',
     `update_time` datetime NOT NULL DEFAULT CURRENT_TIMESTAMP COMMENT '最后更新时间',
-    PRIMARY KEY (`id`)
-) ENGINE=InnoDB AUTO_INCREMENT=306 DEFAULT CHARSET=utf8mb4 COMMENT='推特词库';
-
-CREATE TABLE `x_stop_word` (
-   `id` int(10) unsigned NOT NULL AUTO_INCREMENT COMMENT '主键ID',
-   `words` varchar(255) NOT NULL COMMENT '停用词组',
-   `add_time` datetime NOT NULL COMMENT '添加时间',
-   `update_time` datetime NOT NULL DEFAULT CURRENT_TIMESTAMP COMMENT '最后更新时间',
-   PRIMARY KEY (`id`)
-) ENGINE=InnoDB AUTO_INCREMENT=306 DEFAULT CHARSET=utf8mb4 COMMENT='推特词库';
+    PRIMARY KEY (`id`),
+    UNIQUE KEY `uk_words` (`words`) USING BTREE
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COMMENT='推特词库';

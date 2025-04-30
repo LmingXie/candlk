@@ -31,16 +31,10 @@ public class TweetJob {
 	public void run() {
 		log.info("开始同步推文数据信息...");
 		List<TweetInfo> tweets = sync();
-		/*
-			TODO 通过基本规则过滤不合格的推文
-			1、分词结果小于3个词
-			2、没有推文只包含表情包
-			3、未命中任何关键词
-		 */
 
-		// TODO AI 分词并提取 代币名称和简称
+		// TODO 根据推文 生成 代币名称和简称，最终生成token记录
 
-		// TODO ES 分词匹配
+		// TODO: 2025/4/30 刷新浏览量定时任务
 
 		log.info("结束同步推文数据任务。");
 	}
@@ -50,15 +44,15 @@ public class TweetJob {
 		List<String> oldTweets = tweetService.lastList(100);
 		final String tweetIds = StringUtil.joins(oldTweets, ",");
 
-		// TODO 从数据库查询配置
+		// TODO 从数据库查询配置（实现动态）
 		TweetApi tweetApi = new TweetApi("AAAAAAAAAAAAAAAAAAAAAK450wEAAAAAGq8cOrQ4HTVBBn9Z24umOk8kmik%3DkjB0pGI1V3v3c9WkcQCRVjbfa4DPxJdeTxsF0hWVnIuXrOPVVv",
 				"http://127.0.0.1:10809");
 
 		log.info("推文ID：{}", tweetIds);
 		Messager<List<TweetInfo>> tweetsMsg = tweetApi.tweets(tweetIds);
 		log.info("推文：{}", Jsons.encode(tweetsMsg));
-		if (!tweetsMsg.isOK()) {
-			log.warn("推文获取失败：{}", tweetsMsg.getMsg());
+		if (tweetsMsg == null || !tweetsMsg.isOK()) {
+			log.warn("推文获取失败！");
 			return null;
 		}
 
@@ -79,6 +73,13 @@ public class TweetJob {
 		// 同步用户信息数据
 		Messager<List<TweetUserInfo>> usersMsg = tweetApi.users(StringUtil.joins(authorIds, ","));
 		if (usersMsg.isOK()) {
+			/*
+			TODO 对用户进行评分 根据账号粉丝数量进行评分：
+				 <10 万粉丝：1分
+				 10万-50万：2分
+				 50万-100万：3分
+				 >100万：4分
+			 */
 			tweetUserService.sync(usersMsg.data());
 		}
 		return tweets;

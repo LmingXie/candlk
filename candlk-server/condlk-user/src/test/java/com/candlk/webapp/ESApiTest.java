@@ -34,22 +34,16 @@ public class ESApiTest {
 	@Test
 	public void addKeyWords() throws Exception {
 		final Date now = new Date();
-		// 示例：批量添加关键词
-		List<TweetWord> keyWords = Arrays.asList(
-				new TweetWord("Jup", 0, 0, 0L, now),
-				new TweetWord("GMGN", 0, 0, 0L, now),
-				new TweetWord("Pepe", 0, 0, 0L, now),
-				new TweetWord("KOL", 0, 0, 0L, now),
-				new TweetWord("market", 0, 0, 0L, now),
-				new TweetWord("House", 0, 0, 0L, now),
-				new TweetWord("cap", 0, 0, 0L, now),
-				new TweetWord("可愛が", 0, 0, 0L, now),
-				new TweetWord("に嬉し", 0, 0, 0L, now),
-				new TweetWord("@0xPickleCati", 0, 0, 0L, now)
-		);
+		Set<String> wordSet = new HashSet<>(Arrays.asList(
+		));
+		List<String> words = wordSet.stream().toList();
+		int size = words.size();
+		List<TweetWord> keyWords = new ArrayList<>(size);
 		final int offset = 0;
-		for (int i = 0; i < keyWords.size(); i++) {
-			keyWords.get(i).setId(i + 1L + offset);
+		for (int i = 0; i < size; i++) {
+			TweetWord e = new TweetWord(words.get(i), 0, 0, 0L, now);
+			e.setId(i + 1L + offset);
+			keyWords.add(e);
 		}
 		engine.bulkAddDoc(ESIndex.KEYWORDS_INDEX, keyWords);
 	}

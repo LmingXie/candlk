@@ -34,29 +34,33 @@
   }
 }
 
-// 停用词 索引
+// 关键词索引（支持模糊匹配）
 {
   "settings": {
-    "number_of_shards": 1,
-    "number_of_replicas": 1,
+    "number_of_shards": 5,
+    "number_of_replicas": 0,
     "analysis": {
       "analyzer": {
-        "stopwords_analyzer": {
+        "chinese_analyzer": {
           "type": "custom",
-          "tokenizer": "smartcn_tokenizer",
-          "filter": [
-            "lowercase",
-            "stopwords_filter"
-          ]
+          "tokenizer": "ik_max_word"
         },
-        "english_stopwords_analyzer": {
+        "english_analyzer": {
           "type": "english"
-        }
-      },
-      "filter": {
-        "stopwords_filter": {
-          "type": "stop",
-          "stopwords": ["的", "了", "是", "我", "你", "和", "在", "这", "那"]
+        },
+        "french_analyzer": {
+          "type": "french"
+        },
+        "spanish_analyzer": {
+          "type": "spanish"
+        },
+        "japanese_analyzer": {
+          "type": "custom",
+          "tokenizer": "kuromoji_tokenizer"
+        },
+        "korean_analyzer": {
+          "type": "custom",
+          "tokenizer": "nori_tokenizer"
         }
       }
     }
@@ -64,14 +68,21 @@
   "mappings": {
     "properties": {
       "words": {
-        "type": "keyword"
+        "type": "keyword",
+        "fields": {
+          "en": { "type": "text", "analyzer": "english_analyzer" },
+          "zh": { "type": "text", "analyzer": "ik_max_word" },
+          "fr": { "type": "text", "analyzer": "french_analyzer" },
+          "es": { "type": "text", "analyzer": "spanish_analyzer" },
+          "ja": { "type": "text", "analyzer": "japanese_analyzer" },
+          "ko": { "type": "text", "analyzer": "korean_analyzer" }
+        }
       },
-      "add_time": {
-        "type": "date"
-      },
-      "update_time": {
-        "type": "date"
-      }
+      "type": { "type": "integer" },
+      "priority": { "type": "integer" },
+      "count": { "type": "long" },
+      "addTime": { "type": "date" },
+      "updateTime": { "type": "date" }
     }
   }
 }
