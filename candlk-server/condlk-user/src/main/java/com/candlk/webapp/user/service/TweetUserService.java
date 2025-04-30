@@ -1,5 +1,6 @@
 package com.candlk.webapp.user.service;
 
+import java.math.BigDecimal;
 import java.util.*;
 
 import com.baomidou.mybatisplus.core.conditions.update.UpdateWrapper;
@@ -11,6 +12,7 @@ import com.candlk.webapp.user.dao.TweetUserDao;
 import com.candlk.webapp.user.entity.TweetUser;
 import com.candlk.webapp.user.model.TweetUserType;
 import lombok.extern.slf4j.Slf4j;
+import me.codeplayer.util.NumberUtil;
 import me.codeplayer.util.X;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -35,6 +37,9 @@ public class TweetUserService extends BaseServiceImpl<TweetUser, TweetUserDao, L
 	@Transactional
 	public void updateStat(TweetUser tweetUser) {
 		final String userId = tweetUser.getUserId();
+		if (tweetUser.getFollowers() != null) {
+			tweetUser.setScore(BigDecimal.valueOf(calcScore(tweetUser.getFollowers())));
+		}
 		int num = super.update(tweetUser, new UpdateWrapper<TweetUser>().eq(TweetUser.USERID, userId));
 		if (num < 1) {
 			log.info("【推特用户】新增用户数据：{}", userId);
@@ -69,7 +74,10 @@ public class TweetUserService extends BaseServiceImpl<TweetUser, TweetUserDao, L
 						.eq(TweetUser.USERID, user.id);
 
 				if (user.publicMetrics != null) {
-					wrapper.set(X.isValid(user.publicMetrics.followersCount), TweetUser.FOLLOWERS, user.publicMetrics.followersCount)
+					final Integer followersCount = NumberUtil.getInteger(user.publicMetrics.followersCount, 0);
+					int score = calcScore(followersCount);
+					wrapper.set(TweetUser.FOLLOWERS, followersCount)
+							.set(TweetUser.SCORE, BigDecimal.valueOf(score))
 							.set(X.isValid(user.publicMetrics.followingCount), TweetUser.FOLLOWING, user.publicMetrics.followingCount)
 							.set(X.isValid(user.publicMetrics.tweetCount), TweetUser.TWEETS, user.publicMetrics.tweetCount)
 							.set(X.isValid(user.publicMetrics.mediaCount), TweetUser.MEDIA, user.publicMetrics.mediaCount)
@@ -82,6 +90,28 @@ public class TweetUserService extends BaseServiceImpl<TweetUser, TweetUserDao, L
 			}
 			super.updateBatchByWrappers(wrappers);
 		}
+	}
+
+	private static int calcScore(Integer followersCount) {
+		if (followersCount == null) {
+			return 1;
+		}
+	    /*
+	    对用户进行评分 根据账号粉丝数量进行评分：
+		     <10 万粉丝：1分
+		     10万-50万：2分
+		     50万-100万：3分
+		     >100万：4分
+	     */
+		int score = 1;
+		if (followersCount >= 10_000 && followersCount < 50_000) {
+			score = 2;
+		} else if (followersCount >= 50_000 && followersCount < 100_000) {
+			score = 3;
+		} else if (followersCount >= 100_000) {
+			score = 4;
+		}
+		return score;
 	}
 
 }

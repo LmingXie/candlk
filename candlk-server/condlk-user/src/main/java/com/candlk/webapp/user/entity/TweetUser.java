@@ -1,5 +1,6 @@
 package com.candlk.webapp.user.entity;
 
+import java.math.BigDecimal;
 import java.util.Date;
 
 import com.candlk.webapp.base.entity.TimeBasedEntity;
@@ -55,6 +56,8 @@ public class TweetUser extends TimeBasedEntity {
 	TweetUserType type;
 	/** 业务标识 */
 	Integer bizFlag;
+	/** 推文分数 */
+	BigDecimal score;
 
 	public static final String LOCATION = "location";
 	public static final String BANNER = "banner";
@@ -73,5 +76,6 @@ public class TweetUser extends TimeBasedEntity {
 	public static final String TWEET_LAST_TIME = "tweet_last_time";
 	public static final String TYPE = "type";
 	public static final String BIZ_FLAG = "biz_flag";
+	public static final String SCORE = "score";
 
 }

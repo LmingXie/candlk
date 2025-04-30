@@ -62,10 +62,11 @@ CREATE TABLE `x_tweet_user` (
     `biz_flag` smallint(5) unsigned NOT NULL DEFAULT '0' COMMENT '业务标识',
     `add_time` datetime NOT NULL COMMENT '推特账号创建时间',
     `update_time` datetime NOT NULL DEFAULT CURRENT_TIMESTAMP COMMENT '最后更新时间',
+    `score` decimal(5,2) unsigned NOT NULL DEFAULT '0.00' COMMENT '分数',
     PRIMARY KEY (`id`),
     UNIQUE KEY `uk_username` (`username`) USING BTREE,
     UNIQUE KEY `uk_userId` (`user_id`) USING BTREE
-) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COMMENT='推特用户表';
+) ENGINE=InnoDB AUTO_INCREMENT=1630 DEFAULT CHARSET=utf8mb4 COMMENT='推特用户表';
 
 CREATE TABLE `x_tweet_word` (
     `id` int(10) unsigned NOT NULL AUTO_INCREMENT COMMENT '主键ID',

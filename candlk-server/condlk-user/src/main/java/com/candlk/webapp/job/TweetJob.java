@@ -73,13 +73,6 @@ public class TweetJob {
 		// 同步用户信息数据
 		Messager<List<TweetUserInfo>> usersMsg = tweetApi.users(StringUtil.joins(authorIds, ","));
 		if (usersMsg.isOK()) {
-			/*
-			TODO 对用户进行评分 根据账号粉丝数量进行评分：
-				 <10 万粉丝：1分
-				 10万-50万：2分
-				 50万-100万：3分
-				 >100万：4分
-			 */
 			tweetUserService.sync(usersMsg.data());
 		}
 		return tweets;
