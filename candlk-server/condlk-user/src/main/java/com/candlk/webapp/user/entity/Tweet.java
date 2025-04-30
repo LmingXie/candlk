@@ -1,13 +1,17 @@
 package com.candlk.webapp.user.entity;
 
+import java.math.BigDecimal;
+import java.util.Collection;
 import java.util.Date;
 
+import com.candlk.context.web.Jsons;
 import com.candlk.webapp.base.entity.BaseEntity;
 import com.candlk.webapp.user.model.TweetProvider;
 import com.candlk.webapp.user.model.TweetType;
 import lombok.Getter;
 import lombok.Setter;
 import lombok.experimental.Accessors;
+import org.apache.dubbo.common.utils.CollectionUtils;
 
 /**
  * 推文信息表
@@ -55,10 +59,14 @@ public class Tweet extends BaseEntity {
 	String images;
 	/** 推文视频 */
 	String videos;
-	/** 业务状态：0=初始录入；1=同步推文；2=正在进行分析；3=分析结束 */
+	/** 业务状态：0=初始录入；1=同步推文；2=正在进行分析；3=分析结束；4=不合格推文； */
 	Integer status;
+	/** 推文分数 */
+	BigDecimal score;
+	/** 命中的关键词 */
+	String words;
 
-	public static final int INIT = 0, SYNC = 1, ANALYZING = 2, ANALYZED = 3;
+	public static final int INIT = 0, SYNC = 1, ANALYZING = 2, ANALYZED = 3, QUALITY_NOT_PASS = 4;
 
 	public static Tweet of(TweetProvider providerType, TweetType tweetType, String username, String tweetId, String text, String entities, String orgMsg, Date addTime) {
 		Tweet tweet = new Tweet();
@@ -72,6 +80,16 @@ public class Tweet extends BaseEntity {
 		tweet.setAddTime(addTime);
 		tweet.setUpdateTime(addTime);
 		return tweet;
+	}
+
+	public Tweet setVideos(Collection<?> videos) {
+		this.videos = CollectionUtils.isEmpty(videos) ? null : Jsons.encode(videos);
+		return this;
+	}
+
+	public Tweet setImages(Collection<?> images) {
+		this.images = CollectionUtils.isEmpty(images) ? null : Jsons.encode(images);
+		return this;
 	}
 
 	public static final String TWEET_ID = "tweet_id";
@@ -91,5 +109,7 @@ public class Tweet extends BaseEntity {
 	public static final String UPDATE_TIME = "update_time";
 	public static final String USERNAME = "username";
 	public static final String STATUS = "status";
+	public static final String SCORE = "score";
+	public static final String WORDS = "words";
 
 }

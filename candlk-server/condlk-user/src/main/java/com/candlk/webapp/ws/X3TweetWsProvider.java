@@ -10,7 +10,6 @@ import javax.annotation.Resource;
 
 import com.alibaba.fastjson2.JSON;
 import com.alibaba.fastjson2.JSONObject;
-import com.candlk.context.web.Jsons;
 import com.candlk.webapp.user.entity.Tweet;
 import com.candlk.webapp.user.entity.TweetUser;
 import com.candlk.webapp.user.model.TweetProvider;
@@ -124,8 +123,8 @@ public class X3TweetWsProvider implements Listener, TweetWsApi {
 									.setTweetId(tweetId)
 									.setText(content.trim())
 									.setOrgMsg(post.toJSONString())
-									.setImages(Jsons.encode(images))
-									.setVideos(Jsons.encode(videos))
+									.setImages(images)
+									.setVideos(videos)
 									.setUpdateTime(now)
 									.setAddTime(createTime == null ? now : new EasyDate(createTime * 1000).toDate());
 							tweetService.saveTweet(tweetInfo, author, provider, tweetId);

@@ -43,6 +43,7 @@ public class TweetWord extends TimeBasedEntity {
 	}
 
 	public static final String WORDS = "words";
+	public static final String COUNT = "count";
 	public static final String PRIORITY = "priority";
 	public static final String TYPE = "type";
 

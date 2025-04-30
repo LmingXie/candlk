@@ -31,6 +31,12 @@ public class TweetJob {
 	public void run() {
 		log.info("开始同步推文数据信息...");
 		List<TweetInfo> tweets = sync();
+		/*
+			TODO 通过基本规则过滤不合格的推文
+			1、分词结果小于3个词
+			2、没有推文只包含表情包
+			3、未命中任何关键词
+		 */
 
 		// TODO AI 分词并提取 代币名称和简称
 

@@ -30,12 +30,15 @@ CREATE TABLE `x_tweet` (
    `add_time` datetime NOT NULL COMMENT '推文发布时间',
    `update_time` datetime NOT NULL DEFAULT CURRENT_TIMESTAMP COMMENT '最后更新时间',
    `username` varchar(100) CHARACTER SET latin1 NOT NULL COMMENT '推特用户账号名',
-   `images` json NOT NULL COMMENT '图片',
-   `videos` json NOT NULL COMMENT '视频',
+   `images` json DEFAULT NULL COMMENT '图片',
+   `videos` json DEFAULT NULL COMMENT '视频',
    `status` tinyint(4) unsigned NOT NULL DEFAULT '0' COMMENT '业务状态',
+   `score` decimal(5,2) unsigned NOT NULL DEFAULT '0.00' COMMENT '分数',
+   `words` json DEFAULT NULL COMMENT '命中的关键词',
    PRIMARY KEY (`id`),
-   UNIQUE KEY `uk_tweetId` (`tweet_id`) USING BTREE
-) ENGINE=InnoDB AUTO_INCREMENT=59790 DEFAULT CHARSET=utf8mb4 COMMENT='推文信息表';
+   UNIQUE KEY `uk_tweetId` (`tweet_id`) USING BTREE,
+   KEY `idx_addTime_status` (`add_time`,`status`)
+) ENGINE=InnoDB AUTO_INCREMENT=111476 DEFAULT CHARSET=utf8mb4 COMMENT='推文信息表';
 
 CREATE TABLE `x_tweet_user` (
     `id` int(10) unsigned NOT NULL AUTO_INCREMENT COMMENT '主键ID',

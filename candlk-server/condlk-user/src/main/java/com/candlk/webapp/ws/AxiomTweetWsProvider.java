@@ -178,9 +178,9 @@ public class AxiomTweetWsProvider implements Listener, TweetWsApi {
 
 								JSONObject media = tweet.getJSONObject("media");
 								// 引用图片
-								JSONArray images = media.getJSONArray("images");
+								List<String> images = media.getList("images", String.class);
 								// 引用的视频
-								JSONArray videos = media.getJSONArray("videos");
+								List<String> videos = media.getList("videos", String.class);
 
 								Tweet tweetInfo = new Tweet()
 										.setProviderType(provider)
@@ -189,8 +189,8 @@ public class AxiomTweetWsProvider implements Listener, TweetWsApi {
 										.setTweetId(tweetId)
 										.setText(text)
 										.setOrgMsg(postInfo.toJSONString())
-										.setImages(images == null ? "" : images.toJSONString())
-										.setVideos(videos == null ? "" : videos.toJSONString())
+										.setImages(images)
+										.setVideos(videos)
 										.setUpdateTime(now)
 										.setAddTime(parseDate(tweet.getString("created_at"), now));
 								tweetService.saveTweet(tweetInfo, author, provider, tweetId);

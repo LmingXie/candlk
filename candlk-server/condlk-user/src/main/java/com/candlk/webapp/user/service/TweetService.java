@@ -1,10 +1,16 @@
 package com.candlk.webapp.user.service;
 
-import java.util.ArrayList;
-import java.util.List;
+import java.io.IOException;
+import java.math.BigDecimal;
+import java.util.*;
+import java.util.regex.Pattern;
+import javax.annotation.Nonnull;
 import javax.annotation.Resource;
 
-import com.baomidou.mybatisplus.core.conditions.query.QueryWrapper;
+import co.elastic.clients.elasticsearch._types.SortOrder;
+import co.elastic.clients.elasticsearch._types.query_dsl.Operator;
+import co.elastic.clients.elasticsearch._types.query_dsl.TextQueryType;
+import co.elastic.clients.elasticsearch.core.SearchResponse;
 import com.baomidou.mybatisplus.core.conditions.update.UpdateWrapper;
 import com.candlk.common.dao.SmartQueryWrapper;
 import com.candlk.common.model.TimeInterval;
@@ -14,13 +20,18 @@ import com.candlk.context.model.RedisKey;
 import com.candlk.context.web.Jsons;
 import com.candlk.webapp.api.TweetInfo;
 import com.candlk.webapp.base.service.BaseServiceImpl;
+import com.candlk.webapp.es.ESEngineClient;
 import com.candlk.webapp.user.dao.TweetDao;
 import com.candlk.webapp.user.entity.Tweet;
+import com.candlk.webapp.user.entity.TweetWord;
 import com.candlk.webapp.user.form.TweetQuery;
+import com.candlk.webapp.user.model.ESIndex;
 import com.candlk.webapp.user.model.TweetProvider;
 import com.candlk.webapp.user.vo.TweetVO;
+import com.hankcs.hanlp.seg.common.Term;
+import com.hankcs.hanlp.tokenizer.NotionalTokenizer;
 import lombok.extern.slf4j.Slf4j;
-import me.codeplayer.util.X;
+import me.codeplayer.util.*;
 import org.apache.commons.lang3.StringUtils;
 import org.springframework.dao.DuplicateKeyException;
 import org.springframework.stereotype.Service;
@@ -37,6 +48,8 @@ public class TweetService extends BaseServiceImpl<Tweet, TweetDao, Long> {
 
 	@Resource
 	TweetUserService tweetUserService;
+	@Resource
+	ESEngineClient esEngineClient;
 
 	public Page<TweetVO> findPage(Page<?> page, TweetQuery query, TimeInterval interval) {
 		return baseDao.findPage(page, new SmartQueryWrapper<Tweet>()
@@ -47,7 +60,10 @@ public class TweetService extends BaseServiceImpl<Tweet, TweetDao, Long> {
 	public void saveTweet(Tweet tweetInfo, String author, TweetProvider provider, String tweetId) {
 		try {
 			// 添加推文
-			super.save(tweetInfo);
+			super.save(tweetInfo
+					.setStatus(Tweet.QUALITY_NOT_PASS)
+					.setScore(calcScore(tweetInfo)) // 计算推文评分
+			);
 
 			if (!tweetUserService.updateTweetLastTime(author, tweetInfo.getAddTime())) {
 				// Redis 记录新用户
@@ -61,8 +77,132 @@ public class TweetService extends BaseServiceImpl<Tweet, TweetDao, Long> {
 		}
 	}
 
+	private static final List<String> blockKeywords = Arrays.asList("聪明钱正在买它", "CA: ");
+
+	// Ethereum 地址：0x 开头 + 40个 hex 字符
+	private static final Pattern ETH_ADDRESS_PATTERN = Pattern.compile("0x[a-fA-F0-9]{40}");
+
+	// Solana 地址：Base58，32~44个字符
+	private static final Pattern SOL_ADDRESS_PATTERN = Pattern.compile("\\b[1-9A-HJ-NP-Za-km-z]{32,44}\\b");
+
+	public static boolean containsEthAddress(String text) {
+		return ETH_ADDRESS_PATTERN.matcher(text).find();
+	}
+
+	public static boolean containsSolAddress(String text) {
+		return SOL_ADDRESS_PATTERN.matcher(text).find();
+	}
+
+	public static boolean preCheck(String input) {
+		// 屏蔽 包含地址的推文
+		if (containsEthAddress(input) || containsSolAddress(input)) {
+			return false;
+		}
+
+		// 屏蔽包含敏感字词的推文
+		for (String keyword : blockKeywords) {
+			if (input.contains(keyword)) {
+				return false;
+			}
+		}
+		return true;
+	}
+
+	public BigDecimal calcScore(Tweet tweetInfo) {
+		long start = System.currentTimeMillis();
+		try {
+			final String text = tweetInfo.getText();
+			if (!preCheck(text)) {
+				return BigDecimal.ZERO;
+			}
+
+			// TODO 优化：识别语言再分词（日语、韩语准确度不高）
+			// 推文分词：采用【实词分词器】将自动过滤 符号、表情、语气助词 等特殊字符
+			List<Term> segment = NotionalTokenizer.segment(text);
+			int size = segment.size();
+			if (size < 2) {
+				return BigDecimal.ZERO;
+			}
+			Set<String> words = new HashSet<>(size);
+			for (Term term : segment) {
+				// 字符必须大于1 && 不包含在内部停用词中
+				if (term.word.length() > 1 && !esEngineClient.stopWordsCache.contains(term.word)) {
+					words.add(term.word);
+				}
+			}
+			if (words.size() < 2) {
+				return BigDecimal.ZERO;
+			}
+
+			// 纯文本：0.5分
+			BigDecimal score = new BigDecimal("0.5");
+			try {
+				// 命中关键词 -> 1分
+				List<TweetWord> tweetWords = matchKeywords(words);
+				if (!tweetWords.isEmpty()) {
+					tweetInfo.setStatus(Tweet.INIT);
+					score = score.add(BigDecimal.ONE);
+					tweetInfo.setWords(Jsons.encode(CollectionUtil.toList(tweetWords, TweetWord::getWords)));
+				}
+			} catch (IOException e) {
+				log.error("【{}】查询关键词失败：{}", tweetInfo.getTweetId(), e);
+			}
+
+			// 媒体推文 -> 纯文本：0.5分；附带图片：1分；附带视频/GIF：1.5分；文本+视频 2分
+			if (StringUtils.isNotEmpty(tweetInfo.getImages())) {
+				score = score.add(BigDecimal.ONE);
+			}
+			if (StringUtils.isNotEmpty(tweetInfo.getVideos())) {
+				score = score.add(new BigDecimal("1.5"));
+			}
+			return score;
+		} finally {
+			log.info("【{}】推文评分耗时：{}", tweetInfo.getTweetId(), System.currentTimeMillis() - start);
+		}
+	}
+
+	public List<TweetWord> matchKeywords(Set<String> words) throws IOException {
+		SearchResponse<TweetWord> response = esEngineClient.client.search(s -> {
+			s.index(ESIndex.KEYWORDS_INDEX.value);
+			// 多字段模糊匹配查询（multi_match or should）
+			s.query(q -> q.bool(b -> b.should(
+					q1 -> q1.multiMatch(mm -> mm
+							.query(StringUtil.joins(words, " ")) // 原始文本或提取关键词的字符串
+							.fields("words.zh", "words.en", "words.fr", "words.es", "words.ja", "words.ko")
+							.type(TextQueryType.BestFields) // 可选：也可用 most_fields 或 cross_fields
+							.operator(Operator.Or)
+					)
+			)));
+
+			// 排序规则：type(desc) > priority(desc) > updateTime(desc)
+			s.sort(so -> so.field(f -> f.field(TweetWord.TYPE).order(SortOrder.Asc)));
+			s.sort(so -> so.field(f -> f.field(TweetWord.COUNT).order(SortOrder.Desc)));
+
+			// 设置最大返回数量，实际业务中应分页
+			s.size(10);
+			return s;
+		}, TweetWord.class);
+		return ESEngineClient.toT(response);
+	}
+
+	private transient TimeInterval localTimeInterval;
+
+	@Nonnull
+	public TimeInterval lastInterval() {
+		if (localTimeInterval == null) {
+			// 只查询2天内的推文数据
+			EasyDate d = new EasyDate();
+			Date end = d.endOf(Calendar.DATE).toDate();
+			Date start = d.addDay(-1).beginOf(Calendar.DATE).toDate();
+			localTimeInterval = new TimeInterval(start, end, -1, -1);
+		}
+		return localTimeInterval;
+	}
+
 	public List<String> lastList(Integer limit) {
-		return baseDao.lastList(new QueryWrapper<Tweet>()
+		return baseDao.lastList(new SmartQueryWrapper<>()
+				.eq(Tweet.STATUS, Tweet.INIT)
+				.between(Tweet.ADD_TIME, lastInterval()) // idx_addTime_status 索引
 				.orderByDesc(Tweet.ADD_TIME)
 				.last("LIMIT " + limit)
 		);

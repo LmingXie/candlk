@@ -1,15 +1,17 @@
 package com.candlk.webapp;
 
 import java.io.File;
-import java.util.*;
+import java.util.Date;
+import java.util.List;
 import javax.annotation.Resource;
 
 import com.alibaba.fastjson2.JSONObject;
-import com.candlk.common.model.Messager;
 import com.candlk.context.web.Jsons;
 import com.candlk.webapp.api.*;
 import com.candlk.webapp.user.entity.TweetWord;
 import com.candlk.webapp.user.service.*;
+import com.hankcs.hanlp.seg.common.Term;
+import com.hankcs.hanlp.tokenizer.NotionalTokenizer;
 import lombok.extern.slf4j.Slf4j;
 import me.codeplayer.util.*;
 import org.junit.jupiter.api.BeforeAll;
@@ -44,8 +46,8 @@ public class TweetApiTest {
 		List<String> tweetList = tweetService.lastList(100);
 		final String tweetIds = StringUtil.joins(tweetList, ",");
 		log.info("推文ID：{}", tweetIds);
-		Messager<List<TweetInfo>> tweets = tweetApi.tweets(tweetIds);
-		log.info("推文：{}", Jsons.encode(tweets));
+		// Messager<List<TweetInfo>> tweets = tweetApi.tweets(tweetIds);
+		// log.info("推文：{}", Jsons.encode(tweets));
 	}
 
 	@Test
@@ -73,6 +75,13 @@ public class TweetApiTest {
 		List<TweetWord> tweetWords = CollectionUtil.toList(words, w -> new TweetWord(w, TweetWord.TYPE_HOT, now));
 		tweetWordService.saveBatch(tweetWords);
 		String t = "对推文进行分词要求：1、分词并生成英文的代币名称和大写的代币简称。2、以json格式{\"words\":[\"\"],\"name\":\"\",\"symbol\":\"\"}输出，不要输出任何额外信息。推文：remember when we hated bundlers so much we damn near celebrated them getting drained because we considered them “scammers” and “ruggers”now we support streamers and KOLs that openly record themselves bundling.";
+	}
+
+	@Test
+	public void calcScoreTest() {
+		final String text = "We were clearly telling you sub-10M folks this was going to happen with Housecoin.";
+		List<Term> segment = NotionalTokenizer.segment(text);
+		log.info("分词结果：{}", StringUtil.join(segment, term -> term.word, " | "));
 	}
 
 }

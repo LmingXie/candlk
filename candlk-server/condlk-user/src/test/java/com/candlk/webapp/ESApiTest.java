@@ -4,13 +4,20 @@ import java.io.IOException;
 import java.util.*;
 
 import co.elastic.clients.elasticsearch._types.SortOrder;
+import co.elastic.clients.elasticsearch._types.query_dsl.Operator;
+import co.elastic.clients.elasticsearch._types.query_dsl.TextQueryType;
+import co.elastic.clients.elasticsearch.core.SearchResponse;
 import com.candlk.context.web.Jsons;
 import com.candlk.webapp.es.ESEngineClient;
 import com.candlk.webapp.user.entity.StopWord;
 import com.candlk.webapp.user.entity.TweetWord;
 import com.candlk.webapp.user.model.ESIndex;
-import com.cybozu.labs.langdetect.LangDetectException;
+import com.hankcs.hanlp.seg.common.Term;
+import com.hankcs.hanlp.tokenizer.NLPTokenizer;
+import com.hankcs.hanlp.tokenizer.NotionalTokenizer;
 import lombok.extern.slf4j.Slf4j;
+import me.codeplayer.util.CollectionUtil;
+import me.codeplayer.util.StringUtil;
 import org.junit.jupiter.api.BeforeAll;
 import org.junit.jupiter.api.Test;
 
@@ -20,7 +27,7 @@ public class ESApiTest {
 	static ESEngineClient engine;
 
 	@BeforeAll
-	public static void init() throws IOException, LangDetectException {
+	public static void init() throws IOException {
 		engine = new ESEngineClient();
 	}
 
@@ -29,13 +36,18 @@ public class ESApiTest {
 		final Date now = new Date();
 		// 示例：批量添加关键词
 		List<TweetWord> keyWords = Arrays.asList(
-				new TweetWord("SOL", 0, 0, 0L, now),
 				new TweetWord("Jup", 0, 0, 0L, now),
 				new TweetWord("GMGN", 0, 0, 0L, now),
 				new TweetWord("Pepe", 0, 0, 0L, now),
-				new TweetWord("KOL", 0, 0, 0L, now)
+				new TweetWord("KOL", 0, 0, 0L, now),
+				new TweetWord("market", 0, 0, 0L, now),
+				new TweetWord("House", 0, 0, 0L, now),
+				new TweetWord("cap", 0, 0, 0L, now),
+				new TweetWord("可愛が", 0, 0, 0L, now),
+				new TweetWord("に嬉し", 0, 0, 0L, now),
+				new TweetWord("@0xPickleCati", 0, 0, 0L, now)
 		);
-		final int offset = 5;
+		final int offset = 0;
 		for (int i = 0; i < keyWords.size(); i++) {
 			keyWords.get(i).setId(i + 1L + offset);
 		}
@@ -49,7 +61,9 @@ public class ESApiTest {
 		List<StopWord> stopWords = Arrays.asList(
 				new StopWord("的", now),
 				new StopWord("the", now),
-				new StopWord("是", now)
+				new StopWord("是", now),
+				new StopWord("@", now),
+				new StopWord("$", now)
 		);
 		for (int i = 0; i < stopWords.size(); i++) {
 			stopWords.get(i).setId(i + 1L);
@@ -71,15 +85,99 @@ public class ESApiTest {
 	public void delKeywords() throws Exception {
 		engine.client.delete(d -> d.index("products").id("bk-1"));
 	}
-		/*
-		添加关键词、停用词索引
-		录入关键词（包括热点、二级、普通三类）
-		分词器
-		批量查询停用词到缓存
 
-		批量更新关键词命中计数，并插入普通词
+	@Test
+	public void hanLpSegmentTest() {
+		final String inputStr = "BlockBeats 消息，4 月 30 日，据 Cointelegraph 报道，Ledger 硬件钱包用户收到伪装成官方的诈骗信件，信中以「紧急安全更新」为由，要求用户扫描二维码并提供 24 字私密恢复短语，以窃取钱包控制权。技术评论员 Jacob Canfield 在 X 平台曝光此信件，信件盗用 Ledger 标志、地址和参考编号，威胁不验证将限制钱包访问。\n"
+				+ "\n"
+				+ "\n"
+				+ "\n"
+				+ "Ledger 官方回应称此为诈骗，强调不会通过电话、消息或要求提供恢复短语，呼吁用户警惕钓鱼攻击。诈骗或与 2020 年 7 月 Ledger 数据泄露有关，当时超 27 万用户个人信息（包括姓名、电话和地址）被黑客泄露。";
+		//标准分词
+		// List<Term> termList = StandardTokenizer.segment(inputStr);
+		// System.out.println(termList);
+		// //标准分词封装
+		// System.out.println(HanLP.segment(inputStr));
+		// NLP分词 词性标注和命名实体识别
+		List<Term> segment = NLPTokenizer.segment(inputStr);
+		System.out.println("NLP分词结果：" + StringUtil.join(segment, term -> term.word, " | "));
 
-		查询前TopN关键词
-		 */
+		System.out.println("实词分词器：" + StringUtil.join(NotionalTokenizer.segment(inputStr), term -> term.word, " | "));
+
+	}
+
+	@Test
+	public void hanLpEnSegmentTest() {
+		final String inputStr = "\uD83D\uDE80 Excited to power this crucial discussion at #HackSeasonsConference in Dubai! \uD83D\uDD25 \n"
+				+ "\n"
+				+ "Join @0xPickleCati, @decatanomics, and @MidnightCryptoG as we dive deep into this topic. \n"
+				+ "\n"
+				+ "Register now:";
+		// 标准分词
+		// List<Term> termList = StandardTokenizer.segment(inputStr);
+		// System.out.println("标准分词结果：" + StringUtil.join(termList, term -> term.word, " | "));
+		// //标准分词封装
+		// System.out.println("标准分词封装：" + StringUtil.join(HanLP.segment(inputStr), term -> term.word, " | "));
+		// // NLP分词 词性标注和命名实体识别
+		// List<Term> segment = NLPTokenizer.segment(inputStr);
+		// System.out.println("NLP分词结果：" + StringUtil.join(segment, term -> term.word, " | "));
+
+		System.out.println("实词分词器：" + StringUtil.join(NotionalTokenizer.segment(inputStr), term -> term.word, " | "));
+
+	}
+
+	@Test
+	public void tokenizerTest() throws IOException {
+		final String inputStr = "\uD83C\uDF1E2个聪明钱正在买它！\uD83C\uDF1E\n"
+				+ "\uD83C\uDF1E2 smart traders are buying it! \uD83C\uDF1E\n"
+				+ "\n"
+				+ "\uD83D\uDC8EToken: Longcoin (MC: $4.82K)\n"
+				+ "\n"
+				+ "Di6SRTDraS7L17UTPHMq8han1n4XBzDTcZXgi8yDpump\n"
+				+ "\n"
+				+ "查看我主页简介即可加入无延迟群组   \n"
+				+ "  View my homepage profile to join the no delay group";
+		// 分词
+		List<Term> segment = NotionalTokenizer.segment(inputStr);
+		Set<String> words = CollectionUtil.toSet(segment, term -> term.word);
+		log.info("分词结果：{}", StringUtil.joins(words, " | "));
+
+		if (!words.isEmpty()) {
+			SearchResponse<TweetWord> response = engine.client.search(s -> {
+				s.index(ESIndex.KEYWORDS_INDEX.value);
+
+				// terms 查询匹配 words 字段
+				// s.query(q -> q.terms(t -> t.field(TweetWord.WORDS).terms(tq -> tq.value(
+				// 		words.stream().map(FieldValue::of).collect(Collectors.toList())
+				// ))));
+
+				// 多字段模糊匹配查询（multi_match or should）
+				s.query(q -> q.bool(b -> b.should(
+						q1 -> q1.multiMatch(mm -> mm
+								.query(inputStr) // 原始文本或提取关键词的字符串
+								.fields("words.zh", "words.en", "words.fr", "words.es", "words.ja", "words.ko")
+								.type(TextQueryType.BestFields) // 可选：也可用 most_fields 或 cross_fields
+								.operator(Operator.Or)
+						)
+				)));
+
+				// 排序规则：type(desc) > priority(desc) > updateTime(desc)
+				s.sort(so -> so.field(f -> f.field(TweetWord.TYPE).order(SortOrder.Asc)));
+				s.sort(so -> so.field(f -> f.field(TweetWord.COUNT).order(SortOrder.Desc)));
+
+				// 设置最大返回数量，实际业务中应分页
+				s.size(30);
+				return s;
+			}, TweetWord.class);
+			List<TweetWord> tweetWords = ESEngineClient.toT(response);
+			// 匹配 ES 中的关键词
+			log.info("命中关键词数: {}", tweetWords.size());
+
+			for (TweetWord keyword : tweetWords) {
+				log.info("关键词: {}, 类型: {}, 计数: {}, 优先级: {}, 更新时间: {}", keyword.getWords(), keyword.getType(), keyword.getCount(), keyword.getPriority(), keyword.getUpdateTime());
+			}
+
+		}
+	}
 
 }

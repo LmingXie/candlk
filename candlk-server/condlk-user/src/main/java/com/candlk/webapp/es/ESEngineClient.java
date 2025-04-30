@@ -18,10 +18,12 @@ import com.candlk.context.web.Jsons;
 import com.candlk.webapp.base.entity.BaseEntity;
 import com.candlk.webapp.user.entity.StopWord;
 import com.candlk.webapp.user.model.ESIndex;
-import com.cybozu.labs.langdetect.LangDetectException;
 import lombok.extern.slf4j.Slf4j;
+import org.jetbrains.annotations.NotNull;
+import org.springframework.stereotype.Service;
 
 @Slf4j
+@Service
 public class ESEngineClient {
 
 	private static final String serverUrl = "https://localhost:9200";
@@ -32,11 +34,8 @@ public class ESEngineClient {
 	/** 停用词本地缓存 */
 	public final Set<String> stopWordsCache;
 
-	public ESEngineClient() throws LangDetectException, IOException {
-
-		SSLContext sslContext = TransportUtils
-				.sslContextFromCaFingerprint(fingerprint);
-
+	public ESEngineClient() throws IOException {
+		SSLContext sslContext = TransportUtils.sslContextFromCaFingerprint(fingerprint);
 		client = ElasticsearchClient.of(b -> b
 				.host(serverUrl)
 				.usernameAndPassword("elastic", pwd)
@@ -44,7 +43,6 @@ public class ESEngineClient {
 		);
 		stopWordsCache = Collections.newSetFromMap(new ConcurrentHashMap<>());
 		loadStopWordsToCache(); // 初始化时加载停用词
-		// DetectorFactory.loadProfile("profiles"); // 加载语言识别配置 TODO 研究如何使用分词
 	}
 
 	/** 初始化时从 stopwords_index 加载所有停用词到缓存 */
@@ -133,15 +131,18 @@ public class ESEngineClient {
 			}
 			return s;
 		}, clazz);
-		List<T> results = new ArrayList<>();
-		for (Hit<T> hit : response.hits().hits()) {
+		return toT(response);
+	}
+
+	public static <T extends BaseEntity> @NotNull List<T> toT(SearchResponse<T> response) {
+		List<Hit<T>> hits = response.hits().hits();
+		List<T> results = new ArrayList<>(hits.size());
+		for (Hit<T> hit : hits) {
 			T source = hit.source();
 			if (source != null) {
 				results.add(source);
 			}
 		}
-
-		log.info("查询关键词: 页码={}, 页面大小={}, 结果数={}", page, pageSize, results.size());
 		return results;
 	}
 
