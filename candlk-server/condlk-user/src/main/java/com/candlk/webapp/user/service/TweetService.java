@@ -12,6 +12,7 @@ import co.elastic.clients.elasticsearch._types.FieldValue;
 import co.elastic.clients.elasticsearch._types.SortOrder;
 import co.elastic.clients.elasticsearch._types.query_dsl.Operator;
 import co.elastic.clients.elasticsearch._types.query_dsl.TextQueryType;
+import co.elastic.clients.elasticsearch.core.BulkRequest;
 import co.elastic.clients.elasticsearch.core.SearchResponse;
 import com.baomidou.mybatisplus.core.conditions.update.UpdateWrapper;
 import com.candlk.common.dao.SmartQueryWrapper;
@@ -145,6 +146,7 @@ public class TweetService extends BaseServiceImpl<Tweet, TweetDao, Long> {
 					tweetInfo.setStatus(Tweet.INIT);
 					score = score.add(BigDecimal.ONE);
 					tweetInfo.setWords(Jsons.encode(CollectionUtil.toList(tweetWords, TweetWord::getWords)));
+					// TODO: 2025/4/30 更新关键词计数
 				}
 			} catch (IOException e) {
 				log.error("【{}】查询关键词失败：{}", tweetInfo.getTweetId(), e);
@@ -188,10 +190,28 @@ public class TweetService extends BaseServiceImpl<Tweet, TweetDao, Long> {
 			s.sort(so -> so.field(f -> f.field(TweetWord.COUNT).order(SortOrder.Desc)));
 
 			// 设置最大返回数量，实际业务中应分页
-			s.size(10);
+			s.size(50);
 			return s;
 		}, TweetWord.class);
-		return ESEngineClient.toT(response);
+
+		List<TweetWord> result = ESEngineClient.toT(response);
+
+		// 命中后更新计数 count += 1
+		if (!result.isEmpty()) {
+			BulkRequest.Builder br = new BulkRequest.Builder();
+			for (TweetWord hit : result) {
+				br.operations(op -> op.update(ub -> ub
+						.index(index.value)
+						.id(hit.getId().toString()) // 确保 TweetWord 实体类中 getId() 方法能获取文档 _id
+						.action(a -> a.script(s -> s
+								.lang("painless")
+								.source(builder -> builder.scriptString("ctx._source.count += 1")))
+						)
+				));
+			}
+			esEngineClient.client.bulk(br.build()); // 执行批量更新
+		}
+		return result;
 	}
 
 	private transient TimeInterval localTimeInterval;

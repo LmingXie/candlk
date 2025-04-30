@@ -22,9 +22,9 @@ public class TweetWord extends TimeBasedEntity {
 	Integer type;
 	/** 优先级 */
 	Integer priority;
-	/** ES 引用计数 */
+	/** ES 关键词命中计数【命中后自动更新】 */
 	@TableField(exist = false)
-	Long count;
+	Long count = 0L;
 
 	public static final int TYPE_HOT = 0, TYPE_SECOND = 1, TYPE_NORMAL = 2;
 
