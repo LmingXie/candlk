@@ -4,6 +4,8 @@ import java.io.IOException;
 import java.time.Instant;
 import java.util.*;
 import java.util.concurrent.ConcurrentHashMap;
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
 import javax.net.ssl.SSLContext;
 
 import co.elastic.clients.elasticsearch.ElasticsearchClient;
@@ -113,7 +115,7 @@ public class ESEngineClient {
 	 * @param sortOrder 排序顺序（"asc" 或 "desc"），可为 null
 	 * @return 关键词列表
 	 */
-	public <T extends BaseEntity> List<T> searchKeywords(ESIndex type, Class<T> clazz, int page, int pageSize, String sortField, String sortOrder) throws Exception {
+	public <T extends BaseEntity> List<T> searchKeywords(ESIndex type, Class<T> clazz, int page, int pageSize, String sortField, SortOrder sortOrder) throws Exception {
 		if (page < 1 || pageSize < 1) {
 			throw new IllegalArgumentException("页码和页面大小必须大于 0");
 		}
@@ -127,11 +129,8 @@ public class ESEngineClient {
 					.size(pageSize);
 
 			if (sortField != null && !sortField.isEmpty()) {
-				SortOrder order = sortOrder != null && sortOrder.equalsIgnoreCase("desc") ?
-						SortOrder.Desc : SortOrder.Asc;
-				s.sort(so -> so.field(f -> f.field(sortField).order(order)));
+				s.sort(so -> so.field(f -> f.field(lineToHump(sortField)).order(sortOrder)));
 			}
-
 			return s;
 		}, clazz);
 		List<T> results = new ArrayList<>();
@@ -148,6 +147,19 @@ public class ESEngineClient {
 
 	public static Date parseDate(String time) {
 		return Date.from(Instant.parse(time));
+	}
+
+	private static Pattern linePattern = Pattern.compile("_(\\w)");
+
+	public static String lineToHump(String str) {
+		str = str.toLowerCase();
+		Matcher matcher = linePattern.matcher(str);
+		StringBuilder sb = new StringBuilder();
+		while (matcher.find()) {
+			matcher.appendReplacement(sb, matcher.group(1).toUpperCase());
+		}
+		matcher.appendTail(sb);
+		return sb.toString();
 	}
 
 }

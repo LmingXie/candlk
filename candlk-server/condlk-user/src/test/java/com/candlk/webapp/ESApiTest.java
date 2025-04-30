@@ -3,8 +3,9 @@ package com.candlk.webapp;
 import java.io.IOException;
 import java.util.*;
 
+import co.elastic.clients.elasticsearch._types.SortOrder;
 import com.candlk.context.web.Jsons;
-import com.candlk.webapp.es.*;
+import com.candlk.webapp.es.ESEngineClient;
 import com.candlk.webapp.user.entity.StopWord;
 import com.candlk.webapp.user.entity.TweetWord;
 import com.candlk.webapp.user.model.ESIndex;
@@ -28,14 +29,15 @@ public class ESApiTest {
 		final Date now = new Date();
 		// 示例：批量添加关键词
 		List<TweetWord> keyWords = Arrays.asList(
-				new TweetWord("Meme", 0, 0, 0L, now),
-				new TweetWord("Pump", 0, 0, 0L, now),
-				new TweetWord("Pump", 0, 0, 0L, now),
-				new TweetWord("Chain", 0, 0, 0L, now),
-				new TweetWord("大数据", 0, 0, 0L, now)
+				new TweetWord("SOL", 0, 0, 0L, now),
+				new TweetWord("Jup", 0, 0, 0L, now),
+				new TweetWord("GMGN", 0, 0, 0L, now),
+				new TweetWord("Pepe", 0, 0, 0L, now),
+				new TweetWord("KOL", 0, 0, 0L, now)
 		);
+		final int offset = 5;
 		for (int i = 0; i < keyWords.size(); i++) {
-			keyWords.get(i).setId(i + 1L);
+			keyWords.get(i).setId(i + 1L + offset);
 		}
 		engine.bulkAddDoc(ESIndex.KEYWORDS_INDEX, keyWords);
 	}
@@ -60,8 +62,8 @@ public class ESApiTest {
 	@Test
 	public void searchKeywords() throws Exception {
 		// 示例：查询关键词（第 1 页，每页 2 条，按 priority 降序）
-		List<TweetWord> results = engine.searchKeywords(ESIndex.STOP_WORDS_INDEX, TweetWord.class,
-				1, 2, "id", "desc");
+		List<TweetWord> results = engine.searchKeywords(ESIndex.KEYWORDS_INDEX, TweetWord.class,
+				1, 6, TweetWord.UPDATE_TIME, SortOrder.Desc);
 		log.info("查询关键词: {}", Jsons.encode(results));
 	}
 
