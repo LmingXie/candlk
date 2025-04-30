@@ -159,17 +159,19 @@ public class ESEngineClient {
 		}
 
 		BulkResponse bulkResponse = client.bulk(br.build());
-		// 统计删除成功的数量（没有失败）
-		int successCount = ids.size();
-		if (bulkResponse.errors()) {
-			for (BulkResponseItem item : bulkResponse.items()) {
-				if (item.error() != null) {
-					successCount--;
-					log.warn("删除失败：{}", item.error().reason());
+		int affectedRows = 0;
+		for (BulkResponseItem item : bulkResponse.items()) {
+			if (item.error() == null) {
+				// 只有真正删除的才计入受影响行数（not_found 不计）
+				if ("deleted".equalsIgnoreCase(item.result())) {
+					affectedRows++;
 				}
+			} else {
+				log.warn("删除失败：id={}，reason={}", item.id(), item.error().reason());
 			}
 		}
-		return successCount;
+
+		return affectedRows;
 	}
 
 	public static Date parseDate(String time) {

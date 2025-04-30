@@ -8,7 +8,6 @@ import javax.annotation.Resource;
 import com.alibaba.fastjson2.JSONObject;
 import com.candlk.context.web.Jsons;
 import com.candlk.webapp.api.*;
-import com.candlk.webapp.base.entity.BaseEntity;
 import com.candlk.webapp.es.ESEngineClient;
 import com.candlk.webapp.user.entity.TweetWord;
 import com.candlk.webapp.user.model.ESIndex;
@@ -102,11 +101,11 @@ public class TweetApiTest {
 	@Test
 	public void testDelWords() throws Exception {
 		List<TweetWord> all = tweetWordService.findByWords(Arrays.asList(
-				"value", "gm", "price", "market", "trader", "meme", "pump"
+				"launch", "sol", "solana"
 		));
 		int i = engine.batchDelByIds(ESIndex.KEYWORDS_ACCURATE_INDEX, CollectionUtil.toList(all, t -> t.getId().toString()));
 		log.info("删除了{}个词", i);
-		tweetWordService.deleteByIds(CollectionUtil.toList(all, BaseEntity::getId));
+		tweetWordService.deleteByIds(CollectionUtil.toList(all, TweetWord::getId));
 	}
 
 }
