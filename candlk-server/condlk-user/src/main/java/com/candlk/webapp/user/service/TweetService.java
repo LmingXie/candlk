@@ -4,9 +4,11 @@ import java.io.IOException;
 import java.math.BigDecimal;
 import java.util.*;
 import java.util.regex.Pattern;
+import java.util.stream.Collectors;
 import javax.annotation.Nonnull;
 import javax.annotation.Resource;
 
+import co.elastic.clients.elasticsearch._types.FieldValue;
 import co.elastic.clients.elasticsearch._types.SortOrder;
 import co.elastic.clients.elasticsearch._types.query_dsl.Operator;
 import co.elastic.clients.elasticsearch._types.query_dsl.TextQueryType;
@@ -138,7 +140,7 @@ public class TweetService extends BaseServiceImpl<Tweet, TweetDao, Long> {
 			BigDecimal score = new BigDecimal("0.5");
 			try {
 				// 命中关键词 -> 1分
-				List<TweetWord> tweetWords = matchKeywords(words);
+				List<TweetWord> tweetWords = matchKeywords(ESIndex.KEYWORDS_ACCURATE_INDEX, words);
 				if (!tweetWords.isEmpty()) {
 					tweetInfo.setStatus(Tweet.INIT);
 					score = score.add(BigDecimal.ONE);
@@ -161,18 +163,25 @@ public class TweetService extends BaseServiceImpl<Tweet, TweetDao, Long> {
 		}
 	}
 
-	public List<TweetWord> matchKeywords(Set<String> words) throws IOException {
+	public List<TweetWord> matchKeywords(ESIndex index, Set<String> words) throws IOException {
+
 		SearchResponse<TweetWord> response = esEngineClient.client.search(s -> {
-			s.index(ESIndex.KEYWORDS_INDEX.value);
-			// 多字段模糊匹配查询（multi_match or should）
-			s.query(q -> q.bool(b -> b.should(
-					q1 -> q1.multiMatch(mm -> mm
-							.query(StringUtil.joins(words, " ")) // 原始文本或提取关键词的字符串
-							.fields("words.zh", "words.en", "words.fr", "words.es", "words.ja", "words.ko")
-							.type(TextQueryType.BestFields) // 可选：也可用 most_fields 或 cross_fields
-							.operator(Operator.Or)
-					)
-			)));
+			s.index(index.value);
+			if (index == ESIndex.KEYWORDS_INDEX) {
+				// 多字段模糊匹配查询（multi_match or should）
+				s.query(q -> q.bool(b -> b.should(
+						q1 -> q1.multiMatch(mm -> mm
+								.query(StringUtil.joins(words, " ")) // 原始文本或提取关键词的字符串
+								.fields("words.zh", "words.en", "words.fr", "words.es", "words.ja", "words.ko")
+								.type(TextQueryType.BestFields) // 可选：也可用 most_fields 或 cross_fields
+								.operator(Operator.Or)
+						)
+				)));
+			} else {
+				s.query(q -> q.terms(t -> t.field(TweetWord.WORDS).terms(tq -> tq.value(
+						words.stream().map(FieldValue::of).collect(Collectors.toList())
+				))));
+			}
 
 			// 排序规则：type(desc) > priority(desc) > updateTime(desc)
 			s.sort(so -> so.field(f -> f.field(TweetWord.TYPE).order(SortOrder.Asc)));

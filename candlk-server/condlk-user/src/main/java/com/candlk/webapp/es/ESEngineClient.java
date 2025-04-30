@@ -12,6 +12,7 @@ import co.elastic.clients.elasticsearch.ElasticsearchClient;
 import co.elastic.clients.elasticsearch._types.SortOrder;
 import co.elastic.clients.elasticsearch.core.*;
 import co.elastic.clients.elasticsearch.core.bulk.BulkOperation;
+import co.elastic.clients.elasticsearch.core.bulk.BulkResponseItem;
 import co.elastic.clients.elasticsearch.core.search.Hit;
 import co.elastic.clients.transport.TransportUtils;
 import com.candlk.context.web.Jsons;
@@ -91,11 +92,11 @@ public class ESEngineClient {
 		BulkResponse bulkResponse = client.bulk(bulkRequest);
 
 		if (bulkResponse.errors()) {
-			bulkResponse.items().forEach(item -> {
+			for (BulkResponseItem item : bulkResponse.items()) {
 				if (item.error() != null) {
 					log.warn("批量添加关键词失败: " + item.error().reason());
 				}
-			});
+			}
 		} else {
 			log.info("成功批量添加 " + keyWords.size() + " 个关键词");
 		}
@@ -144,6 +145,31 @@ public class ESEngineClient {
 			}
 		}
 		return results;
+	}
+
+	public int batchDelByIds(ESIndex type, List<String> ids) throws IOException {
+		if (ids == null || ids.isEmpty()) {
+			return 0;
+		}
+
+		BulkRequest.Builder br = new BulkRequest.Builder();
+
+		for (String id : ids) {
+			br.operations(op -> op.delete(del -> del.index(type.value).id(id)));
+		}
+
+		BulkResponse bulkResponse = client.bulk(br.build());
+		// 统计删除成功的数量（没有失败）
+		int successCount = ids.size();
+		if (bulkResponse.errors()) {
+			for (BulkResponseItem item : bulkResponse.items()) {
+				if (item.error() != null) {
+					successCount--;
+					log.warn("删除失败：{}", item.error().reason());
+				}
+			}
+		}
+		return successCount;
 	}
 
 	public static Date parseDate(String time) {

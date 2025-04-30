@@ -8,6 +8,7 @@ import javax.annotation.Resource;
 import com.alibaba.fastjson2.JSONObject;
 import com.candlk.context.web.Jsons;
 import com.candlk.webapp.api.*;
+import com.candlk.webapp.base.entity.BaseEntity;
 import com.candlk.webapp.es.ESEngineClient;
 import com.candlk.webapp.user.entity.TweetWord;
 import com.candlk.webapp.user.model.ESIndex;
@@ -90,6 +91,22 @@ public class TweetApiTest {
 		final String text = "We were clearly telling you sub-10M folks this was going to happen with Housecoin.";
 		List<Term> segment = NotionalTokenizer.segment(text);
 		log.info("分词结果：{}", StringUtil.join(segment, term -> term.word, " | "));
+	}
+
+	@Test
+	public void testSyncWords() throws Exception {
+		List<TweetWord> all = tweetWordService.findAll();
+		engine.bulkAddDoc(ESIndex.KEYWORDS_ACCURATE_INDEX, all);
+	}
+
+	@Test
+	public void testDelWords() throws Exception {
+		List<TweetWord> all = tweetWordService.findByWords(Arrays.asList(
+				"value", "gm", "price", "market", "trader", "meme", "pump"
+		));
+		int i = engine.batchDelByIds(ESIndex.KEYWORDS_ACCURATE_INDEX, CollectionUtil.toList(all, t -> t.getId().toString()));
+		log.info("删除了{}个词", i);
+		tweetWordService.deleteByIds(CollectionUtil.toList(all, BaseEntity::getId));
 	}
 
 }

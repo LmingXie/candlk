@@ -1,5 +1,5 @@
 
-// 关键词 索引
+// 关键词精确匹配索引
 {
   "settings": {
     "number_of_shards": 5,

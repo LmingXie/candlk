@@ -24,7 +24,8 @@ public enum ESIndex implements ValueProxyImpl<ESIndex, String> {
 	 *  西班牙语分词：spanish（自带）
 	 * </pre>
 	 */
-	KEYWORDS_INDEX("关键词索引", TweetWord.class),
+	KEYWORDS_INDEX("关键词模糊匹配索引", TweetWord.class),
+	KEYWORDS_ACCURATE_INDEX("关键词精确匹配索引", TweetWord.class),
 	/** 停用词索引 */
 	STOP_WORDS_INDEX("停用词索引", StopWord.class),
 	;
