@@ -34,8 +34,8 @@ public class WordAction extends BaseAction {
 	}
 
 	@Ready("批量导入关键词")
-	@PostMapping("/importWords")
-	public Messager<Void> importWords(ProxyRequest q, String words) throws Exception {
+	@PostMapping("/imports")
+	public Messager<Void> imports(ProxyRequest q, String words) throws Exception {
 		I18N.assertNotNull(words);
 		List<TweetWord> tweetWords = Jsons.parseArray(words, TweetWord.class);
 		for (TweetWord tweetWord : tweetWords) {
