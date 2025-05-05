@@ -32,10 +32,10 @@ public class ESEngineClient {
 	/** 停用词本地缓存 */
 	public final Set<String> stopWordsCache;
 
-	public ESEngineClient(@Value("${es.url:https://127.0.0.1:9200}") String serverUrl,
-	                      @Value("${es.fingerprint:008d29b8ca1324053f3cc196ae88e9e2dc865463053f0880f9c5cf708588f818}") String fingerprint,
+	public ESEngineClient(@Value("${es.url:#{'https://127.0.0.1:9200'}}") String serverUrl,
+	                      @Value("${es.fingerprint:#{'008d29b8ca1324053f3cc196ae88e9e2dc865463053f0880f9c5cf708588f818'}}") String fingerprint,
 	                      @Value("${es.username:elastic}") String username,
-	                      @Value("${es.pwd:YqR6mL+USUyJnPYPKtG=}") String pwd
+	                      @Value("${es.pwd:#{'YqR6mL+USUyJnPYPKtG='}}") String pwd
 	) throws IOException {
 		SSLContext sslContext = TransportUtils.sslContextFromCaFingerprint(fingerprint);
 		client = ElasticsearchClient.of(b -> b
