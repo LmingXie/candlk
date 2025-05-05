@@ -75,6 +75,13 @@ webapp:
     encrypt:
       aes-key: eJeJylXMuqtUb11wNPG5krsEAQCdc0gN
 
+# ES 引擎配置
+es:
+  url: http://127.0.0.1:9200
+  username: elastic
+  pwd: aS26ZiHC_U+sCJlDccoW
+  fingerprint: f40da2681b97c673f3bf0c65e87d70d75ff166d405f6e36a024a96962df57c4d
+
 # 暴露健康检查访问入口
 management:
   endpoints:

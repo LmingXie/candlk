@@ -8,7 +8,7 @@
       "analyzer": {
         "chinese_analyzer": {
           "type": "custom",
-          "tokenizer": "smartcn_tokenizer"
+          "tokenizer": "ik_max_word"
         },
         "english_analyzer": {
           "type": "english"
@@ -83,6 +83,48 @@
       "count": { "type": "long" },
       "addTime": { "type": "date" },
       "updateTime": { "type": "date" }
+    }
+  }
+}
+
+// 停用词索引
+{
+  "settings": {
+    "number_of_shards": 1,
+    "number_of_replicas": 1,
+    "analysis": {
+      "analyzer": {
+        "stopwords_analyzer": {
+          "type": "custom",
+          "tokenizer": "ik_max_word",
+          "filter": [
+            "lowercase",
+            "stopwords_filter"
+          ]
+        },
+        "english_stopwords_analyzer": {
+          "type": "english"
+        }
+      },
+      "filter": {
+        "stopwords_filter": {
+          "type": "stop",
+          "stopwords": ["的", "了", "是", "我", "你", "和", "在", "这", "那"]
+        }
+      }
+    }
+  },
+  "mappings": {
+    "properties": {
+      "words": {
+        "type": "keyword"
+      },
+      "add_time": {
+        "type": "date"
+      },
+      "update_time": {
+        "type": "date"
+      }
     }
   }
 }

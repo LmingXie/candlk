@@ -28,7 +28,11 @@ public class ESApiTest {
 
 	@BeforeAll
 	public static void init() throws IOException {
-		engine = new ESEngineClient();
+		engine = new ESEngineClient(
+				"https://127.0.0.1:9200",
+				"f40da2681b97c673f3bf0c65e87d70d75ff166d405f6e36a024a96962df57c4d",
+				"elastic", "aS26ZiHC_U+sCJlDccoW"
+		);
 	}
 
 	@Test

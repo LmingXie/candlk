@@ -34,16 +34,15 @@ public class TweetApiTest {
 	TweetUserService tweetUserService;
 	@Resource
 	TweetWordService tweetWordService;
+	@Resource
+	ESEngineClient engine;
 
 	static TweetApi tweetApi;
-
-	static ESEngineClient engine;
 
 	@BeforeAll
 	public static void beforeAll() throws IOException {
 		tweetApi = new TweetApi("AAAAAAAAAAAAAAAAAAAAAK450wEAAAAAGq8cOrQ4HTVBBn9Z24umOk8kmik%3DkjB0pGI1V3v3c9WkcQCRVjbfa4DPxJdeTxsF0hWVnIuXrOPVVv",
 				"http://127.0.0.1:10809");
-		engine = new ESEngineClient();
 	}
 
 	@Test
