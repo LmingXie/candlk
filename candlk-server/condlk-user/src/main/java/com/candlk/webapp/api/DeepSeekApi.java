@@ -6,7 +6,6 @@ import java.net.http.*;
 import java.util.List;
 import java.util.TreeMap;
 
-import com.alibaba.fastjson2.JSON;
 import com.alibaba.fastjson2.JSONObject;
 import com.candlk.common.model.Messager;
 import com.candlk.common.util.BaseHttpUtil;
@@ -16,7 +15,6 @@ import lombok.Setter;
 import lombok.extern.slf4j.Slf4j;
 import me.codeplayer.util.Assert;
 import me.codeplayer.util.StringUtil;
-import org.apache.dubbo.common.utils.CollectionUtils;
 import org.springframework.http.HttpMethod;
 
 /**
@@ -89,27 +87,6 @@ public class DeepSeekApi extends BaseHttpUtil {
 			return resp.castDataType(chat);
 		}
 		return null;
-	}
-
-	public static void main(String[] args) {
-		final String responseBody = "{\"id\":\"2ad901d3-1dbe-4105-8237-f873efc02571\",\"object\":\"chat.completion\",\"created\":1746521385,\"model\":\"deepseek-chat\",\"choices\":[{\"index\":0,\"message\":{\"role\":\"assistant\",\"content\":\"```json\\n{\\n  \\\"name\\\": \\\"Fleek AI Ecosystem Token\\\",\\n  \\\"symbol\\\": \\\"FLK\\\"\\n}\\n```\"},\"logprobs\":null,\"finish_reason\":\"stop\"}],\"usage\":{\"prompt_tokens\":212,\"completion_tokens\":26,\"total_tokens\":238,\"prompt_tokens_details\":{\"cached_tokens\":0},\"prompt_cache_hit_tokens\":0,\"prompt_cache_miss_tokens\":212},\"system_fingerprint\":\"fp_8802369eaa_prod0425fp8\"}";
-		JSONObject json = Jsons.parseObject(responseBody);
-		Messager<JSONObject> resp = Messager.hideData(json).setExt(responseBody);
-		if (resp.isOK()) {
-			JSONObject data = resp.data();
-			DeepSeekChat chat2 = data.toJavaObject(DeepSeekChat.class);
-			Messager<DeepSeekChat> chat = resp.castDataType(chat2);
-			if (chat.isOK()) {
-				DeepSeekChat data1 = chat.data();
-				if (CollectionUtils.isNotEmpty(data1.choices)) {
-					final String content = data1.choices.getFirst().message.content;
-					final String fixedText = content.replaceAll("```json\\n", "").replaceAll("```", "").replaceAll("\\n", "");
-					if (JSON.isValid(fixedText)) {
-						System.out.println(Jsons.encode(Jsons.parseObject(fixedText)));
-					}
-				}
-			}
-		}
 	}
 
 }
