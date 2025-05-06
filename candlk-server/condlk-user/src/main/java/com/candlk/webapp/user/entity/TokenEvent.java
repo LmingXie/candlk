@@ -3,14 +3,16 @@ package com.candlk.webapp.user.entity;
 import com.candlk.webapp.base.entity.TimeBasedEntity;
 import lombok.Getter;
 import lombok.Setter;
+import lombok.experimental.Accessors;
 
 /**
-* 代币事件表
-* @author 
-* @since 2025-04-27
-*/
+ * 代币事件表
+ *
+ * @since 2025-04-27
+ */
 @Setter
 @Getter
+@Accessors(chain = true)
 public class TokenEvent extends TimeBasedEntity {
 
 	/** 推文ID */
@@ -25,9 +27,11 @@ public class TokenEvent extends TimeBasedEntity {
 	String ca;
 	/** 代币简介 */
 	String desc;
-	/** 业务状态 */
+	/** 业务状态（0=待创建；1=已创建） */
 	Integer status;
 
+	public static final int TYPE_SPECIAL = 0, TYPE_HOT = 1, TYPE_SURGE = 2;
+	public static final int CREATE = 0, CREATED = 1;
 
 	public static final String TWEET_ID = "tweet_id";
 	public static final String TYPE = "type";
@@ -36,4 +40,5 @@ public class TokenEvent extends TimeBasedEntity {
 	public static final String CA = "ca";
 	public static final String DESC = "desc";
 	public static final String STATUS = "status";
+
 }

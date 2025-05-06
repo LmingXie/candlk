@@ -3,9 +3,10 @@ package com.candlk.context.web;
 import java.util.Collections;
 import java.util.List;
 
+import javax.annotation.Nullable;
+
 import com.alibaba.fastjson2.*;
-import com.alibaba.fastjson2.filter.Filter;
-import com.alibaba.fastjson2.filter.SimplePropertyPreFilter;
+import com.alibaba.fastjson2.filter.*;
 import com.candlk.common.model.ValueEnum;
 import me.codeplayer.util.X;
 
@@ -17,18 +18,19 @@ import me.codeplayer.util.X;
 public abstract class Jsons {
 
 	static String dateFormat = "millis";   // 日期时间类型默认输出为 毫秒级时间戳
-	static JSONWriter.Context encodeContext;
-	static JSONWriter.Context serializeContext;
-	static JSONReader.Context decodeContext;
-	static JSONReader.Context deserializeContext;
+	static JSONWriter.Context encodeContext, encodeRawContext, serializeContext;
+	static JSONReader.Context decodeContext, deserializeContext;
 
 	static {
 		init();
 	}
 
 	public static void init() {
-		encodeContext = defaultEncodeContext();
-		serializeContext = defaultEncodeContext(JSONWriter.Feature.WriteClassName);
+		JSON.config(JSONWriter.Feature.BrowserCompatible, JSONWriter.Feature.WriteBigDecimalAsPlain);
+		encodeContext = defaultEncodeContext((object, name, value) -> value instanceof ValueEnum<?, ?> t ? t.getValue() : value);
+		encodeRawContext = defaultEncodeContext(null);
+		encodeRawContext.config(JSONWriter.Feature.BrowserCompatible, false);
+		serializeContext = defaultEncodeContext(null, JSONWriter.Feature.WriteClassName);
 		decodeContext = defaultDecodeContext();
 		deserializeContext = defaultDecodeContext(JSONReader.Feature.SupportAutoType);
 	}
@@ -38,10 +40,12 @@ public abstract class Jsons {
 		init();
 	}
 
-	static JSONWriter.Context defaultEncodeContext(JSONWriter.Feature... features) {
+	static JSONWriter.Context defaultEncodeContext(@Nullable ValueFilter valueFilter, JSONWriter.Feature... features) {
 		final JSONWriter.Context context = new JSONWriter.Context(features);
 		context.setDateFormat(dateFormat);
-		context.setValueFilter((object, name, value) -> value instanceof ValueEnum<?, ?> t ? t.getValue() : value);
+		if (valueFilter != null) {
+			context.setValueFilter(valueFilter);
+		}
 		return context;
 	}
 
@@ -50,13 +54,29 @@ public abstract class Jsons {
 	}
 
 	/**
-	 * 将Java对象编码为JSON字符串。<br/>
+	 * 将Java对象编码为JSON字符串。
+	 * <p>
 	 * 如果对象里存在为null的属性，则不包含在字符串中。
+	 * <p>
+	 * 【注意】 对于实现了 {@link  ValueEnum } 接口的枚举，将输出其 value 值
 	 *
 	 * @param obj 指定的任意对象
 	 */
 	public static String encode(Object obj) {
 		return JSON.toJSONString(obj, encodeContext);
+	}
+
+	/**
+	 * 将Java对象编码为JSON字符串。
+	 * <p>
+	 * 如果对象里存在为null的属性，则不包含在字符串中。
+	 * <p>
+	 * 【注意】 所有枚举，将输出其 {@link Enum#ordinal()} 下标值
+	 *
+	 * @param obj 指定的任意对象
+	 */
+	public static String encodeRaw(Object obj) {
+		return JSON.toJSONString(obj, encodeRawContext);
 	}
 
 	/**
@@ -122,6 +142,16 @@ public abstract class Jsons {
 	 */
 	public static <T> T parseObject(String text, Class<T> clazz) {
 		return JSON.parseObject(text, clazz, decodeContext);
+	}
+
+	/**
+	 * 将JSON字符串转为指定类型的Java对象
+	 *
+	 * @param text 指定的JSON字符串
+	 * @param typeReference 指定的类型引用
+	 */
+	public static <T> T parseObject(String text, TypeReference<T> typeReference, JSONReader.Feature... features) {
+		return JSON.parseObject(text, typeReference, features);
 	}
 
 	/**

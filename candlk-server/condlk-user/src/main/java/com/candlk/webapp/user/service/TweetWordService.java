@@ -4,6 +4,7 @@ import java.io.IOException;
 import java.util.List;
 import javax.annotation.Resource;
 
+import co.elastic.clients.elasticsearch._types.SortOrder;
 import co.elastic.clients.elasticsearch.core.SearchResponse;
 import com.baomidou.mybatisplus.core.conditions.query.QueryWrapper;
 import com.candlk.common.web.Page;
@@ -49,6 +50,29 @@ public class TweetWordService extends BaseServiceImpl<TweetWord, TweetWordDao, L
 		}, TweetWord.class);
 		List<TweetWord> list = ESEngineClient.toT(response);
 		return page.castList(list);
+	}
+
+	public List<TweetWord> rank(Integer type) throws IOException {
+		SearchResponse<TweetWord> response = esEngineClient.client.search(s -> {
+			s.index((TweetWord.TYPE_STOP == type ? ESIndex.KEYWORDS_ACCURATE_INDEX : ESIndex.STOP_WORDS_INDEX).value)
+					.query(q -> q
+							.term(t -> t
+									.field("type")
+									.value(type)
+							)
+					)
+					.sort(so -> so
+							.field(f -> f
+									.field("count")
+									.order(SortOrder.Desc)
+							)
+					)
+					.from(0)
+					.size(100);
+
+			return s;
+		}, TweetWord.class);
+		return ESEngineClient.toT(response);
 	}
 
 	@Transactional

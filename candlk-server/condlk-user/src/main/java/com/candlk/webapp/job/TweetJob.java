@@ -1,7 +1,6 @@
 package com.candlk.webapp.job;
 
-import java.util.List;
-import java.util.Set;
+import java.util.*;
 import javax.annotation.Resource;
 
 import com.candlk.common.model.Messager;
@@ -12,11 +11,10 @@ import com.candlk.webapp.user.service.TweetService;
 import com.candlk.webapp.user.service.TweetUserService;
 import lombok.extern.slf4j.Slf4j;
 import me.codeplayer.util.StringUtil;
-import org.springframework.context.annotation.Configuration;
 import org.springframework.scheduling.annotation.Scheduled;
 
 @Slf4j
-@Configuration
+// @Configuration
 public class TweetJob {
 
 	@Resource
@@ -31,11 +29,6 @@ public class TweetJob {
 	public void run() {
 		log.info("开始同步推文数据信息...");
 		List<TweetInfo> tweets = sync();
-
-		// TODO 根据推文 生成 代币名称和简称，最终生成token记录
-
-		// TODO: 2025/4/30 刷新浏览量定时任务
-
 		log.info("结束同步推文数据任务。");
 	}
 
@@ -62,18 +55,33 @@ public class TweetJob {
 
 		// 同步用户数据【max100】
 		Set<String> authorIds = Common.toSet(tweets, tweet -> tweet.authorId);
+		// 跳过 1 小时前更新的用户
+		List<String> filterLastUser = tweetUserService.findByLastUpdate(Common.toSet(tweets, tweet -> tweet.authorId));
+		authorIds.clear();
+		authorIds.addAll(filterLastUser);
+
 		int diff = 100 - authorIds.size();
 		if (diff > 0) {
-			// 再查询最近更新过帖子的用户
-			List<String> userIds = tweetUserService.lastList(authorIds, diff);
+			// 查询最近更新过帖子的用户【更新时间10】
+			List<String> userIds = tweetUserService.lastList(authorIds, diff, true);
 			if (!userIds.isEmpty()) {
 				authorIds.addAll(userIds);
+			}
+			diff = 100 - authorIds.size();
+			if (diff > 0) {
+				// 查询最近更新过帖子的用户【不限制更新时间】
+				authorIds = Common.toSet(tweets, tweet -> tweet.authorId);
+				List<String> userIds2 = tweetUserService.lastList(authorIds, diff, false);
+				if (!userIds2.isEmpty()) {
+					authorIds.addAll(userIds2);
+				}
 			}
 		}
 		// 同步用户信息数据
 		Messager<List<TweetUserInfo>> usersMsg = tweetApi.users(StringUtil.joins(authorIds, ","));
+		final Date now = new Date();
 		if (usersMsg.isOK()) {
-			tweetUserService.sync(usersMsg.data());
+			tweetUserService.sync(usersMsg.data(), now);
 		}
 		return tweets;
 	}

@@ -3,6 +3,7 @@ package com.candlk.webapp.user.dao;
 import java.util.List;
 
 import com.baomidou.mybatisplus.core.conditions.Wrapper;
+import com.candlk.common.web.Page;
 import com.candlk.webapp.base.dao.BaseDao;
 import com.candlk.webapp.user.entity.TweetUser;
 import org.apache.ibatis.annotations.Param;
@@ -14,6 +15,9 @@ import org.apache.ibatis.annotations.Select;
  * @since 2025-04-27
  */
 public interface TweetUserDao extends BaseDao<TweetUser> {
+
+	@Select("SELECT * FROM x_tweet ${ew.customSqlSegment}")
+	Page<TweetUser> findPage(Page<?> page, @Param("ew") Wrapper<?> wrapper);
 
 	@Select("SELECT user_id FROM x_tweet_user ${ew.customSqlSegment}")
 	List<String> lastList(@Param("ew") Wrapper<?> wrapper);

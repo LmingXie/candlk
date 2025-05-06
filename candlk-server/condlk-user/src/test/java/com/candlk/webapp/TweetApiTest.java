@@ -68,7 +68,7 @@ public class TweetApiTest {
 		JSONObject data = Jsons.parseObject(jsonData);
 		// 同步用户信息数据
 		List<TweetUserInfo> tweets = data.getList("data", TweetUserInfo.class);
-		tweetUserService.sync(tweets);
+		tweetUserService.sync(tweets, new Date());
 	}
 
 	@Test
@@ -100,7 +100,7 @@ public class TweetApiTest {
 	@Test
 	public void testDelWords() throws Exception {
 		List<TweetWord> all = tweetWordService.findByWords(Arrays.asList(
-				"launch", "sol", "solana"
+				"gang", "airdrop", "dump", "rug", "blockchain", "viral", "block", "season", "capital", "election"
 		));
 		int i = engine.batchDelByIds(ESIndex.KEYWORDS_ACCURATE_INDEX, CollectionUtil.toList(all, t -> t.getId().toString()));
 		log.info("删除了{}个词", i);

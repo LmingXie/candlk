@@ -24,8 +24,7 @@ import com.candlk.webapp.api.TweetInfo;
 import com.candlk.webapp.base.service.BaseServiceImpl;
 import com.candlk.webapp.es.ESEngineClient;
 import com.candlk.webapp.user.dao.TweetDao;
-import com.candlk.webapp.user.entity.Tweet;
-import com.candlk.webapp.user.entity.TweetWord;
+import com.candlk.webapp.user.entity.*;
 import com.candlk.webapp.user.form.TweetQuery;
 import com.candlk.webapp.user.model.ESIndex;
 import com.candlk.webapp.user.model.TweetProvider;
@@ -224,6 +223,24 @@ public class TweetService extends BaseServiceImpl<Tweet, TweetDao, Long> {
 			localTimeInterval = new TimeInterval(start, end, -1, -1);
 		}
 		return localTimeInterval;
+	}
+
+	public List<Tweet> surgeToken(Integer limit) {
+		return baseDao.lastGenToken(new SmartQueryWrapper<>()
+				.eq("t.status", Tweet.NEW_TOKEN)
+				.between("t.add_time", lastInterval()) // idx_addTime_status 索引
+				.eq("te.type", TokenEvent.TYPE_HOT)
+				.last("LIMIT " + limit)
+		);
+	}
+
+	public List<Tweet> lastGenToken(Integer limit) {
+		return baseDao.lastGenToken(new SmartQueryWrapper<>()
+				.eq("t.status", Tweet.SYNC)
+				.between("t.add_time", lastInterval()) // idx_addTime_status 索引
+				.isNull("te.tweet_id")
+				.last("LIMIT " + limit)
+		);
 	}
 
 	public List<String> lastList(Integer limit) {

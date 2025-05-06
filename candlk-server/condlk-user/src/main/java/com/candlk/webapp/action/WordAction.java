@@ -59,4 +59,10 @@ public class WordAction extends BaseAction {
 		return Messager.OK();
 	}
 
+	@Ready("热词排名")
+	@PostMapping("/rank")
+	public Messager<List<TweetWord>> rank(ProxyRequest q, Integer type) throws Exception {
+		return Messager.exposeData(tweetWordService.rank(type));
+	}
+
 }

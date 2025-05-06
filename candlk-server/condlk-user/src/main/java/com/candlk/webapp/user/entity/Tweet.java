@@ -4,10 +4,10 @@ import java.math.BigDecimal;
 import java.util.Collection;
 import java.util.Date;
 
+import com.baomidou.mybatisplus.annotation.TableField;
 import com.candlk.context.web.Jsons;
 import com.candlk.webapp.base.entity.BaseEntity;
-import com.candlk.webapp.user.model.TweetProvider;
-import com.candlk.webapp.user.model.TweetType;
+import com.candlk.webapp.user.model.*;
 import lombok.Getter;
 import lombok.Setter;
 import lombok.experimental.Accessors;
@@ -59,14 +59,17 @@ public class Tweet extends BaseEntity {
 	String images;
 	/** 推文视频 */
 	String videos;
-	/** 业务状态：0=初始录入；1=同步推文；2=正在进行分析；3=分析结束；4=不合格推文； */
+	/** 业务状态：0=初始录入；1=（从推特接口）同步推文数据；2=生成Token；4=不合格推文； */
 	Integer status;
 	/** 推文分数 */
 	BigDecimal score;
 	/** 命中的关键词 */
 	String words;
+	/** 账号类型：0=普通账号；1=二级账号；2=特殊关注账号； */
+	@TableField(exist = false)
+	TweetUserType userType;
 
-	public static final int INIT = 0, SYNC = 1, ANALYZING = 2, ANALYZED = 3, QUALITY_NOT_PASS = 4;
+	public static final int INIT = 0, SYNC = 1, NEW_TOKEN = 2, QUALITY_NOT_PASS = 4;
 
 	public static Tweet of(TweetProvider providerType, TweetType tweetType, String username, String tweetId, String text, String entities, String orgMsg, Date addTime) {
 		Tweet tweet = new Tweet();

@@ -3,6 +3,7 @@ package com.candlk.common.context;
 import java.util.Locale;
 import java.util.function.Supplier;
 
+import com.candlk.common.model.ErrorMessageException;
 import org.springframework.context.MessageSource;
 import org.springframework.context.i18n.LocaleContextHolder;
 import org.springframework.lang.Nullable;
@@ -50,7 +51,7 @@ public abstract class I18N {
 
 	public static void assertTrue(boolean result) {
 		if (!result) {
-			throw new IllegalArgumentException();
+			throw new IllegalArgumentException(); // 默认提示 BaseI18nKey.ILLEGAL_REQUEST
 		}
 	}
 
@@ -60,10 +61,23 @@ public abstract class I18N {
 		}
 	}
 
-	public static void assertNotNull(Object obj, String msgCode) {
+	public static void assertTrue(boolean result, String msgCode, Object... args) {
+		if (!result) {
+			throw new IllegalArgumentException(msg(msgCode, args));
+		}
+	}
+
+	public static void assertTrue(boolean result, String msgCode, Object arg) {
+		if (!result) {
+			throw new IllegalArgumentException(msg(msgCode, arg));
+		}
+	}
+
+	public static <T> T assertNotNull(T obj, String msgCode) {
 		if (obj == null) {
 			throw new IllegalArgumentException(msg(msgCode));
 		}
+		return obj;
 	}
 
 	public static void assertNotNull(Object obj) {
@@ -75,6 +89,24 @@ public abstract class I18N {
 	public static void assertFalse(boolean result, String msgCode) {
 		if (result) {
 			throw new IllegalArgumentException(msg(msgCode));
+		}
+	}
+
+	public static void assertTrueNoTrace(boolean result, String msgCode) {
+		if (!result) {
+			throw new ErrorMessageException(msg(msgCode), false);
+		}
+	}
+
+	public static void assertTrueNoTrace(boolean result, Supplier<String> msgCode) {
+		if (!result) {
+			throw new ErrorMessageException(msgCode.get(), false);
+		}
+	}
+
+	public static void assertFalseNoTrace(boolean result, String msgCode) {
+		if (result) {
+			throw new ErrorMessageException(msg(msgCode), false);
 		}
 	}
 

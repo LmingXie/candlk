@@ -10,10 +10,10 @@ import lombok.Getter;
 public enum TweetUserType implements ValueProxyImpl<TweetUserType, Integer> {
 	/** 普通账号 */
 	ORDINARY("ordinary"),
-	/** 特殊关注账号 */
-	SPECIAL("special"),
 	/** 二级账号 */
 	LEVEL2("level2"),
+	/** 特殊关注账号 */
+	SPECIAL("special"),
 	;
 
 	@EnumValue

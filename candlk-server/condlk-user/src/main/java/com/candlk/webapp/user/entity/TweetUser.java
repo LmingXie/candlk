@@ -52,7 +52,7 @@ public class TweetUser extends TimeBasedEntity {
 	Integer likes;
 	/** 最后一次发帖时间 */
 	Date tweetLastTime;
-	/** 账号类型：0=普通账号；1=特殊关注账号；2=二级账号； */
+	/** 账号类型：0=普通账号；1=二级账号；2=特殊关注账号； */
 	TweetUserType type;
 	/** 业务标识 */
 	Integer bizFlag;

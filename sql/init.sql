@@ -37,7 +37,7 @@ CREATE TABLE `x_tweet` (
    `words` json DEFAULT NULL COMMENT '命中的关键词',
    PRIMARY KEY (`id`),
    UNIQUE KEY `uk_tweetId` (`tweet_id`) USING BTREE,
-   KEY `idx_addTime_status` (`add_time`,`status`)
+   KEY `idx_status_score_addTime` (`status`,`score` DESC,`add_time`) USING BTREE
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COMMENT='推文信息表';
 
 CREATE TABLE `x_tweet_user` (
@@ -58,7 +58,7 @@ CREATE TABLE `x_tweet_user` (
     `listed` int(10) unsigned NOT NULL DEFAULT '0' COMMENT '包含该用户的列表数量',
     `likes` int(10) unsigned NOT NULL DEFAULT '0' COMMENT '该用户创建的赞数',
     `tweet_last_time` datetime DEFAULT NULL COMMENT '最后一次发帖时间',
-    `type` tinyint(3) unsigned NOT NULL DEFAULT '1' COMMENT '账号类型：0=普通账号；1=特殊关注账号；2=二级账号；',
+    `type` tinyint(3) unsigned NOT NULL DEFAULT '1' COMMENT '账号类型：0=普通账号；1=二级账号；2=特殊关注账号；',
     `biz_flag` smallint(5) unsigned NOT NULL DEFAULT '0' COMMENT '业务标识',
     `add_time` datetime NOT NULL COMMENT '推特账号创建时间',
     `update_time` datetime NOT NULL DEFAULT CURRENT_TIMESTAMP COMMENT '最后更新时间',
