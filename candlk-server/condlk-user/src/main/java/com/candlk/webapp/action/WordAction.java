@@ -29,13 +29,13 @@ public class WordAction extends BaseAction {
 
 	@Ready("查询搜索关键词")
 	@GetMapping("/search")
-	public Messager<Page<TweetWord>> search(ProxyRequest q, String words) throws Exception {
-		return Messager.exposeData(tweetWordService.search(q.getPage(), words));
+	public Messager<Page<TweetWord>> search(ProxyRequest q, String words, Integer type) throws Exception {
+		return Messager.exposeData(tweetWordService.search(q.getPage(), words, type));
 	}
 
 	@Ready("批量导入关键词")
 	@PostMapping("/imports")
-	public Messager<Void> imports(ProxyRequest q, String words) throws Exception {
+	public Messager<Void> imports(ProxyRequest q, String words, Integer type) throws Exception {
 		I18N.assertNotNull(words);
 		List<TweetWord> tweetWords = Jsons.parseArray(words, TweetWord.class);
 		for (TweetWord tweetWord : tweetWords) {
@@ -46,16 +46,16 @@ public class WordAction extends BaseAction {
 			}
 			tweetWord.setPriority(0);
 		}
-		tweetWordService.batchAdd(tweetWords);
+		tweetWordService.batchAdd(tweetWords, type);
 		return Messager.OK();
 	}
 
 	@Ready("批量删除关键词")
 	@PostMapping("/del")
-	public Messager<Void> del(ProxyRequest q, String ids) throws Exception {
+	public Messager<Void> del(ProxyRequest q, String ids, Integer type) throws Exception {
 		I18N.assertNotNull(ids);
 		List<Long> tweetWords = Jsons.parseArray(ids, Long.class);
-		tweetWordService.del(tweetWords);
+		tweetWordService.del(tweetWords, type);
 		return Messager.OK();
 	}
 

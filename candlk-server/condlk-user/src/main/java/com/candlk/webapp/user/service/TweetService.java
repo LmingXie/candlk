@@ -4,7 +4,6 @@ import java.io.IOException;
 import java.math.BigDecimal;
 import java.util.*;
 import java.util.regex.Pattern;
-import java.util.stream.Collectors;
 import javax.annotation.Nonnull;
 import javax.annotation.Resource;
 
@@ -129,9 +128,10 @@ public class TweetService extends BaseServiceImpl<Tweet, TweetDao, Long> {
 			Set<String> words = new HashSet<>(size);
 			for (Term term : segment) {
 				// 字符必须大于1 && 不包含在内部停用词中
-				if (term.word.length() > 1 && !esEngineClient.stopWordsCache.contains(term.word)) {
-					words.add(term.word);
+				if (term.word.length() < 2 || esEngineClient.stopWordsCache.contains(term.word)) {
+					continue;
 				}
+				words.add(term.word);
 			}
 			if (words.size() < 2) {
 				return BigDecimal.ZERO;
@@ -146,7 +146,6 @@ public class TweetService extends BaseServiceImpl<Tweet, TweetDao, Long> {
 					tweetInfo.setStatus(Tweet.INIT);
 					score = score.add(BigDecimal.ONE);
 					tweetInfo.setWords(Jsons.encode(CollectionUtil.toList(tweetWords, TweetWord::getWords)));
-					// TODO: 2025/4/30 更新关键词计数
 				}
 			} catch (IOException e) {
 				log.error("【{}】查询关键词失败：{}", tweetInfo.getTweetId(), e);
@@ -166,8 +165,7 @@ public class TweetService extends BaseServiceImpl<Tweet, TweetDao, Long> {
 	}
 
 	public List<TweetWord> matchKeywords(ESIndex index, Set<String> words) throws IOException {
-
-		SearchResponse<TweetWord> response = esEngineClient.client.search(s -> {
+		final SearchResponse<TweetWord> response = esEngineClient.client.search(s -> {
 			s.index(index.value);
 			if (index == ESIndex.KEYWORDS_INDEX) {
 				// 多字段模糊匹配查询（multi_match or should）
@@ -181,7 +179,7 @@ public class TweetService extends BaseServiceImpl<Tweet, TweetDao, Long> {
 				)));
 			} else {
 				s.query(q -> q.terms(t -> t.field(TweetWord.WORDS).terms(tq -> tq.value(
-						words.stream().map(FieldValue::of).collect(Collectors.toList())
+						CollectionUtil.toList(words, FieldValue::of)
 				))));
 			}
 
@@ -194,7 +192,7 @@ public class TweetService extends BaseServiceImpl<Tweet, TweetDao, Long> {
 			return s;
 		}, TweetWord.class);
 
-		List<TweetWord> result = ESEngineClient.toT(response);
+		final List<TweetWord> result = ESEngineClient.toT(response);
 
 		// 命中后更新计数 count += 1
 		if (!result.isEmpty()) {
