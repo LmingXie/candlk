@@ -49,10 +49,17 @@ public class X3TweetWsProvider implements Listener, TweetWsApi {
 				.join();
 	}
 
+	private Long lastTime = System.currentTimeMillis();
+
+	@Override
+	public Long getLastTime() {
+		return lastTime;
+	}
+
 	@Override
 	public boolean ping() {
 		webSocket.sendText("ping", true);
-		return true;
+		return checkPing();
 	}
 
 	@Override
@@ -83,6 +90,7 @@ public class X3TweetWsProvider implements Listener, TweetWsApi {
 		WS_EXECUTOR.submit(() -> {
 			TweetProvider provider = getProvider();
 			log.info("【{}】事件内容：{}", provider, data);
+			lastTime = System.currentTimeMillis();
 			JSONObject tweetData = JSON.parseObject(data.toString());
 			if ("1".equals(tweetData.getString("msgType"))) {
 
@@ -164,6 +172,11 @@ public class X3TweetWsProvider implements Listener, TweetWsApi {
 	public void onError(WebSocket webSocket, Throwable error) {
 		System.err.println("[WebSocket] Error: " + error.getMessage());
 		Listener.super.onError(webSocket, error);
+	}
+
+	@Override
+	public WebSocket getWebSocket() {
+		return webSocket;
 	}
 
 }

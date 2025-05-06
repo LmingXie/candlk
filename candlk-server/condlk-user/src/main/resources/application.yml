@@ -79,8 +79,8 @@ webapp:
 es:
   url: https://127.0.0.1:9200
   username: elastic
-  pwd: aS26ZiHC_U+sCJlDccoW
-  fingerprint: f40da2681b97c673f3bf0c65e87d70d75ff166d405f6e36a024a96962df57c4d
+  pwd: YqR6mL+USUyJnPYPKtG=
+  fingerprint: 008d29b8ca1324053f3cc196ae88e9e2dc865463053f0880f9c5cf708588f818
 
 # 暴露健康检查访问入口
 management:

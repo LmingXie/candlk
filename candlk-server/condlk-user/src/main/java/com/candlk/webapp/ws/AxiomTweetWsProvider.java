@@ -135,11 +135,18 @@ public class AxiomTweetWsProvider implements Listener, TweetWsApi {
 			"profile.update", // 用户的资料信息有变更
 			"profile.pinned.update" // 置顶推文
 	);
+	private Long lastTime = System.currentTimeMillis();
+
+	@Override
+	public Long getLastTime() {
+		return lastTime;
+	}
 
 	@Override
 	public CompletionStage<?> onText(WebSocket webSocket, CharSequence data, boolean last) {
 		// 并发处理消息（交给线程池）
 		WS_EXECUTOR.submit(() -> {
+			lastTime = System.currentTimeMillis();
 			AxiomTwitter axiomTwitter = Jsons.parseObject(data.toString(), AxiomTwitter.class);
 			if (axiomTwitter != null) {
 				AxiomTwitter.Content content = axiomTwitter.content;
@@ -259,6 +266,10 @@ public class AxiomTweetWsProvider implements Listener, TweetWsApi {
 		Listener.super.onError(webSocket, error);
 	}
 
+	@Override
+	public WebSocket getWebSocket() {
+		return webSocket;
+	}
 	/*
 		转发：
 		{"eventId":"1914850477059002380","handle":"BigBagHodler","userId":1768659346500604000,"subscriptionType":"new_tweet","type":"tweet.update","tweet":{"id":"1914850477059002380","type":"RETWEET","created_at":"Wed Apr 23 01:15:04 +0000 2025","author":{"handle":"BigBagHodler","profile":{"avatar":"https://pbs.twimg.com/profile_images/1907650769194532865/jq8rQmY5_normal.jpg","name":"Zeke"}},"body":{"text":"","urls":[],"mentions":[]},"media":{"images":[],"videos":[]},"subtweet":{"id":"1914850477059002380","type":"RETWEET","created_at":"Wed Apr 23 01:15:04 +0000 2025","author":{"handle":"narracanz","profile":{"avatar":"https://pbs.twimg.com/profile_images/1912996625804627968/2pQYazzT_normal.jpg","name":"narc"}},"body":{"text":"RT @narracanz: $uponly\n\nhttps://t.co/UFNPDix8M5","urls":[{"name":"solscan.io/tx/2hbRf873e1w…","url":"https://solscan.io/tx/2hbRf873e1wQZGkT2h7MzZzL5M3ru32NNRxst2Sp5pkjSniZQHoTyawmo17BFJ3jk3pH59d3pp6ne4VwNSV8dxXp","tco":"https://t.co/UFNPDix8M5"}],"mentions":[]},"media":{"images":[],"videos":[]}}}}

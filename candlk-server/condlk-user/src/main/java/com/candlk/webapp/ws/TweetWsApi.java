@@ -53,6 +53,14 @@ public interface TweetWsApi {
 
 	/** 调用ping指令 */
 	default boolean ping() {
+		return checkPing();
+	}
+
+	default boolean checkPing() {
+		// 20分钟未收到消息，自动进行重连
+		if (System.currentTimeMillis() - getLastTime() > 1000 * 60 * 20) {
+			return reConnection(getWebSocket(), 0, "check ping close and connection ws !");
+		}
 		return true;
 	}
 
@@ -60,7 +68,7 @@ public interface TweetWsApi {
 	void connection();
 
 	/** 重新连接 */
-	default void reConnection(WebSocket webSocket, int statusCode, String reason) {
+	default boolean reConnection(WebSocket webSocket, int statusCode, String reason) {
 		log.warn("【{}】 连接关闭，尝试重新连接中...Code={}, Reason={}", getProvider(), statusCode, reason);
 		// 显式释放当前连接资源
 		webSocket.abort();  // 或者 webSocket.sendClose(1000, "Normal Closure");
@@ -70,6 +78,7 @@ public interface TweetWsApi {
 		} catch (Exception e) {
 			log.error("【{}】 重新连接失败！", getProvider());
 		}
+		return true;
 	}
 
 	// 工具函数：从 Set-Cookie 中提取所有 key=value
@@ -86,5 +95,10 @@ public interface TweetWsApi {
 		}
 		return tokenMap;
 	}
+
+	/** 最后接收到消息的时间 */
+	Long getLastTime();
+
+	WebSocket getWebSocket();
 
 }
