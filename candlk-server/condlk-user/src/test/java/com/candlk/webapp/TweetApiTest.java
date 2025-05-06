@@ -108,11 +108,19 @@ public class TweetApiTest {
 		tweetWordService.deleteByIds(CollectionUtil.toList(all, TweetWord::getId));
 	}
 
+	// @Resource
+	// GenTokenJob genTokenJob;
+	//
+	// @Test
+	// public void testGenTokenJob() throws Exception {
+	// 	genTokenJob.run();
+	// }
+
 	@Resource
 	SurgeTweetJob surgeTweetJob;
 
 	@Test
-	public void testSurgeTweetJob() throws Exception {
+	public void testSurgeTweetJob() {
 		surgeTweetJob.run();
 	}
 

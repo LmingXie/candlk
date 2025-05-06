@@ -87,7 +87,7 @@ public class DeepSeekApiTest {
 		if (chat.isOK()) {
 			DeepSeekChat data = chat.data();
 			if (CollectionUtils.isNotEmpty(data.choices)) {
-				final String content = data.choices.getFirst().message.content;
+				final String content = data.choices.get(0).message.content;
 				final String fixedText = content.replaceAll("```json\\n", "").replaceAll("```", "").replaceAll("\\n", "");
 				if (JSON.isValid(fixedText)) {
 					System.out.println(Jsons.encode(Jsons.parseObject(fixedText)));

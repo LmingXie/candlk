@@ -25,7 +25,7 @@ public class SurgeTweetJob {
 			"AAAAAAAAAAAAAAAAAAAAAK450wEAAAAAc6mb7tVQF3%2B6ssbH2borX%2F0jQpI%3DrxKSmb3okKK49o5Z1P4RFZXgIK08FXXhc1XjSbVrJd1y0bo1sp"
 	};
 	/** 往前追溯10倍的推文（3个秘钥 = 3000条推文） */
-	static final int COUNTER_MAX = SURGE_TWEET_KEYS.length * 100 * 10;
+	static final int COUNTER_MAX = SURGE_TWEET_KEYS.length * 100 * 5; // TODO: 2025/5/6 10倍
 
 	public List<String> findSurgeTweetApi() {
 		// 查询API使用情况
@@ -47,7 +47,7 @@ public class SurgeTweetJob {
 	/**
 	 * 同步推文信息（生产：1 m/次）
 	 */
-	@Scheduled(cron = "${service.cron.SurgeTweetJob:0 0/1 * * * ?}")
+	@Scheduled(cron = "${service.cron.SurgeTweetJob:0 0 0/1 * * ?}")
 	public void run() {
 		log.info("开始【刷新浏览量】定时任务...");
 		final List<String> surgeTweetApis = findSurgeTweetApi();
@@ -89,8 +89,9 @@ public class SurgeTweetJob {
 			sync(batch, surgeTweetApis.get(apiOffset));
 		}
 
-		Date updateTime = oldTweets.getLast().getUpdateTime();
-		long newPoint = (updateTime.getTime() / 1000L) * 1_000_000L + counter + oldTweets.size();
+		int size = oldTweets.size();
+		Date updateTime = oldTweets.get(size - 1).getUpdateTime();
+		long newPoint = (updateTime.getTime() / 1000L) * 1_000_000L + counter + size;
 		// 更新断点
 		opsForZSet.add(UserRedisKey.SURGE_TWEET_API_LIMIT, "point", newPoint);
 
@@ -107,6 +108,7 @@ public class SurgeTweetJob {
 		RedisUtil.getStringRedisTemplate().opsForZSet().add(UserRedisKey.SURGE_TWEET_API_LIMIT, surgeTweetKey,
 				(double) System.currentTimeMillis() / 1000L);
 
+		// TODO: 2025/5/6 开放同步
 		// Messager<List<TweetInfo>> tweetsMsg = tweetApi.tweets(tweetIds);
 		// log.info("推文：{}", Jsons.encode(tweetsMsg));
 		// if (tweetsMsg == null || !tweetsMsg.isOK()) {

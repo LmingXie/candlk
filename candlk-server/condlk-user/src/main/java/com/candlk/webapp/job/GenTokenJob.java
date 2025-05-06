@@ -38,14 +38,14 @@ public class GenTokenJob {
 	static final DeepSeekApi deepSeekApi = DeepSeekApi.getInstance();
 
 	/**
-	 * 根据评分排名，生成Token（生产：1 m/次；本地：1 m/次）
+	 * 根据评分排名，生成Token（生产：5 m/次；）
 	 */
-	@Scheduled(cron = "${service.cron.GenTokenJob:0 0/1 * * * ?}")
+	@Scheduled(cron = "${service.cron.GenTokenJob:0 0/5 * * * ?}")
 	public void run() throws Exception {
 		log.info("开始生成Token数据信息...");
 
 		// 根据评分排名，生成Token TODO 调整limit
-		List<Tweet> tweets = tweetService.lastGenToken(1);
+		List<Tweet> tweets = tweetService.lastGenToken(10);
 		if (!tweets.isEmpty()) {
 			List<UpdateWrapper<Tweet>> updateWrappers = new ArrayList<>(tweets.size());
 			for (Tweet tweet : tweets) {
@@ -55,7 +55,7 @@ public class GenTokenJob {
 			}
 			// 更新推文状态
 			tweetService.updateBatchByWrappers(updateWrappers);
-			ConcurrentExecutor.runConcurrently(tweets, 10, tweet -> {
+			ConcurrentExecutor.runConcurrently(tweets, tweet -> {
 				try {
 					final String[] pair = aiGenToken(tweet.getText());
 
@@ -95,7 +95,7 @@ public class GenTokenJob {
 			if (chat.isOK()) {
 				DeepSeekChat data = chat.data();
 				if (CollectionUtils.isNotEmpty(data.choices)) {
-					final String content = data.choices.getFirst().message.content;
+					final String content = data.choices.get(0).message.content;
 					final String fixedText = content.replaceAll("```json", "").replaceAll("```", "");
 					if (JSON.isValid(fixedText)) {
 						JSONObject tokenInfo = Jsons.parseObject(fixedText);

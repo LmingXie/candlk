@@ -22,7 +22,7 @@
 	</modules>
 
 	<properties>
-		<java.version>23</java.version>
+		<java.version>17</java.version>
 		<env-version>1.0.0</env-version>
 	</properties>
 
