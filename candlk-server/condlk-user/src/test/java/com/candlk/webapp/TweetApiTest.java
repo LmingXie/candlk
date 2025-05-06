@@ -9,6 +9,7 @@ import com.alibaba.fastjson2.JSONObject;
 import com.candlk.context.web.Jsons;
 import com.candlk.webapp.api.*;
 import com.candlk.webapp.es.ESEngineClient;
+import com.candlk.webapp.job.SurgeTweetJob;
 import com.candlk.webapp.user.entity.TweetWord;
 import com.candlk.webapp.user.model.ESIndex;
 import com.candlk.webapp.user.service.*;
@@ -59,7 +60,7 @@ public class TweetApiTest {
 		final String jsonData = FileUtil.readContent(new File("D:\\tweet2.json"));
 		JSONObject data = Jsons.parseObject(jsonData);
 		List<TweetInfo> tweets = data.getList("data", TweetInfo.class);
-		tweetService.sync(tweets);
+		tweetService.sync(tweets, false);
 	}
 
 	@Test
@@ -105,6 +106,14 @@ public class TweetApiTest {
 		int i = engine.batchDelByIds(ESIndex.KEYWORDS_ACCURATE_INDEX, CollectionUtil.toList(all, t -> t.getId().toString()));
 		log.info("删除了{}个词", i);
 		tweetWordService.deleteByIds(CollectionUtil.toList(all, TweetWord::getId));
+	}
+
+	@Resource
+	SurgeTweetJob surgeTweetJob;
+
+	@Test
+	public void testSurgeTweetJob() throws Exception {
+		surgeTweetJob.run();
 	}
 
 }

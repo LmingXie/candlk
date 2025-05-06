@@ -29,7 +29,6 @@ public interface TweetDao extends BaseDao<Tweet> {
 			LEFT JOIN x_tweet_user tu ON t.username = tu.username
 			LEFT JOIN x_token_event te ON t.id = te.tweet_id
 			${ew.customSqlSegment}
-			ORDER BY (t.score + tu.score) DESC
 			""")
 	List<Tweet> lastGenToken(@Param("ew") Wrapper<?> wrapper);
 

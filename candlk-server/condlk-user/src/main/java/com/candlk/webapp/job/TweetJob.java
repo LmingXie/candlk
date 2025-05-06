@@ -51,7 +51,7 @@ public class TweetJob {
 
 		// 将最新推文数据刷新到DB
 		List<TweetInfo> tweets = tweetsMsg.data();
-		tweetService.sync(tweets);
+		tweetService.sync(tweets, false);
 
 		// 同步用户数据【max100】
 		Set<String> authorIds = Common.toSet(tweets, tweet -> tweet.authorId);

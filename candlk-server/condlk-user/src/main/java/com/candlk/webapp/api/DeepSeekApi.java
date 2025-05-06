@@ -28,6 +28,10 @@ public class DeepSeekApi extends BaseHttpUtil {
 	public static final String baseURI = "https://api.deepseek.com";
 	public static final URI chatUri = URI.create(baseURI + "/chat/completions");
 
+	public static DeepSeekApi getInstance() {
+		return new DeepSeekApi("sk-d731d2a8fdb54c42b73427417fb5dd33");
+	}
+
 	final String authToken;
 	final HttpClient proxyHttpClient;
 

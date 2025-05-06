@@ -33,14 +33,14 @@ public class GenTokenJob {
 	@Resource
 	TokenEventService tokenEventService;
 	@Resource
-	DeepSeekApi deepSeekApi;
-	@Resource
 	ESEngineClient esEngineClient;
+
+	static final DeepSeekApi deepSeekApi = DeepSeekApi.getInstance();
 
 	/**
 	 * 根据评分排名，生成Token（生产：1 m/次；本地：1 m/次）
 	 */
-	@Scheduled(cron = "${service.cron.TweetJob:0 0/1 * * * ?}")
+	@Scheduled(cron = "${service.cron.GenTokenJob:0 0/1 * * * ?}")
 	public void run() throws Exception {
 		log.info("开始生成Token数据信息...");
 

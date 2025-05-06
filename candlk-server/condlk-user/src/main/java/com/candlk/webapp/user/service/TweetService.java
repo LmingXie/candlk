@@ -51,6 +51,8 @@ public class TweetService extends BaseServiceImpl<Tweet, TweetDao, Long> {
 	TweetUserService tweetUserService;
 	@Resource
 	ESEngineClient esEngineClient;
+	@Resource
+	TokenEventService tokenEventService;
 
 	public Page<TweetVO> findPage(Page<?> page, TweetQuery query, TimeInterval interval) {
 		return baseDao.findPage(page, new SmartQueryWrapper<Tweet>()
@@ -225,11 +227,19 @@ public class TweetService extends BaseServiceImpl<Tweet, TweetDao, Long> {
 		return localTimeInterval;
 	}
 
-	public List<Tweet> surgeToken(Integer limit) {
+	public List<Tweet> surgeToken(Integer limit, Date prevTime) {
+		EasyDate d = new EasyDate();
+		// 查询 3 分钟前的推文【太短没有意义】
+		Date end = prevTime == null ? d.addMinute(-3).toDate() : prevTime;
+		Date start = d.addDay(-3).beginOf(Calendar.DATE).toDate();
+		TimeInterval timeInterval = new TimeInterval(start, end, -1, -1);
+
 		return baseDao.lastGenToken(new SmartQueryWrapper<>()
 				.eq("t.status", Tweet.NEW_TOKEN)
-				.between("t.add_time", lastInterval()) // idx_addTime_status 索引
+				.between("t.update_time", timeInterval) // idx_addTime_status 索引
 				.eq("te.type", TokenEvent.TYPE_HOT)
+				.eq("te.status", TokenEvent.CREATE) // 状态必须是 未创建
+				.orderByDesc("t.update_time")
 				.last("LIMIT " + limit)
 		);
 	}
@@ -239,6 +249,7 @@ public class TweetService extends BaseServiceImpl<Tweet, TweetDao, Long> {
 				.eq("t.status", Tweet.SYNC)
 				.between("t.add_time", lastInterval()) // idx_addTime_status 索引
 				.isNull("te.tweet_id")
+				.orderByDesc("(t.score + tu.score)")
 				.last("LIMIT " + limit)
 		);
 	}
@@ -253,15 +264,19 @@ public class TweetService extends BaseServiceImpl<Tweet, TweetDao, Long> {
 	}
 
 	@Transactional
-	public void sync(List<TweetInfo> tweets) {
+	public void sync(List<TweetInfo> tweets, boolean asSurge) {
 		if (!tweets.isEmpty()) {
-			List<UpdateWrapper<Tweet>> wrappers = new ArrayList<>(tweets.size());
+			final int size = tweets.size();
+			List<UpdateWrapper<Tweet>> wrappers = new ArrayList<>(size);
+			List<UpdateWrapper<TokenEvent>> tokenWrappers = new ArrayList<>(size);
 			for (TweetInfo tweet : tweets) {
 				UpdateWrapper<Tweet> wrapper = new UpdateWrapper<Tweet>()
 						.set(Tweet.ORG_MSG, Jsons.encode(tweet))
-						.set(Tweet.STATUS, Tweet.SYNC)
-						.eq(Tweet.TWEET_ID, tweet.id)
-						.eq(Tweet.STATUS, Tweet.INIT);
+						.eq(Tweet.TWEET_ID, tweet.id);
+				if (!asSurge) {
+					wrapper.set(Tweet.STATUS, Tweet.SYNC)
+							.eq(Tweet.STATUS, Tweet.INIT);
+				}
 				final String text = tweet.getText();
 				if (StringUtils.isNotEmpty(text)) {
 					wrapper.set(Tweet.TEXT, text);
@@ -274,13 +289,17 @@ public class TweetService extends BaseServiceImpl<Tweet, TweetDao, Long> {
 							.set(X.isValid(tweet.publicMetrics.likeCount), Tweet.LIKES, tweet.publicMetrics.likeCount)
 							.set(X.isValid(tweet.publicMetrics.quoteCount), Tweet.QUOTE, tweet.publicMetrics.quoteCount)
 							.set(X.isValid(tweet.publicMetrics.bookmarkCount), Tweet.BOOKMARK, tweet.publicMetrics.bookmarkCount)
-							.set(X.isValid(tweet.publicMetrics.impressionCount), Tweet.IMPRESSION, tweet.publicMetrics.impressionCount);
+							.set(X.isValid(tweet.publicMetrics.impressionCount), Tweet.IMPRESSION, tweet.publicMetrics.impressionCount)
+							.set(Tweet.UPDATE_TIME, new Date());
 				} else {
 					log.warn("【{}】推文无统计数据：{}", tweet.id, Jsons.encode(tweet));
 				}
 				wrappers.add(wrapper);
 			}
 			super.updateBatchByWrappers(wrappers);
+			if (!tokenWrappers.isEmpty()) {
+				tokenEventService.updateBatchByWrappers(tokenWrappers);
+			}
 		}
 	}
 

@@ -9,7 +9,8 @@ CREATE TABLE `x_token_event` (
  `status` tinyint(4) unsigned NOT NULL COMMENT '业务状态',
  `add_time` datetime NOT NULL DEFAULT CURRENT_TIMESTAMP COMMENT '添加时间',
  `update_time` datetime NOT NULL DEFAULT CURRENT_TIMESTAMP COMMENT '最后更新时间',
- PRIMARY KEY (`id`)
+ PRIMARY KEY (`id`),
+ UNIQUE KEY `uk_tweetId` (`tweet_id`)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COMMENT='代币事件表';
 
 CREATE TABLE `x_tweet` (

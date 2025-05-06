@@ -20,12 +20,11 @@ import org.junit.jupiter.api.Test;
 @Slf4j
 public class DeepSeekApiTest {
 
-	static DeepSeekApi deepSeekApi;
+	static DeepSeekApi deepSeekApi = DeepSeekApi.getInstance();
 	static ESEngineClient esEngineClient;
 
 	@BeforeAll
 	public static void init() throws IOException {
-		deepSeekApi = new DeepSeekApi("sk-d731d2a8fdb54c42b73427417fb5dd33");
 		esEngineClient = new ESEngineClient(
 				"https://127.0.0.1:9200",
 				"008d29b8ca1324053f3cc196ae88e9e2dc865463053f0880f9c5cf708588f818",
