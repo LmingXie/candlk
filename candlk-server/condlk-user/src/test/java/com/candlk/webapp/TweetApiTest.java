@@ -10,6 +10,7 @@ import com.candlk.context.web.Jsons;
 import com.candlk.webapp.api.*;
 import com.candlk.webapp.es.ESEngineClient;
 import com.candlk.webapp.job.SurgeTweetJob;
+import com.candlk.webapp.user.entity.Tweet;
 import com.candlk.webapp.user.entity.TweetWord;
 import com.candlk.webapp.user.model.ESIndex;
 import com.candlk.webapp.user.service.*;
@@ -48,7 +49,7 @@ public class TweetApiTest {
 
 	@Test
 	public void test() {
-		List<String> tweetList = tweetService.lastList(100);
+		List<Tweet> tweetList = tweetService.lastList(100);
 		final String tweetIds = StringUtil.joins(tweetList, ",");
 		log.info("推文ID：{}", tweetIds);
 		// Messager<List<TweetInfo>> tweets = tweetApi.tweets(tweetIds);

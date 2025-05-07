@@ -16,10 +16,10 @@ import org.apache.ibatis.annotations.Select;
  */
 public interface TweetUserDao extends BaseDao<TweetUser> {
 
-	@Select("SELECT * FROM x_tweet ${ew.customSqlSegment}")
+	@Select("SELECT * FROM x_tweet_user ${ew.customSqlSegment}")
 	Page<TweetUser> findPage(Page<?> page, @Param("ew") Wrapper<?> wrapper);
 
-	@Select("SELECT user_id FROM x_tweet_user ${ew.customSqlSegment}")
+	@Select("SELECT username FROM x_tweet_user ${ew.customSqlSegment}")
 	List<String> lastList(@Param("ew") Wrapper<?> wrapper);
 
 }

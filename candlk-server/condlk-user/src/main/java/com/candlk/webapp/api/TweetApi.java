@@ -111,7 +111,7 @@ public class TweetApi extends BaseHttpUtil {
 	}
 
 	public Messager<List<TweetUserInfo>> usersByUsernames(String usernames) {
-		return getUsers(baseURI + "/users/by?ids=" + usernames + USER_FIELDS);
+		return getUsers(baseURI + "/users/by?usernames=" + usernames + USER_FIELDS);
 	}
 
 	public Messager<TweetUserInfo> usersByUsername(String username) {

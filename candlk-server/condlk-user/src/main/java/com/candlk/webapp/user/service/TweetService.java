@@ -254,13 +254,16 @@ public class TweetService extends BaseServiceImpl<Tweet, TweetDao, Long> {
 		);
 	}
 
-	public List<String> lastList(Integer limit) {
+	public List<Tweet> lastList(Integer limit) {
 		return baseDao.lastList(new SmartQueryWrapper<>()
 				.eq(Tweet.STATUS, Tweet.INIT)
 				.between(Tweet.ADD_TIME, lastInterval()) // idx_addTime_status 索引
 				.orderByDesc(Tweet.SCORE)
 				.last("LIMIT " + limit)
 		);
+	}
+	public void syncUserStat(){
+
 	}
 
 	@Transactional

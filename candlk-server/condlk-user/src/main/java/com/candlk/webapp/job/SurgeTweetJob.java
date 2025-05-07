@@ -19,6 +19,7 @@ import org.springframework.data.redis.core.ZSetOperations;
 import org.springframework.scheduling.annotation.Scheduled;
 
 @Slf4j
+@Deprecated
 // @Configuration
 public class SurgeTweetJob {
 
@@ -51,7 +52,7 @@ public class SurgeTweetJob {
 	/**
 	 * 同步推文信息（生产：1 m/次）
 	 */
-	@Scheduled(cron = "${service.cron.SurgeTweetJob:0 0 0/1 * * ?}")
+	@Scheduled(cron = "${service.cron.SurgeTweetJob:0 0/1 * * * ?}")
 	public void run() {
 		log.info("开始【刷新浏览量】定时任务...");
 		final List<String> surgeTweetApis = findSurgeTweetApi();
