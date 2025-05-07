@@ -18,7 +18,7 @@ public class TweetWord extends TimeBasedEntity {
 
 	/** 词组 */
 	String words;
-	/** 事件类型：0=热门词；1=二级词；2=普通词；3=停用词 */
+	/** 关键词类型：0=热门词；1=二级词；2=普通词；3=停用词 */
 	Integer type;
 	/** 优先级 */
 	Integer priority;

@@ -4,9 +4,6 @@ import java.math.BigDecimal;
 import java.util.*;
 import javax.annotation.Resource;
 
-import co.elastic.clients.elasticsearch._types.Result;
-import co.elastic.clients.elasticsearch.core.UpdateRequest;
-import co.elastic.clients.elasticsearch.core.UpdateResponse;
 import com.baomidou.mybatisplus.core.conditions.update.UpdateWrapper;
 import com.candlk.common.dao.SmartQueryWrapper;
 import com.candlk.common.web.Page;
@@ -17,7 +14,6 @@ import com.candlk.webapp.es.ESEngineClient;
 import com.candlk.webapp.user.dao.TweetUserDao;
 import com.candlk.webapp.user.entity.TweetUser;
 import com.candlk.webapp.user.form.TweetUserQuery;
-import com.candlk.webapp.user.model.ESIndex;
 import com.candlk.webapp.user.model.TweetUserType;
 import lombok.extern.slf4j.Slf4j;
 import me.codeplayer.util.NumberUtil;
@@ -47,24 +43,8 @@ public class TweetUserService extends BaseServiceImpl<TweetUser, TweetUserDao, L
 	}
 
 	@Transactional
-	public void flag(TweetUser user, TweetUserType type) throws Exception {
-		update(new UpdateWrapper<TweetUser>().set(TweetUser.TYPE, type.value).eq(TweetUser.ID, user.getId()));
-
-		// 同步更新ES
-		final String userId = user.getUserId();
-		final UpdateRequest<Object, Object> updateRequest = UpdateRequest.of(b -> b
-				.index(ESIndex.KEYWORDS_ACCURATE_INDEX.value)
-				.id(userId)
-				.doc(Map.of(TweetUser.TYPE, type.value))  // 更新字段
-		);
-
-		final UpdateResponse<Object> response = esEngineClient.client.update(updateRequest, Object.class);
-
-		if (response.result() != Result.Updated && response.result() != Result.NoOp) {
-			log.warn("更新type失败: userId={}, result={}", userId, response.result());
-		} else {
-			log.info("成功更新 userId={} 的 type 为 {}", userId, type);
-		}
+	public void edit(TweetUser user, TweetUserType type) throws Exception {
+		super.update(new UpdateWrapper<TweetUser>().set(TweetUser.TYPE, type.value).eq(TweetUser.ID, user.getId()));
 	}
 
 	public boolean updateTweetLastTime(String username, Date now) {

@@ -11,7 +11,9 @@ import com.candlk.context.web.Jsons;
 import com.candlk.context.web.ProxyRequest;
 import com.candlk.webapp.base.action.BaseAction;
 import com.candlk.webapp.user.entity.TweetWord;
+import com.candlk.webapp.user.form.TweetWordQuery;
 import com.candlk.webapp.user.service.TweetWordService;
+import com.candlk.webapp.user.vo.TweetWordVO;
 import me.codeplayer.util.StringUtil;
 import org.springframework.web.bind.annotation.*;
 
@@ -27,14 +29,21 @@ public class WordAction extends BaseAction {
 	@Resource
 	TweetWordService tweetWordService;
 
+	@Ready("关键词列表")
+	@GetMapping("/list")
+	public Messager<Page<TweetWordVO>> list(ProxyRequest q, TweetWordQuery query) throws Exception {
+		final Page<TweetWord> page = tweetWordService.findPage(q.getPage(), query);
+		return Messager.exposeData(page.transformAndCopy(TweetWordVO::new));
+	}
+
 	@Ready("查询搜索关键词")
 	@GetMapping("/search")
-	public Messager<Page<TweetWord>> search(ProxyRequest q, String words, Integer type) throws Exception {
-		return Messager.exposeData(tweetWordService.search(q.getPage(), words, type));
+	public Messager<Page<TweetWordVO>> search(ProxyRequest q, TweetWordQuery query) throws Exception {
+		return Messager.exposeData(tweetWordService.search(q.getPage(), query).transformAndCopy(TweetWordVO::new));
 	}
 
 	@Ready("批量导入关键词")
-	@PostMapping("/imports")
+	@GetMapping("/imports")
 	public Messager<Void> imports(ProxyRequest q, String words, Integer type) throws Exception {
 		I18N.assertNotNull(words);
 		List<TweetWord> tweetWords = Jsons.parseArray(words, TweetWord.class);
@@ -51,7 +60,7 @@ public class WordAction extends BaseAction {
 	}
 
 	@Ready("批量删除关键词")
-	@PostMapping("/del")
+	@GetMapping("/del")
 	public Messager<Void> del(ProxyRequest q, String ids, Integer type) throws Exception {
 		I18N.assertNotNull(ids);
 		List<Long> tweetWords = Jsons.parseArray(ids, Long.class);
@@ -60,9 +69,19 @@ public class WordAction extends BaseAction {
 	}
 
 	@Ready("热词排名")
-	@PostMapping("/rank")
+	@GetMapping("/rank")
 	public Messager<List<TweetWord>> rank(ProxyRequest q, Integer type) throws Exception {
 		return Messager.exposeData(tweetWordService.rank(type));
+	}
+
+	@Ready("修改关键词")
+	@GetMapping("/edit")
+	public Messager<Void> edit(ProxyRequest q, Long id, Integer type) throws Exception {
+		I18N.assertNotNull(id);
+		TweetWord tweetWord = tweetWordService.get(id);
+		I18N.assertNotNull(tweetWord, "关键词不存在");
+		tweetWordService.edit(tweetWord, type);
+		return Messager.OK();
 	}
 
 }

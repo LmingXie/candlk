@@ -9,10 +9,11 @@ import com.candlk.common.web.Ready;
 import com.candlk.context.web.ProxyRequest;
 import com.candlk.webapp.base.action.BaseAction;
 import com.candlk.webapp.user.entity.TweetUser;
+import com.candlk.webapp.user.form.TweetUserForm;
 import com.candlk.webapp.user.form.TweetUserQuery;
-import com.candlk.webapp.user.model.TweetUserType;
 import com.candlk.webapp.user.service.TweetUserService;
 import com.candlk.webapp.user.vo.TweetUserVO;
+import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.annotation.*;
 
 /**
@@ -34,14 +35,12 @@ public class TweetUserAction extends BaseAction {
 		return Messager.exposeData(page.transformAndCopy(TweetUserVO::new));
 	}
 
-	@Ready("标记账号")
-	@PostMapping("/flag")
-	public Messager<Void> flag(ProxyRequest q, Long id, TweetUserType type) throws Exception {
-		I18N.assertNotNull(id);
-		I18N.assertNotNull(type);
-		TweetUser tweetUser = tweetUserService.get(id);
-		I18N.assertNotNull(type, "账号不存在");
-		tweetUserService.flag(tweetUser, type);
+	@Ready("修改账号")
+	@GetMapping("/edit")
+	public Messager<Void> edit(ProxyRequest q, @Validated TweetUserForm form) throws Exception {
+		TweetUser tweetUser = tweetUserService.get(form.id);
+		I18N.assertNotNull(form.type, "账号不存在");
+		tweetUserService.edit(tweetUser, form.type);
 		return Messager.OK();
 	}
 
