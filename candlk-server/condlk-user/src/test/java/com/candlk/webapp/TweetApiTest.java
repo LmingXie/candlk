@@ -9,7 +9,7 @@ import com.alibaba.fastjson2.JSONObject;
 import com.candlk.context.web.Jsons;
 import com.candlk.webapp.api.*;
 import com.candlk.webapp.es.ESEngineClient;
-import com.candlk.webapp.job.SurgeTweetJob;
+import com.candlk.webapp.job.TweetJob;
 import com.candlk.webapp.user.entity.TweetWord;
 import com.candlk.webapp.user.model.ESIndex;
 import com.candlk.webapp.user.service.*;
@@ -108,6 +108,14 @@ public class TweetApiTest {
 		tweetWordService.deleteByIds(CollectionUtil.toList(all, TweetWord::getId));
 	}
 
+	@Resource
+	TweetJob tweetJob;
+
+	@Test
+	public void testTweetJob() {
+		tweetJob.run();
+	}
+
 	// @Resource
 	// GenTokenJob genTokenJob;
 	//
@@ -116,13 +124,13 @@ public class TweetApiTest {
 	// 	genTokenJob.run();
 	// }
 
-	@Resource
-	SurgeTweetJob surgeTweetJob;
-
-	@Test
-	public void testSurgeTweetJob() {
-		surgeTweetJob.run();
-	}
+	// @Resource
+	// SurgeTweetJob surgeTweetJob;
+	//
+	// @Test
+	// public void testSurgeTweetJob() {
+	// 	surgeTweetJob.run();
+	// }
 
 }
 

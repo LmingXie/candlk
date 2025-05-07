@@ -85,8 +85,7 @@ public class TweetApi extends BaseHttpUtil {
 		final String uri = baseURI + "/tweets?ids=" + ids + TWEET_FIELDS + MEDIA_FIELDS;
 		Messager<JSONObject> resp = doGet(URI.create(uri));
 		if (resp.isOK()) {
-			JSONObject data = resp.data();
-			List<TweetInfo> tweetInfo = data.getList("data", TweetInfo.class);
+			List<TweetInfo> tweetInfo = resp.data().getList("data", TweetInfo.class);
 			return resp.castDataType(tweetInfo);
 		}
 		return null;

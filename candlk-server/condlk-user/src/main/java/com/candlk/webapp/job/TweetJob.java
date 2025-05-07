@@ -11,10 +11,11 @@ import com.candlk.webapp.user.service.TweetService;
 import com.candlk.webapp.user.service.TweetUserService;
 import lombok.extern.slf4j.Slf4j;
 import me.codeplayer.util.StringUtil;
+import org.springframework.context.annotation.Configuration;
 import org.springframework.scheduling.annotation.Scheduled;
 
 @Slf4j
-// @Configuration
+@Configuration
 public class TweetJob {
 
 	@Resource
@@ -32,18 +33,18 @@ public class TweetJob {
 		log.info("结束同步推文数据任务。");
 	}
 
+	static final TweetApi tweetApi = new TweetApi("AAAAAAAAAAAAAAAAAAAAAKmD0gEAAAAAFh206gX6pxFlUtLomToW9lgOcfk%3DEoGTJWz5e1HWAdOm0SrVayZakveYertsWXjO68cK6ypIE7hwZU",
+			"http://127.0.0.1:10809");
+
 	private List<TweetInfo> sync() {
 		// 查询前100条推文
 		List<String> oldTweets = tweetService.lastList(100);
 		final String tweetIds = StringUtil.joins(oldTweets, ",");
 
-		// TODO 从数据库查询配置（实现动态）
-		TweetApi tweetApi = new TweetApi("AAAAAAAAAAAAAAAAAAAAAK450wEAAAAAGq8cOrQ4HTVBBn9Z24umOk8kmik%3DkjB0pGI1V3v3c9WkcQCRVjbfa4DPxJdeTxsF0hWVnIuXrOPVVv",
-				"http://127.0.0.1:10809");
-
 		log.info("推文ID：{}", tweetIds);
 		Messager<List<TweetInfo>> tweetsMsg = tweetApi.tweets(tweetIds);
-		log.info("推文：{}", Jsons.encode(tweetsMsg));
+
+		log.info("推文：{}", Jsons.encode(tweetIds));
 		if (tweetsMsg == null || !tweetsMsg.isOK()) {
 			log.warn("推文获取失败！");
 			return null;

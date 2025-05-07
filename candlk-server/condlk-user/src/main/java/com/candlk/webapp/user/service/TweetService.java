@@ -258,7 +258,7 @@ public class TweetService extends BaseServiceImpl<Tweet, TweetDao, Long> {
 		return baseDao.lastList(new SmartQueryWrapper<>()
 				.eq(Tweet.STATUS, Tweet.INIT)
 				.between(Tweet.ADD_TIME, lastInterval()) // idx_addTime_status 索引
-				.orderByDesc(Tweet.ADD_TIME)
+				.orderByDesc(Tweet.SCORE)
 				.last("LIMIT " + limit)
 		);
 	}
@@ -268,7 +268,6 @@ public class TweetService extends BaseServiceImpl<Tweet, TweetDao, Long> {
 		if (!tweets.isEmpty()) {
 			final int size = tweets.size();
 			List<UpdateWrapper<Tweet>> wrappers = new ArrayList<>(size);
-			List<UpdateWrapper<TokenEvent>> tokenWrappers = new ArrayList<>(size);
 			for (TweetInfo tweet : tweets) {
 				UpdateWrapper<Tweet> wrapper = new UpdateWrapper<Tweet>()
 						.set(Tweet.ORG_MSG, Jsons.encode(tweet))
@@ -297,9 +296,6 @@ public class TweetService extends BaseServiceImpl<Tweet, TweetDao, Long> {
 				wrappers.add(wrapper);
 			}
 			super.updateBatchByWrappers(wrappers);
-			if (!tokenWrappers.isEmpty()) {
-				tokenEventService.updateBatchByWrappers(tokenWrappers);
-			}
 		}
 	}
 
