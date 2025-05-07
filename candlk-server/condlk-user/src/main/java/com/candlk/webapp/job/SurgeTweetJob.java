@@ -3,8 +3,12 @@ package com.candlk.webapp.job;
 import java.util.*;
 import javax.annotation.Resource;
 
+import com.candlk.common.model.Messager;
 import com.candlk.common.redis.RedisUtil;
+import com.candlk.common.util.Common;
+import com.candlk.context.web.Jsons;
 import com.candlk.webapp.api.TweetApi;
+import com.candlk.webapp.api.TweetInfo;
 import com.candlk.webapp.user.entity.Tweet;
 import com.candlk.webapp.user.model.UserRedisKey;
 import com.candlk.webapp.user.service.TweetService;
@@ -25,7 +29,7 @@ public class SurgeTweetJob {
 			"AAAAAAAAAAAAAAAAAAAAAK450wEAAAAAc6mb7tVQF3%2B6ssbH2borX%2F0jQpI%3DrxKSmb3okKK49o5Z1P4RFZXgIK08FXXhc1XjSbVrJd1y0bo1sp"
 	};
 	/** 往前追溯10倍的推文（3个秘钥 = 3000条推文） */
-	static final int COUNTER_MAX = SURGE_TWEET_KEYS.length * 100 * 5; // TODO: 2025/5/6 10倍
+	static final int COUNTER_MAX = SURGE_TWEET_KEYS.length * 100 * 10;
 
 	public List<String> findSurgeTweetApi() {
 		// 查询API使用情况
@@ -59,7 +63,8 @@ public class SurgeTweetJob {
 		int limit = surgeTweetApis.size() * 100;
 
 		long counter = score % 1_000_000L;
-		Date prevTime = score > 1_000_000_000L ? new Date(score / 1_000L) : null; // 无需再乘以1000转化为毫秒级
+		// 无需再乘以1000转化为毫秒级
+		Date prevTime = score > 1_000_000_000L ? new Date((score / 1_000L) - 1/*包括最后一毫秒*/) : null;
 		ZSetOperations<String, String> opsForZSet = RedisUtil.getStringRedisTemplate().opsForZSet();
 		if (counter > COUNTER_MAX) {
 			// 重置计数器
@@ -101,23 +106,22 @@ public class SurgeTweetJob {
 	private void sync(List<Tweet> oldTweets, String surgeTweetKey) {
 		final TweetApi tweetApi = new TweetApi(surgeTweetKey, "http://127.0.0.1:10809");
 
-		final String tweetIds = StringUtil.joins(oldTweets, ",");
+		final String tweetIds = StringUtil.join(oldTweets, Tweet::getTweetId, Common.SEP);
 
 		log.info("推文ID：{}", tweetIds);
 		// 记录API使用情况
 		RedisUtil.getStringRedisTemplate().opsForZSet().add(UserRedisKey.SURGE_TWEET_API_LIMIT, surgeTweetKey,
-				(double) System.currentTimeMillis() / 1000L);
+				NumberUtil.getDouble(System.currentTimeMillis() / 1000L));
 
-		// TODO: 2025/5/6 开放同步
-		// Messager<List<TweetInfo>> tweetsMsg = tweetApi.tweets(tweetIds);
-		// log.info("推文：{}", Jsons.encode(tweetsMsg));
-		// if (tweetsMsg == null || !tweetsMsg.isOK()) {
-		// 	log.warn("推文获取失败！");
-		// 	return;
-		// }
-		// // 将最新推文数据刷新到DB
-		// List<TweetInfo> tweets = tweetsMsg.data();
-		// tweetService.sync(tweets, true);
+		Messager<List<TweetInfo>> tweetsMsg = tweetApi.tweets(tweetIds);
+		log.info("推文：{}", Jsons.encode(tweetsMsg));
+		if (tweetsMsg == null || !tweetsMsg.isOK()) {
+			log.warn("推文获取失败！");
+			return;
+		}
+		// 将最新推文数据刷新到DB
+		List<TweetInfo> tweets = tweetsMsg.data();
+		tweetService.sync(tweets, true);
 	}
 
 }

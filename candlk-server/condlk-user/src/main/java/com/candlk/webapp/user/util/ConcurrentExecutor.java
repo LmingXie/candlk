@@ -9,7 +9,7 @@ import lombok.extern.slf4j.Slf4j;
 @Slf4j
 public class ConcurrentExecutor {
 
-	private static final ExecutorService executor = Executors.newFixedThreadPool(2);
+	private static final ExecutorService executor = Executors.newFixedThreadPool(4);
 
 	public static <T> void runConcurrently(List<T> list, Consumer<T> task) throws InterruptedException {
 		final List<Future<?>> futures = new CopyOnWriteArrayList<>();

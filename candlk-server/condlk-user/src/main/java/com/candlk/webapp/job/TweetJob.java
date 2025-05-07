@@ -11,11 +11,10 @@ import com.candlk.webapp.user.service.TweetService;
 import com.candlk.webapp.user.service.TweetUserService;
 import lombok.extern.slf4j.Slf4j;
 import me.codeplayer.util.StringUtil;
-import org.springframework.context.annotation.Configuration;
 import org.springframework.scheduling.annotation.Scheduled;
 
 @Slf4j
-@Configuration
+// @Configuration
 public class TweetJob {
 
 	@Resource

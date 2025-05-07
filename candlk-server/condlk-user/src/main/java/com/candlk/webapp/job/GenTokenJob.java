@@ -44,8 +44,8 @@ public class GenTokenJob {
 	public void run() throws Exception {
 		log.info("开始生成Token数据信息...");
 
-		// 根据评分排名，生成Token TODO 调整limit
-		List<Tweet> tweets = tweetService.lastGenToken(10);
+		// 根据评分排名，生成Token
+		List<Tweet> tweets = tweetService.lastGenToken(100);
 		if (!tweets.isEmpty()) {
 			List<UpdateWrapper<Tweet>> updateWrappers = new ArrayList<>(tweets.size());
 			for (Tweet tweet : tweets) {
