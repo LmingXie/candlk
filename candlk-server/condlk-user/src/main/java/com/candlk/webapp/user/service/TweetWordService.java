@@ -10,17 +10,19 @@ import co.elastic.clients.elasticsearch.core.*;
 import com.baomidou.mybatisplus.core.conditions.query.QueryWrapper;
 import com.baomidou.mybatisplus.core.conditions.update.UpdateWrapper;
 import com.candlk.common.dao.SmartQueryWrapper;
+import com.candlk.common.util.BeanUtil;
+import com.candlk.common.util.Common;
 import com.candlk.common.web.Page;
 import com.candlk.webapp.base.service.BaseServiceImpl;
 import com.candlk.webapp.es.ESEngineClient;
 import com.candlk.webapp.user.dao.TweetWordDao;
-import com.candlk.webapp.user.entity.TweetUser;
-import com.candlk.webapp.user.entity.TweetWord;
+import com.candlk.webapp.user.entity.*;
 import com.candlk.webapp.user.form.TweetWordQuery;
 import com.candlk.webapp.user.model.ESIndex;
 import lombok.extern.slf4j.Slf4j;
 import me.codeplayer.util.CollectionUtil;
 import me.codeplayer.util.X;
+import org.apache.dubbo.common.utils.CollectionUtils;
 import org.springframework.dao.DuplicateKeyException;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -127,27 +129,28 @@ public class TweetWordService extends BaseServiceImpl<TweetWord, TweetWordDao, L
 			throw new IllegalArgumentException("存在重复的关键词！");
 		}
 		if (type.equals(TweetWord.TYPE_STOP)) {
-			esEngineClient.bulkAddDoc(ESIndex.STOP_WORDS_INDEX, tweetWords);
+			esEngineClient.bulkAddDoc(ESIndex.STOP_WORDS_INDEX, BeanUtil.convertAndCopy(tweetWords, StopWord::new));
 		} else {
 			esEngineClient.bulkAddDoc(ESIndex.KEYWORDS_ACCURATE_INDEX, tweetWords);
 		}
 	}
 
 	@Transactional
-	public void del(List<Long> ids, Integer type) throws Exception {
-		final boolean isStop = type.equals(TweetWord.TYPE_STOP);
-		if (isStop) {
-			List<TweetWord> byIds = findByIds(ids);
-			if (byIds.isEmpty()) {
-				return;
-			}
-			esEngineClient.stopWordsCache.removeAll(CollectionUtil.toSet(byIds, TweetWord::getWords));
+	public void del(List<TweetWord> words) throws Exception {
+		Map<Boolean, List<TweetWord>> group = Common.groupBy(words, t -> TweetWord.TYPE_STOP == t.getType());
+		List<TweetWord> stopWords = group.get(true);
+		List<TweetWord> nonStopWords = group.get(false);
+
+		super.deleteByIds(CollectionUtil.toList(words, TweetWord::getId));
+
+		if (CollectionUtils.isNotEmpty(stopWords)) {
+			esEngineClient.stopWordsCache.removeAll(CollectionUtil.toSet(stopWords, TweetWord::getWords));
+
+			esEngineClient.batchDelByIds(ESIndex.STOP_WORDS_INDEX, CollectionUtil.toList(stopWords, word -> word.getId().toString()));
 		}
-
-		super.deleteByIds(ids);
-
-		esEngineClient.batchDelByIds(isStop ? ESIndex.STOP_WORDS_INDEX : ESIndex.KEYWORDS_ACCURATE_INDEX,
-				CollectionUtil.toList(ids, Object::toString));
+		if (CollectionUtils.isNotEmpty(nonStopWords)) {
+			esEngineClient.batchDelByIds(ESIndex.KEYWORDS_ACCURATE_INDEX, CollectionUtil.toList(nonStopWords, word -> word.getId().toString()));
+		}
 
 	}
 

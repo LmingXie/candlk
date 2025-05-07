@@ -9,7 +9,6 @@ import com.candlk.common.redis.RedisUtil;
 import com.candlk.common.web.Page;
 import com.candlk.common.web.Ready;
 import com.candlk.context.model.RedisKey;
-import com.candlk.context.web.Jsons;
 import com.candlk.context.web.ProxyRequest;
 import com.candlk.webapp.base.action.BaseAction;
 import com.candlk.webapp.user.entity.TweetWord;
@@ -19,6 +18,7 @@ import com.candlk.webapp.user.service.TweetWordService;
 import com.candlk.webapp.user.vo.TweetWordVO;
 import lombok.extern.slf4j.Slf4j;
 import me.codeplayer.util.StringUtil;
+import org.apache.dubbo.common.utils.CollectionUtils;
 import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.annotation.*;
 
@@ -89,10 +89,12 @@ public class WordAction extends BaseAction {
 
 	@Ready("批量删除关键词")
 	@GetMapping("/del")
-	public Messager<Void> del(ProxyRequest q, String ids, Integer type) throws Exception {
-		I18N.assertNotNull(ids);
-		List<Long> tweetWords = Jsons.parseArray(ids, Long.class);
-		tweetWordService.del(tweetWords, type);
+	public Messager<Void> del(ProxyRequest q, TweetWordForm form) throws Exception {
+		I18N.assertFalse(CollectionUtils.isEmpty(form.ids), "参数错误");
+		List<TweetWord> words = tweetWordService.findByIds(form.ids);
+		if (!words.isEmpty()) {
+			tweetWordService.del(words);
+		}
 		return Messager.OK();
 	}
 
