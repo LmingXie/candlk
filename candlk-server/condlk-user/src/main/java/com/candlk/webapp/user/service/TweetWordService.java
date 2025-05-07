@@ -1,8 +1,7 @@
 package com.candlk.webapp.user.service;
 
 import java.io.IOException;
-import java.util.List;
-import java.util.Map;
+import java.util.*;
 import javax.annotation.Resource;
 
 import co.elastic.clients.elasticsearch._types.Result;
@@ -20,7 +19,8 @@ import com.candlk.webapp.user.entity.TweetWord;
 import com.candlk.webapp.user.form.TweetWordQuery;
 import com.candlk.webapp.user.model.ESIndex;
 import lombok.extern.slf4j.Slf4j;
-import me.codeplayer.util.*;
+import me.codeplayer.util.CollectionUtil;
+import me.codeplayer.util.X;
 import org.springframework.dao.DuplicateKeyException;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -113,6 +113,10 @@ public class TweetWordService extends BaseServiceImpl<TweetWord, TweetWordDao, L
 			return s;
 		}, TweetWord.class);
 		return ESEngineClient.toT(response);
+	}
+
+	public Set<String> findWords(List<String> words) {
+		return CollectionUtil.toSet(selectList(new QueryWrapper<TweetWord>().select(TweetWord.WORDS).in(TweetWord.WORDS, words)), TweetWord::getWords);
 	}
 
 	@Transactional
