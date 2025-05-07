@@ -17,7 +17,20 @@ import org.apache.ibatis.annotations.Select;
  */
 public interface TweetDao extends BaseDao<Tweet> {
 
-	@Select("SELECT * FROM x_tweet ${ew.customSqlSegment}")
+	@Select("""
+			SELECT t.tweet_id,t.coin,t.symbol,t.desc,
+
+			tw.type,tw.provider_type,tw.text,
+			tw.retweet, tw.reply, tw.likes, tw.quote, tw.bookmark, tw.impression,
+			tw.add_time,tw.update_time,tw.username,tw.images,tw.videos,tw.score,tw.words,
+			
+			tu.avatar, tu.type AS userType ,tu.followers, tu.score AS userScore
+			
+			FROM x_token_event t
+			LEFT JOIN x_tweet tw ON  t.tweet_id= tw.id
+			LEFT JOIN x_tweet_user tu ON tw.username = tu.username
+			${ew.customSqlSegment}
+			""")
 	Page<TweetVO> findPage(Page<?> page, @Param("ew") Wrapper<?> wrapper);
 
 	@Select("SELECT tweet_id, username FROM x_tweet ${ew.customSqlSegment}")

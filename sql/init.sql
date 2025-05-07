@@ -1,7 +1,7 @@
 CREATE TABLE `x_token_event` (
  `id` int(10) unsigned NOT NULL AUTO_INCREMENT COMMENT '主键ID',
  `tweet_id` int(10) unsigned NOT NULL COMMENT '推文ID',
- `type` tinyint(3) unsigned NOT NULL COMMENT '事件类型：0=特殊关注账号；1=热门推文；2=浏览量猛增；',
+ `type` tinyint(3) unsigned NOT NULL COMMENT '类型：0=特殊关注推；1=热门评分推文；2=浏览猛增推文；',
  `coin` varchar(100) NOT NULL DEFAULT '' COMMENT '代币名称',
  `symbol` varchar(100) NOT NULL DEFAULT '' COMMENT '代币简称',
  `ca` varchar(100) CHARACTER SET latin1 NOT NULL DEFAULT '' COMMENT '代币地址',
@@ -10,7 +10,8 @@ CREATE TABLE `x_token_event` (
  `add_time` datetime NOT NULL DEFAULT CURRENT_TIMESTAMP COMMENT '添加时间',
  `update_time` datetime NOT NULL DEFAULT CURRENT_TIMESTAMP COMMENT '最后更新时间',
  PRIMARY KEY (`id`),
- UNIQUE KEY `uk_tweetId` (`tweet_id`)
+ UNIQUE KEY `uk_tweetId` (`tweet_id`),
+ KEY `idx_type_status` (`type`,`status`)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COMMENT='代币事件表';
 
 CREATE TABLE `x_tweet` (

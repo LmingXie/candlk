@@ -17,7 +17,7 @@ public class TokenEvent extends TimeBasedEntity {
 
 	/** 推文ID */
 	Long tweetId;
-	/** 事件类型：0=特殊关注账号；1=热门推文；2=浏览量猛增； */
+	/** 事件类型：0=特殊关注推；1=热门评分推文；2=浏览猛增推文； */
 	Integer type;
 	/** 代币名称 */
 	String coin;

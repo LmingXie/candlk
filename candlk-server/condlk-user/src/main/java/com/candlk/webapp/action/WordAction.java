@@ -110,6 +110,7 @@ public class WordAction extends BaseAction {
 		I18N.assertNotNull(id);
 		TweetWord tweetWord = tweetWordService.get(id);
 		I18N.assertNotNull(tweetWord, "关键词不存在");
+		I18N.assertTrue(tweetWord.getType() != TweetWord.TYPE_STOP, "不可修改停用词！");
 		tweetWordService.edit(tweetWord, type);
 		return Messager.OK();
 	}

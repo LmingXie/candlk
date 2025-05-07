@@ -56,7 +56,8 @@ public class TweetUser extends TimeBasedEntity {
 	TweetUserType type;
 	/** 业务标识 */
 	Integer bizFlag;
-	/** 推文分数 */
+
+	/** 用户分数 */
 	BigDecimal score;
 
 	public static final String LOCATION = "location";

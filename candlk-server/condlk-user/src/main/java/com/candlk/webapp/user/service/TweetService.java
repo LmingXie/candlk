@@ -15,7 +15,7 @@ import co.elastic.clients.elasticsearch.core.BulkRequest;
 import co.elastic.clients.elasticsearch.core.SearchResponse;
 import com.baomidou.mybatisplus.core.conditions.update.UpdateWrapper;
 import com.candlk.common.dao.SmartQueryWrapper;
-import com.candlk.common.model.TimeInterval;
+import com.candlk.common.model.*;
 import com.candlk.common.redis.RedisUtil;
 import com.candlk.common.web.Page;
 import com.candlk.context.model.RedisKey;
@@ -55,7 +55,12 @@ public class TweetService extends BaseServiceImpl<Tweet, TweetDao, Long> {
 	TokenEventService tokenEventService;
 
 	public Page<TweetVO> findPage(Page<?> page, TweetQuery query, TimeInterval interval) {
+		final String prefix = "t.";
 		return baseDao.findPage(page, new SmartQueryWrapper<Tweet>()
+				.eq(prefix + TokenEvent.TYPE, query.type)
+				.eq(prefix + TokenEvent.STATUS, Status.NO.value)
+				.between(prefix + Tweet.ADD_TIME, interval)
+				.orderByDesc(prefix + Tweet.ADD_TIME)
 		);
 	}
 
@@ -262,7 +267,8 @@ public class TweetService extends BaseServiceImpl<Tweet, TweetDao, Long> {
 				.last("LIMIT " + limit)
 		);
 	}
-	public void syncUserStat(){
+
+	public void syncUserStat() {
 
 	}
 
