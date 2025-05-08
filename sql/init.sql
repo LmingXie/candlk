@@ -5,7 +5,7 @@ CREATE TABLE `x_token_event` (
  `coin` varchar(100) NOT NULL DEFAULT '' COMMENT '代币名称',
  `symbol` varchar(100) NOT NULL DEFAULT '' COMMENT '代币简称',
  `ca` varchar(100) CHARACTER SET latin1 NOT NULL DEFAULT '' COMMENT '代币地址',
- `desc` varchar(1000) NOT NULL DEFAULT '' COMMENT '代币简介',
+ `description` varchar(1000) NOT NULL DEFAULT '' COMMENT '代币简介',
  `status` tinyint(4) unsigned NOT NULL COMMENT '业务状态（0=待创建；1=已创建）',
  `add_time` datetime NOT NULL DEFAULT CURRENT_TIMESTAMP COMMENT '添加时间',
  `update_time` datetime NOT NULL DEFAULT CURRENT_TIMESTAMP COMMENT '最后更新时间',

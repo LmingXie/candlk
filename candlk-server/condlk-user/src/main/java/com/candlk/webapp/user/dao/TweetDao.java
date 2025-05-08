@@ -18,7 +18,7 @@ import org.apache.ibatis.annotations.Select;
 public interface TweetDao extends BaseDao<Tweet> {
 
 	@Select("""
-			SELECT t.id, t.coin, t.symbol, t.desc,
+			SELECT t.id, t.coin, t.symbol, t.description, t.status, t.ca,
 			
 			tw.tweet_id, tw.type, tw.provider_type, tw.text,
 			tw.retweet, tw.reply, tw.likes, tw.quote, tw.bookmark, tw.impression,

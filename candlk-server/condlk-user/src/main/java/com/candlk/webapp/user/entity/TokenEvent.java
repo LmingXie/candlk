@@ -26,7 +26,7 @@ public class TokenEvent extends TimeBasedEntity {
 	/** 代币地址 */
 	String ca;
 	/** 代币简介 */
-	String desc;
+	String description;
 	/** 业务状态（0=待创建；1=已创建） */
 	Integer status;
 
@@ -38,7 +38,7 @@ public class TokenEvent extends TimeBasedEntity {
 	public static final String COIN = "coin";
 	public static final String SYMBOL = "symbol";
 	public static final String CA = "ca";
-	public static final String DESC = "desc";
+	public static final String DESCRIPTION = "description";
 	public static final String STATUS = "status";
 
 }

@@ -14,6 +14,8 @@ import lombok.Setter;
 @Setter
 public class TweetVO extends AbstractVO<Tweet> {
 
+	/** 业务状态（0=待创建；1=已创建） */
+	Integer status;
 	/** 推文ID */
 	String tweetId;
 	/** 类型：0=特殊关注推；1=热门评分推文；2=浏览猛增推文； */
