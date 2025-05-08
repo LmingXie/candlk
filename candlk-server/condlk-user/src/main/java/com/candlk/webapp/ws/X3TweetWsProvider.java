@@ -64,8 +64,6 @@ public class X3TweetWsProvider implements Listener, TweetWsApi {
 
 	@Override
 	public void onOpen(WebSocket webSocket) {
-		System.out.println("[WebSocket] Connected.");
-
 		// 订阅：包含CA的所有帖子
 		// webSocket.sendText("{\"action\":1,\"topic\":\"CA_ALL\"}", true);
 		// 订阅：焦点帖子

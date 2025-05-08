@@ -60,15 +60,21 @@ public class SystemInitializer implements SpringApplicationRunListener {
 	 */
 	public static void updateLog4j2Config() {
 		// 正式环境，将 日志级别上调至 info，并移除 "Console" Appender
-		if (!Env.inLocal() && !Boolean.parseBoolean(System.getProperty("debug"))) {
+		if (!Boolean.parseBoolean(System.getProperty("debug"))) {
 			final LoggerContext ctx = (LoggerContext) LogManager.getContext(false);
 			final Configuration config = ctx.getConfiguration();
-			//
-			for (LoggerConfig cfg : config.getLoggers().values()) {
-				if (cfg.getLevel().compareTo(Level.INFO) > 0) {
-					cfg.setLevel(Level.INFO);
+			if (Env.inLocal()) {
+				// 本地环境 Dubbo 无法互联，所以直接屏蔽掉循环报错
+				final String name = "org.apache.dubbo.remoting.transport.netty4";
+				LoggerConfig loggerConfig = new LoggerConfig(name, Level.OFF, false);
+				config.addLogger(name, loggerConfig);
+			} else {
+				for (LoggerConfig cfg : config.getLoggers().values()) {
+					if (cfg.getLevel().compareTo(Level.INFO) > 0) {
+						cfg.setLevel(Level.INFO);
+					}
+					cfg.removeAppender("Console");
 				}
-				cfg.removeAppender("Console");
 			}
 			//
 			ctx.updateLoggers();

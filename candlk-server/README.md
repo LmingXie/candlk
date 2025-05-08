@@ -58,3 +58,10 @@ elasticsearch-plugin install analysis-kuromoji
 # 韩语分词器
 elasticsearch-plugin install analysis-nori
 ```
+
+## 打包
+```shell
+mvn clean package -DskipTests
+
+java -jar target/condlk-user-1.0.0.jar --spring.profiles.active=prod
+```

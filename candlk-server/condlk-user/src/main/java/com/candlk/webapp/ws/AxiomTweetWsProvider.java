@@ -124,8 +124,6 @@ public class AxiomTweetWsProvider implements Listener, TweetWsApi {
 
 	@Override
 	public void onOpen(WebSocket webSocket) {
-		System.out.println("[WebSocket] Connected.");
-
 		// 订阅：活跃账户列表变更事件
 		// webSocket.sendText("{\"action\":\"join\",\"room\":\"twitter_active_list\"}", true);
 		// 订阅：帖子变更事件（活跃账户）
