@@ -54,12 +54,24 @@ public class TweetService extends BaseServiceImpl<Tweet, TweetDao, Long> {
 
 	public Page<TweetVO> findPage(Page<?> page, TweetQuery query, TimeInterval interval) {
 		final String prefix = "t.";
-		return baseDao.findPage(page, new SmartQueryWrapper<Tweet>()
+		var wrapper = new SmartQueryWrapper<Tweet>()
 				.eq(prefix + TokenEvent.TYPE, query.type)
 				.eq(prefix + TokenEvent.STATUS, query.status)
 				.eq("tw." + Tweet.USERNAME, query.username)
-				.between(prefix + Tweet.ADD_TIME, interval)
-				.orderByDesc(prefix + Tweet.ADD_TIME)
+				.between(prefix + Tweet.ADD_TIME, interval);
+		/*
+		全部类型推文/特殊关注推文：按照发布时间倒序
+		热门评分推文：按照评分倒序
+		浏览猛增推文：按照浏览量倒序
+		 */
+		if (query.type == null || query.type == 0) {
+			wrapper.orderByDesc(prefix + Tweet.ADD_TIME);
+		} else if (query.type == 1) {
+			wrapper.orderByDesc("( tw.score + tu.score )");
+		} else {
+			wrapper.orderByDesc("tw.impression");
+		}
+		return baseDao.findPage(page, wrapper
 		);
 	}
 
