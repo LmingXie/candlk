@@ -77,19 +77,27 @@ echo MySQL 启动成功！
 
 echo 启动 Elasticsearch...
 start "" /b cmd /c "cd /d D:\java\elasticsearch-9.0.0\bin && elasticsearch.bat"
-echo ES 服务启动成功！
+echo 等待 Elasticsearch 启动（检测端口 9200）...
+
+:wait_for_es
+timeout /t 2 >nul
+netstat -ano | findstr ":9200" >nul
+if errorlevel 1 (
+    echo 正在等待 Elasticsearch...
+    goto wait_for_es
+)
+
+echo ES 服务已成功启动！
 
 echo 启动 Redis...
 start "" /b cmd /c "cd /d D:\java\Redis-7.2.4-Windows-x64-msys2 && redis-server.exe redis.conf"
 echo Redis 启动成功！
-
-echo 等待 20 秒以确保依赖服务启动...
-timeout /t 20 /nobreak >nul
 
 echo 启动 Java 服务...
 cd /d D:\java
 java -jar condlk-user-1.0.0.jar --spring.profiles.active=prod
 
 exit
+
 
 ```

@@ -78,6 +78,7 @@ public class X3TweetWsProvider implements Listener, TweetWsApi {
 		// 定时任务间隔1分钟发送一次ping心跳
 
 		Listener.super.onOpen(webSocket);
+		log.info("【{}】建立连接成功！", getProvider());
 	}
 
 	public static final String CDN = "https://x3-media-pro-1.oss-cn-hongkong.aliyuncs.com/";
@@ -133,23 +134,23 @@ public class X3TweetWsProvider implements Listener, TweetWsApi {
 									.setVideos(videos)
 									.setUpdateTime(now)
 									.setAddTime(createTime == null ? now : new EasyDate(createTime * 1000).toDate());
-							tweetService.saveTweet(tweetInfo, author, provider, tweetId);
-						}
 
-						TweetUser tweetUser = new TweetUser()
-								.setProviderType(provider)
-								.setUserId(authorInfo.getString("id").replaceFirst("x_", ""))
-								.setUsername(author)
-								.setNickname(authorInfo.getString("name"))
-								.setAvatar(CDN + authorInfo.getString("avatar"))
-								.setBanner(CDN + authorInfo.getString("bk"))
-								.setDescription(JSONObject.of("text", authorInfo.getString("introduction")).toJSONString())
-								.setFollowers(authorInfo.getInteger("fanCount"))
-								.setFollowing(authorInfo.getInteger("focusCount"));
-						createTime = authorInfo.getLong("createTime");
-						tweetUser.setAddTime(createTime == null ? now : new EasyDate(createTime * 1000).toDate());
-						tweetUser.setUpdateTime(now);
-						tweetUserService.updateStat(tweetUser);
+							final TweetUser tweetUser = new TweetUser()
+									.setProviderType(provider)
+									.setUserId(authorInfo.getString("id").replaceFirst("x_", ""))
+									.setUsername(author)
+									.setNickname(authorInfo.getString("name"))
+									.setAvatar(CDN + authorInfo.getString("avatar"))
+									.setBanner(CDN + authorInfo.getString("bk"))
+									.setDescription(JSONObject.of("text", authorInfo.getString("introduction")).toJSONString())
+									.setFollowers(authorInfo.getInteger("fanCount"))
+									.setFollowing(authorInfo.getInteger("focusCount"));
+							createTime = authorInfo.getLong("createTime");
+							tweetUser.setAddTime(createTime == null ? now : new EasyDate(createTime * 1000).toDate());
+							tweetUser.setUpdateTime(now);
+
+							tweetService.saveTweet(tweetInfo, author, provider, tweetId, tweetUser);
+						}
 					}
 				} catch (Exception e) {
 					log.error("【{}】解析数据失败：", provider, e);

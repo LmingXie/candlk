@@ -76,7 +76,7 @@ public interface TweetWsApi {
 			// TODO: 2025/4/23 邮箱、页面 预警
 			this.connection();
 		} catch (Exception e) {
-			log.error("【{}】 重新连接失败！", getProvider());
+			log.error("【{}】 重新连接失败！", getProvider(), e);
 		}
 		return true;
 	}

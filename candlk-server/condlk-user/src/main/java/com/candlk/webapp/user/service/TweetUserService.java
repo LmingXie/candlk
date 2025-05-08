@@ -16,8 +16,8 @@ import com.candlk.webapp.user.entity.TweetUser;
 import com.candlk.webapp.user.form.TweetUserQuery;
 import com.candlk.webapp.user.model.TweetUserType;
 import lombok.extern.slf4j.Slf4j;
-import me.codeplayer.util.NumberUtil;
-import me.codeplayer.util.X;
+import me.codeplayer.util.*;
+import org.springframework.dao.DuplicateKeyException;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.util.CollectionUtils;
@@ -67,7 +67,14 @@ public class TweetUserService extends BaseServiceImpl<TweetUser, TweetUserDao, L
 		if (num < 1) {
 			log.info("【推特用户】新增用户数据：{}", username);
 			tweetUser.setType(TweetUserType.SPECIAL);
-			super.save(tweetUser);
+			// 记录为前一天，用于更新用户信息数据
+			final Date yesterday = new EasyDate().addDay(-1).toDate();
+			tweetUser.initTime(yesterday);
+			try {
+				super.save(tweetUser);
+			} catch (DuplicateKeyException e) { // 违反唯一约束
+				log.warn("【推特用户】违反唯一约束，入库失败：{}", username);
+			}
 		} else {
 			log.info("【推特用户】更新用户数据：{}", username);
 		}

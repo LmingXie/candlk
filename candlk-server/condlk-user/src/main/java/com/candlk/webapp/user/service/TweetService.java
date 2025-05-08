@@ -92,13 +92,16 @@ public class TweetService extends BaseServiceImpl<Tweet, TweetDao, Long> {
 	}
 
 	@Transactional
-	public void saveTweet(Tweet tweetInfo, String author, TweetProvider provider, String tweetId) {
+	public void saveTweet(Tweet tweetInfo, String author, TweetProvider provider, String tweetId, TweetUser tweetUser) {
 		try {
 			// 添加推文
 			super.save(tweetInfo
 					.setStatus(Tweet.QUALITY_NOT_PASS)
 					.setScore(calcScore(tweetInfo)) // 计算推文评分
 			);
+			if (tweetUser != null) {
+				tweetUserService.updateStat(tweetUser);
+			}
 
 			if (!tweetUserService.updateTweetLastTime(author, tweetInfo.getAddTime())) {
 				// Redis 记录新用户

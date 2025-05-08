@@ -24,7 +24,7 @@ import org.springframework.scheduling.annotation.Scheduled;
 import static com.candlk.webapp.user.service.TweetUserService.calcScore;
 
 @Slf4j
-@Configuration
+// @Configuration
 public class TweetSyncJob {
 
 	@Resource

@@ -204,24 +204,24 @@ public class AxiomTweetWsProvider implements Listener, TweetWsApi {
 										.setVideos(videos)
 										.setUpdateTime(now)
 										.setAddTime(parseDate(tweet.getString("created_at"), now));
-								tweetService.saveTweet(tweetInfo, author, provider, tweetId);
 
 								final JSONObject authorInfo = tweet.getJSONObject("author");
+								TweetUser tweetUser = null;
 								if (authorInfo != null) {
 									final JSONObject profile = authorInfo.getJSONObject("profile");
 									if (profile != null) {
-										final TweetUser tweetUser = new TweetUser()
+										tweetUser = new TweetUser()
 												.setProviderType(provider)
 												.setUsername(author)
 												.setNickname(profile.getString("name"))
 												.setAvatar(profile.getString("avatar"))
 												.setTweetLastTime(now);
-										// 记录为前一天，用于更新用户信息数据
-										final Date yesterday = new EasyDate().addDay(-1).toDate();
-										tweetUser.initTime(yesterday);
+										tweetUser.initTime(now);
 										tweetUserService.updateStat(tweetUser);
 									}
 								}
+								tweetService.saveTweet(tweetInfo, author, provider, tweetId, tweetUser);
+
 							}
 						}
 						case "following.update" -> {

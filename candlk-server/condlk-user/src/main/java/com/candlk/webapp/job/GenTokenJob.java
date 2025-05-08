@@ -26,7 +26,7 @@ import org.springframework.context.annotation.Configuration;
 import org.springframework.scheduling.annotation.Scheduled;
 
 @Slf4j
-@Configuration
+// @Configuration
 public class GenTokenJob {
 
 	@Resource
@@ -46,7 +46,7 @@ public class GenTokenJob {
 		log.info("开始生成Token数据信息...");
 
 		// 根据评分排名，生成Token
-		List<Tweet> tweets = tweetService.lastGenToken(100);
+		final List<Tweet> tweets = tweetService.lastGenToken(20);
 		if (!tweets.isEmpty()) {
 			final Date now = new Date();
 			final List<UpdateWrapper<Tweet>> updateWrappers = new ArrayList<>(tweets.size());
@@ -62,7 +62,7 @@ public class GenTokenJob {
 					final String[] pair = aiGenToken(tweet.getText());
 
 					// 通过DeepSeek 生成代币名称和符号
-					TokenEvent token = new TokenEvent()
+					final TokenEvent token = new TokenEvent()
 							.setTweetId(tweet.getId())
 							.setCoin(pair[0])
 							.setSymbol(pair[1])
@@ -84,9 +84,9 @@ public class GenTokenJob {
 		String coin = "", symbol = "";
 
 		try {
-			List<Term> segment = NotionalTokenizer.segment(text);
+			final List<Term> segment = NotionalTokenizer.segment(text);
 
-			Set<String> words = new HashSet<>(segment.size());
+			final Set<String> words = new HashSet<>(segment.size());
 			for (Term term : segment) {
 				// 字符必须大于1 && 不包含在内部停用词中
 				if (term.word.length() < 2 || esEngineClient.stopWordsCache.contains(term.word)) {
