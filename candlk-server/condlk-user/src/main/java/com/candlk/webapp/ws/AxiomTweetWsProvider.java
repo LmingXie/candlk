@@ -225,8 +225,8 @@ public class AxiomTweetWsProvider implements Listener, TweetWsApi {
 						}
 						case "following.update" -> {
 							// 更新账号数据
-							JSONObject user = postInfo.getJSONObject("user");
-							TweetUser tweetUser = new TweetUser()
+							final JSONObject user = postInfo.getJSONObject("user");
+							final TweetUser tweetUser = new TweetUser()
 									.setProviderType(provider)
 									.setUserId(user.getString("id"))
 									.setUsername(user.getString("handle"))
@@ -234,7 +234,7 @@ public class AxiomTweetWsProvider implements Listener, TweetWsApi {
 							tweetUser.setAddTime(parseDate(user.getString("created_at"), now));
 							tweetUser.setUpdateTime(now);
 
-							JSONObject profile = user.getJSONObject("profile");
+							final JSONObject profile = user.getJSONObject("profile");
 							if (profile != null) {
 								tweetUser.setNickname(profile.getString("name"))
 										.setAvatar(profile.getString("avatar"))
@@ -243,7 +243,7 @@ public class AxiomTweetWsProvider implements Listener, TweetWsApi {
 										.setLocation(profile.getString("location"))
 										.setDescription(profile.getString("description"));
 							}
-							JSONObject metrics = user.getJSONObject("metrics");
+							final JSONObject metrics = user.getJSONObject("metrics");
 							if (metrics != null) {
 								tweetUser.setFollowers(metrics.getInteger("followers"))
 										.setTweets(metrics.getInteger("tweets"))
