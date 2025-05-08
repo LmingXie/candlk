@@ -22,12 +22,13 @@ import com.candlk.webapp.user.service.TweetUserService;
 import lombok.extern.slf4j.Slf4j;
 import me.codeplayer.util.EasyDate;
 import org.apache.commons.lang3.StringUtils;
+import org.bitcoinj.core.Base58;
+import org.p2p.solanaj.core.Account;
+import org.p2p.solanaj.utils.TweetNaclFast;
 import org.springframework.http.*;
 import org.springframework.stereotype.Service;
 import org.springframework.util.CollectionUtils;
 import org.springframework.web.client.RestTemplate;
-import software.sava.core.accounts.Signer;
-import software.sava.core.encoding.Base58;
 
 @Slf4j
 @Service
@@ -51,9 +52,11 @@ public class AxiomTweetWsProvider implements Listener, TweetWsApi {
 	public void connection() {
 		final String walletPrivateKey = "2xJ1YaDTjYAfwomwiDQsiz6h16XJtxmG53XWnsSkppMbEkTmC1LL2Se9DDHfaQZL4J1chZ4ZHDvkFMpW6fCqq2Rg";
 		final byte[] secretKey = Base58.decode(walletPrivateKey);
-		Signer signer = Signer.createFromKeyPair(secretKey);
 
-		final String signerAddress = signer.publicKey().toBase58();
+		// 使用 Solanaj 的 Account 对象
+		Account account = new Account(secretKey);
+
+		final String signerAddress = account.getPublicKey().toBase58();
 		log.info("钱包地址：{}", signerAddress);
 
 		RestTemplate restTemplate = new RestTemplate();
@@ -75,9 +78,9 @@ public class AxiomTweetWsProvider implements Listener, TweetWsApi {
 		// 将消息编码为 UTF-8 字节
 		byte[] messageBytes = loginMessage.trim().getBytes(StandardCharsets.UTF_8);
 
-		// 直接使用 signer 签名！
-		byte[] signatureBytes = signer.sign(messageBytes);
-
+		// ✅ 使用 solanaj 自带的 TweetNaclFast.Signature 进行签名
+		final TweetNaclFast.Signature signer = new TweetNaclFast.Signature(new byte[0], account.getSecretKey());
+		final byte[] signatureBytes = signer.detached(messageBytes);
 		// 编码为 base58
 		final String base58Signature = Base58.encode(signatureBytes);
 
