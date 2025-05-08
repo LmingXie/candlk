@@ -45,4 +45,19 @@ public interface TweetDao extends BaseDao<Tweet> {
 			""")
 	List<Tweet> lastGenToken(@Param("ew") Wrapper<?> wrapper);
 
+	@Select("""
+			SELECT t.id, t.tweet_id, t.type, t.provider_type, t.text,
+			t.retweet, t.reply, t.likes, t.quote, t.bookmark, t.impression,
+			t.add_time, t.update_time, t.username, t.images, t.videos, t.score,
+			
+			tu.nickname, tu.avatar,  tu.score AS userScore,
+			te.status
+			
+			FROM x_tweet t
+			LEFT JOIN x_tweet_user tu ON t.username = tu.username
+			LEFT JOIN x_token_event te ON t.id = te.tweet_id
+			${ew.customSqlSegment}
+			""")
+	Page<TweetVO> findPageTrackers(Page<?> page, @Param("ew") Wrapper<?> wrapper);
+
 }

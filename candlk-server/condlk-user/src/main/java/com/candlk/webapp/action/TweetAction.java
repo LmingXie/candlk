@@ -48,4 +48,10 @@ public class TweetAction extends BaseAction {
 		return Messager.OK();
 	}
 
+	@Ready("追踪器推文列表")
+	@GetMapping("/trackers")
+	public Messager<Page<TweetVO>> trackers(ProxyRequest q, TweetQuery query) {
+		return Messager.exposeData(tweetService.findPageTrackers(q.getPage(), query, q.getInterval()));
+	}
+
 }

@@ -45,7 +45,7 @@ CREATE TABLE `x_tweet` (
 CREATE TABLE `x_tweet_user` (
     `id` int(10) unsigned NOT NULL AUTO_INCREMENT COMMENT '主键ID',
     `provider_type` tinyint(3) unsigned NOT NULL COMMENT '推文来源厂商类型',
-    `user_id` varchar(20) CHARACTER SET latin1 NOT NULL COMMENT '推特用户ID',
+    `user_id` varchar(20) CHARACTER SET latin1 COLLATE latin1_swedish_ci DEFAULT NULL COMMENT '推特用户ID',
     `username` varchar(100) CHARACTER SET latin1 NOT NULL COMMENT '推特用户账号名',
     `nickname` varchar(255) DEFAULT NULL COMMENT '推特昵称',
     `avatar` varchar(255) CHARACTER SET latin1 DEFAULT NULL COMMENT '推特头像',

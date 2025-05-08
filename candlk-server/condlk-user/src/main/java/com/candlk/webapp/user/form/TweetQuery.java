@@ -16,4 +16,7 @@ public class TweetQuery {
 	/** 业务状态（0=待创建；1=已创建） */
 	public Integer status;
 
+	/** 最小ID */
+	public Long minId;
+
 }

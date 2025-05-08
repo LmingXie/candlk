@@ -71,8 +71,24 @@ public class TweetService extends BaseServiceImpl<Tweet, TweetDao, Long> {
 		} else {
 			wrapper.orderByDesc("tw.impression");
 		}
-		return baseDao.findPage(page, wrapper
-		);
+		return baseDao.findPage(page, wrapper);
+	}
+
+	public Page<TweetVO> findPageTrackers(Page<?> page, TweetQuery query, TimeInterval interval) {
+		final String prefix = "t.";
+		var wrapper = new SmartQueryWrapper<Tweet>()
+				.eq(prefix + Tweet.USERNAME, query.username)
+				.gt(prefix + Tweet.ID, query.minId)
+				.between(prefix + Tweet.ADD_TIME, interval)
+				.orderByDesc("t.id");
+		if (query.status != null) {
+			if (query.status == TokenEvent.CREATE) {
+				wrapper.isNull("te." + TokenEvent.TYPE);
+			} else {
+				wrapper.isNotNull("te." + TokenEvent.TYPE);
+			}
+		}
+		return baseDao.findPageTrackers(page, wrapper);
 	}
 
 	@Transactional

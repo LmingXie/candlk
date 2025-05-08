@@ -56,18 +56,20 @@ public class TweetUserService extends BaseServiceImpl<TweetUser, TweetUserDao, L
 
 	@Transactional
 	public void updateStat(TweetUser tweetUser) {
-		final String userId = tweetUser.getUserId();
+		final String username = tweetUser.getUsername();
 		if (tweetUser.getFollowers() != null) {
 			tweetUser.setScore(BigDecimal.valueOf(calcScore(tweetUser.getFollowers())));
 		}
-		tweetUser.setUpdateTime(new Date());
-		int num = super.update(tweetUser, new UpdateWrapper<TweetUser>().eq(TweetUser.USERID, userId));
+		if (tweetUser.getUpdateTime() == null) {
+			tweetUser.setUpdateTime(new Date());
+		}
+		int num = super.update(tweetUser, new UpdateWrapper<TweetUser>().eq(TweetUser.USERNAME, username));
 		if (num < 1) {
-			log.info("【推特用户】新增用户数据：{}", userId);
+			log.info("【推特用户】新增用户数据：{}", username);
 			tweetUser.setType(TweetUserType.SPECIAL);
 			super.save(tweetUser);
 		} else {
-			log.info("【推特用户】更新用户数据：{}", userId);
+			log.info("【推特用户】更新用户数据：{}", username);
 		}
 	}
 

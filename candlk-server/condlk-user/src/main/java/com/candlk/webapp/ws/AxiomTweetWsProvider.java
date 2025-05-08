@@ -10,7 +10,8 @@ import java.util.*;
 import java.util.concurrent.CompletionStage;
 import javax.annotation.Resource;
 
-import com.alibaba.fastjson2.*;
+import com.alibaba.fastjson2.JSON;
+import com.alibaba.fastjson2.JSONObject;
 import com.candlk.common.security.AES;
 import com.candlk.context.web.Jsons;
 import com.candlk.webapp.user.entity.*;
@@ -19,6 +20,7 @@ import com.candlk.webapp.user.model.TweetType;
 import com.candlk.webapp.user.service.TweetService;
 import com.candlk.webapp.user.service.TweetUserService;
 import lombok.extern.slf4j.Slf4j;
+import me.codeplayer.util.EasyDate;
 import org.apache.commons.lang3.StringUtils;
 import org.springframework.http.*;
 import org.springframework.stereotype.Service;
@@ -167,7 +169,7 @@ public class AxiomTweetWsProvider implements Listener, TweetWsApi {
 					final Date now = new Date();
 					switch (eventType) {
 						case "tweet.update" -> {
-							JSONObject tweet = postInfo.getJSONObject("tweet");
+							final JSONObject tweet = postInfo.getJSONObject("tweet");
 							if (tweet != null) {
 								TweetType tweetType = TweetType.of(tweet.getString("type"));
 								if (tweetType == null || !tweetType.open) {
@@ -176,20 +178,21 @@ public class AxiomTweetWsProvider implements Listener, TweetWsApi {
 								// 解析并推文数据
 								final String tweetId = tweet.getString("id");
 								final String author = axiomTwitter.content.handle.trim();
-								JSONObject body = tweet.getJSONObject("body");
+
+								final JSONObject body = tweet.getJSONObject("body");
 								// 使用正则表达式去除以 https://t.co/ 开头的推文尾部 短链接
 								final String text = body.getString("text").replaceAll("https://t\\.co/\\S+", "").trim();
 								if (StringUtils.isEmpty(text)) {
 									return;
 								}
 
-								JSONObject media = tweet.getJSONObject("media");
+								final JSONObject media = tweet.getJSONObject("media");
 								// 引用图片
-								List<String> images = media.getList("images", String.class);
+								final List<String> images = media.getList("images", String.class);
 								// 引用的视频
-								List<String> videos = media.getList("videos", String.class);
+								final List<String> videos = media.getList("videos", String.class);
 
-								Tweet tweetInfo = new Tweet()
+								final Tweet tweetInfo = new Tweet()
 										.setProviderType(provider)
 										.setType(tweetType)
 										.setUsername(author)
@@ -201,6 +204,23 @@ public class AxiomTweetWsProvider implements Listener, TweetWsApi {
 										.setUpdateTime(now)
 										.setAddTime(parseDate(tweet.getString("created_at"), now));
 								tweetService.saveTweet(tweetInfo, author, provider, tweetId);
+
+								final JSONObject authorInfo = tweet.getJSONObject("author");
+								if (authorInfo != null) {
+									final JSONObject profile = authorInfo.getJSONObject("profile");
+									if (profile != null) {
+										final TweetUser tweetUser = new TweetUser()
+												.setProviderType(provider)
+												.setUsername(author)
+												.setNickname(profile.getString("name"))
+												.setAvatar(profile.getString("avatar"))
+												.setTweetLastTime(now);
+										// 记录为前一天，用于更新用户信息数据
+										final Date yesterday = new EasyDate().addDay(-1).toDate();
+										tweetUser.initTime(yesterday);
+										tweetUserService.updateStat(tweetUser);
+									}
+								}
 							}
 						}
 						case "following.update" -> {

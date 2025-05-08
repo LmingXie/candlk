@@ -35,6 +35,8 @@ public class TweetVO extends AbstractVO<Tweet> {
 	TweetProvider providerType;
 	/** 推特用户账号名 */
 	String username;
+	/** 昵称 */
+	String nickname;
 	/** 推文内容 */
 	String text;
 	/** 此推文被转发的次数 */
