@@ -40,14 +40,15 @@ public class GenTokenJob {
 	/**
 	 * 根据评分排名，生成Token（生产：5 m/次；）
 	 */
-	@Scheduled(cron = "${service.cron.GenTokenJob:0 0/5 * * * ?}")
+	@Scheduled(cron = "${service.cron.GenTokenJob:0 0/1 * * * ?}")
 	public void run() throws Exception {
 		log.info("开始生成Token数据信息...");
 
 		// 根据评分排名，生成Token
 		List<Tweet> tweets = tweetService.lastGenToken(100);
 		if (!tweets.isEmpty()) {
-			List<UpdateWrapper<Tweet>> updateWrappers = new ArrayList<>(tweets.size());
+			final Date now = new Date();
+			final List<UpdateWrapper<Tweet>> updateWrappers = new ArrayList<>(tweets.size());
 			for (Tweet tweet : tweets) {
 				updateWrappers.add(new UpdateWrapper<Tweet>()
 						.set(Tweet.STATUS, Tweet.NEW_TOKEN)
@@ -68,6 +69,7 @@ public class GenTokenJob {
 							// 热门推文 由定时任务检查是否可以成功 浏览量猛增 推文
 							.setType(TweetUserType.SPECIAL == tweet.getUserType()
 									? TokenEvent.TYPE_SPECIAL : TokenEvent.TYPE_HOT);
+					token.initTime(now);
 					tokenEventService.save(token);
 				} catch (Exception e) {
 					log.error("生成代币名称和代币符号失败：", e);
@@ -101,6 +103,7 @@ public class GenTokenJob {
 						JSONObject tokenInfo = Jsons.parseObject(fixedText);
 						coin = tokenInfo.getString("name");
 						symbol = tokenInfo.getString("symbol");
+						log.info("【DeepSeek】生成代币名称和代币符号成功：{} {}", coin, symbol);
 					}
 				}
 			}

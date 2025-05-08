@@ -2,17 +2,17 @@ package com.candlk.webapp;
 
 import java.io.File;
 import java.io.IOException;
+import java.math.BigDecimal;
 import java.util.*;
 import javax.annotation.Resource;
 
 import com.alibaba.fastjson2.JSONObject;
+import com.candlk.common.model.Messager;
 import com.candlk.context.web.Jsons;
 import com.candlk.webapp.api.*;
 import com.candlk.webapp.es.ESEngineClient;
-import com.candlk.webapp.job.SurgeTweetJob;
-import com.candlk.webapp.user.entity.Tweet;
-import com.candlk.webapp.user.entity.TweetWord;
-import com.candlk.webapp.user.model.ESIndex;
+import com.candlk.webapp.user.entity.*;
+import com.candlk.webapp.user.model.*;
 import com.candlk.webapp.user.service.*;
 import com.hankcs.hanlp.seg.common.Term;
 import com.hankcs.hanlp.tokenizer.NotionalTokenizer;
@@ -24,6 +24,8 @@ import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.junit.jupiter.MockitoExtension;
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.test.context.junit.jupiter.SpringExtension;
+
+import static com.candlk.webapp.user.service.TweetUserService.calcScore;
 
 @Slf4j
 @SpringBootTest(classes = UserApplication.class)
@@ -110,11 +112,11 @@ public class TweetApiTest {
 	}
 
 	// @Resource
-	// TweetJob tweetJob;
+	// TweetSyncJob tweetSyncJob;
 	//
 	// @Test
 	// public void testTweetJob() {
-	// 	tweetJob.run();
+	// 	tweetSyncJob.run();
 	// }
 
 	// @Resource
@@ -125,12 +127,75 @@ public class TweetApiTest {
 	// 	genTokenJob.run();
 	// }
 
-	@Resource
-	SurgeTweetJob surgeTweetJob;
-
+	// @Resource
+	// SurgeTweetJob surgeTweetJob;
+	//
+	// @Test
+	// public void testSurgeTweetJob() {
+	// 	surgeTweetJob.run();
+	// }
 	@Test
-	public void testSurgeTweetJob() {
-		surgeTweetJob.run();
+	public void sync() {
+		final String responseBody = FileUtil.readContent(new File("D:\\100user.json"));
+		JSONObject json = Jsons.parseObject(responseBody);
+		Messager<JSONObject> resp = Messager.hideData(json).setExt(responseBody);
+		JSONObject data = resp.data();
+		List<TweetUserInfo> tweetInfo = data.getList("data", TweetUserInfo.class);
+		Messager<List<TweetUserInfo>> usersMsg = resp.castDataType(tweetInfo);
+		if (usersMsg.isOK()) {
+			List<TweetUserInfo> allUser = usersMsg.data();
+			HashSet<String> allUsername = CollectionUtil.toSet(allUser, TweetUserInfo::getUsername);
+			// 已经存在的用户
+			List<String> existsUsernames = tweetUserService.findByUsername(allUsername, false);
+
+			int size = existsUsernames.size();
+			List<TweetUserInfo> existsUsers = new ArrayList<>(size);
+			int allSize = allUser.size();
+			List<TweetUser> newUsers = new ArrayList<>(allSize - size);
+			Date now = new Date();
+
+			Set<String> duplicate = new HashSet<>(allSize);
+			for (TweetUserInfo user : allUser) {
+				if (duplicate.contains(user.username)) {
+					continue;
+				}
+				duplicate.add(user.username);
+				if (existsUsernames.contains(user.username)) {
+					// 添加到已存在用户列表
+					existsUsers.add(user);
+				} else {
+					TweetUser tweetUser = new TweetUser()
+							.setProviderType(TweetProvider.TWEET)
+							.setUserId(user.id)
+							.setUsername(user.username)
+							.setNickname(user.name)
+							.setAvatar(user.profileImageUrl)
+							.setBanner(user.profileBannerUrl)
+							.setPinned(StringUtil.length(user.pinnedTweetId) > 0 ? ("[\"" + user.pinnedTweetId + "\"]") : null)
+							.setLocation(user.location)
+							.setDescription(Jsons.encode(JSONObject.of("text", user.description)));
+					if (user.publicMetrics != null) {
+						final Integer followersCount = NumberUtil.getInteger(user.publicMetrics.followersCount, 0);
+						int score = calcScore(followersCount);
+						tweetUser.setFollowers(user.publicMetrics.followersCount)
+								.setTweets(user.publicMetrics.tweetCount)
+								.setFollowing(user.publicMetrics.followingCount)
+								.setMedia(user.publicMetrics.mediaCount)
+								.setListed(user.publicMetrics.listedCount)
+								.setLikes(user.publicMetrics.likeCount)
+								.setTweetLastTime(now)
+								.setType(TweetUserType.SPECIAL)
+								.setScore(BigDecimal.valueOf(score))
+								.initTime(now);
+					}
+					newUsers.add(tweetUser);
+				}
+			}
+
+			tweetUserService.saveBatch(newUsers);
+			tweetUserService.sync(existsUsers, now);
+			log.info("同步用户：新增{}个，更新{}个", newUsers.size(), existsUsers.size());
+		}
 	}
 
 }

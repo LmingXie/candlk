@@ -18,7 +18,7 @@ import org.apache.ibatis.annotations.Select;
 public interface TweetDao extends BaseDao<Tweet> {
 
 	@Select("""
-			SELECT t.id, t.coin, t.symbol, t.description, t.status, t.ca,
+			SELECT t.id, t.coin, t.symbol, t.description, t.status, t.ca, t.add_time AS saveTime,
 			
 			tw.tweet_id, tw.type, tw.provider_type, tw.text,
 			tw.retweet, tw.reply, tw.likes, tw.quote, tw.bookmark, tw.impression,
@@ -33,7 +33,7 @@ public interface TweetDao extends BaseDao<Tweet> {
 			""")
 	Page<TweetVO> findPage(Page<?> page, @Param("ew") Wrapper<?> wrapper);
 
-	@Select("SELECT tweet_id, username FROM x_tweet ${ew.customSqlSegment}")
+	@Select("SELECT * FROM x_tweet ${ew.customSqlSegment}")
 	List<Tweet> lastList(@Param("ew") Wrapper<?> wrapper);
 
 	@Select("""

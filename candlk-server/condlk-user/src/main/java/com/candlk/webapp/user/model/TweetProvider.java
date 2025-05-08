@@ -16,6 +16,8 @@ public enum TweetProvider implements ValueProxyImpl<TweetProvider, Integer> {
 	AXIOM("Axiom"),
 	/** <a href="https://www.x3.pro/trending-tweets">X3</a> */
 	X3("X3"),
+	/** Tweet官方 */
+	TWEET("tweet", false),
 	;
 
 	@EnumValue

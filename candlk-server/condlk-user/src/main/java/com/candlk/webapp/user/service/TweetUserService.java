@@ -71,11 +71,11 @@ public class TweetUserService extends BaseServiceImpl<TweetUser, TweetUserDao, L
 		}
 	}
 
-	public List<String> findByLastUpdate(Collection<?> usernames) {
+	public List<String> findByUsername(Collection<?> usernames, boolean limitLastUpdate) {
 		return baseDao.lastList(new SmartQueryWrapper<TweetUser>()
 				.in(TweetUser.USERNAME, usernames)
-				// 更新间隔必须 > 1 小时
-				.apply(" TIMESTAMPDIFF(HOUR, update_time, NOW()) > {0}", 1)
+				// 更新间隔 < 1 小时 的拥挤
+				.apply(limitLastUpdate, " TIMESTAMPDIFF(HOUR, update_time, NOW()) < {0}", 1)
 		);
 	}
 
@@ -126,7 +126,7 @@ public class TweetUserService extends BaseServiceImpl<TweetUser, TweetUserDao, L
 		}
 	}
 
-	private static int calcScore(Integer followersCount) {
+	public static int calcScore(Integer followersCount) {
 		if (followersCount == null) {
 			return 1;
 		}

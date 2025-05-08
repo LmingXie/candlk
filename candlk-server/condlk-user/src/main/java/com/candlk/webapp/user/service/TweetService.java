@@ -267,8 +267,14 @@ public class TweetService extends BaseServiceImpl<Tweet, TweetDao, Long> {
 		);
 	}
 
-	public void syncUserStat() {
-
+	@Transactional
+	public void syncStatus(List<Tweet> tweets) {
+		if (!tweets.isEmpty()) {
+			super.update(new UpdateWrapper<Tweet>()
+					.set(Tweet.STATUS, Tweet.SYNC)
+					.eq(Tweet.STATUS, Tweet.INIT)
+					.in(Tweet.ID, CollectionUtil.toList(tweets, Tweet::getId)));
+		}
 	}
 
 	@Transactional

@@ -1,18 +1,26 @@
 package com.candlk.webapp.job;
 
+import java.math.BigDecimal;
 import java.util.*;
 import javax.annotation.Resource;
 
+import com.alibaba.fastjson2.JSONObject;
 import com.candlk.common.model.Messager;
 import com.candlk.common.util.Common;
+import com.candlk.context.web.Jsons;
 import com.candlk.webapp.api.TweetApi;
 import com.candlk.webapp.api.TweetUserInfo;
 import com.candlk.webapp.user.entity.Tweet;
+import com.candlk.webapp.user.entity.TweetUser;
+import com.candlk.webapp.user.model.TweetProvider;
+import com.candlk.webapp.user.model.TweetUserType;
 import com.candlk.webapp.user.service.TweetService;
 import com.candlk.webapp.user.service.TweetUserService;
 import lombok.extern.slf4j.Slf4j;
-import me.codeplayer.util.StringUtil;
+import me.codeplayer.util.*;
 import org.springframework.scheduling.annotation.Scheduled;
+
+import static com.candlk.webapp.user.service.TweetUserService.calcScore;
 
 @Slf4j
 // @Configuration
@@ -47,13 +55,13 @@ public class TweetSyncJob {
 		// // 将最新推文数据刷新到DB
 		// List<TweetInfo> tweets = tweetsMsg.data();
 		// tweetService.sync(tweets, false);
+		tweetService.syncStatus(oldTweets);
 
 		// 同步用户数据【max100】
 		Set<String> usernames = Common.toSet(oldTweets, Tweet::getUsername);
-		// 跳过 1 小时前更新的用户
-		List<String> filterLastUser = tweetUserService.findByLastUpdate(usernames);
-		usernames.clear();
-		usernames.addAll(filterLastUser);
+		// 排除 1 小时内更新过的用户
+		List<String> filterLastUser = tweetUserService.findByUsername(usernames, true);
+		filterLastUser.forEach(usernames::remove);
 
 		int diff = 100 - usernames.size();
 		if (diff > 0) {
@@ -71,11 +79,54 @@ public class TweetSyncJob {
 				}
 			}
 		}
+		final Date now = new Date();
 		// 同步用户信息数据
 		Messager<List<TweetUserInfo>> usersMsg = tweetApi.usersByUsernames(StringUtil.joins(usernames, ","));
-		final Date now = new Date();
 		if (usersMsg.isOK()) {
-			tweetUserService.sync(usersMsg.data(), now);
+			final List<TweetUserInfo> allUser = usersMsg.data();
+			final HashSet<String> allUsername = CollectionUtil.toSet(allUser, TweetUserInfo::getUsername);
+			// 已经存在的用户
+			final List<String> existsUsernames = tweetUserService.findByUsername(allUsername, false);
+
+			int size = existsUsernames.size();
+			List<TweetUserInfo> existsUsers = new ArrayList<>(size);
+			List<TweetUser> newUsers = new ArrayList<>(allUser.size() - size);
+			for (TweetUserInfo user : allUser) {
+				if (existsUsernames.contains(user.getUsername())) {
+					// 添加到已存在用户列表
+					existsUsers.add(user);
+				} else {
+					TweetUser tweetUser = new TweetUser()
+							.setProviderType(TweetProvider.TWEET)
+							.setUserId(user.id)
+							.setUsername(user.username)
+							.setNickname(user.name)
+							.setAvatar(user.profileImageUrl)
+							.setBanner(user.profileBannerUrl)
+							.setPinned(StringUtil.length(user.pinnedTweetId) > 0 ? ("[\"" + user.pinnedTweetId + "\"]") : null)
+							.setLocation(user.location)
+							.setDescription(Jsons.encode(JSONObject.of("text", user.description)));
+					if (user.publicMetrics != null) {
+						final Integer followersCount = NumberUtil.getInteger(user.publicMetrics.followersCount, 0);
+						int score = calcScore(followersCount);
+						tweetUser.setFollowers(user.publicMetrics.followersCount)
+								.setTweets(user.publicMetrics.tweetCount)
+								.setFollowing(user.publicMetrics.followingCount)
+								.setMedia(user.publicMetrics.mediaCount)
+								.setListed(user.publicMetrics.listedCount)
+								.setLikes(user.publicMetrics.likeCount)
+								.setTweetLastTime(now)
+								.setType(TweetUserType.SPECIAL)
+								.setScore(BigDecimal.valueOf(score))
+								.initTime(now);
+					}
+					newUsers.add(tweetUser);
+				}
+			}
+
+			tweetUserService.saveBatch(newUsers);
+			tweetUserService.sync(existsUsers, now);
+			log.info("同步用户：新增{}个，更新{}个", newUsers.size(), existsUsers.size());
 		}
 		log.info("结束同步推文数据任务。");
 	}

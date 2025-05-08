@@ -28,6 +28,8 @@ public class TweetVO extends AbstractVO<Tweet> {
 	String ca;
 	/** 代币简介 */
 	String desc;
+	/** 收录时间 */
+	Date saveTime;
 
 	/** 推文来源厂商类型 */
 	TweetProvider providerType;
