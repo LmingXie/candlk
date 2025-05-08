@@ -65,3 +65,31 @@ mvn clean package -DskipTests
 
 java -jar target/condlk-user-1.0.0.jar --spring.profiles.active=prod
 ```
+
+## 启动脚本
+```
+@echo off
+chcp 65001 >nul
+
+echo 启动 MySQL...
+net start mysql
+echo MySQL 启动成功！
+
+echo 启动 Elasticsearch...
+start "" /b cmd /c "cd /d D:\java\elasticsearch-9.0.0\bin && elasticsearch.bat"
+echo ES 服务启动成功！
+
+echo 启动 Redis...
+start "" /b cmd /c "cd /d D:\java\Redis-7.2.4-Windows-x64-msys2 && redis-server.exe redis.conf"
+echo Redis 启动成功！
+
+echo 等待 20 秒以确保依赖服务启动...
+timeout /t 20 /nobreak >nul
+
+echo 启动 Java 服务...
+cd /d D:\java
+java -jar condlk-user-1.0.0.jar --spring.profiles.active=prod
+
+exit
+
+```

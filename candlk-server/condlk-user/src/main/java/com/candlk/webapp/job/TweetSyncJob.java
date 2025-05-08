@@ -18,12 +18,13 @@ import com.candlk.webapp.user.service.TweetService;
 import com.candlk.webapp.user.service.TweetUserService;
 import lombok.extern.slf4j.Slf4j;
 import me.codeplayer.util.*;
+import org.springframework.context.annotation.Configuration;
 import org.springframework.scheduling.annotation.Scheduled;
 
 import static com.candlk.webapp.user.service.TweetUserService.calcScore;
 
 @Slf4j
-// @Configuration
+@Configuration
 public class TweetSyncJob {
 
 	@Resource

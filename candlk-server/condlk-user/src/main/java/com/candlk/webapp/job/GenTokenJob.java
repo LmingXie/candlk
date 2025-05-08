@@ -22,10 +22,11 @@ import com.hankcs.hanlp.tokenizer.NotionalTokenizer;
 import lombok.extern.slf4j.Slf4j;
 import me.codeplayer.util.StringUtil;
 import org.apache.dubbo.common.utils.CollectionUtils;
+import org.springframework.context.annotation.Configuration;
 import org.springframework.scheduling.annotation.Scheduled;
 
 @Slf4j
-// @Configuration
+@Configuration
 public class GenTokenJob {
 
 	@Resource
