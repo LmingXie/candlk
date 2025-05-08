@@ -18,11 +18,11 @@ import org.apache.ibatis.annotations.Select;
 public interface TweetDao extends BaseDao<Tweet> {
 
 	@Select("""
-			SELECT t.tweet_id,t.coin,t.symbol,t.desc,
-
-			tw.type,tw.provider_type,tw.text,
+			SELECT t.id, t.coin, t.symbol, t.desc,
+			
+			tw.tweet_id, tw.type, tw.provider_type, tw.text,
 			tw.retweet, tw.reply, tw.likes, tw.quote, tw.bookmark, tw.impression,
-			tw.add_time,tw.update_time,tw.username,tw.images,tw.videos,tw.score,tw.words,
+			tw.add_time, tw.update_time, tw.username, tw.images, tw.videos, tw.score, tw.words,
 			
 			tu.avatar, tu.type AS userType ,tu.followers, tu.score AS userScore
 			

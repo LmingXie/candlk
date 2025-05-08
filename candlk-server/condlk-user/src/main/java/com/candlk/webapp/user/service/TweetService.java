@@ -51,14 +51,13 @@ public class TweetService extends BaseServiceImpl<Tweet, TweetDao, Long> {
 	TweetUserService tweetUserService;
 	@Resource
 	ESEngineClient esEngineClient;
-	@Resource
-	TokenEventService tokenEventService;
 
 	public Page<TweetVO> findPage(Page<?> page, TweetQuery query, TimeInterval interval) {
 		final String prefix = "t.";
 		return baseDao.findPage(page, new SmartQueryWrapper<Tweet>()
 				.eq(prefix + TokenEvent.TYPE, query.type)
-				.eq(prefix + TokenEvent.STATUS, Status.NO.value)
+				.eq(prefix + TokenEvent.STATUS, query.status)
+				.eq("tw." + Tweet.USERNAME, query.username)
 				.between(prefix + Tweet.ADD_TIME, interval)
 				.orderByDesc(prefix + Tweet.ADD_TIME)
 		);
