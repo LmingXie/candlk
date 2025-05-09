@@ -4,12 +4,13 @@ import java.util.List;
 import java.util.concurrent.*;
 import java.util.function.Consumer;
 
+import com.candlk.context.web.TaskUtils;
 import lombok.extern.slf4j.Slf4j;
 
 @Slf4j
 public class ConcurrentExecutor {
 
-	private static final ExecutorService executor = Executors.newFixedThreadPool(4);
+	private static final ExecutorService executor = TaskUtils.newThreadPool(4,8,2048,"ce-task");
 
 	public static <T> void runConcurrently(List<T> list, Consumer<T> task) throws InterruptedException {
 		final List<Future<?>> futures = new CopyOnWriteArrayList<>();

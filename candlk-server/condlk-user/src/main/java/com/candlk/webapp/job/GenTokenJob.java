@@ -7,6 +7,8 @@ import com.alibaba.fastjson2.JSON;
 import com.alibaba.fastjson2.JSONObject;
 import com.baomidou.mybatisplus.core.conditions.update.UpdateWrapper;
 import com.candlk.common.model.Messager;
+import com.candlk.common.redis.RedisUtil;
+import com.candlk.context.model.RedisKey;
 import com.candlk.context.web.Jsons;
 import com.candlk.webapp.api.DeepSeekApi;
 import com.candlk.webapp.api.DeepSeekChat;
@@ -26,7 +28,7 @@ import org.springframework.context.annotation.Configuration;
 import org.springframework.scheduling.annotation.Scheduled;
 
 @Slf4j
-// @Configuration
+@Configuration
 public class GenTokenJob {
 
 	@Resource
@@ -39,10 +41,14 @@ public class GenTokenJob {
 	static final DeepSeekApi deepSeekApi = DeepSeekApi.getInstance();
 
 	/**
-	 * 根据评分排名，生成Token（生产：5 m/次；）
+	 * 根据评分排名，生成Token（生产：30 s/次；）
 	 */
 	@Scheduled(cron = "${service.cron.GenTokenJob:0 0/1 * * * ?}")
 	public void run() throws Exception {
+		if (!RedisUtil.getStringRedisTemplate().opsForSet().isMember(RedisKey.SYS_SWITCH, RedisKey.TWEET_SCORE_FLAG)) {
+			log.info("【推文评分】开关关闭，跳过执行...");
+			return;
+		}
 		log.info("开始生成Token数据信息...");
 
 		// 根据评分排名，生成Token

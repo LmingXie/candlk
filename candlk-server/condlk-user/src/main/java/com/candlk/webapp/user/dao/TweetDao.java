@@ -37,7 +37,7 @@ public interface TweetDao extends BaseDao<Tweet> {
 	List<Tweet> lastList(@Param("ew") Wrapper<?> wrapper);
 
 	@Select("""
-			SELECT t.*, te.type AS userType
+			SELECT t.*, tu.type AS userType
 			FROM x_tweet t
 			LEFT JOIN x_tweet_user tu ON t.username = tu.username
 			LEFT JOIN x_token_event te ON t.id = te.tweet_id

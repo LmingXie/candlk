@@ -2,10 +2,13 @@ package com.candlk.webapp.action;
 
 import javax.annotation.Resource;
 
+import com.alibaba.fastjson2.JSONObject;
 import com.candlk.common.context.I18N;
 import com.candlk.common.model.Messager;
+import com.candlk.common.redis.RedisUtil;
 import com.candlk.common.web.Page;
 import com.candlk.common.web.Ready;
+import com.candlk.context.model.RedisKey;
 import com.candlk.context.web.ProxyRequest;
 import com.candlk.webapp.base.action.BaseAction;
 import com.candlk.webapp.user.entity.TokenEvent;
@@ -14,6 +17,9 @@ import com.candlk.webapp.user.form.TweetQuery;
 import com.candlk.webapp.user.service.TokenEventService;
 import com.candlk.webapp.user.service.TweetService;
 import com.candlk.webapp.user.vo.TweetVO;
+import me.codeplayer.util.X;
+import org.apache.tomcat.util.bcel.Const;
+import org.springframework.data.redis.core.SetOperations;
 import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.annotation.*;
 
@@ -31,10 +37,27 @@ public class TweetAction extends BaseAction {
 	@Resource
 	TokenEventService tokenEventService;
 
+	@Ready("切换推文评分开关")
+	@GetMapping("/editTweetScore")
+	public Messager<Void> toggleTweetScore(ProxyRequest q, Boolean isOpen) {
+		return RedisUtil.fastAttemptInLock(RedisKey.USER_OP_LOCK_PREFIX, () -> {
+			final SetOperations<String, String> opsForSet = RedisUtil.getStringRedisTemplate().opsForSet();
+			if (X.isValid(isOpen)) {
+				opsForSet.add(RedisKey.SYS_SWITCH, RedisKey.TWEET_SCORE_FLAG);
+			} else {
+				opsForSet.remove(RedisKey.SYS_SWITCH, RedisKey.TWEET_SCORE_FLAG);
+			}
+			return Messager.OK((isOpen ? "开启" : "关闭") + "推文评分开关成功");
+		});
+	}
+
 	@Ready("推文列表")
 	@GetMapping("/list")
 	public Messager<Page<TweetVO>> list(ProxyRequest q, TweetQuery query) {
-		return Messager.exposeData(tweetService.findPage(q.getPage(), query, q.getInterval()));
+		return Messager.exposeData(tweetService.findPage(q.getPage(), query, q.getInterval()))
+				.setExt(JSONObject.of(
+						"tweetScoreFlag", RedisUtil.getStringRedisTemplate().opsForSet().isMember(RedisKey.SYS_SWITCH, RedisKey.TWEET_SCORE_FLAG)
+				));
 	}
 
 	@Ready("成功创建代币")

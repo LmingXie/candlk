@@ -65,7 +65,7 @@ public class TweetService extends BaseServiceImpl<Tweet, TweetDao, Long> {
 		浏览猛增推文：按照浏览量倒序
 		 */
 		if (query.type == null || query.type == 0) {
-			wrapper.orderByDesc(prefix + Tweet.ADD_TIME);
+			wrapper.orderByDesc("tw." + Tweet.ADD_TIME);
 		} else if (query.type == 1) {
 			wrapper.orderByDesc("( tw.score + tu.score )");
 		} else {
@@ -103,10 +103,7 @@ public class TweetService extends BaseServiceImpl<Tweet, TweetDao, Long> {
 				tweetUserService.updateStat(tweetUser);
 			}
 
-			if (!tweetUserService.updateTweetLastTime(author, tweetInfo.getAddTime())) {
-				// Redis 记录新用户
-				RedisUtil.getStringRedisTemplate().opsForSet().add(RedisKey.TWEET_NEW_USERS, author);
-			}
+			tweetUserService.updateTweetLastTime(author, tweetInfo.getAddTime());
 
 		} catch (DuplicateKeyException e) { // 违反唯一约束
 			log.warn("【{}】推文已存在：{}", provider, tweetId);
@@ -248,10 +245,10 @@ public class TweetService extends BaseServiceImpl<Tweet, TweetDao, Long> {
 	@Nonnull
 	public TimeInterval lastInterval() {
 		if (localTimeInterval == null) {
-			// 只查询2天内的推文数据
-			EasyDate d = new EasyDate();
-			Date end = d.endOf(Calendar.DATE).toDate();
-			Date start = d.addDay(-1).beginOf(Calendar.DATE).toDate();
+			// 只查询 3小时 内的推文数据
+			final EasyDate d = new EasyDate();
+			final Date end = d.endOf(Calendar.DATE).toDate();
+			final Date start = d.addHour(-3).beginOf(Calendar.DATE).toDate();
 			localTimeInterval = new TimeInterval(start, end, -1, -1);
 		}
 		return localTimeInterval;
@@ -279,7 +276,8 @@ public class TweetService extends BaseServiceImpl<Tweet, TweetDao, Long> {
 				.eq("t.status", Tweet.SYNC)
 				.between("t.add_time", lastInterval()) // idx_addTime_status 索引
 				.isNull("te.tweet_id")
-				.orderByDesc("(t.score + tu.score)")
+				// .orderByDesc("(t.score + tu.score)")
+				.orderByDesc("t.add_time")
 				.last("LIMIT " + limit)
 		);
 	}

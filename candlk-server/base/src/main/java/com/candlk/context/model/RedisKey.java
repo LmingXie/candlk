@@ -12,9 +12,9 @@ public interface RedisKey {
 	String USER_OP_LOCK_PREFIX = "user:lock:";
 	/** 商户站点状态 ZSet < merchantId,status > */
 	String MERCHANT_SITE_STATUS = "merchant:site:status";
-	/**
-	 * 推特新用户账号 < Set < $username > >
-	 */
-	String TWEET_NEW_USERS = "tweetNewUsers";
+	/** 系统开关 < Set < $开关名称 > > */
+	String SYS_SWITCH = "sysSwitch";
+	/** 推文评分开关 */
+	String TWEET_SCORE_FLAG = "tweetScoreFlag";
 
 }

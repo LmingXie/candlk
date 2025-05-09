@@ -6,6 +6,7 @@ import javax.annotation.Resource;
 import com.candlk.common.model.Messager;
 import com.candlk.common.redis.RedisUtil;
 import com.candlk.common.util.Common;
+import com.candlk.context.model.RedisKey;
 import com.candlk.context.web.Jsons;
 import com.candlk.webapp.api.TweetApi;
 import com.candlk.webapp.api.TweetInfo;
@@ -54,6 +55,10 @@ public class SurgeTweetJob {
 	 */
 	@Scheduled(cron = "${service.cron.SurgeTweetJob:0 0/1 * * * ?}")
 	public void run() {
+		if (!RedisUtil.getStringRedisTemplate().opsForSet().isMember(RedisKey.SYS_SWITCH, RedisKey.TWEET_SCORE_FLAG)) {
+			log.info("【推文评分】开关关闭，跳过执行...");
+			return;
+		}
 		log.info("开始【刷新浏览量】定时任务...");
 		final List<String> surgeTweetApis = findSurgeTweetApi();
 		if (surgeTweetApis.isEmpty()) {

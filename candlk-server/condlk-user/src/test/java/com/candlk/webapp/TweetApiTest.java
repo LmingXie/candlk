@@ -156,11 +156,11 @@ public class TweetApiTest {
 
 			Set<String> duplicate = new HashSet<>(allSize);
 			for (TweetUserInfo user : allUser) {
-				if (duplicate.contains(user.username)) {
+				if (CollectionUtil.findFirst(duplicate, u -> u.equalsIgnoreCase(user.username)) != null) {
 					continue;
 				}
 				duplicate.add(user.username);
-				if (existsUsernames.contains(user.username)) {
+				if (CollectionUtil.findFirst(existsUsernames, u -> u.equalsIgnoreCase(user.username)) != null) {
 					// 添加到已存在用户列表
 					existsUsers.add(user);
 				} else {
@@ -196,6 +196,12 @@ public class TweetApiTest {
 			tweetUserService.sync(existsUsers, now);
 			log.info("同步用户：新增{}个，更新{}个", newUsers.size(), existsUsers.size());
 		}
+	}
+
+	@Test
+	public void getList() {
+		final List<Tweet> tweets = tweetService.lastGenToken(20);
+		log.info("tweets:{}", Jsons.encode(tweets));
 	}
 
 }

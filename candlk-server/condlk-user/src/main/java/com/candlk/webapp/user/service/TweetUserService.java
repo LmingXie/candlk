@@ -4,8 +4,10 @@ import java.math.BigDecimal;
 import java.util.*;
 import javax.annotation.Resource;
 
+import com.alibaba.fastjson2.JSONObject;
 import com.baomidou.mybatisplus.core.conditions.update.UpdateWrapper;
 import com.candlk.common.dao.SmartQueryWrapper;
+import com.candlk.common.model.Messager;
 import com.candlk.common.web.Page;
 import com.candlk.context.web.Jsons;
 import com.candlk.webapp.api.TweetUserInfo;
@@ -14,6 +16,7 @@ import com.candlk.webapp.es.ESEngineClient;
 import com.candlk.webapp.user.dao.TweetUserDao;
 import com.candlk.webapp.user.entity.TweetUser;
 import com.candlk.webapp.user.form.TweetUserQuery;
+import com.candlk.webapp.user.model.TweetProvider;
 import com.candlk.webapp.user.model.TweetUserType;
 import lombok.extern.slf4j.Slf4j;
 import me.codeplayer.util.*;
@@ -30,9 +33,6 @@ import org.springframework.util.CollectionUtils;
 @Slf4j
 @Service
 public class TweetUserService extends BaseServiceImpl<TweetUser, TweetUserDao, Long> {
-
-	@Resource
-	ESEngineClient esEngineClient;
 
 	public Page<TweetUser> findPage(Page<?> page, TweetUserQuery query) {
 		return baseDao.findPage(page, new SmartQueryWrapper<TweetUser>()
@@ -155,6 +155,62 @@ public class TweetUserService extends BaseServiceImpl<TweetUser, TweetUserDao, L
 			score = 4;
 		}
 		return score;
+	}
+
+	@Transactional
+	public void batchSyncUserInfo(Messager<List<TweetUserInfo>> usersMsg, Date now, int retry) {
+		final List<TweetUserInfo> allUser = usersMsg.data();
+		final HashSet<String> allUsername = CollectionUtil.toSet(allUser, TweetUserInfo::getUsername);
+		// 已经存在的用户
+		final List<String> existsUsernames = findByUsername(allUsername, false);
+
+		int size = existsUsernames.size();
+		List<TweetUserInfo> existsUsers = new ArrayList<>(size);
+		List<TweetUser> newUsers = new ArrayList<>(allUser.size() - size);
+		for (TweetUserInfo user : allUser) {
+			if (CollectionUtil.findFirst(existsUsernames, u -> u.equalsIgnoreCase(user.username)) != null) {
+				// 添加到已存在用户列表
+				existsUsers.add(user);
+			} else {
+				TweetUser tweetUser = new TweetUser()
+						.setProviderType(TweetProvider.TWEET)
+						.setUserId(user.id)
+						.setUsername(user.username)
+						.setNickname(user.name)
+						.setAvatar(user.profileImageUrl)
+						.setBanner(user.profileBannerUrl)
+						.setPinned(StringUtil.length(user.pinnedTweetId) > 0 ? ("[\"" + user.pinnedTweetId + "\"]") : null)
+						.setLocation(user.location)
+						.setDescription(Jsons.encode(JSONObject.of("text", user.description)));
+				if (user.publicMetrics != null) {
+					final Integer followersCount = NumberUtil.getInteger(user.publicMetrics.followersCount, 0);
+					int score = calcScore(followersCount);
+					tweetUser.setFollowers(user.publicMetrics.followersCount)
+							.setTweets(user.publicMetrics.tweetCount)
+							.setFollowing(user.publicMetrics.followingCount)
+							.setMedia(user.publicMetrics.mediaCount)
+							.setListed(user.publicMetrics.listedCount)
+							.setLikes(user.publicMetrics.likeCount)
+							.setTweetLastTime(now)
+							.setType(TweetUserType.SPECIAL)
+							.setScore(BigDecimal.valueOf(score))
+							.initTime(now);
+				}
+				newUsers.add(tweetUser);
+			}
+		}
+
+		try {
+			super.saveBatch(newUsers);
+		} catch (DuplicateKeyException e) { // 违反唯一约束
+			if (--retry > 0) {
+				batchSyncUserInfo(usersMsg, now, retry);
+				return;
+			}
+			log.warn("【同步用户】违反唯一约束，入库失败！");
+		}
+		this.sync(existsUsers, now);
+		log.info("【同步用户】：新增{}个，更新{}个", newUsers.size(), existsUsers.size());
 	}
 
 }

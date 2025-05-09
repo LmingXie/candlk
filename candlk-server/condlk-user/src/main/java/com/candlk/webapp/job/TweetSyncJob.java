@@ -6,7 +6,9 @@ import javax.annotation.Resource;
 
 import com.alibaba.fastjson2.JSONObject;
 import com.candlk.common.model.Messager;
+import com.candlk.common.redis.RedisUtil;
 import com.candlk.common.util.Common;
+import com.candlk.context.model.RedisKey;
 import com.candlk.context.web.Jsons;
 import com.candlk.webapp.api.TweetApi;
 import com.candlk.webapp.api.TweetUserInfo;
@@ -24,7 +26,7 @@ import org.springframework.scheduling.annotation.Scheduled;
 import static com.candlk.webapp.user.service.TweetUserService.calcScore;
 
 @Slf4j
-// @Configuration
+@Configuration
 public class TweetSyncJob {
 
 	@Resource
@@ -40,8 +42,12 @@ public class TweetSyncJob {
 	 */
 	@Scheduled(cron = "${service.cron.TweetSyncJob:0 0/1 * * * ?}")
 	public void run() {
+		if (!RedisUtil.getStringRedisTemplate().opsForSet().isMember(RedisKey.SYS_SWITCH, RedisKey.TWEET_SCORE_FLAG)) {
+			log.info("【推文评分】开关关闭，跳过执行...");
+			return;
+		}
 		log.info("开始同步推文数据信息...");// 查询前100条推文
-		List<Tweet> oldTweets = tweetService.lastList(100);
+		final List<Tweet> oldTweets = tweetService.lastList(100);
 		// final String tweetIds = StringUtil.join(oldTweets, Tweet::getTweetId, ",");
 		//
 		// log.info("推文ID：{}", tweetIds);
@@ -59,9 +65,9 @@ public class TweetSyncJob {
 		tweetService.syncStatus(oldTweets);
 
 		// 同步用户数据【max100】
-		Set<String> usernames = Common.toSet(oldTweets, Tweet::getUsername);
+		final Set<String> usernames = Common.toSet(oldTweets, Tweet::getUsername);
 		// 排除 1 小时内更新过的用户
-		List<String> filterLastUser = tweetUserService.findByUsername(usernames, true);
+		final List<String> filterLastUser = tweetUserService.findByUsername(usernames, true);
 		filterLastUser.forEach(usernames::remove);
 
 		int diff = 100 - usernames.size();
@@ -82,52 +88,9 @@ public class TweetSyncJob {
 		}
 		final Date now = new Date();
 		// 同步用户信息数据
-		Messager<List<TweetUserInfo>> usersMsg = tweetApi.usersByUsernames(StringUtil.joins(usernames, ","));
+		final Messager<List<TweetUserInfo>> usersMsg = tweetApi.usersByUsernames(StringUtil.joins(usernames, ","));
 		if (usersMsg.isOK()) {
-			final List<TweetUserInfo> allUser = usersMsg.data();
-			final HashSet<String> allUsername = CollectionUtil.toSet(allUser, TweetUserInfo::getUsername);
-			// 已经存在的用户
-			final List<String> existsUsernames = tweetUserService.findByUsername(allUsername, false);
-
-			int size = existsUsernames.size();
-			List<TweetUserInfo> existsUsers = new ArrayList<>(size);
-			List<TweetUser> newUsers = new ArrayList<>(allUser.size() - size);
-			for (TweetUserInfo user : allUser) {
-				if (existsUsernames.contains(user.getUsername())) {
-					// 添加到已存在用户列表
-					existsUsers.add(user);
-				} else {
-					TweetUser tweetUser = new TweetUser()
-							.setProviderType(TweetProvider.TWEET)
-							.setUserId(user.id)
-							.setUsername(user.username)
-							.setNickname(user.name)
-							.setAvatar(user.profileImageUrl)
-							.setBanner(user.profileBannerUrl)
-							.setPinned(StringUtil.length(user.pinnedTweetId) > 0 ? ("[\"" + user.pinnedTweetId + "\"]") : null)
-							.setLocation(user.location)
-							.setDescription(Jsons.encode(JSONObject.of("text", user.description)));
-					if (user.publicMetrics != null) {
-						final Integer followersCount = NumberUtil.getInteger(user.publicMetrics.followersCount, 0);
-						int score = calcScore(followersCount);
-						tweetUser.setFollowers(user.publicMetrics.followersCount)
-								.setTweets(user.publicMetrics.tweetCount)
-								.setFollowing(user.publicMetrics.followingCount)
-								.setMedia(user.publicMetrics.mediaCount)
-								.setListed(user.publicMetrics.listedCount)
-								.setLikes(user.publicMetrics.likeCount)
-								.setTweetLastTime(now)
-								.setType(TweetUserType.SPECIAL)
-								.setScore(BigDecimal.valueOf(score))
-								.initTime(now);
-					}
-					newUsers.add(tweetUser);
-				}
-			}
-
-			tweetUserService.saveBatch(newUsers);
-			tweetUserService.sync(existsUsers, now);
-			log.info("同步用户：新增{}个，更新{}个", newUsers.size(), existsUsers.size());
+			tweetUserService.batchSyncUserInfo(usersMsg, now, 3);
 		}
 		log.info("结束同步推文数据任务。");
 	}
