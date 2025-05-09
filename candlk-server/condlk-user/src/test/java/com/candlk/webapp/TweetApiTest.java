@@ -144,7 +144,7 @@ public class TweetApiTest {
 		Messager<List<TweetUserInfo>> usersMsg = resp.castDataType(tweetInfo);
 		final Date now = new Date();
 		if (usersMsg.isOK()) {
-			tweetUserService.batchSyncUserInfo(usersMsg, now, 3);
+			tweetUserService.batchSyncUserInfo(usersMsg, now);
 		}
 	}
 

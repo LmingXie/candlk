@@ -158,7 +158,7 @@ public class TweetUserService extends BaseServiceImpl<TweetUser, TweetUserDao, L
 	}
 
 	@Transactional
-	public void batchSyncUserInfo(Messager<List<TweetUserInfo>> usersMsg, Date now, int retry) {
+	public void batchSyncUserInfo(Messager<List<TweetUserInfo>> usersMsg, Date now) {
 		final List<TweetUserInfo> allUser = usersMsg.data();
 		final HashSet<String> allUsername = CollectionUtil.toSet(allUser, TweetUserInfo::getUsername);
 		// 已经存在的用户
@@ -200,16 +200,8 @@ public class TweetUserService extends BaseServiceImpl<TweetUser, TweetUserDao, L
 			}
 		}
 
-		try {
-			super.saveBatch(newUsers);
-			this.sync(existsUsers, now);
-		} catch (DuplicateKeyException e) { // 违反唯一约束
-			if (--retry > 0) {
-				batchSyncUserInfo(usersMsg, now, retry);
-				return;
-			}
-			log.warn("【同步用户】违反唯一约束，入库失败！");
-		}
+		super.saveBatch(newUsers);
+		this.sync(existsUsers, now);
 		log.info("【同步用户】：新增{}个，更新{}个", newUsers.size(), existsUsers.size());
 	}
 

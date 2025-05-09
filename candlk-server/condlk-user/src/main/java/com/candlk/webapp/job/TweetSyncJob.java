@@ -21,6 +21,7 @@ import com.candlk.webapp.user.service.TweetUserService;
 import lombok.extern.slf4j.Slf4j;
 import me.codeplayer.util.*;
 import org.springframework.context.annotation.Configuration;
+import org.springframework.dao.DuplicateKeyException;
 import org.springframework.scheduling.annotation.Scheduled;
 
 import static com.candlk.webapp.user.service.TweetUserService.calcScore;
@@ -90,7 +91,13 @@ public class TweetSyncJob {
 		// 同步用户信息数据
 		final Messager<List<TweetUserInfo>> usersMsg = tweetApi.usersByUsernames(StringUtil.joins(usernames, ","));
 		if (usersMsg.isOK()) {
-			tweetUserService.batchSyncUserInfo(usersMsg, now, 3);
+			for (int i = 0; i < 3; i++) {
+				try {
+					tweetUserService.batchSyncUserInfo(usersMsg, now);
+				} catch (DuplicateKeyException e) { // 违反唯一约束
+					log.warn("【同步用户】违反唯一约束，入库失败！");
+				}
+			}
 		}
 		log.info("结束同步推文数据任务。");
 	}
