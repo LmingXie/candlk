@@ -51,7 +51,7 @@ public class GmgnTweetWsProvider extends BaseHttpUtil implements Listener, Tweet
 		log.info("【{}】开始建立连接！", getProvider());
 		// 建立连接
 		this.webSocket = proxyHttpClient.newWebSocketBuilder()
-				.connectTimeout(Duration.of(10, ChronoUnit.SECONDS))
+				.connectTimeout(Duration.of(15, ChronoUnit.SECONDS))
 				.header("Origin", "https://gmgn.ai")
 				.header("User-Agent", "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/135.0.0.0 Safari/537.36")
 				.buildAsync(URI.create("wss://ws.gmgn.ai/quotation?device_id=64baecd0-f073-411a-8c86-d71e8523f449&client_id=gmgn_web_20250508-860-943999d&from_app=gmgn&app_ver=20250508-860-943999d&tz_name=Asia%2FShanghai&tz_offset=28800&app_lang=zh-CN&fp_did=718668df0879175894ff6925a2175d69&os=web&uuid=89b9f65f2ea537a6"),

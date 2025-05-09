@@ -10,7 +10,7 @@ import lombok.extern.slf4j.Slf4j;
 public class TweetDeduplicate {
 
 	// 保存 tweetId 及其插入时间
-	private static final ConcurrentHashMap<String, Long> seenTweetMap = new ConcurrentHashMap<>(10000, 1F);
+	private static final ConcurrentHashMap<String, Long> seenTweetMap = new ConcurrentHashMap<>(500, 1F);
 
 	// 去重记录保存的时间（毫秒），默认 30 s
 	private static final long EXPIRATION_MILLIS = 30 * 1000;
