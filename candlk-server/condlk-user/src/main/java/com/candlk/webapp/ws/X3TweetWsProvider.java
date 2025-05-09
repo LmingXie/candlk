@@ -4,12 +4,15 @@ import java.net.URI;
 import java.net.http.HttpClient;
 import java.net.http.WebSocket;
 import java.net.http.WebSocket.Listener;
+import java.time.Duration;
+import java.time.temporal.ChronoUnit;
 import java.util.*;
 import java.util.concurrent.CompletionStage;
 import javax.annotation.Resource;
 
 import com.alibaba.fastjson2.JSON;
 import com.alibaba.fastjson2.JSONObject;
+import com.candlk.common.util.BaseHttpUtil;
 import com.candlk.webapp.user.entity.Tweet;
 import com.candlk.webapp.user.entity.TweetUser;
 import com.candlk.webapp.user.model.TweetProvider;
@@ -28,8 +31,6 @@ public class X3TweetWsProvider implements Listener, TweetWsApi {
 	public WebSocket webSocket;
 	@Resource
 	TweetService tweetService;
-	@Resource
-	TweetUserService tweetUserService;
 
 	@Override
 	public TweetProvider getProvider() {
@@ -38,11 +39,10 @@ public class X3TweetWsProvider implements Listener, TweetWsApi {
 
 	@Override
 	public void connection() {
-		// 构建 HttpClient 并设置线程池
-		HttpClient client = HttpClient.newBuilder().executor(WS_EXECUTOR).build();
-
+		log.info("【{}】开始建立连接！", getProvider());
 		// 建立连接
-		this.webSocket = client.newWebSocketBuilder()
+		this.webSocket = BaseHttpUtil.defaultClient().newWebSocketBuilder()
+				.connectTimeout(Duration.of(5, ChronoUnit.SECONDS))
 				.header("Origin", "https://www.x3.pro")
 				.header("User-Agent", "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/135.0.0.0 Safari/537.36")
 				.buildAsync(URI.create("wss://www.x3.pro/api/ws?Authorization=" + UUID.randomUUID()), this)

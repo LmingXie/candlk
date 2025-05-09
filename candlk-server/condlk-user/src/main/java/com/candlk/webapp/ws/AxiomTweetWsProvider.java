@@ -6,6 +6,8 @@ import java.net.http.WebSocket;
 import java.net.http.WebSocket.Listener;
 import java.nio.charset.StandardCharsets;
 import java.text.SimpleDateFormat;
+import java.time.Duration;
+import java.time.temporal.ChronoUnit;
 import java.util.*;
 import java.util.concurrent.CompletionStage;
 import javax.annotation.Resource;
@@ -13,6 +15,7 @@ import javax.annotation.Resource;
 import com.alibaba.fastjson2.JSON;
 import com.alibaba.fastjson2.JSONObject;
 import com.candlk.common.security.AES;
+import com.candlk.common.util.BaseHttpUtil;
 import com.candlk.context.web.Jsons;
 import com.candlk.webapp.user.entity.*;
 import com.candlk.webapp.user.model.TweetProvider;
@@ -87,7 +90,7 @@ public class AxiomTweetWsProvider implements Listener, TweetWsApi {
 		// 输出签名
 		log.info("签名（Base58）：" + base58Signature);
 
-		ResponseEntity<String> loginResp = restTemplate.postForEntity("https://api3.axiom.trade/verify-wallet-v2", JSONObject.of(
+		final ResponseEntity<String> loginResp = restTemplate.postForEntity("https://api3.axiom.trade/verify-wallet-v2", JSONObject.of(
 				"walletAddress", signerAddress,
 				"signature", base58Signature,
 				"nonce", nonce,
@@ -108,11 +111,9 @@ public class AxiomTweetWsProvider implements Listener, TweetWsApi {
 				final String refreshToken = tokenMap.get("auth-refresh-token");
 				log.info("Access Token: {}  Refresh Token: {}", accessToken, refreshToken);
 
-				// 构建 HttpClient 并设置线程池
-				HttpClient client = HttpClient.newBuilder().executor(TweetWsApi.WS_EXECUTOR).build();
-
 				// 建立连接
-				this.webSocket = client.newWebSocketBuilder()
+				this.webSocket = BaseHttpUtil.defaultClient().newWebSocketBuilder()
+						.connectTimeout(Duration.of(5, ChronoUnit.SECONDS))
 						.header("Origin", "https://axiom.trade")
 						.header("cookie", "auth-refresh-token=" + refreshToken + "; auth-access-token=" + accessToken + ";")
 						.header("User-Agent", "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/135.0.0.0 Safari/537.36")
