@@ -1,7 +1,6 @@
 package com.candlk.webapp.ws;
 
 import java.net.URI;
-import java.net.http.HttpClient;
 import java.net.http.WebSocket;
 import java.net.http.WebSocket.Listener;
 import java.time.Duration;
@@ -18,7 +17,6 @@ import com.candlk.webapp.user.entity.TweetUser;
 import com.candlk.webapp.user.model.TweetProvider;
 import com.candlk.webapp.user.model.TweetType;
 import com.candlk.webapp.user.service.TweetService;
-import com.candlk.webapp.user.service.TweetUserService;
 import lombok.extern.slf4j.Slf4j;
 import me.codeplayer.util.EasyDate;
 import org.apache.commons.lang3.StringUtils;
@@ -89,14 +87,14 @@ public class X3TweetWsProvider implements Listener, TweetWsApi {
 	public CompletionStage<?> onText(WebSocket webSocket, CharSequence data, boolean last) {
 		// 并发处理消息（交给线程池）
 		WS_EXECUTOR.submit(() -> {
-			TweetProvider provider = getProvider();
-			log.info("【{}】事件内容：{}", provider, data);
+			final TweetProvider provider = getProvider();
+			// log.info("【{}】事件内容：{}", provider, data);
 			lastTime = System.currentTimeMillis();
-			JSONObject tweetData = JSON.parseObject(data.toString());
+			final JSONObject tweetData = JSON.parseObject(data.toString());
 			if ("1".equals(tweetData.getString("msgType"))) {
 
 				try {
-					List<JSONObject> posts = tweetData.getJSONObject("data").getList("data", JSONObject.class);
+					final List<JSONObject> posts = tweetData.getJSONObject("data").getList("data", JSONObject.class);
 
 					final Date now = new Date();
 					for (JSONObject post : posts) {
@@ -105,16 +103,16 @@ public class X3TweetWsProvider implements Listener, TweetWsApi {
 						if (StringUtils.isNotEmpty(tokens)) {
 							continue;
 						}
-						JSONObject originPost = post.getJSONObject("originPost");
-						TweetType tweetType = originPost == null ? TweetType.TWEET : TweetType.QUOTE;
+						final JSONObject originPost = post.getJSONObject("originPost");
+						final TweetType tweetType = originPost == null ? TweetType.TWEET : TweetType.QUOTE;
 
-						JSONObject authorInfo = post.getJSONObject("author");
+						final JSONObject authorInfo = post.getJSONObject("author");
 						final String author = authorInfo.getString("screenName");
 						final String tweetId = post.getString("id").replaceFirst("x_", "");
 
-						List<JSONObject> medias = post.getList("medias", JSONObject.class);
+						final List<JSONObject> medias = post.getList("medias", JSONObject.class);
 						// 引用图片 和 视频
-						List<String> images = new ArrayList<>(), videos = new ArrayList<>();
+						final List<String> images = new ArrayList<>(), videos = new ArrayList<>();
 
 						if (medias != null) {
 							for (JSONObject media : medias) {
@@ -125,7 +123,7 @@ public class X3TweetWsProvider implements Listener, TweetWsApi {
 						Long createTime = post.getLong("createTime");
 						final String content = post.getString("content");
 						if (StringUtils.isNotEmpty(content)) {
-							Tweet tweetInfo = new Tweet()
+							final Tweet tweetInfo = new Tweet()
 									.setProviderType(provider)
 									.setType(tweetType)
 									.setUsername(author)

@@ -126,7 +126,7 @@ public class GmgnTweetWsProvider extends BaseHttpUtil implements Listener, Tweet
 					case "tweet", "reply", "quote"/*,"repost"*/ -> {
 						if (vo.content != null) {
 							final String username = vo.user.username, tweetId = vo.tweetId;
-							log.info("【{}】账户={} 订阅类型={} ID={} 内容={}", provider, username, vo.twType, tweetId, Jsons.encode(vo));
+							// log.info("【{}】账户={} 订阅类型={} ID={} 内容={}", provider, username, vo.twType, tweetId, Jsons.encode(vo));
 							final Tweet tweetInfo = new Tweet()
 									.setProviderType(provider)
 									.setType(switch (vo.twType) {
