@@ -155,18 +155,18 @@ public class AxiomTweetWsProvider implements Listener, TweetWsApi {
 			if (axiomTwitter != null) {
 				AxiomTwitter.Content content = axiomTwitter.content;
 				final String event = content.event;
-				String[] split = event.split(":");
+				final String[] split = event.split(":");
 				byte[] iv = decoder.decode(split[0]);
-				TweetProvider provider = getProvider();
+				final TweetProvider provider = getProvider();
 				try {
 					final byte[] decrypt = aes.decrypt(decoder.decode(split[1]), iv);
 					JSONObject postInfo = JSON.parseObject(decrypt);
 					// System.out.println("解密：" + Jsons.encode(postInfo));
 					final String eventType = content.eventType;
-					if (eventTypes.contains(eventType)) {
-						log.info("【{}】账户={} 订阅类型={} 事件ID={} 事件内容={}", provider, content.handle, content.subscriptionType, content.eventId, Jsons.encode(postInfo));
-					} else {
+					if (!eventTypes.contains(eventType)) {
 						log.warn("【{}】未知事件类型：账户={} 订阅类型={} 事件ID={} 事件内容={}", provider, content.handle, content.subscriptionType, content.eventId, Jsons.encode(postInfo));
+					} else {
+						log.info("【{}】账户={} 订阅类型={} 事件ID={} 事件内容={}", provider, content.handle, content.subscriptionType, content.eventId, Jsons.encode(postInfo));
 					}
 					final Date now = new Date();
 					switch (eventType) {
@@ -256,7 +256,7 @@ public class AxiomTweetWsProvider implements Listener, TweetWsApi {
 						}
 					}
 				} catch (Exception e) {
-					log.error("【{}】解析数据失败：", provider, e);
+					log.error("【{}】解析数据失败，内容：{}：", provider, data, e);
 				}
 			}
 		});

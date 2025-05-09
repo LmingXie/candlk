@@ -75,9 +75,9 @@ public class TweetUserService extends BaseServiceImpl<TweetUser, TweetUserDao, L
 			} catch (DuplicateKeyException e) { // 违反唯一约束
 				log.warn("【推特用户】违反唯一约束，入库失败：{}", username);
 			}
-		} else {
+		}/* else {
 			log.info("【推特用户】更新用户数据：{}", username);
-		}
+		}*/
 	}
 
 	public List<String> findByUsername(Collection<?> usernames, boolean limitLastUpdate) {

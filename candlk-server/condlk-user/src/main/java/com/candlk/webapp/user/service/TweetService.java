@@ -147,57 +147,52 @@ public class TweetService extends BaseServiceImpl<Tweet, TweetDao, Long> {
 	}
 
 	public BigDecimal calcScore(Tweet tweetInfo) {
-		long start = System.currentTimeMillis();
-		try {
-			final String text = tweetInfo.getText();
-			if (!preCheck(text)) {
-				return BigDecimal.ZERO;
-			}
-
-			// TODO 优化：识别语言再分词（日语、韩语准确度不高）
-			// 推文分词：采用【实词分词器】将自动过滤 符号、表情、语气助词 等特殊字符
-			List<Term> segment = NotionalTokenizer.segment(text);
-			int size = segment.size();
-			if (size < 2) {
-				return BigDecimal.ZERO;
-			}
-			Set<String> words = new HashSet<>(size);
-			for (Term term : segment) {
-				// 字符必须大于1 && 不包含在内部停用词中
-				if (term.word.length() < 2 || esEngineClient.stopWordsCache.contains(term.word)) {
-					continue;
-				}
-				words.add(term.word);
-			}
-			if (words.size() < 2) {
-				return BigDecimal.ZERO;
-			}
-
-			// 纯文本：0.5分
-			BigDecimal score = new BigDecimal("0.5");
-			try {
-				// 命中关键词 -> 1分
-				List<TweetWord> tweetWords = matchKeywords(ESIndex.KEYWORDS_ACCURATE_INDEX, words);
-				if (!tweetWords.isEmpty()) {
-					tweetInfo.setStatus(Tweet.INIT);
-					score = score.add(BigDecimal.ONE);
-					tweetInfo.setWords(Jsons.encode(CollectionUtil.toList(tweetWords, TweetWord::getWords)));
-				}
-			} catch (IOException e) {
-				log.error("【{}】查询关键词失败：{}", tweetInfo.getTweetId(), e);
-			}
-
-			// 媒体推文 -> 纯文本：0.5分；附带图片：1分；附带视频/GIF：1.5分；文本+视频 2分
-			if (StringUtils.isNotEmpty(tweetInfo.getImages())) {
-				score = score.add(BigDecimal.ONE);
-			}
-			if (StringUtils.isNotEmpty(tweetInfo.getVideos())) {
-				score = score.add(new BigDecimal("1.5"));
-			}
-			return score;
-		} finally {
-			log.info("【{}】推文评分耗时：{} ms", tweetInfo.getTweetId(), System.currentTimeMillis() - start);
+		final String text = tweetInfo.getText();
+		if (!preCheck(text)) {
+			return BigDecimal.ZERO;
 		}
+
+		// TODO 优化：识别语言再分词（日语、韩语准确度不高）
+		// 推文分词：采用【实词分词器】将自动过滤 符号、表情、语气助词 等特殊字符
+		List<Term> segment = NotionalTokenizer.segment(text);
+		int size = segment.size();
+		if (size < 2) {
+			return BigDecimal.ZERO;
+		}
+		Set<String> words = new HashSet<>(size);
+		for (Term term : segment) {
+			// 字符必须大于1 && 不包含在内部停用词中
+			if (term.word.length() < 2 || esEngineClient.stopWordsCache.contains(term.word)) {
+				continue;
+			}
+			words.add(term.word);
+		}
+		if (words.size() < 2) {
+			return BigDecimal.ZERO;
+		}
+
+		// 纯文本：0.5分
+		BigDecimal score = new BigDecimal("0.5");
+		try {
+			// 命中关键词 -> 1分
+			List<TweetWord> tweetWords = matchKeywords(ESIndex.KEYWORDS_ACCURATE_INDEX, words);
+			if (!tweetWords.isEmpty()) {
+				tweetInfo.setStatus(Tweet.INIT);
+				score = score.add(BigDecimal.ONE);
+				tweetInfo.setWords(Jsons.encode(CollectionUtil.toList(tweetWords, TweetWord::getWords)));
+			}
+		} catch (IOException e) {
+			log.error("【{}】查询关键词失败：{}", tweetInfo.getTweetId(), e);
+		}
+
+		// 媒体推文 -> 纯文本：0.5分；附带图片：1分；附带视频/GIF：1.5分；文本+视频 2分
+		if (StringUtils.isNotEmpty(tweetInfo.getImages())) {
+			score = score.add(BigDecimal.ONE);
+		}
+		if (StringUtils.isNotEmpty(tweetInfo.getVideos())) {
+			score = score.add(new BigDecimal("1.5"));
+		}
+		return score;
 	}
 
 	public List<TweetWord> matchKeywords(ESIndex index, Set<String> words) throws IOException {
