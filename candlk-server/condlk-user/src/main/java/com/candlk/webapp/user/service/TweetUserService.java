@@ -202,6 +202,7 @@ public class TweetUserService extends BaseServiceImpl<TweetUser, TweetUserDao, L
 
 		try {
 			super.saveBatch(newUsers);
+			this.sync(existsUsers, now);
 		} catch (DuplicateKeyException e) { // 违反唯一约束
 			if (--retry > 0) {
 				batchSyncUserInfo(usersMsg, now, retry);
@@ -209,7 +210,6 @@ public class TweetUserService extends BaseServiceImpl<TweetUser, TweetUserDao, L
 			}
 			log.warn("【同步用户】违反唯一约束，入库失败！");
 		}
-		this.sync(existsUsers, now);
 		log.info("【同步用户】：新增{}个，更新{}个", newUsers.size(), existsUsers.size());
 	}
 

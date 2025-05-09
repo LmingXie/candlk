@@ -142,59 +142,9 @@ public class TweetApiTest {
 		JSONObject data = resp.data();
 		List<TweetUserInfo> tweetInfo = data.getList("data", TweetUserInfo.class);
 		Messager<List<TweetUserInfo>> usersMsg = resp.castDataType(tweetInfo);
+		final Date now = new Date();
 		if (usersMsg.isOK()) {
-			List<TweetUserInfo> allUser = usersMsg.data();
-			HashSet<String> allUsername = CollectionUtil.toSet(allUser, TweetUserInfo::getUsername);
-			// 已经存在的用户
-			List<String> existsUsernames = tweetUserService.findByUsername(allUsername, false);
-
-			int size = existsUsernames.size();
-			List<TweetUserInfo> existsUsers = new ArrayList<>(size);
-			int allSize = allUser.size();
-			List<TweetUser> newUsers = new ArrayList<>(allSize - size);
-			Date now = new Date();
-
-			Set<String> duplicate = new HashSet<>(allSize);
-			for (TweetUserInfo user : allUser) {
-				if (CollectionUtil.findFirst(duplicate, u -> u.equalsIgnoreCase(user.username)) != null) {
-					continue;
-				}
-				duplicate.add(user.username);
-				if (CollectionUtil.findFirst(existsUsernames, u -> u.equalsIgnoreCase(user.username)) != null) {
-					// 添加到已存在用户列表
-					existsUsers.add(user);
-				} else {
-					TweetUser tweetUser = new TweetUser()
-							.setProviderType(TweetProvider.TWEET)
-							.setUserId(user.id)
-							.setUsername(user.username)
-							.setNickname(user.name)
-							.setAvatar(user.profileImageUrl)
-							.setBanner(user.profileBannerUrl)
-							.setPinned(StringUtil.length(user.pinnedTweetId) > 0 ? ("[\"" + user.pinnedTweetId + "\"]") : null)
-							.setLocation(user.location)
-							.setDescription(Jsons.encode(JSONObject.of("text", user.description)));
-					if (user.publicMetrics != null) {
-						final Integer followersCount = NumberUtil.getInteger(user.publicMetrics.followersCount, 0);
-						int score = calcScore(followersCount);
-						tweetUser.setFollowers(user.publicMetrics.followersCount)
-								.setTweets(user.publicMetrics.tweetCount)
-								.setFollowing(user.publicMetrics.followingCount)
-								.setMedia(user.publicMetrics.mediaCount)
-								.setListed(user.publicMetrics.listedCount)
-								.setLikes(user.publicMetrics.likeCount)
-								.setTweetLastTime(now)
-								.setType(TweetUserType.SPECIAL)
-								.setScore(BigDecimal.valueOf(score))
-								.initTime(now);
-					}
-					newUsers.add(tweetUser);
-				}
-			}
-
-			tweetUserService.saveBatch(newUsers);
-			tweetUserService.sync(existsUsers, now);
-			log.info("同步用户：新增{}个，更新{}个", newUsers.size(), existsUsers.size());
+			tweetUserService.batchSyncUserInfo(usersMsg, now, 3);
 		}
 	}
 

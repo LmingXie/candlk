@@ -80,7 +80,7 @@ public class TweetSyncJob {
 			diff = 100 - usernames.size();
 			if (diff > 0) {
 				// 查询最近更新过帖子的用户【不限制更新时间】
-				List<String> userIds2 = tweetUserService.lastList(usernames, diff, false);
+				final List<String> userIds2 = tweetUserService.lastList(usernames, diff, false);
 				if (!userIds2.isEmpty()) {
 					usernames.addAll(userIds2);
 				}

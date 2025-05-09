@@ -100,7 +100,7 @@ public class GenTokenJob {
 				}
 				words.add(term.word);
 			}
-			Messager<DeepSeekChat> chat = deepSeekApi.chat("根据推文生成代币名称和代币符号，仅输出json格式的{\"name\":\"\",\"symbol\":\"\"}。" + StringUtil.joins(words, " "));
+			final Messager<DeepSeekChat> chat = deepSeekApi.chat("根据推文生成代币名称和代币符号，仅输出json格式的{\"name\":\"\",\"symbol\":\"\"}。" + StringUtil.joins(words, " "));
 			if (chat.isOK()) {
 				DeepSeekChat data = chat.data();
 				if (CollectionUtils.isNotEmpty(data.choices)) {
