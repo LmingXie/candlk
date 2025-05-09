@@ -61,7 +61,7 @@ mybatis-plus:
   configuration:
     map-underscore-to-camel-case: true
     default-enum-type-handler: org.apache.ibatis.type.EnumOrdinalTypeHandler
-    log-impl: org.apache.ibatis.logging.nologging.NoLoggingImpl  # TODO 清空 log-impl，等于不配置，默认就不会打印日志
+    log-impl: org.apache.ibatis.logging.nologging.NoLoggingImpl  # TODO 不打印日志
   global-config:
     db-config:
       table-prefix: x_

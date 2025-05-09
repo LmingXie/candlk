@@ -58,7 +58,9 @@ public class X3TweetWsProvider implements Listener, TweetWsApi {
 
 	@Override
 	public boolean ping() {
-		webSocket.sendText("ping", true);
+		if (webSocket != null) {
+			webSocket.sendText("ping", true);
+		}
 		return checkPing();
 	}
 
