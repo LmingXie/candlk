@@ -16,7 +16,8 @@ import com.alibaba.fastjson2.JSONObject;
 import com.candlk.common.security.AES;
 import com.candlk.common.util.BaseHttpUtil;
 import com.candlk.context.web.Jsons;
-import com.candlk.webapp.user.entity.*;
+import com.candlk.webapp.user.entity.Tweet;
+import com.candlk.webapp.user.entity.TweetUser;
 import com.candlk.webapp.user.model.TweetProvider;
 import com.candlk.webapp.user.model.TweetType;
 import com.candlk.webapp.user.service.TweetService;
@@ -179,6 +180,9 @@ public class AxiomTweetWsProvider implements Listener, TweetWsApi {
 								// 解析并推文数据
 								final String username = vo.content.handle.trim(), tweetId = tweet.getString("id");
 
+								if (duplicate(tweetId, now)) {
+									return;
+								}
 								final JSONObject body = tweet.getJSONObject("body");
 								// 使用正则表达式去除以 https://t.co/ 开头的推文尾部 短链接
 								final String text = body.getString("text").replaceAll("https://t\\.co/\\S+", "").trim();
@@ -219,7 +223,6 @@ public class AxiomTweetWsProvider implements Listener, TweetWsApi {
 									}
 								}
 								tweetService.saveTweet(tweetInfo, username, provider, tweetId, tweetUser);
-
 							}
 						}
 						case "following.update" -> {

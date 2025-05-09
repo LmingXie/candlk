@@ -112,7 +112,7 @@ public class GmgnTweetWsProvider extends BaseHttpUtil implements Listener, Tweet
 	public CompletionStage<?> onText(WebSocket webSocket, CharSequence data, boolean last) {
 		// 并发处理消息（交给线程池）
 		WS_EXECUTOR.submit(() -> {
-			TweetProvider provider = getProvider();
+			final TweetProvider provider = getProvider();
 			lastTime = System.currentTimeMillis();
 
 			final GmgnTweetEventVO event = Jsons.parseObject(data.toString(), GmgnTweetEventVO.class);
@@ -126,6 +126,9 @@ public class GmgnTweetWsProvider extends BaseHttpUtil implements Listener, Tweet
 					case "tweet", "reply", "quote"/*,"repost"*/ -> {
 						if (vo.content != null) {
 							final String username = vo.user.username, tweetId = vo.tweetId;
+							if (duplicate(tweetId, now)) {
+								return;
+							}
 							// log.info("【{}】账户={} 订阅类型={} ID={} 内容={}", provider, username, vo.twType, tweetId, Jsons.encode(vo));
 							final Tweet tweetInfo = new Tweet()
 									.setProviderType(provider)

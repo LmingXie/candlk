@@ -106,9 +106,14 @@ public class X3TweetWsProvider implements Listener, TweetWsApi {
 						final JSONObject originPost = post.getJSONObject("originPost");
 						final TweetType tweetType = originPost == null ? TweetType.TWEET : TweetType.QUOTE;
 
+						final String tweetId = post.getString("id").replaceFirst("x_", "");
+
+						if (duplicate(tweetId, now)) {
+							return;
+						}
+
 						final JSONObject authorInfo = post.getJSONObject("author");
 						final String author = authorInfo.getString("screenName");
-						final String tweetId = post.getString("id").replaceFirst("x_", "");
 
 						final List<JSONObject> medias = post.getList("medias", JSONObject.class);
 						// 引用图片 和 视频

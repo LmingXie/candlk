@@ -6,6 +6,7 @@ import java.util.Map;
 import javax.annotation.PostConstruct;
 
 import com.candlk.webapp.user.model.TweetProvider;
+import com.candlk.webapp.ws.TweetDeduplicate;
 import com.candlk.webapp.ws.TweetWsApi;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.context.annotation.Configuration;
@@ -34,6 +35,8 @@ public class PingJob {
 				}
 			}
 		}
+
+		TweetDeduplicate.clear();
 		// log.info("结束执行心跳任务。");
 	}
 
