@@ -2,7 +2,6 @@ package com.candlk.webapp.user.service;
 
 import java.math.BigDecimal;
 import java.util.*;
-import javax.annotation.Resource;
 
 import com.alibaba.fastjson2.JSONObject;
 import com.baomidou.mybatisplus.core.conditions.update.UpdateWrapper;
@@ -12,7 +11,6 @@ import com.candlk.common.web.Page;
 import com.candlk.context.web.Jsons;
 import com.candlk.webapp.api.TweetUserInfo;
 import com.candlk.webapp.base.service.BaseServiceImpl;
-import com.candlk.webapp.es.ESEngineClient;
 import com.candlk.webapp.user.dao.TweetUserDao;
 import com.candlk.webapp.user.entity.TweetUser;
 import com.candlk.webapp.user.form.TweetUserQuery;
@@ -47,6 +45,7 @@ public class TweetUserService extends BaseServiceImpl<TweetUser, TweetUserDao, L
 		super.update(new UpdateWrapper<TweetUser>().set(TweetUser.TYPE, type.value).eq(TweetUser.ID, user.getId()));
 	}
 
+	@Transactional
 	public boolean updateTweetLastTime(String username, Date now) {
 		return super.update(new UpdateWrapper<TweetUser>()
 				.set(TweetUser.TWEET_LAST_TIME, now)

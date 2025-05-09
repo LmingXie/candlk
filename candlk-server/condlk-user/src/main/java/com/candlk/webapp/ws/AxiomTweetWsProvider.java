@@ -1,7 +1,6 @@
 package com.candlk.webapp.ws;
 
 import java.net.URI;
-import java.net.http.HttpClient;
 import java.net.http.WebSocket;
 import java.net.http.WebSocket.Listener;
 import java.nio.charset.StandardCharsets;
@@ -22,8 +21,8 @@ import com.candlk.webapp.user.model.TweetProvider;
 import com.candlk.webapp.user.model.TweetType;
 import com.candlk.webapp.user.service.TweetService;
 import com.candlk.webapp.user.service.TweetUserService;
+import com.candlk.webapp.user.vo.AxiomTwitterEventVO;
 import lombok.extern.slf4j.Slf4j;
-import me.codeplayer.util.EasyDate;
 import org.apache.commons.lang3.StringUtils;
 import org.bitcoinj.core.Base58;
 import org.p2p.solanaj.core.Account;
@@ -151,9 +150,9 @@ public class AxiomTweetWsProvider implements Listener, TweetWsApi {
 		// 并发处理消息（交给线程池）
 		WS_EXECUTOR.submit(() -> {
 			lastTime = System.currentTimeMillis();
-			AxiomTwitter axiomTwitter = Jsons.parseObject(data.toString(), AxiomTwitter.class);
-			if (axiomTwitter != null) {
-				AxiomTwitter.Content content = axiomTwitter.content;
+			final AxiomTwitterEventVO vo = Jsons.parseObject(data.toString(), AxiomTwitterEventVO.class);
+			if (vo != null) {
+				AxiomTwitterEventVO.Content content = vo.content;
 				final String event = content.event;
 				final String[] split = event.split(":");
 				byte[] iv = decoder.decode(split[0]);
@@ -165,9 +164,9 @@ public class AxiomTweetWsProvider implements Listener, TweetWsApi {
 					final String eventType = content.eventType;
 					if (!eventTypes.contains(eventType)) {
 						log.warn("【{}】未知事件类型：账户={} 订阅类型={} ID={} 内容={}", provider, content.handle, content.subscriptionType, content.eventId, Jsons.encode(postInfo));
-					} else {
+					} /*else {
 						log.info("【{}】账户={} 订阅类型={} ID={} 内容={}", provider, content.handle, content.subscriptionType, content.eventId, Jsons.encode(postInfo));
-					}
+					}*/
 					final Date now = new Date();
 					switch (eventType) {
 						case "tweet.update" -> {
@@ -178,8 +177,7 @@ public class AxiomTweetWsProvider implements Listener, TweetWsApi {
 									return;
 								}
 								// 解析并推文数据
-								final String tweetId = tweet.getString("id");
-								final String author = axiomTwitter.content.handle.trim();
+								final String username = vo.content.handle.trim(), tweetId = tweet.getString("id");
 
 								final JSONObject body = tweet.getJSONObject("body");
 								// 使用正则表达式去除以 https://t.co/ 开头的推文尾部 短链接
@@ -197,7 +195,7 @@ public class AxiomTweetWsProvider implements Listener, TweetWsApi {
 								final Tweet tweetInfo = new Tweet()
 										.setProviderType(provider)
 										.setType(tweetType)
-										.setUsername(author)
+										.setUsername(username)
 										.setTweetId(tweetId)
 										.setText(text)
 										.setOrgMsg(postInfo.toJSONString())
@@ -213,15 +211,14 @@ public class AxiomTweetWsProvider implements Listener, TweetWsApi {
 									if (profile != null) {
 										tweetUser = new TweetUser()
 												.setProviderType(provider)
-												.setUsername(author)
+												.setUsername(username)
 												.setNickname(profile.getString("name"))
 												.setAvatar(profile.getString("avatar"))
 												.setTweetLastTime(now);
 										tweetUser.initTime(now);
-										tweetUserService.updateStat(tweetUser);
 									}
 								}
-								tweetService.saveTweet(tweetInfo, author, provider, tweetId, tweetUser);
+								tweetService.saveTweet(tweetInfo, username, provider, tweetId, tweetUser);
 
 							}
 						}

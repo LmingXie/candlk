@@ -1,11 +1,11 @@
-package com.candlk.webapp.user.entity;
+package com.candlk.webapp.user.vo;
 
 import lombok.Data;
 import lombok.NoArgsConstructor;
 
 @NoArgsConstructor
 @Data
-public class AxiomTwitter {
+public class AxiomTwitterEventVO {
 
 	public String room;
 	public Content content;

@@ -1,8 +1,7 @@
 package com.candlk.common.util;
 
 import java.io.IOException;
-import java.net.URI;
-import java.net.URLEncoder;
+import java.net.*;
 import java.net.http.*;
 import java.nio.charset.StandardCharsets;
 import java.time.Duration;
@@ -354,6 +353,59 @@ public abstract class BaseHttpUtil {
 		IllegalThreadStateException ex = new IllegalThreadStateException();
 		ex.initCause(e);
 		return ex;
+	}
+
+	/**
+	 * 基于代理配置信息创建HTTP客户端
+	 */
+	protected static HttpClient.Builder prepareProxyClient(String host, int port, @Nullable String username, @Nullable String password) {
+		final HttpClient.Builder builder = HttpClient.newBuilder()
+				.version(HttpClient.Version.HTTP_1_1)
+				.connectTimeout(Duration.of(5, ChronoUnit.SECONDS))
+				.proxy(ProxySelector.of(new InetSocketAddress(host, port)));
+
+		if (StringUtil.notEmpty(username)) {
+			final PasswordAuthentication authentication = new PasswordAuthentication(username, password.toCharArray());
+			builder.authenticator(new Authenticator() {
+				@Override
+				protected PasswordAuthentication getPasswordAuthentication() {
+
+					if (getRequestorType() == RequestorType.PROXY) {
+						return authentication;
+					}
+					return null;
+				}
+			});
+		}
+
+		return builder;
+	}
+
+	/**
+	 * 基于代理配置信息创建HTTP客户端
+	 *
+	 * @param proxyConfig 形如 <code> "proxy://username:password@host:port" </code>
+	 */
+	protected static HttpClient.Builder prepareProxyClient(@Nonnull String proxyConfig) {
+		// "proxy://username:password@host:port"
+		final URI uri = URI.create(proxyConfig);
+		String username = null, password = null;
+		final String userInfo = uri.getUserInfo();
+		if (StringUtil.notEmpty(userInfo)) {
+			final String[] parts = userInfo.split(":", 2);
+			username = parts[0];
+			password = parts[1];
+		}
+		return prepareProxyClient(uri.getHost(), uri.getPort(), username, password);
+	}
+
+	/**
+	 * 基于代理配置信息创建HTTP客户端，如果没有配置代理，则使用默认的HTTP客户端
+	 *
+	 * @param proxyConfig 形如 <code> "proxy://username:password@host:port" </code>
+	 */
+	protected static HttpClient getProxyOrDefaultClient(@Nullable String proxyConfig) {
+		return StringUtil.isBlank(proxyConfig) ? defaultClient() : prepareProxyClient(proxyConfig).build();
 	}
 
 }

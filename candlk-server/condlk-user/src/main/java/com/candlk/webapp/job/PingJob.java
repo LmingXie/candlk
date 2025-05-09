@@ -22,7 +22,7 @@ public class PingJob {
 		}
 	}
 
-	@Scheduled(cron = "${service.cron.PingJob:0/55 * * * * ?}")
+	@Scheduled(cron = "${service.cron.PingJob:0/30 * * * * ?}")
 	public void run() {
 		log.info("开始执行心跳任务...");
 		EnumMap<TweetProvider, TweetWsApi> map = TweetWsApi.implMapRef.get();

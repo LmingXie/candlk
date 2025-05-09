@@ -1,30 +1,23 @@
 package com.candlk.webapp.job;
 
-import java.math.BigDecimal;
 import java.util.*;
 import javax.annotation.Resource;
 
-import com.alibaba.fastjson2.JSONObject;
 import com.candlk.common.model.Messager;
 import com.candlk.common.redis.RedisUtil;
 import com.candlk.common.util.Common;
 import com.candlk.context.model.RedisKey;
-import com.candlk.context.web.Jsons;
 import com.candlk.webapp.api.TweetApi;
 import com.candlk.webapp.api.TweetUserInfo;
 import com.candlk.webapp.user.entity.Tweet;
-import com.candlk.webapp.user.entity.TweetUser;
-import com.candlk.webapp.user.model.TweetProvider;
-import com.candlk.webapp.user.model.TweetUserType;
 import com.candlk.webapp.user.service.TweetService;
 import com.candlk.webapp.user.service.TweetUserService;
 import lombok.extern.slf4j.Slf4j;
-import me.codeplayer.util.*;
+import me.codeplayer.util.StringUtil;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.dao.DuplicateKeyException;
 import org.springframework.scheduling.annotation.Scheduled;
-
-import static com.candlk.webapp.user.service.TweetUserService.calcScore;
 
 @Slf4j
 @Configuration
@@ -34,9 +27,18 @@ public class TweetSyncJob {
 	TweetService tweetService;
 	@Resource
 	TweetUserService tweetUserService;
+	@Value("${service.proxy-conf}")
+	private String proxyConf;
 
-	static final TweetApi tweetApi = new TweetApi("AAAAAAAAAAAAAAAAAAAAAK450wEAAAAAc6mb7tVQF3%2B6ssbH2borX%2F0jQpI%3DrxKSmb3okKK49o5Z1P4RFZXgIK08FXXhc1XjSbVrJd1y0bo1sp",
-			"http://127.0.0.1:10809");
+	static TweetApi tweetApiCache;
+
+	public TweetApi getTweetApi() {
+		if (tweetApiCache == null) {
+			tweetApiCache = new TweetApi("AAAAAAAAAAAAAAAAAAAAAK450wEAAAAAc6mb7tVQF3%2B6ssbH2borX%2F0jQpI%3DrxKSmb3okKK49o5Z1P4RFZXgIK08FXXhc1XjSbVrJd1y0bo1sp",
+					proxyConf);
+		}
+		return tweetApiCache;
+	}
 
 	/**
 	 * 同步推文信息（生产：1 m/次；本地：15 m/次）
@@ -47,6 +49,7 @@ public class TweetSyncJob {
 			log.info("【推文评分】开关关闭，跳过执行...");
 			return;
 		}
+		final TweetApi tweetApi = getTweetApi();
 		log.info("开始同步推文数据信息...");// 查询前100条推文
 		final List<Tweet> oldTweets = tweetService.lastList(100);
 		// final String tweetIds = StringUtil.join(oldTweets, Tweet::getTweetId, ",");

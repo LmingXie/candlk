@@ -103,6 +103,7 @@ warn:
   service:
     url: https://qyapi.weixin.qq.com/cgi-bin/webhook/send?key=ffdc8cb0-5bcd-4ae1-a1a6-6acbe654e3cb
 service:
+  proxy-conf: http://127.0.0.1:10809
   proxy:
     host: 127.0.0.1
     port: 10808
