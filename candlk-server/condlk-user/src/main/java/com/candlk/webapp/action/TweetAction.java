@@ -47,7 +47,7 @@ public class TweetAction extends BaseAction {
 			} else {
 				opsForSet.remove(RedisKey.SYS_SWITCH, flag);
 			}
-			return Messager.OK((isOpen ? "开启" : "关闭") + "推文评分开关成功");
+			return Messager.OK((isOpen ? "开启" : "关闭") + "开关成功");
 		});
 	}
 
