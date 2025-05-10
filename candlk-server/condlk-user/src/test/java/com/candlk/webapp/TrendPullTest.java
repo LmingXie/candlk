@@ -5,7 +5,7 @@ import javax.annotation.Resource;
 import com.candlk.context.web.Jsons;
 import com.candlk.webapp.job.TrendJob;
 import com.candlk.webapp.trend.TrendApi;
-import com.candlk.webapp.trend.impl.GDTTrendImpl;
+import com.candlk.webapp.trend.impl.Trends24Impl;
 import lombok.extern.slf4j.Slf4j;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
@@ -22,9 +22,9 @@ public class TrendPullTest {
 
 	public static void main(String[] args) throws Exception {
 		// final TrendApi api = new GoogleTrendImpl("http://127.0.0.1:10809");
-		// final TrendApi api = new Trends24Impl();
+		final TrendApi api = new Trends24Impl();
 		// final TrendApi api = new RedditListImpl();
-		final TrendApi api = new GDTTrendImpl();
+		// final TrendApi api = new GDTTrendImpl();
 		System.out.println(" 全部关键词：" + Jsons.encode(api.pull()));
 	}
 

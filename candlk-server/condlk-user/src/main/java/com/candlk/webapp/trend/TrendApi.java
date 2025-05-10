@@ -1,7 +1,7 @@
 package com.candlk.webapp.trend;
 
-import java.util.EnumMap;
-import java.util.Set;
+import java.util.*;
+import javax.annotation.Nullable;
 
 import com.candlk.context.ContextImpl;
 import com.candlk.webapp.user.model.TrendProvider;
@@ -48,12 +48,16 @@ public interface TrendApi {
 		return TrendApi.formatWord(word);
 	}
 
-	default void parseHtmlKeyword(Set<String> keywords, String url, String xpath) {
+	default Set<String> parseHtmlKeyword(@Nullable Set<String> keywords, String url, String xpath) {
 		try {
 			final Connection connect = Jsoup.connect(url).timeout(10_000);
 			final Document document = connect.get();
 			final Elements aTags = document.selectXpath(xpath);
 			if (!aTags.isEmpty()) {
+				if (keywords == null) {
+					final int size = aTags.size();
+					keywords = new HashSet<>(size, 1F);
+				}
 				for (Element a : aTags) {
 					final String word = parseHtmlWord(a.text());
 					keywords.add(word);
@@ -62,6 +66,7 @@ public interface TrendApi {
 		} catch (Exception e) {
 			log.error("【{}】查询 全部 趋势热词失败 ", getProvider());
 		}
+		return keywords;
 	}
 
 }
