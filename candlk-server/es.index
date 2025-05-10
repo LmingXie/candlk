@@ -1,5 +1,5 @@
 
-// 关键词精确匹配索引
+// 关键词精确匹配索引：keywords_accurate_index
 {
   "settings": {
     "number_of_shards": 5,
@@ -29,7 +29,8 @@
       "priority": { "type": "integer" },
       "count": { "type": "long" },
       "addTime": { "type": "date" },
-      "updateTime": { "type": "date" }
+      "updateTime": { "type": "date" },
+      "status": { "type": "integer" }
     }
   }
 }
@@ -124,7 +125,8 @@
       },
       "update_time": {
         "type": "date"
-      }
+      },
+     "status": { "type": "integer" }
     }
   }
 }

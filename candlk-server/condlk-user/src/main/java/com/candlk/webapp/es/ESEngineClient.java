@@ -9,17 +9,20 @@ import java.util.regex.Pattern;
 import javax.net.ssl.SSLContext;
 
 import co.elastic.clients.elasticsearch.ElasticsearchClient;
+import co.elastic.clients.elasticsearch._types.FieldValue;
 import co.elastic.clients.elasticsearch._types.SortOrder;
 import co.elastic.clients.elasticsearch.core.*;
 import co.elastic.clients.elasticsearch.core.bulk.BulkOperation;
 import co.elastic.clients.elasticsearch.core.bulk.BulkResponseItem;
 import co.elastic.clients.elasticsearch.core.search.Hit;
+import co.elastic.clients.json.JsonData;
 import co.elastic.clients.transport.TransportUtils;
 import com.candlk.context.web.Jsons;
 import com.candlk.webapp.base.entity.BaseEntity;
 import com.candlk.webapp.user.entity.StopWord;
 import com.candlk.webapp.user.model.ESIndex;
 import lombok.extern.slf4j.Slf4j;
+import me.codeplayer.util.CollectionUtil;
 import org.jetbrains.annotations.NotNull;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
@@ -37,7 +40,7 @@ public class ESEngineClient {
 	                      @Value("${es.username:elastic}") String username,
 	                      @Value("${es.pwd:#{'YqR6mL+USUyJnPYPKtG='}}") String pwd
 	) throws IOException {
-		SSLContext sslContext = TransportUtils.sslContextFromCaFingerprint(fingerprint);
+		final SSLContext sslContext = TransportUtils.sslContextFromCaFingerprint(fingerprint);
 		client = ElasticsearchClient.of(b -> b
 				.host(serverUrl)
 				.usernameAndPassword(username, pwd)
@@ -49,13 +52,13 @@ public class ESEngineClient {
 
 	/** 初始化时从 stopwords_index 加载所有停用词到缓存 */
 	private void loadStopWordsToCache() throws IOException {
-		SearchResponse<StopWord> response = client.search(s -> s
+		final SearchResponse<StopWord> response = client.search(s -> s
 						.index(ESIndex.STOP_WORDS_INDEX.value)
 						.query(q -> q.matchAll(m -> m))
 						.size(10000), // 设置足够大的 size，覆盖大部分停用词
 				StopWord.class);
 
-		List<Hit<StopWord>> hits = response.hits().hits();
+		final List<Hit<StopWord>> hits = response.hits().hits();
 		for (Hit<StopWord> hit : hits) {
 			StopWord source = hit.source();
 			if (source != null) {
@@ -76,7 +79,7 @@ public class ESEngineClient {
 			return;
 		}
 
-		List<BulkOperation> operations = new ArrayList<>();
+		final List<BulkOperation> operations = new ArrayList<>();
 		for (T keyword : keyWords) {
 			operations.add(BulkOperation.of(b -> b
 					.index(op -> op.index(type.value)
@@ -89,8 +92,8 @@ public class ESEngineClient {
 		}
 
 		// 批量添加
-		BulkRequest bulkRequest = BulkRequest.of(b -> b.operations(operations));
-		BulkResponse bulkResponse = client.bulk(bulkRequest);
+		final BulkRequest bulkRequest = BulkRequest.of(b -> b.operations(operations));
+		final BulkResponse bulkResponse = client.bulk(bulkRequest);
 
 		if (bulkResponse.errors()) {
 			for (BulkResponseItem item : bulkResponse.items()) {
@@ -120,9 +123,9 @@ public class ESEngineClient {
 			throw new IllegalArgumentException("页码和页面大小必须大于 0");
 		}
 
-		int from = (page - 1) * pageSize;
+		final int from = (page - 1) * pageSize;
 
-		SearchResponse<T> response = client.search(s -> {
+		final SearchResponse<T> response = client.search(s -> {
 			s.index(type.value)
 					.query(q -> q.matchAll(m -> m))
 					.from(from)
@@ -137,8 +140,8 @@ public class ESEngineClient {
 	}
 
 	public static <T extends BaseEntity> @NotNull List<T> toT(SearchResponse<T> response) {
-		List<Hit<T>> hits = response.hits().hits();
-		List<T> results = new ArrayList<>(hits.size());
+		final List<Hit<T>> hits = response.hits().hits();
+		final List<T> results = new ArrayList<>(hits.size());
 		for (Hit<T> hit : hits) {
 			T source = hit.source();
 			if (source != null) {
@@ -153,13 +156,13 @@ public class ESEngineClient {
 			return 0;
 		}
 
-		BulkRequest.Builder br = new BulkRequest.Builder();
+		final BulkRequest.Builder br = new BulkRequest.Builder();
 
 		for (String id : ids) {
 			br.operations(op -> op.delete(del -> del.index(type.value).id(id)));
 		}
 
-		BulkResponse bulkResponse = client.bulk(br.build());
+		final BulkResponse bulkResponse = client.bulk(br.build());
 		int affectedRows = 0;
 		for (BulkResponseItem item : bulkResponse.items()) {
 			if (item.error() == null) {
@@ -173,6 +176,43 @@ public class ESEngineClient {
 		}
 
 		return affectedRows;
+	}
+
+	public <T extends BaseEntity> Long updateFieldByIds(ESIndex esIndex, List<T> list, String field, Object value) throws IOException {
+		return updateFieldByIds(esIndex, list, field, value, null);
+	}
+
+	public <T extends BaseEntity> Long updateFieldByIds(ESIndex esIndex, List<T> list, String field, Object value, Date updateTime) throws IOException {
+		final UpdateByQueryResponse response = client.updateByQuery(UpdateByQueryRequest.of(b -> {
+			b.index(esIndex.value).query(q -> q
+					.terms(t -> t
+							.field("_id")
+							.terms(v -> v.value(CollectionUtil.toList(list, w -> FieldValue.of(w.getId().toString()))))
+					)
+			);
+
+			if (updateTime != null) {
+				// 构建脚本：更新目标字段和 updateTime 字段
+				final String scriptSource = String.format("""
+						    ctx._source['%s'] = params['%s'];
+						    ctx._source.updateTime = params.updateTime;
+						""", field, field);
+				b.script(s -> s
+						.lang("painless")
+						.source(builder -> builder.scriptString(scriptSource))
+						.params(field, JsonData.of(value))
+						.params("updateTime", JsonData.of(updateTime)) // 使用 java.time.Instant 或 Date
+				);
+			} else {
+				b.script(s -> s
+						.source(builder -> builder.scriptString("ctx._source." + field + " = params." + field))
+						.lang("painless")
+						.params(field, JsonData.of(value))
+				);
+			}
+			return b;
+		}));
+		return response.updated();
 	}
 
 	public static Date parseDate(String time) {

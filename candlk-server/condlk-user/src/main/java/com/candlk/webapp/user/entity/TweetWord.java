@@ -22,6 +22,8 @@ public class TweetWord extends TimeBasedEntity {
 	Integer type;
 	/** 优先级 */
 	Integer priority;
+	/** 业务状态：0=未启用；已启用 */
+	Integer status;
 	/** ES 关键词命中计数【命中后自动更新】 */
 	@TableField(exist = false)
 	Long count = 0L;
@@ -46,5 +48,6 @@ public class TweetWord extends TimeBasedEntity {
 	public static final String COUNT = "count";
 	public static final String PRIORITY = "priority";
 	public static final String TYPE = "type";
+	public static final String STATUS = "status";
 
 }

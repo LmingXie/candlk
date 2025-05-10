@@ -4,9 +4,8 @@ import java.io.IOException;
 import java.util.*;
 import javax.annotation.Resource;
 
-import co.elastic.clients.elasticsearch._types.Result;
 import co.elastic.clients.elasticsearch._types.SortOrder;
-import co.elastic.clients.elasticsearch.core.*;
+import co.elastic.clients.elasticsearch.core.SearchResponse;
 import com.baomidou.mybatisplus.core.conditions.query.QueryWrapper;
 import com.baomidou.mybatisplus.core.conditions.update.UpdateWrapper;
 import com.candlk.common.dao.SmartQueryWrapper;
@@ -151,28 +150,19 @@ public class TweetWordService extends BaseServiceImpl<TweetWord, TweetWordDao, L
 		if (CollectionUtils.isNotEmpty(nonStopWords)) {
 			esEngineClient.batchDelByIds(ESIndex.KEYWORDS_ACCURATE_INDEX, CollectionUtil.toList(nonStopWords, word -> word.getId().toString()));
 		}
-
 	}
 
 	@Transactional
-	public void edit(TweetWord word, Integer type) throws Exception {
-		super.update(new UpdateWrapper<TweetWord>().set(TweetWord.TYPE, type).eq(TweetWord.ID, word.getId()));
-
-		// 同步更新ES
-		final String wordId = word.getId().toString();
-		final UpdateRequest<Object, Object> updateRequest = UpdateRequest.of(b -> b
-				.index(ESIndex.KEYWORDS_ACCURATE_INDEX.value)
-				.id(wordId)
-				.doc(Map.of(TweetUser.TYPE, type))  // 更新字段
+	public void edit(List<TweetWord> word, String field, Integer newValue, Date now) throws Exception {
+		super.update(new UpdateWrapper<TweetWord>()
+				.set(field, newValue)
+				.set(TweetWord.UPDATE_TIME, now)
+				.in(TweetWord.ID, CollectionUtil.toList(word, TweetWord::getId))
 		);
 
-		final UpdateResponse<Object> response = esEngineClient.client.update(updateRequest, Object.class);
-
-		if (response.result() != Result.Updated && response.result() != Result.NoOp) {
-			log.warn("更新type失败: userId={}, result={}", wordId, response.result());
-		} else {
-			log.info("成功更新 userId={} 的 type 为 {}", wordId, type);
-		}
+		// 同步更新ES
+		final Long updated = esEngineClient.updateFieldByIds(ESIndex.KEYWORDS_ACCURATE_INDEX, word, field, newValue, now);
+		log.info("更新结果： field:{} type={} words={} updated={}", field, newValue, word.size(), updated);
 	}
 
 }

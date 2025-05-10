@@ -19,6 +19,8 @@ public class TweetWordVO extends AbstractVO<TweetWord> {
 	Integer priority;
 	/** ES 关键词命中计数【命中后自动更新】 */
 	Long count = 0L;
+	/** 业务状态：0=未启用；已启用 */
+	Integer status;
 
 	Date addTime;
 	/** 最后更新时间 */

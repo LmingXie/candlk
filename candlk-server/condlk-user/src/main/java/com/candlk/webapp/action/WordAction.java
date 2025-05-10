@@ -12,8 +12,7 @@ import com.candlk.context.model.RedisKey;
 import com.candlk.context.web.ProxyRequest;
 import com.candlk.webapp.base.action.BaseAction;
 import com.candlk.webapp.user.entity.TweetWord;
-import com.candlk.webapp.user.form.TweetWordForm;
-import com.candlk.webapp.user.form.TweetWordQuery;
+import com.candlk.webapp.user.form.*;
 import com.candlk.webapp.user.service.TweetWordService;
 import com.candlk.webapp.user.vo.TweetWordVO;
 import lombok.extern.slf4j.Slf4j;
@@ -106,13 +105,27 @@ public class WordAction extends BaseAction {
 
 	@Ready("修改关键词")
 	@GetMapping("/edit")
-	public Messager<Void> edit(ProxyRequest q, Long id, Integer type) throws Exception {
-		I18N.assertNotNull(id);
-		I18N.assertTrue(TweetWord.TYPE_STOP != type, "不可修改为停用词！");
-		final TweetWord tweetWord = tweetWordService.get(id);
-		I18N.assertNotNull(tweetWord, "关键词不存在");
-		I18N.assertTrue(tweetWord.getType() != TweetWord.TYPE_STOP, "不可修改停用词！");
-		tweetWordService.edit(tweetWord, type);
+	public Messager<Void> edit(ProxyRequest q, @Validated EditWordForm form) throws Exception {
+		I18N.assertNotNull(form.ids);
+		I18N.assertNotNull(form.type, "关键词类型不可或缺");
+		I18N.assertTrue(TweetWord.TYPE_STOP != form.type, "不可修改为停用词！");
+		final List<TweetWord> tweetWords = tweetWordService.findByIds(form.ids);
+		I18N.assertNotNull(CollectionUtils.isNotEmpty(tweetWords), "关键词不存在");
+		for (TweetWord tweetWord : tweetWords) {
+			I18N.assertTrue(tweetWord.getType() != TweetWord.TYPE_STOP, "不可修改停用词！");
+		}
+		tweetWordService.edit(tweetWords, TweetWord.TYPE, form.type, q.now());
+		return Messager.OK();
+	}
+
+	@Ready("禁用/启用关键词")
+	@GetMapping("/editStatus")
+	public Messager<Void> editStatus(ProxyRequest q, @Validated EditWordForm form) throws Exception {
+		I18N.assertNotNull(form.ids);
+		I18N.assertNotNull(form.status, "关键词状态不可或缺");
+		final List<TweetWord> tweetWords = tweetWordService.findByIds(form.ids);
+		I18N.assertNotNull(CollectionUtils.isNotEmpty(tweetWords), "关键词不存在");
+		tweetWordService.edit(tweetWords, TweetWord.STATUS, form.status, q.now());
 		return Messager.OK();
 	}
 

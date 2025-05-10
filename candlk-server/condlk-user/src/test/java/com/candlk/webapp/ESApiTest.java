@@ -3,10 +3,15 @@ package com.candlk.webapp;
 import java.io.IOException;
 import java.util.*;
 
+import co.elastic.clients.elasticsearch.ElasticsearchClient;
 import co.elastic.clients.elasticsearch._types.SortOrder;
+import co.elastic.clients.elasticsearch._types.mapping.Property;
+import co.elastic.clients.elasticsearch._types.mapping.TypeMapping;
 import co.elastic.clients.elasticsearch._types.query_dsl.Operator;
 import co.elastic.clients.elasticsearch._types.query_dsl.TextQueryType;
-import co.elastic.clients.elasticsearch.core.SearchResponse;
+import co.elastic.clients.elasticsearch.core.*;
+import co.elastic.clients.elasticsearch.indices.GetMappingRequest;
+import co.elastic.clients.elasticsearch.indices.PutMappingRequest;
 import com.candlk.context.web.Jsons;
 import com.candlk.webapp.es.ESEngineClient;
 import com.candlk.webapp.user.entity.StopWord;
@@ -30,8 +35,11 @@ public class ESApiTest {
 	public static void init() throws IOException {
 		engine = new ESEngineClient(
 				"https://127.0.0.1:9200",
-				"f40da2681b97c673f3bf0c65e87d70d75ff166d405f6e36a024a96962df57c4d",
-				"elastic", "aS26ZiHC_U+sCJlDccoW"
+				// "f40da2681b97c673f3bf0c65e87d70d75ff166d405f6e36a024a96962df57c4d",
+				// "elastic", "aS26ZiHC_U+sCJlDccoW"
+
+				"008d29b8ca1324053f3cc196ae88e9e2dc865463053f0880f9c5cf708588f818",
+				"elastic", "YqR6mL+USUyJnPYPKtG="
 		);
 	}
 
@@ -176,6 +184,48 @@ public class ESApiTest {
 			}
 
 		}
+	}
+
+	@Test
+	public void testAddField() throws Exception {
+		ElasticsearchClient client = engine.client;
+		final String indexName = ESIndex.KEYWORDS_ACCURATE_INDEX.name().toLowerCase();
+		final String fieldName = "status";
+		// Step 1: 获取索引映射关系
+		final TypeMapping typeMapping = client.indices()
+				.getMapping(GetMappingRequest.of(r -> r.index(indexName)))
+				.get(indexName).mappings();
+		final Map<String, Property> properties = typeMapping.properties();
+
+		if (!properties.containsKey(fieldName)) {
+			// Step 2: 添加字段
+			client.indices().putMapping(PutMappingRequest.of(req -> req
+					.index(indexName)
+					.properties(fieldName, Property.of(p -> p.integer(i -> i))) // TODO 设置为integer类型！
+			));
+
+			System.out.println("✅ 添加字段成功：" + fieldName);
+		} else {
+			System.out.println("ℹ️ 字段已存在：" + fieldName);
+		}
+
+		// Step 3: 更新现有文档默认值
+		final UpdateByQueryResponse response = client.updateByQuery(UpdateByQueryRequest.of(req -> req
+				.index(indexName)
+				.script(s -> s
+						// 通过脚本设置默认值
+						.source(builder -> builder.scriptString("if (ctx._source.status == null) { ctx._source.status = 1; }"))
+						.lang("painless")
+				)
+				.query(q -> q
+						.bool(b -> b
+								.mustNot(mn -> mn
+										.exists(e -> e.field(fieldName))
+								)
+						)
+				)
+		));
+		System.out.println("🔁 更新文档数据: " + response.updated());
 	}
 
 }
