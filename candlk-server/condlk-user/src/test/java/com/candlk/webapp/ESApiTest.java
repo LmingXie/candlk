@@ -7,9 +7,8 @@ import co.elastic.clients.elasticsearch.ElasticsearchClient;
 import co.elastic.clients.elasticsearch._types.SortOrder;
 import co.elastic.clients.elasticsearch._types.mapping.Property;
 import co.elastic.clients.elasticsearch._types.mapping.TypeMapping;
-import co.elastic.clients.elasticsearch._types.query_dsl.Operator;
-import co.elastic.clients.elasticsearch._types.query_dsl.TextQueryType;
-import co.elastic.clients.elasticsearch.core.*;
+import co.elastic.clients.elasticsearch.core.UpdateByQueryRequest;
+import co.elastic.clients.elasticsearch.core.UpdateByQueryResponse;
 import co.elastic.clients.elasticsearch.indices.GetMappingRequest;
 import co.elastic.clients.elasticsearch.indices.PutMappingRequest;
 import com.candlk.context.web.Jsons;
@@ -17,6 +16,7 @@ import com.candlk.webapp.es.ESEngineClient;
 import com.candlk.webapp.user.entity.StopWord;
 import com.candlk.webapp.user.entity.TweetWord;
 import com.candlk.webapp.user.model.ESIndex;
+import com.candlk.webapp.user.service.TweetService;
 import com.hankcs.hanlp.seg.common.Term;
 import com.hankcs.hanlp.tokenizer.NLPTokenizer;
 import com.hankcs.hanlp.tokenizer.NotionalTokenizer;
@@ -134,48 +134,16 @@ public class ESApiTest {
 
 	@Test
 	public void tokenizerTest() throws IOException {
-		final String inputStr = "\uD83C\uDF1E2个聪明钱正在买它！\uD83C\uDF1E\n"
-				+ "\uD83C\uDF1E2 smart traders are buying it! \uD83C\uDF1E\n"
-				+ "\n"
-				+ "\uD83D\uDC8EToken: Longcoin (MC: $4.82K)\n"
-				+ "\n"
-				+ "Di6SRTDraS7L17UTPHMq8han1n4XBzDTcZXgi8yDpump\n"
-				+ "\n"
-				+ "查看我主页简介即可加入无延迟群组   \n"
-				+ "  View my homepage profile to join the no delay group";
+		final String inputStr =
+				"查看我主页简介即可加入无延迟群组   \n"
+						+ "  View my homepage profile to join the no delay group! rewards!!";
 		// 分词
-		List<Term> segment = NotionalTokenizer.segment(inputStr);
-		Set<String> words = CollectionUtil.toSet(segment, term -> term.word);
+		final List<Term> segment = NotionalTokenizer.segment(inputStr);
+		final Set<String> words = CollectionUtil.toSet(segment, term -> term.word);
 		log.info("分词结果：{}", StringUtil.joins(words, " | "));
 
 		if (!words.isEmpty()) {
-			SearchResponse<TweetWord> response = engine.client.search(s -> {
-				s.index(ESIndex.KEYWORDS_INDEX.value);
-
-				// terms 查询匹配 words 字段
-				// s.query(q -> q.terms(t -> t.field(TweetWord.WORDS).terms(tq -> tq.value(
-				// 		words.stream().map(FieldValue::of).collect(Collectors.toList())
-				// ))));
-
-				// 多字段模糊匹配查询（multi_match or should）
-				s.query(q -> q.bool(b -> b.should(
-						q1 -> q1.multiMatch(mm -> mm
-								.query(inputStr) // 原始文本或提取关键词的字符串
-								.fields("words.zh", "words.en", "words.fr", "words.es", "words.ja", "words.ko")
-								.type(TextQueryType.BestFields) // 可选：也可用 most_fields 或 cross_fields
-								.operator(Operator.Or)
-						)
-				)));
-
-				// 排序规则：type(desc) > priority(desc) > updateTime(desc)
-				s.sort(so -> so.field(f -> f.field(TweetWord.TYPE).order(SortOrder.Asc)));
-				s.sort(so -> so.field(f -> f.field(TweetWord.COUNT).order(SortOrder.Desc)));
-
-				// 设置最大返回数量，实际业务中应分页
-				s.size(30);
-				return s;
-			}, TweetWord.class);
-			List<TweetWord> tweetWords = ESEngineClient.toT(response);
+			final List<TweetWord> tweetWords = TweetService.esMatchKeywords(engine.client, ESIndex.KEYWORDS_ACCURATE_INDEX, words);
 			// 匹配 ES 中的关键词
 			log.info("命中关键词数: {}", tweetWords.size());
 

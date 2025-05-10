@@ -7,14 +7,15 @@ import java.util.regex.Pattern;
 import javax.annotation.Nonnull;
 import javax.annotation.Resource;
 
+import co.elastic.clients.elasticsearch.ElasticsearchClient;
 import co.elastic.clients.elasticsearch._types.FieldValue;
 import co.elastic.clients.elasticsearch._types.SortOrder;
-import co.elastic.clients.elasticsearch._types.query_dsl.Operator;
-import co.elastic.clients.elasticsearch._types.query_dsl.TextQueryType;
+import co.elastic.clients.elasticsearch._types.query_dsl.*;
 import co.elastic.clients.elasticsearch.core.BulkRequest;
 import co.elastic.clients.elasticsearch.core.SearchResponse;
 import com.baomidou.mybatisplus.core.conditions.update.UpdateWrapper;
 import com.candlk.common.dao.SmartQueryWrapper;
+import com.candlk.common.model.Status;
 import com.candlk.common.model.TimeInterval;
 import com.candlk.common.web.Page;
 import com.candlk.context.web.Jsons;
@@ -31,6 +32,7 @@ import com.hankcs.hanlp.tokenizer.NotionalTokenizer;
 import lombok.extern.slf4j.Slf4j;
 import me.codeplayer.util.*;
 import org.apache.commons.lang3.StringUtils;
+import org.jetbrains.annotations.NotNull;
 import org.springframework.dao.DuplicateKeyException;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -191,35 +193,7 @@ public class TweetService extends BaseServiceImpl<Tweet, TweetDao, Long> {
 	}
 
 	public List<TweetWord> matchKeywords(ESIndex index, Set<String> words) throws IOException {
-		final SearchResponse<TweetWord> response = esEngineClient.client.search(s -> {
-			s.index(index.value);
-			if (index == ESIndex.KEYWORDS_INDEX) {
-				// 多字段模糊匹配查询（multi_match or should）
-				s.query(q -> q.bool(b -> b.should(
-						q1 -> q1.multiMatch(mm -> mm
-								.query(StringUtil.joins(words, " ")) // 原始文本或提取关键词的字符串
-								.fields("words.zh", "words.en", "words.fr", "words.es", "words.ja", "words.ko")
-								.type(TextQueryType.BestFields) // 可选：也可用 most_fields 或 cross_fields
-								.operator(Operator.Or)
-						)
-				)));
-			} else {
-				s.query(q -> q.terms(t -> t.field(TweetWord.WORDS).terms(tq -> tq.value(
-						CollectionUtil.toList(words, FieldValue::of)
-				))));
-			}
-
-			// 排序规则：type(desc) > priority(desc) > updateTime(desc)
-			s.sort(so -> so.field(f -> f.field(TweetWord.TYPE).order(SortOrder.Asc)));
-			s.sort(so -> so.field(f -> f.field(TweetWord.COUNT).order(SortOrder.Desc)));
-
-			// 设置最大返回数量，实际业务中应分页
-			s.size(50);
-			return s;
-		}, TweetWord.class);
-
-		final List<TweetWord> result = ESEngineClient.toT(response);
-
+		final List<TweetWord> result = esMatchKeywords(esEngineClient.client, index, words);
 		// 命中后更新计数 count += 1
 		if (!result.isEmpty()) {
 			BulkRequest.Builder br = new BulkRequest.Builder();
@@ -236,6 +210,42 @@ public class TweetService extends BaseServiceImpl<Tweet, TweetDao, Long> {
 			esEngineClient.client.bulk(br.build()); // 执行批量更新
 		}
 		return result;
+	}
+
+	@NotNull
+	public static List<TweetWord> esMatchKeywords(ElasticsearchClient client, ESIndex index, Set<String> words) throws IOException {
+		final SearchResponse<TweetWord> response = client.search(s -> {
+			s.index(index.value);
+			s.query(q -> q.bool(b -> {
+				// 模糊查询索引：根据ES分词后的字段模糊匹配
+				if (index == ESIndex.KEYWORDS_INDEX) {
+					b.should(q1 -> q1.multiMatch(mm -> mm
+							.query(StringUtil.joins(words, " "))
+							.fields("words.zh", "words.en", "words.fr", "words.es", "words.ja", "words.ko")
+							.type(TextQueryType.BestFields)
+							.operator(Operator.Or)
+					));
+				} else {
+					// 精确查询索引：根据 ES 原始字段精确匹配
+					q.terms(t -> t.field(TweetWord.WORDS)
+							.terms(tq -> tq.value(CollectionUtil.toList(words, FieldValue::of)))
+					);
+				}
+
+				// 将主查询和 status == 1 组合为 must 子句
+				return b.must(q1 -> q1.term(t -> t.field(TweetWord.STATUS).value(Status.YES.value)));
+			}));
+
+			// 排序规则：type(desc) > priority(desc) > updateTime(desc)
+			s.sort(so -> so.field(f -> f.field(TweetWord.TYPE).order(SortOrder.Asc)));
+			s.sort(so -> so.field(f -> f.field(TweetWord.COUNT).order(SortOrder.Desc)));
+
+			// 设置最大返回数量，实际业务中应分页
+			s.size(50);
+			return s;
+		}, TweetWord.class);
+
+		return ESEngineClient.toT(response);
 	}
 
 	private transient TimeInterval localTimeInterval;
