@@ -2,7 +2,6 @@ package com.candlk.common.web;
 
 import java.io.IOException;
 import java.nio.charset.StandardCharsets;
-import java.util.Date;
 import java.util.Map;
 import java.util.Map.Entry;
 import java.util.function.Consumer;
@@ -27,12 +26,15 @@ public class Logs {
 
 	public static final Logger LOGGER = LoggerFactory.getLogger(Logs.class);
 
-	public static void logJSON(@Nullable Long memberId, String appName, String requestMethod, String requestURI, JSONObject headersJson,
-	                           String params, String ip, Date time, long useTimeMs, @Nullable Object retVal, @Nullable Throwable e) {
+	public static void logJSON(@Nullable Long merchantId, @Nullable Long memberId, String appName, String requestMethod, String requestURI, JSONObject headersJson,
+	                           String params, String ip, long time, long useTimeMs, @Nullable Object retVal, @Nullable Throwable e) {
 
 		JSONObject json = new JSONObject();
 		json.put("app", appName);
-		json.put("userId", memberId);
+		if (memberId != null) {
+			json.put("mid", merchantId);
+			json.put("userId", memberId);
+		}
 		json.put("method", requestMethod);
 		json.put("uri", requestURI);
 		json.put("headers", headersJson);
