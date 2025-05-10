@@ -6,6 +6,11 @@ import java.util.Set;
 import com.candlk.context.ContextImpl;
 import com.candlk.webapp.user.model.TrendProvider;
 import me.codeplayer.util.LazyCacheLoader;
+import org.jsoup.Connection;
+import org.jsoup.Jsoup;
+import org.jsoup.nodes.Document;
+import org.jsoup.nodes.Element;
+import org.jsoup.select.Elements;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -37,6 +42,26 @@ public interface TrendApi {
 
 	static String formatWord(String word) {
 		return word.trim().toLowerCase();
+	}
+
+	default String parseHtmlWord(String word) {
+		return TrendApi.formatWord(word);
+	}
+
+	default void parseHtmlKeyword(Set<String> keywords, String url, String xpath) {
+		try {
+			final Connection connect = Jsoup.connect(url).timeout(10_000);
+			final Document document = connect.get();
+			final Elements aTags = document.selectXpath(xpath);
+			if (!aTags.isEmpty()) {
+				for (Element a : aTags) {
+					final String word = parseHtmlWord(a.text());
+					keywords.add(word);
+				}
+			}
+		} catch (Exception e) {
+			log.error("【{}】查询 全部 趋势热词失败 ", getProvider());
+		}
 	}
 
 }
