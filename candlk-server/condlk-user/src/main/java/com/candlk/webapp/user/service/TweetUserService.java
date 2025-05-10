@@ -54,7 +54,7 @@ public class TweetUserService extends BaseServiceImpl<TweetUser, TweetUserDao, L
 	}
 
 	@Transactional
-	public void updateStat(TweetUser tweetUser) {
+	public boolean updateStat(TweetUser tweetUser) {
 		final String username = tweetUser.getUsername();
 		if (tweetUser.getFollowers() != null) {
 			tweetUser.setScore(BigDecimal.valueOf(calcScore(tweetUser.getFollowers())));
@@ -74,12 +74,20 @@ public class TweetUserService extends BaseServiceImpl<TweetUser, TweetUserDao, L
 			} catch (DuplicateKeyException e) { // 违反唯一约束
 				log.warn("【推特用户】违反唯一约束，入库失败：{}", username);
 			}
+			return false;
 		}/* else {
 			log.info("【推特用户】更新用户数据：{}", username);
 		}*/
+		return true;
 	}
 
-	public List<String> findByUsername(Collection<?> usernames, boolean limitLastUpdate) {
+	public TweetUser findByUsername(String usernames) {
+		return selectOne(new SmartQueryWrapper<TweetUser>()
+				.select(TweetUser.USERNAME, TweetUser.TYPE)
+				.in(TweetUser.USERNAME, usernames));
+	}
+
+	public List<String> findByUsernames(Collection<?> usernames, boolean limitLastUpdate) {
 		return baseDao.lastList(new SmartQueryWrapper<TweetUser>()
 				.in(TweetUser.USERNAME, usernames)
 				// 更新间隔 < 1 小时 的拥挤
@@ -161,7 +169,7 @@ public class TweetUserService extends BaseServiceImpl<TweetUser, TweetUserDao, L
 		final List<TweetUserInfo> allUser = usersMsg.data();
 		final HashSet<String> allUsername = CollectionUtil.toSet(allUser, TweetUserInfo::getUsername);
 		// 已经存在的用户
-		final List<String> existsUsernames = findByUsername(allUsername, false);
+		final List<String> existsUsernames = findByUsernames(allUsername, false);
 
 		int size = existsUsernames.size();
 		List<TweetUserInfo> existsUsers = new ArrayList<>(size);

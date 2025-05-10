@@ -149,12 +149,13 @@ public class X3TweetWsProvider implements Listener, TweetWsApi {
 									.setBanner(CDN + authorInfo.getString("bk"))
 									.setDescription(JSONObject.of("text", authorInfo.getString("introduction")).toJSONString())
 									.setFollowers(authorInfo.getInteger("fanCount"))
-									.setFollowing(authorInfo.getInteger("focusCount"));
+									.setFollowing(authorInfo.getInteger("focusCount"))
+									.setTweetLastTime(now);
 							createTime = authorInfo.getLong("createTime");
 							tweetUser.setAddTime(createTime == null ? now : new EasyDate(createTime * 1000).toDate());
 							tweetUser.setUpdateTime(now);
 
-							tweetService.saveTweet(tweetInfo, author, provider, tweetId, tweetUser);
+							tweetService.saveTweet(tweetInfo, provider, tweetId, tweetUser);
 						}
 					}
 				} catch (Exception e) {

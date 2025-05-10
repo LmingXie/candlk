@@ -165,7 +165,7 @@ public class GmgnTweetWsProvider extends BaseHttpUtil implements Listener, Tweet
 									.setAvatar(vo.user.avatar)
 									.setTweetLastTime(now);
 							tweetUser.initTime(now);
-							tweetService.saveTweet(tweetInfo, username, provider, tweetId, tweetUser);
+							tweetService.saveTweet(tweetInfo, provider, tweetId, tweetUser);
 						}
 					}
 					case "description" -> log.info("【{}】简介更新：{}", provider, data);

@@ -222,7 +222,7 @@ public class AxiomTweetWsProvider implements Listener, TweetWsApi {
 										tweetUser.initTime(now);
 									}
 								}
-								tweetService.saveTweet(tweetInfo, username, provider, tweetId, tweetUser);
+								tweetService.saveTweet(tweetInfo, provider, tweetId, tweetUser);
 							}
 						}
 						case "following.update" -> {

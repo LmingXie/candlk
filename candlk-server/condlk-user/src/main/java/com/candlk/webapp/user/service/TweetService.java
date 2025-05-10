@@ -15,10 +15,8 @@ import co.elastic.clients.elasticsearch.core.BulkRequest;
 import co.elastic.clients.elasticsearch.core.SearchResponse;
 import com.baomidou.mybatisplus.core.conditions.update.UpdateWrapper;
 import com.candlk.common.dao.SmartQueryWrapper;
-import com.candlk.common.model.*;
-import com.candlk.common.redis.RedisUtil;
+import com.candlk.common.model.TimeInterval;
 import com.candlk.common.web.Page;
-import com.candlk.context.model.RedisKey;
 import com.candlk.context.web.Jsons;
 import com.candlk.webapp.api.TweetInfo;
 import com.candlk.webapp.base.service.BaseServiceImpl;
@@ -26,8 +24,7 @@ import com.candlk.webapp.es.ESEngineClient;
 import com.candlk.webapp.user.dao.TweetDao;
 import com.candlk.webapp.user.entity.*;
 import com.candlk.webapp.user.form.TweetQuery;
-import com.candlk.webapp.user.model.ESIndex;
-import com.candlk.webapp.user.model.TweetProvider;
+import com.candlk.webapp.user.model.*;
 import com.candlk.webapp.user.vo.TweetVO;
 import com.hankcs.hanlp.seg.common.Term;
 import com.hankcs.hanlp.tokenizer.NotionalTokenizer;
@@ -92,18 +89,19 @@ public class TweetService extends BaseServiceImpl<Tweet, TweetDao, Long> {
 	}
 
 	@Transactional
-	public void saveTweet(Tweet tweetInfo, String author, TweetProvider provider, String tweetId, TweetUser tweetUser) {
+	public void saveTweet(Tweet tweetInfo, TweetProvider provider, String tweetId, TweetUser tweetUser) {
 		try {
-			// 添加推文
-			super.save(tweetInfo
-					.setStatus(Tweet.QUALITY_NOT_PASS)
-					.setScore(calcScore(tweetInfo)) // 计算推文评分
-			);
-			if (tweetUser != null) {
-				tweetUserService.updateStat(tweetUser);
+			tweetInfo.setStatus(Tweet.QUALITY_NOT_PASS)
+					.setScore(calcScore(tweetInfo)); // 计算推文评分
+			// 特殊账号无需命中关键词 -> 验证是否为特殊账号
+			if (tweetUserService.updateStat(tweetUser)/*更新成功说明用户存在*/ && Tweet.INIT != tweetInfo.getStatus()/*评分未达标*/) {
+				final TweetUser user = tweetUserService.findByUsername(tweetInfo.getUsername());
+				if (user != null && user.getType() == TweetUserType.SPECIAL) {
+					tweetInfo.setStatus(Tweet.INIT);
+				}
 			}
-
-			tweetUserService.updateTweetLastTime(author, tweetInfo.getAddTime());
+			// 添加推文
+			super.save(tweetInfo);
 
 		} catch (DuplicateKeyException e) { // 违反唯一约束
 			log.warn("【{}】推文已存在：{}", provider, tweetId);
@@ -151,12 +149,12 @@ public class TweetService extends BaseServiceImpl<Tweet, TweetDao, Long> {
 
 		// TODO 优化：识别语言再分词（日语、韩语准确度不高）
 		// 推文分词：采用【实词分词器】将自动过滤 符号、表情、语气助词 等特殊字符
-		List<Term> segment = NotionalTokenizer.segment(text);
-		int size = segment.size();
+		final List<Term> segment = NotionalTokenizer.segment(text);
+		final int size = segment.size();
 		if (size < 2) {
 			return BigDecimal.ZERO;
 		}
-		Set<String> words = new HashSet<>(size);
+		final Set<String> words = new HashSet<>(size);
 		for (Term term : segment) {
 			// 字符必须大于1 && 不包含在内部停用词中
 			if (term.word.length() < 2 || esEngineClient.stopWordsCache.contains(term.word)) {

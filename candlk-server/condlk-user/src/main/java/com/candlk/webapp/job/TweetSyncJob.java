@@ -71,7 +71,7 @@ public class TweetSyncJob {
 		// 同步用户数据【max100】
 		final Set<String> usernames = Common.toSet(oldTweets, Tweet::getUsername);
 		// 排除 1 小时内更新过的用户
-		final List<String> filterLastUser = tweetUserService.findByUsername(usernames, true);
+		final List<String> filterLastUser = tweetUserService.findByUsernames(usernames, true);
 		filterLastUser.forEach(usernames::remove);
 
 		int diff = 100 - usernames.size();
