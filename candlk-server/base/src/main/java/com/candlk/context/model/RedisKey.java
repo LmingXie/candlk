@@ -1,5 +1,8 @@
 package com.candlk.context.model;
 
+import java.util.Arrays;
+import java.util.List;
+
 /***
  * 全局共享的 Redis 键
  */
@@ -16,5 +19,10 @@ public interface RedisKey {
 	String SYS_SWITCH = "sysSwitch";
 	/** 推文评分开关 */
 	String TWEET_SCORE_FLAG = "tweetScoreFlag";
+
+	/** 爬取推文趋势热词开关 */
+	String TWEET_TREND_FLAG = "tweetTrendFlag";
+
+	List<String> ALL_SYS_SWITCH = Arrays.asList(TWEET_SCORE_FLAG, TWEET_TREND_FLAG);
 
 }

@@ -1,5 +1,7 @@
 package com.candlk.webapp.user.dao;
 
+import java.util.Set;
+
 import com.baomidou.mybatisplus.core.conditions.Wrapper;
 import com.candlk.common.web.Page;
 import com.candlk.webapp.base.dao.BaseDao;
@@ -16,5 +18,8 @@ public interface TweetWordDao extends BaseDao<TweetWord> {
 
 	@Select("SELECT * FROM x_tweet_word ${ew.customSqlSegment}")
 	Page<TweetWord> findPage(Page<?> page, @Param("ew") Wrapper<?> wrapper);
+
+	@Select("SELECT words FROM x_tweet_word ${ew.customSqlSegment}")
+	Set<String> findWords(@Param("ew") Wrapper<?> wrapper);
 
 }

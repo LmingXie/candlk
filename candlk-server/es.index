@@ -19,21 +19,43 @@
         "spanish_analyzer": {
           "type": "spanish"
         }
+      },
+      "normalizer": {
+        "lowercase_normalizer": {
+          "type": "custom",
+          "filter": ["lowercase"]
+        }
       }
     }
   },
   "mappings": {
     "properties": {
-      "words": { "type": "keyword" },
-      "type": { "type": "integer" },
-      "priority": { "type": "integer" },
-      "count": { "type": "long" },
-      "addTime": { "type": "date" },
-      "updateTime": { "type": "date" },
-      "status": { "type": "integer" }
+      "words": {
+        "type": "keyword",
+        "normalizer": "lowercase_normalizer"
+      },
+      "type": {
+        "type": "integer"
+      },
+      "priority": {
+        "type": "integer"
+      },
+      "count": {
+        "type": "long"
+      },
+      "addTime": {
+        "type": "date"
+      },
+      "updateTime": {
+        "type": "date"
+      },
+      "status": {
+        "type": "integer"
+      }
     }
   }
 }
+
 
 // 关键词索引（支持模糊匹配）
 {

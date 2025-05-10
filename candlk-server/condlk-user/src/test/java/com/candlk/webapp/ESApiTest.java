@@ -13,6 +13,7 @@ import co.elastic.clients.elasticsearch.indices.GetMappingRequest;
 import co.elastic.clients.elasticsearch.indices.PutMappingRequest;
 import com.candlk.context.web.Jsons;
 import com.candlk.webapp.es.ESEngineClient;
+import com.candlk.webapp.trend.TrendApi;
 import com.candlk.webapp.user.entity.StopWord;
 import com.candlk.webapp.user.entity.TweetWord;
 import com.candlk.webapp.user.model.ESIndex;
@@ -135,11 +136,12 @@ public class ESApiTest {
 	@Test
 	public void tokenizerTest() throws IOException {
 		final String inputStr =
-				"查看我主页简介即可加入无延迟群组   \n"
-						+ "  View my homepage profile to join the no delay group! rewards!!";
+				"Phantom pulled in $17M in April from its 0.85% in-app swap fee. \uD83D\uDC40\n"
+						+ "\n"
+						+ "What memes should they buy? \uD83E\uDD14";
 		// 分词
 		final List<Term> segment = NotionalTokenizer.segment(inputStr);
-		final Set<String> words = CollectionUtil.toSet(segment, term -> term.word);
+		final Set<String> words = CollectionUtil.toSet(segment, term -> TrendApi.formatWord(term.word));
 		log.info("分词结果：{}", StringUtil.joins(words, " | "));
 
 		if (!words.isEmpty()) {
@@ -150,7 +152,6 @@ public class ESApiTest {
 			for (TweetWord keyword : tweetWords) {
 				log.info("关键词: {}, 类型: {}, 计数: {}, 优先级: {}, 更新时间: {}", keyword.getWords(), keyword.getType(), keyword.getCount(), keyword.getPriority(), keyword.getUpdateTime());
 			}
-
 		}
 	}
 
@@ -158,7 +159,7 @@ public class ESApiTest {
 	public void testAddField() throws Exception {
 		ElasticsearchClient client = engine.client;
 		final String indexName = ESIndex.KEYWORDS_ACCURATE_INDEX.name().toLowerCase();
-		final String fieldName = "status";
+		final String fieldName = "providerType";
 		// Step 1: 获取索引映射关系
 		final TypeMapping typeMapping = client.indices()
 				.getMapping(GetMappingRequest.of(r -> r.index(indexName)))
@@ -182,7 +183,10 @@ public class ESApiTest {
 				.index(indexName)
 				.script(s -> s
 						// 通过脚本设置默认值
-						.source(builder -> builder.scriptString("if (ctx._source.status == null) { ctx._source.status = 1; }"))
+						.source(builder -> builder.scriptString(
+								// TODO 调整默认值
+								"if (ctx._source." + fieldName + " == null) { ctx._source." + fieldName + " = 0; }"
+						))
 						.lang("painless")
 				)
 				.query(q -> q

@@ -22,6 +22,7 @@ import com.candlk.context.web.Jsons;
 import com.candlk.webapp.api.TweetInfo;
 import com.candlk.webapp.base.service.BaseServiceImpl;
 import com.candlk.webapp.es.ESEngineClient;
+import com.candlk.webapp.trend.TrendApi;
 import com.candlk.webapp.user.dao.TweetDao;
 import com.candlk.webapp.user.entity.*;
 import com.candlk.webapp.user.form.TweetQuery;
@@ -162,7 +163,7 @@ public class TweetService extends BaseServiceImpl<Tweet, TweetDao, Long> {
 			if (term.word.length() < 2 || esEngineClient.stopWordsCache.contains(term.word)) {
 				continue;
 			}
-			words.add(term.word);
+			words.add(TrendApi.formatWord(term.word));
 		}
 		if (words.size() < 2) {
 			return BigDecimal.ZERO;
@@ -172,7 +173,7 @@ public class TweetService extends BaseServiceImpl<Tweet, TweetDao, Long> {
 		BigDecimal score = new BigDecimal("0.5");
 		try {
 			// 命中关键词 -> 1分
-			List<TweetWord> tweetWords = matchKeywords(ESIndex.KEYWORDS_ACCURATE_INDEX, words);
+			final List<TweetWord> tweetWords = matchKeywords(ESIndex.KEYWORDS_ACCURATE_INDEX, words);
 			if (!tweetWords.isEmpty()) {
 				tweetInfo.setStatus(Tweet.INIT);
 				score = score.add(BigDecimal.ONE);
@@ -214,34 +215,38 @@ public class TweetService extends BaseServiceImpl<Tweet, TweetDao, Long> {
 
 	@NotNull
 	public static List<TweetWord> esMatchKeywords(ElasticsearchClient client, ESIndex index, Set<String> words) throws IOException {
+		if (words.isEmpty()) {
+			return Collections.emptyList();
+		}
 		final SearchResponse<TweetWord> response = client.search(s -> {
 			s.index(index.value);
 			s.query(q -> q.bool(b -> {
-				// 模糊查询索引：根据ES分词后的字段模糊匹配
+				// 必须条件：status == 1
+				b.must(q1 -> q1.term(t -> t.field(TweetWord.STATUS).value(Status.YES.value)));
+
 				if (index == ESIndex.KEYWORDS_INDEX) {
-					b.should(q1 -> q1.multiMatch(mm -> mm
+					// 模糊匹配（多语言分词字段）
+					b.must(q1 -> q1.multiMatch(mm -> mm
 							.query(StringUtil.joins(words, " "))
 							.fields("words.zh", "words.en", "words.fr", "words.es", "words.ja", "words.ko")
 							.type(TextQueryType.BestFields)
 							.operator(Operator.Or)
 					));
 				} else {
-					// 精确查询索引：根据 ES 原始字段精确匹配
-					q.terms(t -> t.field(TweetWord.WORDS)
+					// 精确匹配（keyword 字段）
+					b.must(q1 -> q1.terms(t -> t
+							.field("words")  // 注意：如果 mapping 中是 keyword 类型，直接用 "words"
 							.terms(tq -> tq.value(CollectionUtil.toList(words, FieldValue::of)))
-					);
+					));
 				}
-
-				// 将主查询和 status == 1 组合为 must 子句
-				return b.must(q1 -> q1.term(t -> t.field(TweetWord.STATUS).value(Status.YES.value)));
+				return b;
 			}));
 
-			// 排序规则：type(desc) > priority(desc) > updateTime(desc)
+			// 排序规则
 			s.sort(so -> so.field(f -> f.field(TweetWord.TYPE).order(SortOrder.Asc)));
 			s.sort(so -> so.field(f -> f.field(TweetWord.COUNT).order(SortOrder.Desc)));
 
-			// 设置最大返回数量，实际业务中应分页
-			s.size(50);
+			s.size(10);
 			return s;
 		}, TweetWord.class);
 

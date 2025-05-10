@@ -51,44 +51,45 @@ public class TweetWordService extends BaseServiceImpl<TweetWord, TweetWordDao, L
 	}
 
 	public Page<TweetWord> search(Page<TweetWord> page, TweetWordQuery query) throws IOException {
-		long pageSize = page.getSize();
-		long from = page.offset();
-
-		SearchResponse<TweetWord> response = esEngineClient.client.search(s -> {
+		final long pageSize = page.getSize(), from = page.offset();
+		final SearchResponse<TweetWord> response = esEngineClient.client.search(s -> {
 			boolean notStop = query.type == null || TweetWord.TYPE_STOP != query.type;
 			s.index((notStop ? ESIndex.KEYWORDS_ACCURATE_INDEX : ESIndex.STOP_WORDS_INDEX).value)
 					.from((int) from)
 					.size((int) pageSize);
 
-			if (X.isValid(query.words)) {
-				s.query(q -> q.wildcard(w -> w
-						.field(TweetWord.WORDS)
-						.value("*" + query.words + "*")));
-			}
+			s.query(q -> q.bool(b -> {
+				// 模糊匹配（忽略大小写）
+				if (X.isValid(query.words)) {
+					b.must(m -> m.wildcard(w -> w
+							.field(TweetWord.WORDS)
+							.value("*" + query.words.toLowerCase() + "*")
+					));
+				}
+				// 类型条件
+				if (query.type != null && TweetWord.TYPE_STOP != query.type) {
+					b.must(m -> m.term(t -> t
+							.field(TweetWord.TYPE)
+							.value(query.type)
+					));
+				}
+				return b;
+			}));
 
-			if (query.type != null && TweetWord.TYPE_STOP != query.type) {
-				s.query(q -> q
-						.term(t -> t
-								.field(TweetWord.TYPE)
-								.value(query.type)
-						)
-				);
-			}
+			// 排序
 			if (notStop) {
-				s.sort(so -> so
-						.field(f -> f
-								.field(TweetWord.COUNT)
-								.order(SortOrder.Desc)
-						)
-				);
+				s.sort(so -> so.field(f -> f
+						.field(TweetWord.COUNT)
+						.order(SortOrder.Desc)
+				));
 			}
 
 			return s;
 		}, TweetWord.class);
-		List<TweetWord> list = ESEngineClient.toT(response);
+		final List<TweetWord> list = ESEngineClient.toT(response);
 
 		// 设置总记录数（分页必需）
-		long total = response.hits().total() != null ? response.hits().total().value() : 0;
+		final long total = response.hits().total() != null ? response.hits().total().value() : 0;
 		page.setTotal(total);
 		return page.castList(list);
 	}
@@ -117,7 +118,7 @@ public class TweetWordService extends BaseServiceImpl<TweetWord, TweetWordDao, L
 	}
 
 	public Set<String> findWords(List<String> words) {
-		return CollectionUtil.toSet(selectList(new QueryWrapper<TweetWord>().select(TweetWord.WORDS).in(TweetWord.WORDS, words)), TweetWord::getWords);
+		return baseDao.findWords(new QueryWrapper<TweetWord>().in(TweetWord.WORDS, words));
 	}
 
 	@Transactional
@@ -125,6 +126,7 @@ public class TweetWordService extends BaseServiceImpl<TweetWord, TweetWordDao, L
 		try {
 			super.saveBatch(tweetWords);
 		} catch (DuplicateKeyException e) {
+			log.error("存在重复的关键词：", e);
 			throw new IllegalArgumentException("存在重复的关键词！");
 		}
 		if (type.equals(TweetWord.TYPE_STOP)) {

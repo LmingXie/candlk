@@ -11,6 +11,12 @@ import lombok.Setter;
 @Setter
 public class TweetWordVO extends AbstractVO<TweetWord> {
 
+	/**
+	 * 来源厂商类型
+	 *
+	 * @see com.candlk.webapp.user.model.TrendProvider
+	 */
+	Integer providerType;
 	/** 词组 */
 	String words;
 	/** 关键词类型：0=热门词；1=二级词；2=普通词；3=停用词 */

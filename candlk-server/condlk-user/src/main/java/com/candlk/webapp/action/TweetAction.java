@@ -18,7 +18,6 @@ import com.candlk.webapp.user.service.TokenEventService;
 import com.candlk.webapp.user.service.TweetService;
 import com.candlk.webapp.user.vo.TweetVO;
 import me.codeplayer.util.X;
-import org.apache.tomcat.util.bcel.Const;
 import org.springframework.data.redis.core.SetOperations;
 import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.annotation.*;
@@ -37,15 +36,16 @@ public class TweetAction extends BaseAction {
 	@Resource
 	TokenEventService tokenEventService;
 
-	@Ready("切换推文评分开关")
-	@GetMapping("/editTweetScore")
-	public Messager<Void> toggleTweetScore(ProxyRequest q, Boolean isOpen) {
+	@Ready("切换系统开关")
+	@GetMapping("/sysSwitch")
+	public Messager<Void> sysSwitch(ProxyRequest q, String flag, Boolean isOpen) {
+		I18N.assertTrue(RedisKey.ALL_SYS_SWITCH.contains(flag));
 		return RedisUtil.fastAttemptInLock(RedisKey.USER_OP_LOCK_PREFIX, () -> {
 			final SetOperations<String, String> opsForSet = RedisUtil.getStringRedisTemplate().opsForSet();
 			if (X.isValid(isOpen)) {
-				opsForSet.add(RedisKey.SYS_SWITCH, RedisKey.TWEET_SCORE_FLAG);
+				opsForSet.add(RedisKey.SYS_SWITCH, flag);
 			} else {
-				opsForSet.remove(RedisKey.SYS_SWITCH, RedisKey.TWEET_SCORE_FLAG);
+				opsForSet.remove(RedisKey.SYS_SWITCH, flag);
 			}
 			return Messager.OK((isOpen ? "开启" : "关闭") + "推文评分开关成功");
 		});

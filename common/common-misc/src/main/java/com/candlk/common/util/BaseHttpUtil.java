@@ -4,12 +4,14 @@ import java.io.IOException;
 import java.net.*;
 import java.net.http.*;
 import java.nio.charset.StandardCharsets;
+import java.security.cert.X509Certificate;
 import java.time.Duration;
 import java.time.temporal.ChronoUnit;
 import java.util.Map;
 import java.util.function.Function;
 import javax.annotation.Nonnull;
 import javax.annotation.Nullable;
+import javax.net.ssl.*;
 
 import lombok.extern.slf4j.Slf4j;
 import me.codeplayer.util.*;
@@ -358,7 +360,7 @@ public abstract class BaseHttpUtil {
 	/**
 	 * 基于代理配置信息创建HTTP客户端
 	 */
-	protected static HttpClient.Builder prepareProxyClient(String host, int port, @Nullable String username, @Nullable String password) {
+	public static HttpClient.Builder prepareProxyClient(String host, int port, @Nullable String username, @Nullable String password) {
 		final HttpClient.Builder builder = HttpClient.newBuilder()
 				.version(HttpClient.Version.HTTP_1_1)
 				.connectTimeout(Duration.of(5, ChronoUnit.SECONDS))
@@ -386,7 +388,7 @@ public abstract class BaseHttpUtil {
 	 *
 	 * @param proxyConfig 形如 <code> "proxy://username:password@host:port" </code>
 	 */
-	protected static HttpClient.Builder prepareProxyClient(@Nonnull String proxyConfig) {
+	public static HttpClient.Builder prepareProxyClient(@Nonnull String proxyConfig) {
 		// "proxy://username:password@host:port"
 		final URI uri = URI.create(proxyConfig);
 		String username = null, password = null;
@@ -404,8 +406,32 @@ public abstract class BaseHttpUtil {
 	 *
 	 * @param proxyConfig 形如 <code> "proxy://username:password@host:port" </code>
 	 */
-	protected static HttpClient getProxyOrDefaultClient(@Nullable String proxyConfig) {
+	public static HttpClient getProxyOrDefaultClient(@Nullable String proxyConfig) {
 		return StringUtil.isBlank(proxyConfig) ? defaultClient() : prepareProxyClient(proxyConfig).build();
+	}
+
+	// 忽略所有 HTTPS 证书验证
+	public static void trustAllHttpsCertificates() throws Exception {
+		final TrustManager[] trustAllCerts = new TrustManager[] {
+				new X509TrustManager() {
+					public X509Certificate[] getAcceptedIssuers() {
+						return null;
+					}
+
+					public void checkClientTrusted(X509Certificate[] certs, String authType) {
+					}
+
+					public void checkServerTrusted(X509Certificate[] certs, String authType) {
+					}
+				}
+		};
+
+		final SSLContext sc = SSLContext.getInstance("TLS");
+		sc.init(null, trustAllCerts, new java.security.SecureRandom());
+		HttpsURLConnection.setDefaultSSLSocketFactory(sc.getSocketFactory());
+
+		// 忽略主机名验证
+		HttpsURLConnection.setDefaultHostnameVerifier((hostname, session) -> true);
 	}
 
 }
