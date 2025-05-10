@@ -36,4 +36,9 @@ public class RedditListImpl implements TrendApi {
 		return keywords;
 	}
 
+	@Override
+	public int getTimeout() {
+		return 20_000;
+	}
+
 }

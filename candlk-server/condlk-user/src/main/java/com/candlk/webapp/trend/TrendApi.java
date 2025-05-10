@@ -48,9 +48,13 @@ public interface TrendApi {
 		return TrendApi.formatWord(word);
 	}
 
+	default int getTimeout() {
+		return 10_1000;
+	}
+
 	default Set<String> parseHtmlKeyword(@Nullable Set<String> keywords, String url, String xpath) {
 		try {
-			final Connection connect = Jsoup.connect(url).timeout(10_000);
+			final Connection connect = Jsoup.connect(url).timeout(getTimeout());
 			final Document document = connect.get();
 			final Elements aTags = document.selectXpath(xpath);
 			if (!aTags.isEmpty()) {
@@ -64,7 +68,7 @@ public interface TrendApi {
 				}
 			}
 		} catch (Exception e) {
-			log.error("【{}】查询 全部 趋势热词失败 ", getProvider());
+			log.error("【{}】查询 全部 趋势热词失败 ", getProvider(), e);
 		}
 		return keywords;
 	}
