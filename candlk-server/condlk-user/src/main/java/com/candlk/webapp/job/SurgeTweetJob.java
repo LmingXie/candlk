@@ -56,7 +56,7 @@ public class SurgeTweetJob {
 	@Scheduled(cron = "${service.cron.SurgeTweetJob:0 0/1 * * * ?}")
 	public void run() {
 		if (!RedisUtil.getStringRedisTemplate().opsForSet().isMember(RedisKey.SYS_SWITCH, RedisKey.TWEET_SCORE_FLAG)) {
-			log.info("【推文评分】开关关闭，跳过执行...");
+			log.info("【推文评分】开关关闭，跳过执行【同步推文浏览量】...");
 			return;
 		}
 		log.info("开始【刷新浏览量】定时任务...");

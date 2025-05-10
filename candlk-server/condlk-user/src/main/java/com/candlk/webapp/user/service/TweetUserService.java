@@ -41,8 +41,12 @@ public class TweetUserService extends BaseServiceImpl<TweetUser, TweetUserDao, L
 	}
 
 	@Transactional
-	public void edit(TweetUser user, TweetUserType type) throws Exception {
-		super.update(new UpdateWrapper<TweetUser>().set(TweetUser.TYPE, type.value).eq(TweetUser.ID, user.getId()));
+	public void edit(List<TweetUser> users, TweetUserType type) {
+		super.update(new UpdateWrapper<TweetUser>()
+				.set(TweetUser.TYPE, type.value)
+				.set(TweetUser.UPDATE_TIME, new Date())
+				.in(TweetUser.ID, CollectionUtil.toList(users, TweetUser::getId))
+		);
 	}
 
 	@Transactional

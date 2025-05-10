@@ -47,7 +47,7 @@ public class GenTokenJob {
 	@Scheduled(cron = "${service.cron.GenTokenJob:0/30 * * * * ?}")
 	public void run() throws Exception {
 		if (!RedisUtil.getStringRedisTemplate().opsForSet().isMember(RedisKey.SYS_SWITCH, RedisKey.TWEET_SCORE_FLAG)) {
-			log.info("【推文评分】开关关闭，跳过执行...");
+			log.info("【推文评分】开关关闭，跳过执行【生成Token】...");
 			return;
 		}
 		log.info("开始生成Token数据信息...");

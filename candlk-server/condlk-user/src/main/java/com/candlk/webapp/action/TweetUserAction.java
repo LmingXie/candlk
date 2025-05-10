@@ -1,5 +1,6 @@
 package com.candlk.webapp.action;
 
+import java.util.List;
 import javax.annotation.Resource;
 
 import com.candlk.common.context.I18N;
@@ -37,10 +38,10 @@ public class TweetUserAction extends BaseAction {
 
 	@Ready("修改账号")
 	@GetMapping("/edit")
-	public Messager<Void> edit(ProxyRequest q, @Validated TweetUserForm form) throws Exception {
-		TweetUser tweetUser = tweetUserService.get(form.id);
+	public Messager<Void> edit(ProxyRequest q, @Validated TweetUserForm form) {
+		List<TweetUser> tweetUsers = tweetUserService.findByIds(form.ids);
 		I18N.assertNotNull(form.type, "账号不存在");
-		tweetUserService.edit(tweetUser, form.type);
+		tweetUserService.edit(tweetUsers, form.type);
 		return Messager.OK();
 	}
 
