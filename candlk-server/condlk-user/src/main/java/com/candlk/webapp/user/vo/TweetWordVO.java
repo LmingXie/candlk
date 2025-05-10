@@ -25,7 +25,7 @@ public class TweetWordVO extends AbstractVO<TweetWord> {
 	Date updateTime;
 
 	public Integer getType() {
-		return type == null ? TweetWord.TYPE_NORMAL : type;
+		return type == null ? TweetWord.TYPE_STOP : type;
 	}
 
 	public Integer getPriority() {

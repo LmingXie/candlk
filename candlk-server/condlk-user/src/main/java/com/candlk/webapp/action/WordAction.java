@@ -108,7 +108,8 @@ public class WordAction extends BaseAction {
 	@GetMapping("/edit")
 	public Messager<Void> edit(ProxyRequest q, Long id, Integer type) throws Exception {
 		I18N.assertNotNull(id);
-		TweetWord tweetWord = tweetWordService.get(id);
+		I18N.assertTrue(TweetWord.TYPE_STOP != type, "不可修改为停用词！");
+		final TweetWord tweetWord = tweetWordService.get(id);
 		I18N.assertNotNull(tweetWord, "关键词不存在");
 		I18N.assertTrue(tweetWord.getType() != TweetWord.TYPE_STOP, "不可修改停用词！");
 		tweetWordService.edit(tweetWord, type);
