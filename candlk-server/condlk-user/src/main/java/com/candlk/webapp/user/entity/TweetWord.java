@@ -26,7 +26,7 @@ public class TweetWord extends TimeBasedEntity {
 	Integer providerType = TrendProvider.CUSTOM.value;
 	/** 词组 */
 	String words;
-	/** 关键词类型：0=热门词；1=二级词；2=普通词；3=停用词 */
+	/** 关键词类型：0=热门词；1=自定义；2=普通词；3=停用词 */
 	Integer type;
 	/** 优先级 */
 	Integer priority;
@@ -36,8 +36,8 @@ public class TweetWord extends TimeBasedEntity {
 	@TableField(exist = false)
 	Long count = 0L;
 
-	/** 关键词类型：0=热门词；1=二级词；2=普通词；3=停用词 */
-	public static final int TYPE_HOT = 0, TYPE_SECOND = 1, TYPE_NORMAL = 2, TYPE_STOP = 3;
+	/** 关键词类型：0=热门词；1=自定义；2=普通词；3=停用词 */
+	public static final int TYPE_HOT = 0, TYPE_CUSTOM = 1, TYPE_NORMAL = 2, TYPE_STOP = 3;
 
 	public TweetWord(String words, Integer type, Date now) {
 		this.words = words;

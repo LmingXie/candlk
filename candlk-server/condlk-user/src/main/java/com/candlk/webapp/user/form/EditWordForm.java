@@ -13,7 +13,7 @@ public class EditWordForm implements Form {
 
 	public List<Long> ids;
 
-	/** 关键词类型：0=热门词；1=二级词；2=普通词；3=停用词； */
+	/** 关键词类型：0=热门词；1=自定义；2=普通词；3=停用词； */
 	@Check(value = "关键词类型", required = false)
 	public Integer type;
 

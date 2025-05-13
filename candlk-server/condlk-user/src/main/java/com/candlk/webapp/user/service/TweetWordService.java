@@ -78,10 +78,8 @@ public class TweetWordService extends BaseServiceImpl<TweetWord, TweetWordDao, L
 
 			// 排序
 			if (notStop) {
-				s.sort(so -> so.field(f -> f
-						.field(TweetWord.COUNT)
-						.order(SortOrder.Desc)
-				));
+				s.sort(so -> so.field(f -> f.field(TweetWord.STATUS).order(SortOrder.Desc)));
+				s.sort(so -> so.field(f -> f.field(TweetWord.COUNT).order(SortOrder.Desc)));
 			}
 
 			return s;
@@ -103,12 +101,7 @@ public class TweetWordService extends BaseServiceImpl<TweetWord, TweetWordDao, L
 									.value(type)
 							)
 					)
-					.sort(so -> so
-							.field(f -> f
-									.field(TweetWord.COUNT)
-									.order(SortOrder.Desc)
-							)
-					)
+					.sort(so -> so.field(f -> f.field(TweetWord.COUNT).order(SortOrder.Desc)))
 					.from(0)
 					.size(100);
 
@@ -117,7 +110,7 @@ public class TweetWordService extends BaseServiceImpl<TweetWord, TweetWordDao, L
 		return ESEngineClient.toT(response);
 	}
 
-	public Set<String> findWords(List<String> words) {
+	public List<String> findWords(List<String> words) {
 		return baseDao.findWords(new QueryWrapper<TweetWord>().in(TweetWord.WORDS, words));
 	}
 

@@ -8,7 +8,7 @@ import lombok.Setter;
 public class TweetWordQuery {
 
 	public String words;
-	/** 关键词类型：0=热门词；1=二级词；2=普通词；3=停用词； */
+	/** 关键词类型：0=热门词；1=自定义；2=普通词；3=停用词； */
 	public Integer type;
 
 }

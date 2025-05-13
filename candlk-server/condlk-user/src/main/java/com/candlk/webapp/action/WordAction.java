@@ -5,12 +5,16 @@ import java.util.*;
 import javax.annotation.Resource;
 
 import co.elastic.clients.elasticsearch.ElasticsearchClient;
+import co.elastic.clients.elasticsearch._types.Conflicts;
 import co.elastic.clients.elasticsearch._types.mapping.Property;
 import co.elastic.clients.elasticsearch._types.mapping.TypeMapping;
+import co.elastic.clients.elasticsearch._types.query_dsl.Query;
 import co.elastic.clients.elasticsearch.core.UpdateByQueryRequest;
 import co.elastic.clients.elasticsearch.core.UpdateByQueryResponse;
 import co.elastic.clients.elasticsearch.indices.GetMappingRequest;
 import co.elastic.clients.elasticsearch.indices.PutMappingRequest;
+import co.elastic.clients.json.JsonData;
+import com.alibaba.fastjson2.JSONObject;
 import com.candlk.common.context.I18N;
 import com.candlk.common.model.Messager;
 import com.candlk.common.redis.RedisUtil;
@@ -50,13 +54,19 @@ public class WordAction extends BaseAction {
 	@GetMapping("/list")
 	public Messager<Page<TweetWordVO>> list(ProxyRequest q, TweetWordQuery query) throws Exception {
 		final Page<TweetWord> page = tweetWordService.findPage(q.getPage(), query);
-		return Messager.exposeData(page.transformAndCopy(TweetWordVO::new));
+		return Messager.exposeData(page.transformAndCopy(TweetWordVO::new))
+				.setExt(JSONObject.of(
+						"tweetTrendFlag", RedisUtil.getStringRedisTemplate().opsForSet().isMember(RedisKey.SYS_SWITCH, RedisKey.TWEET_TREND_FLAG)
+				));
 	}
 
 	@Ready("查询搜索关键词")
 	@GetMapping("/search")
 	public Messager<Page<TweetWordVO>> search(ProxyRequest q, TweetWordQuery query) throws Exception {
-		return Messager.exposeData(tweetWordService.search(q.getPage(), query).transformAndCopy(TweetWordVO::new));
+		return Messager.exposeData(tweetWordService.search(q.getPage(), query).transformAndCopy(TweetWordVO::new))
+				.setExt(JSONObject.of(
+						"tweetTrendFlag", RedisUtil.getStringRedisTemplate().opsForSet().isMember(RedisKey.SYS_SWITCH, RedisKey.TWEET_TREND_FLAG)
+				));
 	}
 
 	@Ready("批量导入关键词")
@@ -80,7 +90,7 @@ public class WordAction extends BaseAction {
 			}
 			if (!tweetWords.isEmpty()) {
 				// 排除重复词组
-				final Set<String> oldWords = tweetWordService.findWords(words);
+				final List<String> oldWords = tweetWordService.findWords(words);
 				if (!oldWords.isEmpty()) {
 					tweetWords.removeIf(t -> oldWords.contains(t.getWords()));
 				}
@@ -153,11 +163,53 @@ public class WordAction extends BaseAction {
 	@GetMapping("/esAddStatusField")
 	public Messager<Void> esAddStatusField() throws Exception {
 		final ElasticsearchClient client = esEngineClient.client;
-		final String indexName = ESIndex.KEYWORDS_ACCURATE_INDEX.name().toLowerCase();
+		final String indexName = ESIndex.KEYWORDS_ACCURATE_INDEX.value;
 
 		addESIntegerField(client, indexName, "status", "1");
 		addESIntegerField(client, indexName, "providerType", "0");
 
+		return Messager.OK();
+	}
+
+	@Ready("ES修改将全部自定义修改为热门词")
+	@GetMapping("/updateAllWordType")
+	public Messager<Void> updateAllWordType() throws Exception {
+		// 构建脚本
+		final String scriptSource = """
+				    ctx._source.type = 0;
+				    ctx._source.updateTime = params.now;
+				""";
+
+		// 构建参数
+		final Map<String, JsonData> params = new HashMap<>();
+		params.put("now", JsonData.of(new Date()));
+
+		// 构建查询：type = 1
+		final Query query = Query.of(q -> q.term(t -> t.field("type").value(1)));
+
+		// 构建 UpdateByQuery 请求
+		final UpdateByQueryRequest request = UpdateByQueryRequest.of(r -> r
+				.index(ESIndex.KEYWORDS_ACCURATE_INDEX.value)
+				.query(query)
+				.script(s -> s
+						.lang("painless")
+						.source(builder -> builder.scriptString(scriptSource))
+						.params(params)
+				)
+				.conflicts(Conflicts.Proceed)
+				.refresh(true)
+		);
+
+		// 执行请求
+		final UpdateByQueryResponse response = esEngineClient.client.updateByQuery(request);
+
+		if (response.failures() != null && !response.failures().isEmpty()) {
+			for (var failure : response.failures()) {
+				log.warn("更新失败: {}", failure.cause().reason());
+			}
+		} else {
+			log.info("成功更新文档数: {}", response.updated());
+		}
 		return Messager.OK();
 	}
 

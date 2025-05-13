@@ -19,7 +19,7 @@ public class TweetWordVO extends AbstractVO<TweetWord> {
 	Integer providerType;
 	/** 词组 */
 	String words;
-	/** 关键词类型：0=热门词；1=二级词；2=普通词；3=停用词 */
+	/** 关键词类型：0=热门词；1=自定义；2=普通词；3=停用词 */
 	Integer type;
 	/** 优先级 */
 	Integer priority;

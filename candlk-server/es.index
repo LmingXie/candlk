@@ -34,24 +34,12 @@
         "type": "keyword",
         "normalizer": "lowercase_normalizer"
       },
-      "type": {
-        "type": "integer"
-      },
-      "priority": {
-        "type": "integer"
-      },
-      "count": {
-        "type": "long"
-      },
-      "addTime": {
-        "type": "date"
-      },
-      "updateTime": {
-        "type": "date"
-      },
-      "status": {
-        "type": "integer"
-      }
+      "type": { "type": "integer" },
+      "priority": { "type": "integer" },
+      "count": { "type": "long" },
+      "addTime": { "type": "date" },
+      "updateTime": { "type": "date" },
+      "status": { "type": "integer" }
     }
   }
 }
