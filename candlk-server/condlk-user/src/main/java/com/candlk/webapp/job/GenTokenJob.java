@@ -44,7 +44,7 @@ public class GenTokenJob {
 	/**
 	 * 根据评分排名，生成Token（生产：30 s/次；）
 	 */
-	@Scheduled(cron = "${service.cron.GenTokenJob:0/30 * * * * ?}")
+	@Scheduled(cron = "${service.cron.GenTokenJob:0/10 * * * * ?}")
 	public void run() throws Exception {
 		if (!RedisUtil.getStringRedisTemplate().opsForSet().isMember(RedisKey.SYS_SWITCH, RedisKey.TWEET_SCORE_FLAG)) {
 			log.info("【推文评分】开关关闭，跳过执行【生成Token】...");
@@ -60,7 +60,7 @@ public class GenTokenJob {
 			tweetService.update(null, new UpdateWrapper<Tweet>()
 					.set(Tweet.STATUS, Tweet.NEW_TOKEN)
 					.in(Tweet.ID, CollectionUtil.toList(tweets, Tweet::getId))
-					.eq(Tweet.STATUS, Tweet.INIT));
+					.eq(Tweet.STATUS, Tweet.SYNC));
 			ConcurrentExecutor.runConcurrently(tweets, tweet -> {
 				try {
 					final String[] pair = aiGenToken(tweet.getText());

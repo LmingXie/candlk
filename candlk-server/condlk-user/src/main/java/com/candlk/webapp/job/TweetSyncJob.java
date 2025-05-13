@@ -15,12 +15,11 @@ import com.candlk.webapp.user.service.TweetUserService;
 import lombok.extern.slf4j.Slf4j;
 import me.codeplayer.util.StringUtil;
 import org.springframework.beans.factory.annotation.Value;
-import org.springframework.context.annotation.Configuration;
 import org.springframework.dao.DuplicateKeyException;
 import org.springframework.scheduling.annotation.Scheduled;
 
 @Slf4j
-@Configuration
+// @Configuration
 public class TweetSyncJob {
 
 	@Resource

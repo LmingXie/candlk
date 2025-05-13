@@ -53,6 +53,9 @@ public class TweetService extends BaseServiceImpl<Tweet, TweetDao, Long> {
 	ESEngineClient esEngineClient;
 
 	public Page<TweetVO> findPage(Page<?> page, TweetQuery query, TimeInterval interval) {
+		if (interval == null) {
+			interval = lastInterval();
+		}
 		final String prefix = "t.";
 		var wrapper = new SmartQueryWrapper<Tweet>()
 				.eq(prefix + TokenEvent.TYPE, query.type)
@@ -64,13 +67,13 @@ public class TweetService extends BaseServiceImpl<Tweet, TweetDao, Long> {
 		热门评分推文：按照评分倒序
 		浏览猛增推文：按照浏览量倒序
 		 */
-		if (query.type == null || query.type == 0) {
-			wrapper.orderByDesc("tw." + Tweet.ADD_TIME);
-		} else if (query.type == 1) {
-			wrapper.orderByDesc("( tw.score + tu.score )");
-		} else {
-			wrapper.orderByDesc("tw.impression");
-		}
+		// if (query.type == null || query.type == 0) {
+		wrapper.orderByDesc("tw." + Tweet.ADD_TIME);
+		// } else if (query.type == 1) {
+		// 	wrapper.orderByDesc("( tw.score + tu.score )");
+		// } else {
+		// 	wrapper.orderByDesc("tw.impression");
+		// }
 		return baseDao.findPage(page, wrapper);
 	}
 
@@ -97,10 +100,10 @@ public class TweetService extends BaseServiceImpl<Tweet, TweetDao, Long> {
 			tweetInfo.setStatus(Tweet.QUALITY_NOT_PASS)
 					.setScore(calcScore(tweetInfo)); // 计算推文评分
 			// 特殊账号无需命中关键词 -> 验证是否为特殊账号
-			if (tweetUserService.updateStat(tweetUser)/*更新成功说明用户存在*/ && Tweet.INIT != tweetInfo.getStatus()/*评分未达标*/) {
+			if (tweetUserService.updateStat(tweetUser)/*更新成功说明用户存在*/ && Tweet.SYNC != tweetInfo.getStatus()/*评分未达标*/) {
 				final TweetUser user = tweetUserService.findByUsername(tweetInfo.getUsername());
 				if (user != null && user.getType() == TweetUserType.SPECIAL) {
-					tweetInfo.setStatus(Tweet.INIT);
+					tweetInfo.setStatus(Tweet.SYNC);
 				}
 			}
 			// 添加推文
@@ -175,7 +178,7 @@ public class TweetService extends BaseServiceImpl<Tweet, TweetDao, Long> {
 			// 命中关键词 -> 1分
 			final List<TweetWord> tweetWords = matchKeywords(ESIndex.KEYWORDS_ACCURATE_INDEX, words);
 			if (!tweetWords.isEmpty()) {
-				tweetInfo.setStatus(Tweet.INIT);
+				tweetInfo.setStatus(Tweet.SYNC);
 				score = score.add(BigDecimal.ONE);
 				tweetInfo.setWords(Jsons.encode(CollectionUtil.toList(tweetWords, TweetWord::getWords)));
 			}
@@ -253,25 +256,20 @@ public class TweetService extends BaseServiceImpl<Tweet, TweetDao, Long> {
 		return ESEngineClient.toT(response);
 	}
 
-	private transient TimeInterval localTimeInterval;
-
 	@Nonnull
 	public TimeInterval lastInterval() {
-		if (localTimeInterval == null) {
-			// 只查询 3小时 内的推文数据
-			final EasyDate d = new EasyDate();
-			final Date end = d.endOf(Calendar.DATE).toDate();
-			final Date start = d.addHour(-3).beginOf(Calendar.DATE).toDate();
-			localTimeInterval = new TimeInterval(start, end, -1, -1);
-		}
-		return localTimeInterval;
+		// 只查询 3小时 内的推文数据
+		final EasyDate d = new EasyDate();
+		final Date start = d.addMinute(-5).toDate();
+		final Date end = d.endOf(Calendar.DATE).toDate();
+		return new TimeInterval(start, end, -1, -1);
 	}
 
 	public List<Tweet> surgeToken(Integer limit, Date prevTime) {
 		EasyDate d = new EasyDate();
 		// 查询 3 分钟前的推文【太短没有意义】
 		Date end = prevTime == null ? d.addMinute(-3).toDate() : prevTime;
-		Date start = d.addDay(-3).beginOf(Calendar.DATE).toDate();
+		Date start = d.addHour(-1).beginOf(Calendar.DATE).toDate();
 		TimeInterval timeInterval = new TimeInterval(start, end, -1, -1);
 
 		return baseDao.lastGenToken(new SmartQueryWrapper<>()
