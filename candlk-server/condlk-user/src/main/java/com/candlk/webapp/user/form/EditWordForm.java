@@ -17,6 +17,7 @@ public class EditWordForm implements Form {
 	@Check(value = "关键词类型", required = false)
 	public Integer type;
 
+	/**状态：*/
 	@Check(value = "状态", required = false)
 	public Integer status;
 

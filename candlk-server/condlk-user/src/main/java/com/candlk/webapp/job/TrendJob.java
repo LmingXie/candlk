@@ -6,6 +6,7 @@ import javax.annotation.Resource;
 
 import co.elastic.clients.elasticsearch._types.Conflicts;
 import co.elastic.clients.elasticsearch._types.query_dsl.Query;
+import co.elastic.clients.elasticsearch._types.query_dsl.TermQuery;
 import co.elastic.clients.elasticsearch.core.UpdateByQueryRequest;
 import co.elastic.clients.json.JsonData;
 import com.candlk.common.redis.RedisUtil;
@@ -61,14 +62,14 @@ public class TrendJob {
 		if (!allWords.isEmpty()) {
 			log.info("查询 全部 趋势热词成功，总共录得关键词：{} {}", allWords.size(), Jsons.encode(allWords));
 			try {
-				this.updateHotWordStatus(allWords, now);
+				updateHotWordStatus(esEngineClient, allWords, now);
 			} catch (Exception e) {
 				log.error("更新热词状态失败：", e);
 			}
 		}
 	}
 
-	private void updateHotWordStatus(Set<String> hotWords, Date now) throws IOException {
+	public static void updateHotWordStatus(ESEngineClient esEngineClient, Set<String> hotWords, Date now) throws IOException {
 		// 构建 painless 脚本
 		final String scriptSource = """
 				if (params.hotWords.contains(ctx._source.words)) {
@@ -84,12 +85,12 @@ public class TrendJob {
 		params.put("hotWords", JsonData.of(hotWords)); // List<String> 可被 Elasticsearch painless 脚本识别为 Java List
 		params.put("now", JsonData.of(now));
 
-		// 构建查询：排除自定义类型 关键词
+		// 构建查询：排除 自定义 或 手动禁用 的关键词
 		final Query query = Query.of(q -> q.bool(b -> b
-				.mustNot(mn -> mn.term(t -> t
-						.field("type")
-						.value(TweetWord.TYPE_CUSTOM)
-				))
+				.mustNot(mn -> mn.bool(inner -> inner.should(Arrays.asList(
+						TermQuery.of(t -> t.field(TweetWord.TYPE).value(TweetWord.TYPE_CUSTOM))._toQuery(),
+						TermQuery.of(t -> t.field(TweetWord.STATUS).value(TweetWord.STATUS_DISABLE))._toQuery()
+				))))
 		));
 
 		// 构建 request

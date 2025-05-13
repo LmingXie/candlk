@@ -30,14 +30,14 @@ public class TweetWord extends TimeBasedEntity {
 	Integer type;
 	/** 优先级 */
 	Integer priority;
-	/** 业务状态：0=未启用；已启用 */
+	/** 业务状态：0=未启用；1=已启用；2=手动禁用； */
 	Integer status = Status.YES.value;
 	/** ES 关键词命中计数【命中后自动更新】 */
 	@TableField(exist = false)
 	Long count = 0L;
 
 	/** 关键词类型：0=热门词；1=自定义；2=普通词；3=停用词 */
-	public static final int TYPE_HOT = 0, TYPE_CUSTOM = 1, TYPE_NORMAL = 2, TYPE_STOP = 3;
+	public static final int TYPE_HOT = 0, TYPE_CUSTOM = 1, TYPE_NORMAL = 2, TYPE_STOP = 3, STATUS_DISABLE = 2;
 
 	public TweetWord(String words, Integer type, Date now) {
 		this.words = words;
