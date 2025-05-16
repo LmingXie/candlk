@@ -69,7 +69,7 @@ public class TweetUserService extends BaseServiceImpl<TweetUser, TweetUserDao, L
 		int num = super.update(tweetUser, new UpdateWrapper<TweetUser>().eq(TweetUser.USERNAME, username));
 		if (num < 1) {
 			log.info("【推特用户】新增用户数据：{}", username);
-			tweetUser.setType(TweetUserType.SPECIAL);
+			tweetUser.setType(TweetUserType.ORDINARY);
 			// 记录为前一天，用于更新用户信息数据
 			final Date yesterday = new EasyDate().addDay(-1).toDate();
 			tweetUser.initTime(yesterday);
@@ -203,7 +203,7 @@ public class TweetUserService extends BaseServiceImpl<TweetUser, TweetUserDao, L
 							.setListed(user.publicMetrics.listedCount)
 							.setLikes(user.publicMetrics.likeCount)
 							.setTweetLastTime(now)
-							.setType(TweetUserType.SPECIAL)
+							.setType(TweetUserType.ORDINARY)
 							.setScore(BigDecimal.valueOf(score))
 							.initTime(now);
 				}
