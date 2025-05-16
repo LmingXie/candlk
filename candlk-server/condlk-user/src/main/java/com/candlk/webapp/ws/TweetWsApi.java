@@ -105,7 +105,7 @@ public interface TweetWsApi {
 		if (TweetDeduplicate.shouldInsert(tweetId, now.getTime())) {
 			return false;
 		}
-		log.info("【{}】推文已存在，跳过：{}", getProvider(), tweetId);
+		// log.info("【{}】推文已存在，跳过：{}", getProvider(), tweetId);
 		return true;
 	}
 

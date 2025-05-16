@@ -26,7 +26,7 @@ public class TweetDeduplicate {
 				seenTweetMap.remove(entry.getKey());
 			}
 		}
-		log.info("定时清理推文ID，当前剩余：{} 条缓存ID。", seenTweetMap.size());
+		// log.info("定时清理推文ID，当前剩余：{} 条缓存ID。", seenTweetMap.size());
 	}
 
 	/**

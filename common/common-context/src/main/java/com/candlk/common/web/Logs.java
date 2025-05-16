@@ -12,6 +12,7 @@ import javax.servlet.http.HttpServletRequest;
 import com.alibaba.fastjson2.JSON;
 import com.alibaba.fastjson2.JSONObject;
 import com.candlk.common.context.Context;
+import com.candlk.common.context.Env;
 import me.codeplayer.util.CollectionUtil;
 import me.codeplayer.util.X;
 import org.apache.commons.io.IOUtils;
@@ -30,7 +31,7 @@ public class Logs {
 	public static void logJSON(@Nullable Long memberId, String appName, String requestMethod, String requestURI, JSONObject headersJson,
 	                           String params, String ip, Date time, long useTimeMs, @Nullable Object retVal, @Nullable Throwable e) {
 
-		JSONObject json = new JSONObject();
+		final JSONObject json = new JSONObject();
 		json.put("app", appName);
 		json.put("userId", memberId);
 		json.put("method", requestMethod);
@@ -44,7 +45,9 @@ public class Logs {
 		if (e != null) {
 			json.put("ex", e.toString());
 		}
-		LOGGER.info(json.toJSONString());
+		if (Env.inner()) {
+			LOGGER.info(json.toJSONString());
+		}
 	}
 
 	public static String toRequestBody(HttpServletRequest request) throws IOException {
