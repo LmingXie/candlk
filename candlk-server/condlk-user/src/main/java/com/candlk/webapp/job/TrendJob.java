@@ -10,6 +10,8 @@ import co.elastic.clients.elasticsearch._types.query_dsl.*;
 import co.elastic.clients.elasticsearch.core.DeleteByQueryRequest;
 import co.elastic.clients.elasticsearch.core.UpdateByQueryRequest;
 import co.elastic.clients.json.JsonData;
+import com.candlk.common.redis.RedisUtil;
+import com.candlk.context.model.RedisKey;
 import com.candlk.context.web.Jsons;
 import com.candlk.webapp.es.ESEngineClient;
 import com.candlk.webapp.trend.TrendApi;
@@ -35,10 +37,10 @@ public class TrendJob {
 
 	@Scheduled(cron = "${service.cron.TrendJob:0 0/10 * * * ?}")
 	public void run() {
-		// if (!RedisUtil.getStringRedisTemplate().opsForSet().isMember(RedisKey.SYS_SWITCH, RedisKey.TWEET_TREND_FLAG)) {
-		// 	log.info("【爬取趋势热词】开关关闭，跳过执行...");
-		// 	return;
-		// }
+		if (!RedisUtil.getStringRedisTemplate().opsForSet().isMember(RedisKey.SYS_SWITCH, RedisKey.TWEET_TREND_FLAG)) {
+			log.info("【爬取趋势热词】开关关闭，跳过执行...");
+			return;
+		}
 		log.info("开始执行 爬取趋势热词 任务...");
 
 		final Set<String> allWords = new HashSet<>();
