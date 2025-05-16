@@ -4,6 +4,7 @@ import java.io.IOException;
 import java.util.*;
 import javax.annotation.Resource;
 
+import co.elastic.clients.elasticsearch._types.ScriptSortType;
 import co.elastic.clients.elasticsearch._types.SortOrder;
 import co.elastic.clients.elasticsearch.core.SearchResponse;
 import com.baomidou.mybatisplus.core.conditions.query.QueryWrapper;
@@ -14,6 +15,7 @@ import com.candlk.common.util.Common;
 import com.candlk.common.web.Page;
 import com.candlk.webapp.base.service.BaseServiceImpl;
 import com.candlk.webapp.es.ESEngineClient;
+import com.candlk.webapp.job.TrendJob;
 import com.candlk.webapp.user.dao.TweetWordDao;
 import com.candlk.webapp.user.entity.*;
 import com.candlk.webapp.user.form.TweetWordQuery;
@@ -78,7 +80,14 @@ public class TweetWordService extends BaseServiceImpl<TweetWord, TweetWordDao, L
 
 			// 排序
 			if (notStop) {
-				s.sort(so -> so.field(f -> f.field(TweetWord.STATUS).order(SortOrder.Desc)));
+				s.sort(so -> so.script(script -> script
+						.type(ScriptSortType.Number)
+						.script(sc -> sc
+								.lang("painless")
+								.source(builder -> builder.scriptString("if (doc['status'].value == 1) return 0; else if (doc['status'].value == 2) return 1; else return 2;"))
+						)
+				));
+
 				s.sort(so -> so.field(f -> f.field(TweetWord.COUNT).order(SortOrder.Desc)));
 			}
 
@@ -127,6 +136,12 @@ public class TweetWordService extends BaseServiceImpl<TweetWord, TweetWordDao, L
 		} else {
 			esEngineClient.bulkAddDoc(ESIndex.KEYWORDS_ACCURATE_INDEX, tweetWords);
 		}
+	}
+
+	@Transactional
+	public void batchDel(Set<String> excludeWords) throws Exception {
+		delete(new UpdateWrapper<TweetWord>().notIn(TweetWord.WORDS, excludeWords));
+		TrendJob.deleteOldHotWords(esEngineClient, excludeWords);
 	}
 
 	@Transactional

@@ -174,11 +174,12 @@ public class TweetService extends BaseServiceImpl<Tweet, TweetDao, Long> {
 
 		// 纯文本：0.5分
 		BigDecimal score = new BigDecimal("0.5");
+		boolean hit = false;
 		try {
 			// 命中关键词 -> 1分
 			final List<TweetWord> tweetWords = matchKeywords(ESIndex.KEYWORDS_ACCURATE_INDEX, words);
 			if (!tweetWords.isEmpty()) {
-				tweetInfo.setStatus(Tweet.SYNC);
+				hit = true;
 				score = score.add(BigDecimal.ONE);
 				tweetInfo.setWords(Jsons.encode(CollectionUtil.toList(tweetWords, TweetWord::getWords)));
 			}
@@ -189,9 +190,15 @@ public class TweetService extends BaseServiceImpl<Tweet, TweetDao, Long> {
 		// 媒体推文 -> 纯文本：0.5分；附带图片：1分；附带视频/GIF：1.5分；文本+视频 2分
 		if (StringUtils.isNotEmpty(tweetInfo.getImages())) {
 			score = score.add(BigDecimal.ONE);
+			if (hit) {
+				tweetInfo.setStatus(Tweet.SYNC);
+			}
 		}
 		if (StringUtils.isNotEmpty(tweetInfo.getVideos())) {
 			score = score.add(new BigDecimal("1.5"));
+			if (hit) {
+				tweetInfo.setStatus(Tweet.SYNC);
+			}
 		}
 		return score;
 	}

@@ -54,7 +54,7 @@ public class DeepSeekApi extends BaseHttpUtil {
 			HttpResponse<String> response = doSend(this.proxyHttpClient, builder.build(), responseBodyHandler);
 			responseBody = response.body();
 			if (response.statusCode() == 200) {
-				JSONObject json = Jsons.parseObject(responseBody);
+				final JSONObject json = Jsons.parseObject(responseBody);
 				return Messager.hideData(json).setExt(responseBody);
 			}
 			return new Messager<JSONObject>().setExt(responseBody);
@@ -63,7 +63,7 @@ public class DeepSeekApi extends BaseHttpUtil {
 			return Messager.status(Messager.ERROR);
 		} finally {
 			if (ex == null) {
-				log.info("【DeepSeek】请求地址：{}\n请求参数：{}\n返回数据：{}", uri, body, responseBody);
+				// log.info("【DeepSeek】请求地址：{}\n请求参数：{}\n返回数据：{}", uri, body, responseBody);
 			} else {
 				log.error("【DeepSeek】请求地址：" + uri + "\n请求参数：" + body, ex);
 			}

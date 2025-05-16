@@ -105,10 +105,10 @@ public class GenTokenJob {
 						final String content = data.choices.get(0).message.content;
 						final String fixedText = content.replaceAll("```json", "").replaceAll("```", "");
 						if (JSON.isValid(fixedText)) {
-							JSONObject tokenInfo = Jsons.parseObject(fixedText);
+							final JSONObject tokenInfo = Jsons.parseObject(fixedText);
 							coin = tokenInfo.getString("name");
 							symbol = tokenInfo.getString("symbol");
-							log.info("【DeepSeek】生成代币名称和代币符号成功：{} {}", coin, symbol);
+							// log.info("【DeepSeek】生成代币名称和代币符号成功：{} {}", coin, symbol);
 						}
 					}
 				}

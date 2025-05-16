@@ -5,8 +5,9 @@ import java.util.*;
 import javax.annotation.Resource;
 
 import co.elastic.clients.elasticsearch._types.Conflicts;
-import co.elastic.clients.elasticsearch._types.query_dsl.Query;
-import co.elastic.clients.elasticsearch._types.query_dsl.TermQuery;
+import co.elastic.clients.elasticsearch._types.FieldValue;
+import co.elastic.clients.elasticsearch._types.query_dsl.*;
+import co.elastic.clients.elasticsearch.core.DeleteByQueryRequest;
 import co.elastic.clients.elasticsearch.core.UpdateByQueryRequest;
 import co.elastic.clients.json.JsonData;
 import com.candlk.common.redis.RedisUtil;
@@ -56,16 +57,50 @@ public class TrendJob {
 					log.info("【{}】查询趋势热词成功，总共录得关键词：{}", type, words.size());
 				}
 			} catch (Exception e) {
-				log.error("【{}】查询趋势热词失败：{}", type, e);
+				log.error("【{}】查询趋势热词失败：", type, e);
 			}
 		}
 		if (!allWords.isEmpty()) {
 			log.info("查询 全部 趋势热词成功，总共录得关键词：{} {}", allWords.size(), Jsons.encode(allWords));
 			try {
-				updateHotWordStatus(esEngineClient, allWords, now);
+				tweetWordService.batchDel(allWords);
 			} catch (Exception e) {
 				log.error("更新热词状态失败：", e);
 			}
+		}
+	}
+
+	public static void deleteOldHotWords(ESEngineClient esEngineClient, Set<String> hotWords) throws IOException {
+		// 构建查询：删除不在 hotWords 中，且 type != TYPE_CUSTOM 的文档
+		final Query query = Query.of(q -> q.bool(b -> b
+				.mustNot(mn -> mn.bool(inner -> inner
+						.should(Arrays.asList(
+								TermsQuery.of(t -> t.field("words").terms(v -> v.value(
+										hotWords.stream().map(FieldValue::of).toList()
+								)))._toQuery(),
+								TermQuery.of(t -> t.field("type").value(TweetWord.TYPE_CUSTOM))._toQuery()
+						))
+						.minimumShouldMatch(String.valueOf(TweetWord.TYPE_CUSTOM)) // 只要有一个 should 成立，就不会被删除（我们取反）
+				))
+		));
+
+		// 构建删除请求
+		final DeleteByQueryRequest request = DeleteByQueryRequest.of(r -> r
+				.index(ESIndex.KEYWORDS_ACCURATE_INDEX.value)
+				.query(query)
+				.conflicts(Conflicts.Proceed)
+				.requestsPerSecond(-1f)
+				.refresh(true)
+		);
+
+		// 执行请求
+		var response = esEngineClient.client.deleteByQuery(request);
+		if (response.failures() != null && !response.failures().isEmpty()) {
+			for (var failure : response.failures()) {
+				log.warn("删除失败: " + failure.cause().reason());
+			}
+		} else {
+			log.info("成功删除文档数: " + response.deleted());
 		}
 	}
 
@@ -136,6 +171,7 @@ public class TrendJob {
 						tweetWord.setWords(trim);
 						tweetWord.setType(wordType);
 						tweetWord.setPriority(0);
+						tweetWord.setStatus(1);
 						tweetWord.initTime(now);
 						tweetWords.add(tweetWord);
 					}
