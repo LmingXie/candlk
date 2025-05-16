@@ -119,7 +119,7 @@ public class TweetWordService extends BaseServiceImpl<TweetWord, TweetWordDao, L
 		return ESEngineClient.toT(response);
 	}
 
-	public List<String> findWords(List<String> words) {
+	public List<String> findWords(Collection<String> words) {
 		return baseDao.findWords(new QueryWrapper<TweetWord>().in(TweetWord.WORDS, words));
 	}
 

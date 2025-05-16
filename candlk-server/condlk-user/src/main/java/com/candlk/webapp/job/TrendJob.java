@@ -10,8 +10,6 @@ import co.elastic.clients.elasticsearch._types.query_dsl.*;
 import co.elastic.clients.elasticsearch.core.DeleteByQueryRequest;
 import co.elastic.clients.elasticsearch.core.UpdateByQueryRequest;
 import co.elastic.clients.json.JsonData;
-import com.candlk.common.redis.RedisUtil;
-import com.candlk.context.model.RedisKey;
 import com.candlk.context.web.Jsons;
 import com.candlk.webapp.es.ESEngineClient;
 import com.candlk.webapp.trend.TrendApi;
@@ -19,7 +17,6 @@ import com.candlk.webapp.user.entity.TweetWord;
 import com.candlk.webapp.user.model.ESIndex;
 import com.candlk.webapp.user.model.TrendProvider;
 import com.candlk.webapp.user.service.TweetWordService;
-import com.google.common.collect.Lists;
 import lombok.extern.slf4j.Slf4j;
 import me.codeplayer.util.CollectionUtil;
 import me.codeplayer.util.StringUtil;
@@ -36,12 +33,12 @@ public class TrendJob {
 	@Resource
 	ESEngineClient esEngineClient;
 
-	@Scheduled(cron = "${service.cron.TrendJob:0 0/30 * * * ?}")
+	@Scheduled(cron = "${service.cron.TrendJob:0 0/10 * * * ?}")
 	public void run() {
-		if (!RedisUtil.getStringRedisTemplate().opsForSet().isMember(RedisKey.SYS_SWITCH, RedisKey.TWEET_TREND_FLAG)) {
-			log.info("【爬取趋势热词】开关关闭，跳过执行...");
-			return;
-		}
+		// if (!RedisUtil.getStringRedisTemplate().opsForSet().isMember(RedisKey.SYS_SWITCH, RedisKey.TWEET_TREND_FLAG)) {
+		// 	log.info("【爬取趋势热词】开关关闭，跳过执行...");
+		// 	return;
+		// }
 		log.info("开始执行 爬取趋势热词 任务...");
 
 		final Set<String> allWords = new HashSet<>();
@@ -49,15 +46,14 @@ public class TrendJob {
 		for (TrendProvider type : TrendProvider.CACHE) {
 			final TrendApi instance = TrendApi.getInstance(type);
 			try {
-				final Set<String> words = instance.pull();
-				if (CollectionUtils.isNotEmpty(words)) {
-					final List<List<String>> batchWords = Lists.partition(new ArrayList<>(words), 2000);
-					splitImportWords(batchWords, type, now);
-					allWords.addAll(words);
-					log.info("【{}】查询趋势热词成功，总共录得关键词：{}", type, words.size());
-				}
+				pullWords(type, instance, now, allWords);
 			} catch (Exception e) {
 				log.error("【{}】查询趋势热词失败：", type, e);
+				try {
+					pullWords(type, instance, now, allWords);
+				} catch (Exception e2) {
+					log.error("【{}】查询趋势热词失败，跳过：", type, e2);
+				}
 			}
 		}
 		if (!allWords.isEmpty()) {
@@ -66,6 +62,45 @@ public class TrendJob {
 				tweetWordService.batchDel(allWords);
 			} catch (Exception e) {
 				log.error("更新热词状态失败：", e);
+			}
+		}
+	}
+
+	private void pullWords(TrendProvider type, TrendApi instance, Date now, Set<String> allWords) throws Exception {
+		final Set<String> words = instance.pull();
+		if (CollectionUtils.isNotEmpty(words)) {
+			log.info("【{}】查询趋势热词成功，总共录得关键词：{}", type, words.size());
+			splitImportWords(words, type, now);
+			allWords.addAll(words);
+		}
+	}
+
+	public void splitImportWords(Set<String> batch, TrendProvider type, Date now) {
+		log.info("【{}】开始导入关键词：{} {}", type, batch.size(), Jsons.encode(batch));
+		final List<String> oldWords = tweetWordService.findWords(batch);
+		if (!oldWords.isEmpty()) {
+			batch.removeIf(t -> CollectionUtil.findFirst(oldWords, t::equals) != null);
+		}
+		if (!batch.isEmpty()) {
+			final List<TweetWord> tweetWords = new ArrayList<>(batch.size());
+			final int wordType = TweetWord.TYPE_HOT;
+			for (String word : batch) {
+				if (!StringUtil.isEmpty(word)) {
+					final TweetWord tweetWord = new TweetWord();
+					final String trim = word.trim();
+					tweetWord.setProviderType(type.value);
+					tweetWord.setWords(trim);
+					tweetWord.setType(wordType);
+					tweetWord.setPriority(0);
+					tweetWord.setStatus(1);
+					tweetWord.initTime(now);
+					tweetWords.add(tweetWord);
+				}
+			}
+			try {
+				tweetWordService.batchAdd(tweetWords, wordType);
+			} catch (Exception e) {
+				log.error("导入失败", e);
 			}
 		}
 	}
@@ -150,38 +185,6 @@ public class TrendJob {
 			}
 		} else {
 			log.info("成功更新文档数: " + response.updated());
-		}
-	}
-
-	public void splitImportWords(List<List<String>> batchWords, TrendProvider type, Date now) {
-		for (List<String> batch : batchWords) {
-			log.info("【{}】开始导入关键词：{} {}", type, batch.size(), Jsons.encode(batch));
-			final List<String> oldWords = tweetWordService.findWords(batch);
-			if (!oldWords.isEmpty()) {
-				batch.removeIf(t -> CollectionUtil.findFirst(oldWords, t::equals) != null);
-			}
-			if (!batch.isEmpty()) {
-				final List<TweetWord> tweetWords = new ArrayList<>(batch.size());
-				final int wordType = TweetWord.TYPE_HOT;
-				for (String word : batch) {
-					if (!StringUtil.isEmpty(word)) {
-						final TweetWord tweetWord = new TweetWord();
-						final String trim = word.trim();
-						tweetWord.setProviderType(type.value);
-						tweetWord.setWords(trim);
-						tweetWord.setType(wordType);
-						tweetWord.setPriority(0);
-						tweetWord.setStatus(1);
-						tweetWord.initTime(now);
-						tweetWords.add(tweetWord);
-					}
-				}
-				try {
-					tweetWordService.batchAdd(tweetWords, wordType);
-				} catch (Exception e) {
-					log.error("导入失败", e);
-				}
-			}
 		}
 	}
 

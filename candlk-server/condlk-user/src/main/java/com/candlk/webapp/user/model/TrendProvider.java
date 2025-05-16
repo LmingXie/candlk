@@ -17,9 +17,9 @@ public enum TrendProvider implements ValueProxyImpl<TrendProvider, Integer> {
 	/** <a href="https://trends24.in/united-states/">trends24</a> */
 	TRENDS24("Trends24"),
 	/** <a href="https://redditlist.com/nsfw.html">RedditList</a> */
-	REDDIT_LIST("RedditList"),
+	REDDIT_LIST("RedditList", false),
 	/** <a href="https://getdaytrends.com/united-states/">getdaytrends.com</a> */
-	GDT("getdaytrends"),
+	GDT("getdaytrends", false),
 	;
 
 	@EnumValue
