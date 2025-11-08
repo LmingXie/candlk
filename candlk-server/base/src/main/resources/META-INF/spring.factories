@@ -1,1 +1,1 @@
-org.springframework.boot.SpringApplicationRunListener=com.candlk.context.SystemInitializer
+org.springframework.boot.SpringApplicationRunListener=com.bojiu.context.SystemInitializer

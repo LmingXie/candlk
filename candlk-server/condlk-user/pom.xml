@@ -5,7 +5,7 @@
 	<modelVersion>4.0.0</modelVersion>
 
 	<parent>
-		<groupId>com.candlk</groupId>
+		<groupId>com.bojiu</groupId>
 		<artifactId>candlk-server</artifactId>
 		<version>1.0.0</version>
 	</parent>
@@ -20,15 +20,9 @@
 
 	<dependencies>
 		<dependency>
-			<groupId>com.candlk</groupId>
+			<groupId>com.bojiu</groupId>
 			<artifactId>base</artifactId>
 			<version>${env-version}</version>
-		</dependency>
-
-		<dependency>
-			<groupId>com.candlk</groupId>
-			<artifactId>common-alarm</artifactId>
-			<version>1.0.0</version>
 		</dependency>
 
 		<!--
@@ -39,7 +33,7 @@
 		-->
 
 		<dependency>
-			<groupId>com.candlk</groupId>
+			<groupId>com.bojiu</groupId>
 			<artifactId>common-gencode</artifactId>
 			<version>1.0.0</version>
 			<scope>test</scope>
@@ -84,7 +78,7 @@
 				<artifactId>spring-boot-maven-plugin</artifactId>
 				<configuration>
 					<executable>true</executable>
-					<mainClass>com.candlk.webapp.UserApplication</mainClass>
+					<mainClass>com.bojiu.webapp.UserApplication</mainClass>
 				</configuration>
 				<executions>
 					<execution>

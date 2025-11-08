@@ -44,7 +44,7 @@
 			<AppenderRef ref="Console"/>
 		</Logger>
 
-		<Logger name="com.candlk.common.web.Logs" level="info" additivity="false">
+		<Logger name="com.bojiu.common.web.Logs" level="info" additivity="false">
 			<AppenderRef ref="requestLog"/>
 			<AppenderRef ref="Console"/>
 		</Logger>

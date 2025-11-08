@@ -1,1 +1,1 @@
-session=com.candlk.context.rpc.DubboSessionFilter
+session=com.bojiu.context.rpc.DubboSessionFilter

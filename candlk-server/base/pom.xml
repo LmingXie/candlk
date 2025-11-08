@@ -5,13 +5,13 @@
 	<modelVersion>4.0.0</modelVersion>
 
 	<parent>
-		<groupId>com.candlk</groupId>
+		<groupId>com.bojiu</groupId>
 		<artifactId>candlk-server</artifactId>
 		<version>1.0.0</version>
 	</parent>
 
 	<artifactId>base</artifactId>
-	<version>${env-version}</version>
+	<version>1.0.0</version>
 
 	<properties>
 		<maven.compiler.source>17</maven.compiler.source>
@@ -20,7 +20,7 @@
 
 	<dependencies>
 		<dependency>
-			<groupId>com.candlk</groupId>
+			<groupId>com.bojiu</groupId>
 			<artifactId>common-context</artifactId>
 		</dependency>
 
@@ -29,11 +29,27 @@
 			<artifactId>spring-session-data-redis</artifactId>
 		</dependency>
 
+		<dependency>
+			<groupId>com.bojiu</groupId>
+			<artifactId>xxl-job-core</artifactId>
+			<version>1.0.0</version>
+			<exclusions>
+				<exclusion>
+					<groupId>io.netty</groupId>
+					<artifactId>netty-resolver-dns-classes-macos</artifactId>
+				</exclusion>
+				<exclusion>
+					<groupId>io.netty</groupId>
+					<artifactId>netty-resolver-dns-native-macos</artifactId>
+				</exclusion>
+			</exclusions>
+		</dependency>
+
 		<!-- poi-ooxml 间接依赖，低版本有漏洞 -->
 		<dependency>
 			<groupId>org.apache.commons</groupId>
 			<artifactId>commons-compress</artifactId>
-			<version>1.24.0</version>
+			<version>1.26.1</version>
 			<optional>true</optional>
 		</dependency>
 
@@ -51,5 +67,32 @@
 		</dependency>
 
 	</dependencies>
+
+	<build>
+		<plugins>
+			<plugin>
+				<groupId>org.apache.maven.plugins</groupId>
+				<artifactId>maven-compiler-plugin</artifactId>
+				<version>3.13.0</version>
+				<executions>
+					<execution>
+						<id>log4j-plugin-processor</id>
+						<goals>
+							<goal>compile</goal>
+						</goals>
+						<phase>process-classes</phase>
+						<configuration>
+							<proc>only</proc>
+							<annotationProcessors>
+								<annotationProcessor>
+									org.apache.logging.log4j.core.config.plugins.processor.PluginProcessor
+								</annotationProcessor>
+							</annotationProcessors>
+						</configuration>
+					</execution>
+				</executions>
+			</plugin>
+		</plugins>
+	</build>
 
 </project>

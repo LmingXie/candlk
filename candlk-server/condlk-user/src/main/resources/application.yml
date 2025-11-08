@@ -8,7 +8,7 @@ spring:
   profiles:
     active: local
   application:
-    name: bj-user
+    name: nbr-bj-user
   main:
     allow-circular-references: true
 
@@ -47,7 +47,7 @@ spring:
         prepStmtCacheSize: 250 # 默认 25
         prepStmtCacheSqlLimit: 1024 # 默认 256
 mybatis-plus:
-  type-handlers-package: com.candlk.context.dao
+  type-handlers-package: com.bojiu.context.dao
   mapper-locations: classpath:/mapper/**/*.xml
   configuration:
     map-underscore-to-camel-case: true
@@ -59,11 +59,11 @@ mybatis-plus:
       logic-delete-field: state
       logic-delete-value: 0
       logic-not-delete-value: 3
-  type-aliases-package: com.candlk.**.entity
-  type-enums-package: com.candlk.**.model
+  type-aliases-package: com.bojiu.**.entity
+  type-enums-package: com.bojiu.**.model
 
 
-### common-config.yml 所有服务的公共配置
+  ### common-config.yml 所有服务的公共配置
   messages:
     use-code-as-default-message: true
   mvc:
