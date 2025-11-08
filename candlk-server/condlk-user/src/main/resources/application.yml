@@ -14,8 +14,8 @@ spring:
 
   ### redis连接配置
   redis:
-    host: 192.168.0.99
-    password: sakFsl#89jflka
+    host: 127.0.0.1
+    password: 123456
     database: 0
 
   ### db连接配置
@@ -23,7 +23,7 @@ spring:
     enabled: false
   datasource:
     driver-class-name: com.mysql.cj.jdbc.Driver
-    url: jdbc:mysql://192.168.0.99/bj_game_local?useUnicode=true
+    url: jdbc:mysql://127.0.0.1:3306/sasurplus?useUnicode=true
     username: root
     password: 123456
     hikari:
