@@ -1,0 +1,39 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<Configuration status="error">
+
+	<Properties>
+		<property name="appName" value="${spring:spring.application.name}-${spring:spring.profiles.active}"/>
+		<Property name="LOG_EXCEPTION_CONVERSION_WORD">%xwEx</Property>
+		<Property name="CONSOLE_LOG_PATTERN">%clr{%d{HH:mm:ss.SSS}}{faint} %clr{%5p} %clr{%-40.40c{1.}}{cyan} %clr{:}{faint} %m%n${sys:LOG_EXCEPTION_CONVERSION_WORD}</Property>
+		<Property name="LOG_DIR">logs</Property>
+	</Properties>
+
+	<DynamicThresholdFilter key="logLevel" defaultThreshold="INFO" onMatch="ACCEPT" onMismatch="NEUTRAL">
+		<KeyValuePair key="trace" value="TRACE" />
+		<KeyValuePair key="debug" value="DEBUG" />
+		<KeyValuePair key="warn" value="WARN" />
+		<KeyValuePair key="error" value="ERROR" />
+	</DynamicThresholdFilter>
+
+	<Appenders>
+		<Console name="Console" target="SYSTEM_OUT" follow="true">
+			<PatternLayout pattern="${sys:CONSOLE_LOG_PATTERN}"/>
+		</Console>
+	</Appenders>
+
+	<!-- Logger -->
+	<Loggers>
+		<Root level="info">
+			<AppenderRef ref="Console"/>
+		</Root>
+
+		<Logger name="com.bojiu" level="debug" additivity="false">
+			<AppenderRef ref="Console"/>
+		</Logger>
+
+		<Logger name="com.bojiu.common.web.Logs" level="info" additivity="false">
+			<AppenderRef ref="Console"/>
+		</Logger>
+	</Loggers>
+
+</Configuration>
