@@ -70,7 +70,7 @@ public class PermissionInterceptor implements HandlerInterceptor {
 
 			Member member = getSessionMember(request, response);
 
-			// 非正式环境，允许传入 $debug=$merchantId 参数进行快速调试
+			// 非正式环境，允许传入 $debug=用户ID 参数进行快速调试
 			if (member == null && !Env.inProduction()) {
 				Long memberId = NumberUtil.getLong(request.getParameter("$debug"), null);
 				if (memberId != null && autoLoginHandler instanceof DefaultAutoLoginHandler impl) {

@@ -189,9 +189,7 @@ public class DefaultAutoLoginHandler implements AutoLoginHandler, InitializingBe
 						redisValue.set(redisKey, jsonStr, TIMEOUT);
 						// 如果走了自动登录，需要将数据源再切换回 默认读库
 						DataSourceSelector.reset();
-						// 用户设置了自动退出登录 不在续期
-						long userExpire = RedisUtil.scoreLong(RedisKey.USER_AUTO_LOGIN_EXPIRE, memberId + RedisKey.dailySep + clientId);
-						if (userExpire != 0 && info.expireTime - System.currentTimeMillis() < renewTokenCountDownMs) {
+						if (info.expireTime - System.currentTimeMillis() < renewTokenCountDownMs) {
 							renewToken(request, response, m, info, clientId);
 						}
 					}

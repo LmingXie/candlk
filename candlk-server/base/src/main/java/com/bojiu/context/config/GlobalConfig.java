@@ -7,10 +7,10 @@ import java.util.concurrent.ThreadPoolExecutor;
 import com.baomidou.mybatisplus.annotation.DbType;
 import com.baomidou.mybatisplus.core.metadata.TableInfo;
 import com.baomidou.mybatisplus.core.metadata.TableInfoHelper;
-import com.baomidou.mybatisplus.extension.plugins.MybatisPlusInterceptor;
 import com.baomidou.mybatisplus.extension.plugins.handler.TenantLineHandler;
-import com.baomidou.mybatisplus.extension.plugins.inner.PaginationInnerInterceptor;
 import com.bojiu.common.context.Context;
+import com.bojiu.common.dao.EnhanceMybatisPlusInterceptor;
+import com.bojiu.common.dao.FastPaginationInnerInterceptor;
 import com.bojiu.common.util.SpringUtil;
 import com.bojiu.context.ContextImpl;
 import com.bojiu.context.model.*;
@@ -75,8 +75,8 @@ public class GlobalConfig {
 	}
 
 	@Bean
-	public MybatisPlusInterceptor mybatisPlusInterceptor() {
-		MybatisPlusInterceptor interceptor = new MybatisPlusInterceptor();
+	public EnhanceMybatisPlusInterceptor mybatisPlusInterceptor() {
+		EnhanceMybatisPlusInterceptor interceptor = new EnhanceMybatisPlusInterceptor();
 		// 基于表内行级字段的 多租户 插件
 		// 使用自定义的多租户插件，以支持 InExpression
 		interceptor.addInnerInterceptor(new com.bojiu.context.auth.TenantLineInnerInterceptor(new TenantLineHandler() {
@@ -133,7 +133,7 @@ public class GlobalConfig {
 			}
 		}));
 		// 分页插件
-		interceptor.addInnerInterceptor(new PaginationInnerInterceptor(DbType.MYSQL));
+		interceptor.addInnerInterceptor(new FastPaginationInnerInterceptor(DbType.MYSQL));
 		return interceptor;
 	}
 

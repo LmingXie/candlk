@@ -1,5 +1,6 @@
 package com.bojiu.context.web;
 
+import java.nio.charset.Charset;
 import java.time.Instant;
 import java.util.*;
 import java.util.function.Function;
@@ -17,8 +18,7 @@ import com.bojiu.context.SessionContext;
 import com.bojiu.context.auth.DefaultAutoLoginHandler;
 import com.bojiu.context.model.*;
 import lombok.Setter;
-import me.codeplayer.util.NumberUtil;
-import me.codeplayer.util.StringUtil;
+import me.codeplayer.util.*;
 import org.springframework.http.HttpHeaders;
 import org.springframework.session.Session;
 import org.springframework.session.SessionRepository;
@@ -103,6 +103,7 @@ public class RequestContextImpl extends RequestContext {
 		this.session = null;
 		this.flushRequired = false;
 		ContextImpl.removeCurrentMerchantId();
+		ContextImpl.localeThreadLocal.remove();
 		DataSourceSelector.reset();
 	}
 
@@ -183,7 +184,13 @@ public class RequestContextImpl extends RequestContext {
 		if (request != null) {
 			return doGetLanguage(request);
 		}
-		return sessionContext().getLanguage();
+		if (StringUtil.notEmpty(sessionId)) {
+			SessionContext sc = (SessionContext) doGetExternalSessionAttr(SESSION_CONTEXT);
+			if (sc != null) {
+				return sc.getLanguage();
+			}
+		}
+		return Language.DEFAULT;
 	}
 
 	@Nonnull
@@ -345,7 +352,7 @@ public class RequestContextImpl extends RequestContext {
 	@Nullable
 	public static String decodeSessionId(String encodedSessionId) {
 		if (StringUtil.notEmpty(encodedSessionId)) {
-			return new String(Base64.getDecoder().decode(encodedSessionId));
+			return JavaUtil.newString(Base64.getDecoder().decode(encodedSessionId), Charset.defaultCharset());
 		}
 		return null;
 	}

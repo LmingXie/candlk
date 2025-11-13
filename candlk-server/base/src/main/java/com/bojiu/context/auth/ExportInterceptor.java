@@ -9,7 +9,9 @@ import javax.servlet.http.HttpServletResponse;
 
 import com.bojiu.common.context.Context;
 import com.bojiu.common.context.I18N;
+import com.bojiu.common.model.Bean;
 import com.bojiu.common.util.Formats;
+import com.bojiu.common.util.SpringUtil;
 import com.bojiu.common.web.Logs;
 import com.bojiu.common.web.Page;
 import com.bojiu.common.web.mvc.EmptyView;
@@ -56,11 +58,15 @@ public class ExportInterceptor implements HandlerInterceptor {
 
 	@SuppressWarnings("rawtypes")
 	public static void handleExport(HttpServletRequest request, Export export, @Nullable List<Object> listToExport, @Nullable ModelAndView modelAndView) {
-		request.setAttribute(Logs.RESPONSE, null); // 导出数据一般较多，因此无论方法实际返回什么，都不需要记录导出的数据明细
 		if (listToExport == null) {
 			listToExport = tryLoadData(request, modelAndView);
 		}
-
+		// 导出数据一般较多，不需要记录导出的数据明细，只记录一下导出的数据量 {"exportCount":12345}
+		final int size = X.size(listToExport);
+		if (size >= 10_0000) { // 导出数据量超过 10W 时，记录一下日志，避免后面可能因为 OOM，导致请求日志中看不到 exportCount
+			SpringUtil.log.warn("【数据导出】本次导出的数据量={}，用户ID={}，请求路径={}", size, Bean.idOf(RequestContextImpl.getSessionUser(request)), request.getRequestURL());
+		}
+		request.setAttribute(Logs.RESPONSE, "{\"exportCount\":" + size + "}");
 		// 获取表格标题，优先从请求中获取，如果没有则从注解中获取
 		// final String fileExt = "csv"; // 如果是从文件名称中获取，一定要先转为小写
 		final ExportProvider provider = ExportUtil.PROVIDER; // ExportManager.getProvider(fileExt);

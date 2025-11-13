@@ -1,5 +1,6 @@
 package com.bojiu.context;
 
+import java.util.Locale;
 import java.util.regex.Pattern;
 
 import com.bojiu.common.context.*;
@@ -8,10 +9,8 @@ import com.bojiu.common.redis.RedisUtil;
 import com.bojiu.common.validator.ValidateError;
 import com.bojiu.common.validator.ValidateHelper;
 import com.bojiu.common.web.ServletUtil;
-import com.bojiu.context.model.BaseI18nKey;
-import com.bojiu.context.model.MessagerStatus;
+import com.bojiu.context.model.*;
 import com.bojiu.context.web.Jsons;
-import com.bojiu.context.web.RequestContextImpl;
 import me.codeplayer.util.StringUtil;
 import org.springframework.boot.builder.SpringApplicationBuilder;
 import org.springframework.context.ConfigurableApplicationContext;
@@ -46,7 +45,10 @@ public abstract class BaseApplication {
 		System.setProperty("jdk.tls.ephemeralDHKeySize", "1024"); // JDK 17.0.9 调整 TLSv1.2 默认值为 2048
 		System.setProperty("dubbo.application.qos-enable", "false"); // 禁止 Dubbo 的 QoS Server 服务
 		// 国际化信息 初始化设置
-		I18N.setLocaleSupplier(() -> RequestContextImpl.get().getLanguage().getLocale());
+		I18N.setLocaleSupplier(() -> {
+			final Locale locale = ContextImpl.localeThreadLocal.get();
+			return locale != null ? locale : Language.DEFAULT.locale;
+		});
 		// 自定义 用户名验证 的正则表达式
 		Matcher.DefaultMatcher.INSTANCE.regexUsername = Pattern.compile("^(?=.*[a-zA-Z])[a-zA-Z0-9_]{4,16}$", Pattern.CASE_INSENSITIVE);
 		ValidateHelper.PHONE_MATCHER = phone -> Context.get().matchPhone(phone);

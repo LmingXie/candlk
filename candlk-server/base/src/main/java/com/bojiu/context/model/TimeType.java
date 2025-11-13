@@ -66,10 +66,12 @@ public enum TimeType implements LabelI18nProxy<TimeType, Integer> {
 				endTime = base.endOf(Calendar.DATE).toDate();
 				beginTime = base.addDay(offsetDays).beginOf(Calendar.DATE).toDate();
 			}
-			case THIS_WEEK, LAST_WEEK -> {
-				if (this == LAST_WEEK) { // 时间设置到上周
-					base.addDay(-base.getWeekDay() - 1).beginOf(Calendar.DATE);
-				}
+			case THIS_WEEK -> {
+				endTime = base.addDay(7 - base.getWeekDay()).endOf(Calendar.DATE).toDate(); // 周日
+				beginTime = base.addDay(1 - base.getWeekDay()).beginOf(Calendar.DATE).toDate();
+			}
+			case LAST_WEEK -> {
+				base.addDay(-base.getWeekDay() - 1).beginOf(Calendar.DATE);
 				endTime = base.endOf(Calendar.DAY_OF_WEEK).toDate();
 				beginTime = base.addDay(1 - base.getWeekDay()).beginOf(Calendar.DATE).toDate();
 			}

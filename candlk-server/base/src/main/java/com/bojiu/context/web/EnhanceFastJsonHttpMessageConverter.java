@@ -34,7 +34,7 @@ public class EnhanceFastJsonHttpMessageConverter extends FastJsonHttpMessageConv
 	static void logRequestIfNeeded(Object val) {
 		if (val instanceof byte[] bytes) {
 			try {
-				val = new String(bytes, StandardCharsets.UTF_8);
+				val = JavaUtil.newString(bytes, StandardCharsets.UTF_8);
 			} catch (Throwable e) {
 				val = "Failed to obtain request body: " + e;
 			}

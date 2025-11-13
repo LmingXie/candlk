@@ -90,7 +90,7 @@ public enum CycleMode implements LabelI18nProxy<CycleMode, Integer> {
 			case HOUR_CYCLE -> TimeInterval.ofFast(zonedDate, Calendar.HOUR_OF_DAY); // 每小时循环
 			case QUARTERLY_CYCLE -> extractMonthRange(zonedDate, 3);
 			case SEMIYEARLY_CYCLE -> extractMonthRange(zonedDate, 6);
-			case YEARLY_CYCLE -> extractMonthRange(zonedDate, Calendar.YEAR);
+			case YEARLY_CYCLE -> extractMonthRange(zonedDate, 12);
 		};
 	}
 
@@ -104,5 +104,24 @@ public enum CycleMode implements LabelI18nProxy<CycleMode, Integer> {
 		return new TimeInterval(begin, end, -1, 1);
 	}
 
+	/**
+	 * 根据循环模式获取 Calendar模式(目前支持小时,日,周,月,年)
+	 */
+	public static Integer castCalendar(CycleMode cycleMode) {
+		return switch (cycleMode) {
+			case DAILY_CYCLE:
+				yield Calendar.DATE;
+			case WEEKLY_CYCLE:
+				yield Calendar.DAY_OF_WEEK;
+			case MONTHLY_CYCLE:
+				yield Calendar.MONTH;
+			case HOUR_CYCLE:
+				yield Calendar.HOUR_OF_DAY; // 每小时循环
+			case YEARLY_CYCLE:
+				yield Calendar.YEAR;
+			default:
+				yield null;
+		};
+	}
 
 }
