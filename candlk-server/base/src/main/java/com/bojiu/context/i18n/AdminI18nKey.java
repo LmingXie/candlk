@@ -2022,7 +2022,7 @@ public interface AdminI18nKey extends BaseI18nKey {
 	String PROMOTION_TURNTABLE_REQUIRED = "promotion.turntable.required";
 	/** 消耗幸运值不能小于0！ */
 	String PROMOTION_EXCHANGE_LUCKY_INVALID = "promotion.exchange.lucky.invalid";
-	/** 转盘配置必须为10个~ */
+	/** 转盘配置必须为{0}个~ */
 	String PROMOTION_TURNTABLE_SIZE_INVALID = "promotion.turntable.size.invalid";
 	/** 奖励金额不能小于0 */
 	String PROMOTION_BONUS_AMOUNT_GT_INVALID = "promotion.bonus.amount.gt.invalid";
@@ -2123,8 +2123,8 @@ public interface AdminI18nKey extends BaseI18nKey {
 	String PROMOTION_RANK_ROBOT_CONFIG_ZERO_INVALID = "merchant.rank.robot.config.zero.invalid";
 	/** 排行榜领取时间不能为空 */
 	String PROMOTION_RANK_RECEIVE_TIME_START_INVALID = "promotion.rank.receive.time.invalid";
-	/** 排行榜奖励过期天数不能为空 */
-	String PROMOTION_RANK_EXPIRE_TIME_INVALID = "promotion.rank.expire.time.invalid";
+	/** 奖励过期天数 */
+	String PROMOTION_EXPIRE_TIME = "promotion.expire.time";
 
 	/** 目标站点没有相应的配置 */
 	String TARGET_SITE_NOT_FOUND_CONFIG = "target.site.not.found.config";
@@ -3398,6 +3398,8 @@ public interface AdminI18nKey extends BaseI18nKey {
 	String TURNTABLE_RATE_TYPE_NO_PROBABILITY = "turntable.rate.type.no.probability";
 	/** 谢谢惠顾 */
 	String TURNTABLE_RATE_TYPE_THANK = "turntable.rate.type.thank";
+	/** 成本范围%s ~ %s，计算总概率为 %.2f%%，无法变更，请调整成本或奖金 */
+	String REWARD_ITEM_LIMIT_MSG = "reward.item.limit.msg";
 
 
 }

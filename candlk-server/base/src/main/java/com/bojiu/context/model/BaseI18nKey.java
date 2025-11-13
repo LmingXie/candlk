@@ -30,6 +30,8 @@ public interface BaseI18nKey {
 	String LIMIT_CHANGED = "limit.changed";
 	/** 配置已变更，请刷新! */
 	String CONFIG_CHANGED = "config.changed";
+	/** 验证未通过或已超时，请重新操作！ */
+	String VERIFY_TIME_OUT = "verify.time.out";
 	/** 系统繁忙，请稍后再试! */
 	String SYSTEM_BUSY = "system.busy";
 	/** 您输入的内容过长！ */

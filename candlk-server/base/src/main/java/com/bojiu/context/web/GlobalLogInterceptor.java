@@ -1,11 +1,12 @@
 package com.bojiu.context.web;
 
-import javax.annotation.Nullable;
 import javax.servlet.http.HttpServletRequest;
 
 import com.bojiu.common.web.Logs;
-import org.aspectj.lang.JoinPoint;
-import org.aspectj.lang.annotation.*;
+import com.bojiu.context.model.MemberType;
+import org.aspectj.lang.ProceedingJoinPoint;
+import org.aspectj.lang.annotation.Around;
+import org.aspectj.lang.annotation.Aspect;
 import org.springframework.stereotype.Component;
 import org.springframework.web.context.request.RequestContextHolder;
 import org.springframework.web.context.request.ServletRequestAttributes;
@@ -20,32 +21,27 @@ public class GlobalLogInterceptor {
 	/**
 	 * 定义拦截规则：拦截 com.bojiu..action 包下面的所有类中。
 	 */
-	@Pointcut("@annotation(org.springframework.web.bind.annotation.PostMapping) || @annotation(org.springframework.web.bind.annotation.GetMapping) || @annotation(org.springframework.web.bind.annotation.RequestMapping) && execution(* com.bojiu..*Action.*(..))")
-	public void actionMethodPointcut() {
-	}
-
-	@AfterReturning(returning = "ret", pointcut = "actionMethodPointcut()")
-	public void doAfterReturning(JoinPoint joinPoint, Object ret) throws Exception {
-		doLog(joinPoint, ret, null);
-	}
-
-	@AfterThrowing(pointcut = "actionMethodPointcut()", throwing = "e")
-	public void doAfterThrowing(JoinPoint joinPoint, Throwable e) throws Exception {
-		doLog(joinPoint, null, e);
-	}
-
-	public void doLog(JoinPoint joinPoint, @Nullable Object retVal, @Nullable Throwable e) {
-		ServletRequestAttributes attributes = (ServletRequestAttributes) RequestContextHolder.getRequestAttributes();
-		HttpServletRequest request = attributes.getRequest();
-
-		if (retVal != null) {
-			request.setAttribute(Logs.RESPONSE, retVal);
+	@Around("@annotation(org.springframework.web.bind.annotation.PostMapping) || @annotation(org.springframework.web.bind.annotation.GetMapping) || @annotation(org.springframework.web.bind.annotation.RequestMapping) && execution(* com.bojiu..*Action.*(..))")
+	public Object doAround(ProceedingJoinPoint pjp) throws Throwable {
+		HttpServletRequest request = ((ServletRequestAttributes) RequestContextHolder.getRequestAttributes()).getRequest();
+		Object result = null;
+		Throwable err = null;
+		try {
+			result = pjp.proceed();
+			if (result != null) {
+				request.setAttribute(Logs.RESPONSE, result);
+				// 如果是后台 数据量 较多的分页列表，则可以酌情缓存总记录数
+				if (MemberType.fromBackstage()) {
+					ResponseDataHandler.handleResultIfNeeded(request, result);
+				}
+			}
+			return result;
+		} catch (Throwable e) {
+			request.setAttribute(Logs.EXCEPTION, err = e);
+			throw e;
+		} finally {
+			DeferTask.executeDeferTasks(request, result, err);
 		}
-		if (e != null) {
-			request.setAttribute(Logs.EXCEPTION, e);
-		}
-
-		DeferTask.executeDeferTasks(request, retVal, e);
 	}
 
 }

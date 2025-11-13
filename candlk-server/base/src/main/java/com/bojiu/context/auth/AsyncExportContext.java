@@ -1,5 +1,6 @@
 package com.bojiu.context.auth;
 
+import java.util.Locale;
 import java.util.TimeZone;
 
 import com.bojiu.webapp.base.util.Export;
@@ -19,21 +20,28 @@ public class AsyncExportContext {
 
 	/** 导出配置 */
 	public Export.Config config;
-	/** 当前操作用户ID */
-	public Long empId;
 	/** 时区 */
 	public TimeZone timeZone;
 	/** 国际化后的导出文件名称 */
+	public Locale locale;
+	/** 国际化后的导出文件名称 */
 	public String fileName;
+
+	/** 当前所属商户ID */
+	public Long merchantId;
+	/** 当前操作用户ID */
+	public Long empId;
 
 	// ============ after ============
 
 	public Object result;
 
-	public AsyncExportContext initConfig(Export.Config config, Long empId, TimeZone timeZone, String fileName) {
+	public AsyncExportContext initConfig(Export.Config config, Long merchantId, Long empId, TimeZone timeZone, Locale locale, String fileName) {
 		this.config = config;
+		this.merchantId = merchantId;
 		this.empId = empId;
 		this.timeZone = timeZone;
+		this.locale = locale;
 		this.fileName = fileName;
 		return this;
 	}

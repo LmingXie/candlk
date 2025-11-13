@@ -185,8 +185,7 @@ public class EnhanceCookieSerializer implements CookieSerializer {
 	 */
 	private String base64Decode(String base64Value) {
 		try {
-			byte[] decodedCookieBytes = Base64.getDecoder().decode(base64Value);
-			return new String(decodedCookieBytes);
+			return Common.decodeBase64String(base64Value);
 		} catch (Exception ex) {
 			logger.debug("Unable to Base64 decode value: " + base64Value);
 			return null;

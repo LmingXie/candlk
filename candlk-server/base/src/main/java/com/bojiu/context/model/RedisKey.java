@@ -872,8 +872,9 @@ public interface RedisKey {
 	String MSG_SENT_KEY = "msgSentKey";
 
 	/**
-	 * 用户设置自动登录过期时间 ZSet < "userAutoLoginExpire", $userId-clientId, 时间戳 >
-	 * 用户设置自动登录过期时间type Hash < "userAutoLoginExpire - $merchantId", $userId-clientId, $type >
+	 * 用户设置自动登录过期时间 ZSet < "userAutoLoginExpire", $merchantId-$userId, 时间戳 >
+	 * 用户自动登录过期时间判断 ZSet < "userAutoLoginExpire", $merchantId-$userId-expire, 时间戳+最后一次登录时间戳 >
+	 * 用户设置自动登录过期时间type Hash < "userAutoLoginExpire - $merchantId", $userId, $type >
 	 */
 	String USER_AUTO_LOGIN_EXPIRE = "userAutoLoginExpire";
 	/**
@@ -881,5 +882,21 @@ public interface RedisKey {
 	 * ZSet < "depositAgainParticipate"+$merchantId, $userId, $expireTime >
 	 */
 	String DEPOSIT_AGAIN_PARTICIPATE = "depositAgainParticipate";
+	/**
+	 * 排行榜循环周期 (当前轮) TODO 可以重设活动过期时间,所以要更新redis的过期时间
+	 * ZSet < "rankCycle:"+$promotionId,  $cycle, $cycleEndTime >
+	 */
+	String RANK_CYCLE = "pRankCycle:";
 
+	/**
+	 * 弹窗只弹一次处理
+	 * Hash < "promotionPopUp-$type-$promotionId", $userId, "1" >
+	 */
+	String PROMOTION_POP_UP = "promotionPopUp";
+
+	/**
+	 * 用户删除设备缓存
+	 * Hash < "loginDeviceSession", $merchantId-$userId-$sessionId, "1" >
+	 */
+	String LOGIN_DEVICE_SESSION = "loginDeviceSession";
 }

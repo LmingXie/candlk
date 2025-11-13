@@ -216,7 +216,7 @@ public enum Country implements LabelI18nProxy<Country, String> {
 	}
 
 	public EasyDate newEasyDate(long time) {
-		return new EasyDate(time).setTimeZone(timeZone).setTime(time);
+		return new EasyDate(time, timeZone);
 	}
 
 	/** 返回该国家默认时区的当前时间 */

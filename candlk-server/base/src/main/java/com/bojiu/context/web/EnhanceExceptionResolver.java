@@ -290,11 +290,17 @@ public class EnhanceExceptionResolver extends AbstractHandlerMethodExceptionReso
 		@Nonnull
 		@Override
 		public Messager<?> resolve(HttpServletRequest request, HttpServletResponse response, Exception e) {
-			if (e instanceof ValidationException && e.getCause() instanceof Exception c) {
-				e = c;
-			}
+			ErrorMessageException em = null;
+			Throwable cause = e;
+			do {
+				if (cause instanceof ErrorMessageException) {
+					em = (ErrorMessageException) cause;
+					break;
+				}
+				cause = cause.getCause();
+			} while (cause != null);
 			final Messager<?> msger;
-			if (e instanceof ErrorMessageException em) {
+			if (em != null) {
 				msger = em.getMessager();
 			} else {
 				msger = new Messager<>();

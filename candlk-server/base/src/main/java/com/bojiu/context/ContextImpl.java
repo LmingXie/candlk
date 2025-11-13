@@ -1,5 +1,6 @@
 package com.bojiu.context;
 
+import java.util.Locale;
 import java.util.TimeZone;
 import java.util.concurrent.TimeUnit;
 import java.util.function.Function;
@@ -61,6 +62,11 @@ public class ContextImpl extends Context implements ServletContextAware, CacheSy
 			return RequestContextImpl.getMerchantId(request);
 		}
 		return null;
+	});
+
+	public static final ThreadLocal<Locale> localeThreadLocal = ThreadLocal.withInitial(() -> {
+		RequestContextImpl req = RequestContextImpl.get();
+		return req.getRequest() == null ? null : req.getLanguage().getLocale();
 	});
 
 	// <域名, 商户ID>

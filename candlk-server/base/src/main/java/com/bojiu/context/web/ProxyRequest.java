@@ -19,7 +19,8 @@ import com.bojiu.context.model.Currency;
 import com.bojiu.context.model.*;
 import com.bojiu.webapp.base.entity.Merchant;
 import com.bojiu.webapp.base.util.Export;
-import me.codeplayer.util.*;
+import me.codeplayer.util.EasyDate;
+import me.codeplayer.util.StringUtil;
 import org.apache.commons.lang3.tuple.Pair;
 
 public class ProxyRequest extends BaseProxyRequest {
@@ -304,7 +305,7 @@ public class ProxyRequest extends BaseProxyRequest {
 	@Nonnull
 	public <T> Page<T> getPage(final boolean allowExport, final boolean allowQueryTotal) {
 		if (page == null) {
-			page = initPage(null);
+			page = doInitPage(null);
 		}
 		if ((allowExport || MemberType.fromBackstage()) && isExport()) {
 			page.setSize(Page.SIZE_SKIP_LIMIT);
@@ -312,7 +313,7 @@ public class ProxyRequest extends BaseProxyRequest {
 		if (!allowQueryTotal) {
 			page.setSearchCount(false);
 		}
-		return X.castType(page);
+		return preHandlePage(page);
 	}
 
 	/**
@@ -492,6 +493,33 @@ public class ProxyRequest extends BaseProxyRequest {
 				d.getCalendar().add(meta[1], meta[0]);
 			}
 		}
+	}
+
+	@Override
+	@SuppressWarnings({ "rawtypes", "unchecked" })
+	protected <T> Page<T> preHandlePage(Page page) {
+		if (MemberType.fromBackstage() /* 仅限后台 */
+				&& page.getList() == Collections.emptyList() /* 没有设置过 */
+				&& page.getTotal() == 0L
+				&& page.getSize() >= 0L && page.searchCount() /* 非导出 */
+				&& page.getCurrent() != 6 /* 留一个口子，如果是 第6页 时，就不使用缓存 */) {
+			final long totalCount = ResponseDataHandler.getCachedTotalCount(request);
+			if (totalCount > 0) { // 采用缓存的数据总数
+				page.setTotal(totalCount);
+				page.setSearchCount(false);
+			}
+			page.setList(List.of()); // 设置一个空集合，避免重复调用此方法时触发重复判断
+		}
+		return page;
+	}
+
+	/**
+	 * 标记当前接口是否允许缓存当前分页数据的 总记录数（ 即 COUNT(*) ）
+	 * <p>
+	 * 默认情况下，当分页的总记录数超过 10000 时，将会被自动缓存
+	 */
+	public void setAllowCacheTotal(Boolean allow) {
+		ResponseDataHandler.setAllowCacheTotal(request, allow);
 	}
 
 }
