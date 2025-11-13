@@ -7,13 +7,15 @@
 package org.drinkless.tdlib.example;
 
 import java.io.*;
-import java.util.NavigableSet;
-import java.util.TreeSet;
-import java.util.concurrent.ConcurrentHashMap;
-import java.util.concurrent.ConcurrentMap;
+import java.nio.charset.StandardCharsets;
+import java.nio.file.Files;
+import java.nio.file.Paths;
+import java.util.*;
+import java.util.concurrent.*;
 import java.util.concurrent.atomic.AtomicLong;
 import java.util.concurrent.locks.*;
 
+import com.bojiu.common.context.Context;
 import org.drinkless.tdlib.Client;
 import org.drinkless.tdlib.TdApi;
 
@@ -91,6 +93,7 @@ public final class Example {
 			case TdApi.AuthorizationStateWaitTdlibParameters.CONSTRUCTOR:
 				TdApi.SetTdlibParameters request = new TdApi.SetTdlibParameters();
 				request.databaseDirectory = "tdlib";
+				// request.databaseEncryptionKey = "123456".getBytes(StandardCharsets.UTF_8);
 				request.useMessageDatabase = true;
 				request.useSecretChats = true;
 				request.apiId = 94575;
@@ -258,7 +261,7 @@ public final class Example {
 								}
 								break;
 							case TdApi.Ok.CONSTRUCTOR:
-								// chats had already been received through updates, let's retry request
+								// chats had already been received through updates, let's retry request 聊天已经通过更新收到，让我们重新请求
 								getMainChatList(limit);
 								break;
 							default:
@@ -269,7 +272,7 @@ public final class Example {
 				return;
 			}
 
-			java.util.Iterator<OrderedChat> iter = mainChatList.iterator();
+			Iterator<OrderedChat> iter = mainChatList.iterator();
 			System.out.println();
 			System.out.println("First " + limit + " chat(s) out of " + mainChatList.size() + " known chat(s):");
 			for (int i = 0; i < limit && i < mainChatList.size(); i++) {
@@ -292,13 +295,45 @@ public final class Example {
 		client.send(new TdApi.SendMessage(chatId, null, null, null, replyMarkup, content), defaultHandler);
 	}
 
-	public static void main(String[] args) throws InterruptedException {
+	public static void main(String[] args) throws InterruptedException, IOException {
+		/*
+		发送消息（文本、图片、文件） — 可以。
+			API：TdApi.SendMessage 搭配 TdApi.InputMessageText 或 TdApi.InputMessagePhoto/Document（先 UploadFile/PrepareFile）。
+
+		监听账号消息（类似 Telethon 的 events.NewMessage） — 可以。
+			TDLib 通过“update”流发 UpdateNewMessage / UpdateNewChannelMessage 等，你在接收 loop 中处理这些更新即可（可把它抽象为事件订阅器）。官方文档解释了如何处理 updates。
+
+		修改账户资料（名字、姓氏、头像、简介） — 可以。
+			API：TdApi.SetName、TdApi.SetProfilePhoto / TdApi.SetProfilePhoto(InputFile)、TdApi.SetBio。
+
+		查询实体群组/用户（以便发送） — 可以。
+			方法包括 SearchPublicChat、GetChat、SearchChats、GetChatMembers 等（注意：对某些 channel/chat 的信息，必须先 join / openChat 才能获取完整历史）。
+
+		加入和退出群组 — 可以。
+			API：TdApi.JoinChat、TdApi.JoinChatByInviteLink、TdApi.LeaveChat、TdApi.AddChatMember / TdApi.AddChatMembers（对 supergroups/channels 有权限限制）。注意：加入私有群、需要先 checkChatInviteLink / joinChatByInviteLink。
+
+		根据指定时间查询群聊的聊天记录（类似 iter_messages） — 可以。
+			使用 TdApi.GetChatHistory（以 message_id / offset / limit 查询，返回 message 列表），与监听 update 结合可实现从指定时间范围获取历史消息。TDLib 返回的是逆序（从最新到更旧），可通过逻辑翻转或分页加载。
+
+		将其他人拉入群组（邀请） — 可以（受权限限制）。
+			API：TdApi.AddChatMember / TdApi.AddChatMembers 或 TdApi.InviteToChannel（取决 wrapper/tdlib 版本与 chat 类型）；需要 can_invite_users 权限，且有 member 限制（频道成员数大时限制）。
+
+			1、封装客户端API
+			2、实现多线程池批量加载客户端，并建立连接设置代理
+			3、收到消息后在本地进行缓存，批量入库
+			4、支持批量导入session+json文件，session先通过调用本地py接口录入 -> 启动监听 -> java发送验证码 -> 轮训查py接口获取验证码 -> tdlib登录 -> 监听收到的消息
+			5、查询账号
+			6、删除账号
+			7、切换代理
+			8、
+		 */
+
 		// set log message handler to handle only fatal errors (0) and plain log messages (-1)
 		Client.setLogMessageHandler(0, new LogMessageHandler());
 
-		// disable TDLib log and redirect fatal errors and plain log messages to a file
+		// 禁用TDLib日志，并将致命错误和普通日志消息重定向到一个文件
 		try {
-			Client.execute(new TdApi.SetLogVerbosityLevel(0));
+			Client.execute(new TdApi.SetLogVerbosityLevel(3));  // 0=none, 1=error, 2=warn, 3=info, 4+=debug
 			Client.execute(new TdApi.SetLogStream(new TdApi.LogStreamFile("tdlib.log", 1 << 27, false)));
 		} catch (Client.ExecutionException error) {
 			throw new IOError(new IOException("Write access to the current directory is required"));
@@ -306,6 +341,7 @@ public final class Example {
 
 		// create client
 		client = Client.create(new UpdateHandler(), null, null);
+
 
 		// main loop
 		while (!needQuit) {
@@ -370,7 +406,49 @@ public final class Example {
 
 		@Override
 		public void onResult(TdApi.Object object) {
+
 			switch (object.getConstructor()) {
+				case TdApi.UpdateNewMessage.CONSTRUCTOR:
+					TdApi.UpdateNewMessage newMsg = (TdApi.UpdateNewMessage) object;
+					TdApi.Message msg = newMsg.message;
+					long chatId = msg.chatId;
+					TdApi.MessageContent content = msg.content;
+					if (content instanceof TdApi.MessageText text) {
+						TdApi.FormattedText txt = text.text;
+						String textStr = txt.text;
+						TdApi.TextEntity[] entities = txt.entities;
+					} else if (content instanceof TdApi.MessagePhoto photo) {
+						TdApi.Photo photo1 = photo.photo;
+					} else if (content instanceof TdApi.MessageAnimation animation) {
+						TdApi.Animation animation1 = animation.animation;
+					} else if (content instanceof TdApi.MessageDocument document) {
+						TdApi.Document document1 = document.document;
+					} else if (content instanceof TdApi.MessageSticker sticker) {
+						TdApi.Sticker sticker1 = sticker.sticker;
+					} else if (content instanceof TdApi.MessageAudio audio) {
+						TdApi.Audio audio1 = audio.audio;
+					}
+					long mediaAlbumId = msg.mediaAlbumId;
+
+					long msgId = msg.id;
+					TdApi.MessageSender sender = msg.senderId;
+					long senderId = switch (sender.getConstructor()) {
+						case TdApi.MessageSenderUser.CONSTRUCTOR -> ((TdApi.MessageSenderUser) sender).userId;
+						case TdApi.MessageSenderChat.CONSTRUCTOR -> ((TdApi.MessageSenderChat) sender).chatId;
+						default -> throw new IllegalStateException("Unexpected value: " + sender.getConstructor());
+					};
+
+					// 查询用户信息
+					TdApi.User senderInfo = client.sendSync(new TdApi.GetUser(senderId), 10, TimeUnit.SECONDS);
+					TdApi.UserStatus status = senderInfo.status;
+					TdApi.UserType type = senderInfo.type;
+
+					// 引用回复
+					TdApi.MessageReplyTo replyTo = msg.replyTo;
+					// 转发信息
+					TdApi.MessageForwardInfo forwardInfo = msg.forwardInfo;
+
+					break;
 				case TdApi.UpdateAuthorizationState.CONSTRUCTOR:
 					onAuthorizationStateUpdated(((TdApi.UpdateAuthorizationState) object).authorizationState);
 					break;

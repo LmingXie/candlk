@@ -9,8 +9,11 @@ package org.drinkless.tdlib;
 import java.io.*;
 import java.nio.file.Path;
 import java.nio.file.Paths;
-import java.util.concurrent.ConcurrentHashMap;
+import java.util.Base64;
+import java.util.concurrent.*;
 import java.util.concurrent.atomic.AtomicLong;
+
+import lombok.Getter;
 
 /**
  * Main class for interaction with the TDLib.
@@ -154,6 +157,26 @@ public final class Client {
 		nativeClientSend(nativeClientId, queryId, query);
 	}
 
+	public <T extends TdApi.Object> T sendSync(TdApi.Function query, long timeoutMillis) {
+		return sendSync(query, timeoutMillis, TimeUnit.MILLISECONDS);
+	}
+
+	public <T extends TdApi.Object> T sendSync(TdApi.Function query, long timeout, TimeUnit unit) {
+		CompletableFuture<TdApi.Object> future = new CompletableFuture<>();
+
+		this.send(query, future::complete, future::completeExceptionally);
+
+		try {
+			@SuppressWarnings("unchecked")
+			T result = (T) future.get(timeout, unit);
+			return result;
+		} catch (TimeoutException e) {
+			throw new RuntimeException("TDLib request timeout", e);
+		} catch (Exception e) {
+			throw new RuntimeException("TDLib request failed", e);
+		}
+	}
+
 	/**
 	 * Sends a request to the TDLib with an empty ExceptionHandler.
 	 *
@@ -272,6 +295,7 @@ public final class Client {
 
 	}
 
+	@Getter
 	private final int nativeClientId;
 
 	private static final ConcurrentHashMap<Integer, ExceptionHandler> defaultExceptionHandlers = new ConcurrentHashMap<Integer, ExceptionHandler>();
