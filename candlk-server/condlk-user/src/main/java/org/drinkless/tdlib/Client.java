@@ -12,6 +12,7 @@ import java.nio.file.Paths;
 import java.util.concurrent.*;
 import java.util.concurrent.atomic.AtomicLong;
 
+import com.bojiu.context.web.TaskUtils;
 import lombok.Getter;
 
 /** 与TDLib交互的主类。 */
@@ -199,7 +200,7 @@ public final class Client {
 			if (!responseReceiver.isRun) {
 				responseReceiver.isRun = true;
 
-				Thread receiverThread = new Thread(responseReceiver, "TDLib thread");
+				Thread receiverThread = new Thread(responseReceiver, "TDClient thread");
 				receiverThread.setDaemon(true);
 				receiverThread.start();
 			}
@@ -225,29 +226,46 @@ public final class Client {
 		/** 最大事件ID TODO 根据账号数量进行调整 */
 		private static final int MAX_EVENTS = 1000;
 		private final int[] clientIds = new int[MAX_EVENTS];
+		/**
+		 * 请求ID，通过 {@link Client#nativeClientSend}发送请求时传递，用来匹配返回结果对应的处理器。
+		 */
 		private final long[] eventIds = new long[MAX_EVENTS];
 		private final TdApi.Object[] events = new TdApi.Object[MAX_EVENTS];
 
+		/** 阻塞超时时间（单位：秒） */
+		private static final double TIMEOUT = 10 * 60.0;
+
 		@Override
 		public void run() {
-			while (true) {
-				int resultN = nativeClientReceive(clientIds, eventIds, events, 100000.0 /*seconds*/);
-				for (int i = 0; i < resultN; i++) {
-					processResult(clientIds[i], eventIds[i], events[i]);
-					events[i] = null;
+			/*
+			Pull 模式，每次最多100条，当没有消息时 nativeClientReceive 会阻塞，线程进入休眠
+			如果超时，会直接返回 0，表示“没有事件”。
+			 */
+			while (isRun) {
+				int resultN = nativeClientReceive(clientIds, eventIds, events, TIMEOUT);
+				if (resultN != 0) {
+					for (int i = 0; i < resultN; i++) {
+						processResult(clientIds[i], eventIds[i], events[i]);
+						events[i] = null;
+					}
 				}
 			}
 		}
 
-		private void processResult(int clientId, long id, TdApi.Object object) {
-			boolean isClosed = id == 0 && object instanceof TdApi.UpdateAuthorizationState updateAuth
+		/** 线程数量不宜过多，避免 内存占用过大 以及 增加 资源IO 争用 */
+		static final ThreadPoolExecutor tdTaskThreadPool = TaskUtils.newThreadPool(8, 20, 8192, "td-task-");
+
+		private void processResult(int clientId, long eventId, TdApi.Object object) {
+			boolean isClosed = eventId == 0 && object instanceof TdApi.UpdateAuthorizationState updateAuth
 					&& updateAuth.authorizationState instanceof TdApi.AuthorizationStateClosed;
 
-			Handler handler = id == 0 ? updateHandlers.get(clientId) : handlers.remove(id);
+			Handler handler = eventId == 0 ? updateHandlers.get(clientId) : handlers.remove(eventId);
 			if (handler != null) {
 				try {
+					// TODO: 2025/11/17 onResult需要通过多线程异步处理
 					handler.resultHandler.onResult(object);
 				} catch (Throwable cause) {
+					// TODO: 2025/11/17 异常处理逻辑 全局应该被忽略，在onResult内部独立进行
 					ExceptionHandler exceptionHandler = handler.exceptionHandler;
 					if (exceptionHandler == null) {
 						exceptionHandler = defaultExceptionHandlers.get(clientId);
