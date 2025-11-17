@@ -101,42 +101,43 @@ public final class Example {
 				request.systemLanguageCode = "en";
 				request.deviceModel = "Desktop";
 				request.applicationVersion = "1.0";
+				request.systemVersion = "Windows 11";
 
 				client.send(request, new AuthorizationRequestHandler());
 				break;
 			case TdApi.AuthorizationStateWaitPhoneNumber.CONSTRUCTOR: {
-				String phoneNumber = promptString("Please enter phone number: "); // 输入：15673626666
+				String phoneNumber = promptString("请输入电话号码: "); // 输入：15673626666
 				client.send(new TdApi.SetAuthenticationPhoneNumber(phoneNumber, null), new AuthorizationRequestHandler());
 				break;
 			}
 			case TdApi.AuthorizationStateWaitOtherDeviceConfirmation.CONSTRUCTOR: {
 				String link = ((TdApi.AuthorizationStateWaitOtherDeviceConfirmation) Example.authorizationState).link;
-				System.out.println("Please confirm this login link on another device: " + link);
+				System.out.println("请在另一台设备上确认此登录链接: " + link);
 				break;
 			}
 			case TdApi.AuthorizationStateWaitEmailAddress.CONSTRUCTOR: {
-				String emailAddress = promptString("Please enter email address: ");
+				String emailAddress = promptString("请输入电子邮件地址: ");
 				client.send(new TdApi.SetAuthenticationEmailAddress(emailAddress), new AuthorizationRequestHandler());
 				break;
 			}
 			case TdApi.AuthorizationStateWaitEmailCode.CONSTRUCTOR: {
-				String code = promptString("Please enter email authentication code: ");
+				String code = promptString("请输入电子邮件授权验证码: ");
 				client.send(new TdApi.CheckAuthenticationEmailCode(new TdApi.EmailAddressAuthenticationCode(code)), new AuthorizationRequestHandler());
 				break;
 			}
 			case TdApi.AuthorizationStateWaitCode.CONSTRUCTOR: {
-				String code = promptString("Please enter authentication code: ");
+				String code = promptString("请输入授权验证码: ");
 				client.send(new TdApi.CheckAuthenticationCode(code), new AuthorizationRequestHandler());
 				break;
 			}
 			case TdApi.AuthorizationStateWaitRegistration.CONSTRUCTOR: {
-				String firstName = promptString("Please enter your first name: ");
-				String lastName = promptString("Please enter your last name: ");
+				String firstName = promptString("请输入您的名字: ");
+				String lastName = promptString("请输入您的姓: ");
 				client.send(new TdApi.RegisterUser(firstName, lastName, false), new AuthorizationRequestHandler());
 				break;
 			}
 			case TdApi.AuthorizationStateWaitPassword.CONSTRUCTOR: {
-				String password = promptString("Please enter password: ");
+				String password = promptString("请输入密码: ");
 				client.send(new TdApi.CheckAuthenticationPassword(password), new AuthorizationRequestHandler());
 				break;
 			}
@@ -166,7 +167,7 @@ public final class Example {
 				}
 				break;
 			default:
-				System.err.println("Unsupported authorization state:" + newLine + Example.authorizationState);
+				System.err.println("不支持的授权状态:" + newLine + Example.authorizationState);
 		}
 	}
 
@@ -328,7 +329,7 @@ public final class Example {
 			8、
 		 */
 
-		// set log message handler to handle only fatal errors (0) and plain log messages (-1)
+		// 设置日志消息处理程序，只处理致命错误(0)和普通日志消息（-1）
 		Client.setLogMessageHandler(0, new LogMessageHandler());
 
 		// 禁用TDLib日志，并将致命错误和普通日志消息重定向到一个文件
@@ -766,14 +767,14 @@ public final class Example {
 		public void onResult(TdApi.Object object) {
 			switch (object.getConstructor()) {
 				case TdApi.Error.CONSTRUCTOR:
-					System.err.println("Receive an error:" + newLine + object);
+					System.err.println("接收错误:" + newLine + object);
 					onAuthorizationStateUpdated(null); // repeat last action
 					break;
 				case TdApi.Ok.CONSTRUCTOR:
-					// result is already received through UpdateAuthorizationState, nothing to do
+					// 结果已经通过UpdateAuthorizationState收到，无需做任何事情
 					break;
 				default:
-					System.err.println("Receive wrong response from TDLib:" + newLine + object);
+					System.err.println("从TDLib接收错误的响应:" + newLine + object);
 			}
 		}
 

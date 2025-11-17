@@ -9,15 +9,12 @@ package org.drinkless.tdlib;
 import java.io.*;
 import java.nio.file.Path;
 import java.nio.file.Paths;
-import java.util.Base64;
 import java.util.concurrent.*;
 import java.util.concurrent.atomic.AtomicLong;
 
 import lombok.Getter;
 
-/**
- * Main class for interaction with the TDLib.
- */
+/** 与TDLib交互的主类。 */
 public final class Client {
 
 	static {
@@ -77,59 +74,57 @@ public final class Client {
 	public interface ResultHandler {
 
 		/**
-		 * Callback called on result of query to TDLib or incoming update from TDLib.
+		 * 对TDLib的查询结果或从TDLib传入的更新调用回调。
 		 *
-		 * @param object Result of query or update of type TdApi.Update about new events.
+		 * @param object 查询或更新TdApi类型的结果。更新新事件。
 		 */
 		void onResult(TdApi.Object object);
 
 	}
 
 	/**
-	 * Interface for handler of exceptions thrown while invoking ResultHandler.
-	 * By default, all such exceptions are ignored.
-	 * All exceptions thrown from ExceptionHandler are ignored.
+	 * 调用ResultHandler时抛出的异常处理程序的接口。
+	 * 默认情况下，所有这些异常都会被忽略。
+	 * 所有从ExceptionHandler抛出的异常都会被忽略。
 	 */
 	public interface ExceptionHandler {
 
 		/**
-		 * Callback called on exceptions thrown while invoking ResultHandler.
+		 * 在调用ResultHandler时抛出异常时调用的回调。
 		 *
-		 * @param e Exception thrown by ResultHandler.
+		 * @param e 由ResultHandler抛出的异常。
 		 */
 		void onException(Throwable e);
 
 	}
 
-	/**
-	 * Interface for handler of messages that are added to the internal TDLib log.
-	 */
+	/** 用于处理添加到内部TDLib日志的消息的接口。 */
 	public interface LogMessageHandler {
 
 		/**
-		 * Callback called on messages that are added to the internal TDLib log.
+		 * 对添加到内部TDLib日志的消息调用回调。
 		 *
-		 * @param verbosityLevel Log verbosity level with which the message was added from -1 up to 1024.
-		 * If 0, then TDLib will crash as soon as the callback returns.
-		 * None of the TDLib methods can be called from the callback.
-		 * @param message The message added to the internal TDLib log.
+		 * @param verbosityLevel 添加消息的日志冗长级别，从-1到1024。
+		 * 如果为0，则TDLib将在回调返回时立即崩溃。
+		 * 任何TDLib方法都不能从回调中调用。
+		 * @param message 添加到内部TDLib日志中的消息。
 		 */
 		void onLogMessage(int verbosityLevel, String message);
 
 	}
 
 	/**
-	 * Exception class thrown when TDLib error occurred while performing {@link #execute(TdApi.Function)}.
+	 * 执行 {@link #execute(TdApi.Function)} 时发生TDLib错误时抛出的异常类
 	 */
 	public static class ExecutionException extends Exception {
 
 		/**
-		 * Original TDLib error occurred when performing one of the synchronous functions.
+		 * 执行其中一个同步函数时发生原始TDLib错误。
 		 */
 		public final TdApi.Error error;
 
 		/**
-		 * @param error TDLib error occurred while performing {@link #execute(TdApi.Function)}.
+		 * @param error TDLib 执行时发生错误 {@link #execute(TdApi.Function)}.
 		 */
 		ExecutionException(TdApi.Error error) {
 			super(error.code + ": " + error.message);
@@ -178,25 +173,16 @@ public final class Client {
 	}
 
 	/**
-	 * Sends a request to the TDLib with an empty ExceptionHandler.
+	 * 使用空的ExceptionHandler向TDLib发送请求。
 	 *
-	 * @param query Object representing a query to the TDLib.
-	 * @param resultHandler Result handler with onResult method which will be called with result
-	 * of the query or with TdApi.Error as parameter. If it is null, then
-	 * defaultExceptionHandler will be called.
+	 * @param query 对象，表示对TDLib的查询。
+	 * @param resultHandler 带有onResult方法的结果处理程序，该方法将在查询结果或TdApi时调用。错误作为参数。如果它为空，则将调用defaultExceptionHandler。
 	 */
 	public void send(TdApi.Function query, ResultHandler resultHandler) {
 		send(query, resultHandler, null);
 	}
 
-	/**
-	 * Synchronously executes a TDLib request. Only a few marked accordingly requests can be executed synchronously.
-	 *
-	 * @param query Object representing a query to the TDLib.
-	 * @param <T> Automatically deduced return type of the query.
-	 * @return request result.
-	 * @throws ExecutionException if query execution fails.
-	 */
+	/** 同步执行TDLib请求。只有少数相应标记的请求可以同步执行。 */
 	@SuppressWarnings("unchecked")
 	public static <T extends TdApi.Object> T execute(TdApi.Function<T> query) throws ExecutionException {
 		TdApi.Object object = nativeClientExecute(query);
@@ -206,14 +192,7 @@ public final class Client {
 		return (T) object;
 	}
 
-	/**
-	 * Creates new Client.
-	 *
-	 * @param updateHandler Handler for incoming updates.
-	 * @param updateExceptionHandler Handler for exceptions thrown from updateHandler. If it is null, exceptions will be ignored.
-	 * @param defaultExceptionHandler Default handler for exceptions thrown from all ResultHandler. If it is null, exceptions will be ignored.
-	 * @return created Client
-	 */
+	/** 创建一个新的客户端 */
 	public static Client create(ResultHandler updateHandler, ExceptionHandler updateExceptionHandler, ExceptionHandler defaultExceptionHandler) {
 		Client client = new Client(updateHandler, updateExceptionHandler, defaultExceptionHandler);
 		synchronized (responseReceiver) {
@@ -229,11 +208,11 @@ public final class Client {
 	}
 
 	/**
-	 * Sets the handler for messages that are added to the internal TDLib log.
-	 * None of the TDLib methods can be called from the callback.
+	 * 设置 TDLib 内部的日志处理器
+	 * 任何 TDLib 方法都不能从回调中调用。
 	 *
-	 * @param maxVerbosityLevel The maximum verbosity level of messages for which the callback will be called.
-	 * @param logMessageHandler Handler for messages that are added to the internal TDLib log. Pass null to remove the handler.
+	 * @param maxVerbosityLevel 日志级别（ 0=none, 1=error, 2=warn, 3=info, 4+=debug）
+	 * @param logMessageHandler 日志处理器（用于在Java端接收TDLib内部的日志）
 	 */
 	public static void setLogMessageHandler(int maxVerbosityLevel, LogMessageHandler logMessageHandler) {
 		nativeClientSetLogMessageHandler(maxVerbosityLevel, logMessageHandler);
@@ -242,6 +221,12 @@ public final class Client {
 	private static class ResponseReceiver implements Runnable {
 
 		public boolean isRun = false;
+
+		/** 最大事件ID TODO 根据账号数量进行调整 */
+		private static final int MAX_EVENTS = 1000;
+		private final int[] clientIds = new int[MAX_EVENTS];
+		private final long[] eventIds = new long[MAX_EVENTS];
+		private final TdApi.Object[] events = new TdApi.Object[MAX_EVENTS];
 
 		@Override
 		public void run() {
@@ -255,13 +240,8 @@ public final class Client {
 		}
 
 		private void processResult(int clientId, long id, TdApi.Object object) {
-			boolean isClosed = false;
-			if (id == 0 && object instanceof TdApi.UpdateAuthorizationState) {
-				TdApi.AuthorizationState authorizationState = ((TdApi.UpdateAuthorizationState) object).authorizationState;
-				if (authorizationState instanceof TdApi.AuthorizationStateClosed) {
-					isClosed = true;
-				}
-			}
+			boolean isClosed = id == 0 && object instanceof TdApi.UpdateAuthorizationState updateAuth
+					&& updateAuth.authorizationState instanceof TdApi.AuthorizationStateClosed;
 
 			Handler handler = id == 0 ? updateHandlers.get(clientId) : handlers.remove(id);
 			if (handler != null) {
@@ -282,44 +262,28 @@ public final class Client {
 			}
 
 			if (isClosed) {
-				updateHandlers.remove(clientId);           // there will be no more updates
-				defaultExceptionHandlers.remove(clientId); // ignore further exceptions
-				clientCount.decrementAndGet();
+				updateHandlers.remove(clientId);           // 不会有更多的更新
+				defaultExceptionHandlers.remove(clientId); // 忽略其他异常
 			}
 		}
-
-		private static final int MAX_EVENTS = 1000;
-		private final int[] clientIds = new int[MAX_EVENTS];
-		private final long[] eventIds = new long[MAX_EVENTS];
-		private final TdApi.Object[] events = new TdApi.Object[MAX_EVENTS];
 
 	}
 
 	@Getter
 	private final int nativeClientId;
 
-	private static final ConcurrentHashMap<Integer, ExceptionHandler> defaultExceptionHandlers = new ConcurrentHashMap<Integer, ExceptionHandler>();
-	private static final ConcurrentHashMap<Integer, Handler> updateHandlers = new ConcurrentHashMap<Integer, Handler>();
-	private static final ConcurrentHashMap<Long, Handler> handlers = new ConcurrentHashMap<Long, Handler>();
+	private static final ConcurrentHashMap<Integer, ExceptionHandler> defaultExceptionHandlers = new ConcurrentHashMap<>();
+	private static final ConcurrentHashMap<Integer, Handler> updateHandlers = new ConcurrentHashMap<>();
+	private static final ConcurrentHashMap<Long, Handler> handlers = new ConcurrentHashMap<>();
 	private static final AtomicLong currentQueryId = new AtomicLong();
-	private static final AtomicLong clientCount = new AtomicLong();
 
 	private static final ResponseReceiver responseReceiver = new ResponseReceiver();
 
-	private static class Handler {
-
-		final ResultHandler resultHandler;
-		final ExceptionHandler exceptionHandler;
-
-		Handler(ResultHandler resultHandler, ExceptionHandler exceptionHandler) {
-			this.resultHandler = resultHandler;
-			this.exceptionHandler = exceptionHandler;
-		}
+	private record Handler(ResultHandler resultHandler, ExceptionHandler exceptionHandler) {
 
 	}
 
 	private Client(ResultHandler updateHandler, ExceptionHandler updateExceptionHandler, ExceptionHandler defaultExceptionHandler) {
-		clientCount.incrementAndGet();
 		nativeClientId = createNativeClient();
 		if (updateHandler != null) {
 			updateHandlers.put(nativeClientId, new Handler(updateHandler, updateExceptionHandler));
