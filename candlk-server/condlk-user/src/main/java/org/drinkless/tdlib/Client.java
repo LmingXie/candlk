@@ -12,10 +12,13 @@ import java.nio.file.Paths;
 import java.util.concurrent.*;
 import java.util.concurrent.atomic.AtomicLong;
 
+import com.bojiu.common.util.SpringUtil;
 import com.bojiu.context.web.TaskUtils;
 import lombok.Getter;
+import lombok.extern.slf4j.Slf4j;
 
 /** 与TDLib交互的主类。 */
+@Slf4j
 public final class Client {
 
 	static {
@@ -37,10 +40,9 @@ public final class Client {
 			System.load(new File(tdDir, "zlib1.dll").getAbsolutePath());
 			System.load(new File(tdDir, "tdjni.dll").getAbsolutePath());
 
-			System.out.println("[TDLib] DLL 加载成功: " + tdDir.getAbsolutePath());
+			log.info("[TDLib] DLL 加载成功: {}", tdDir.getAbsolutePath());
 		} catch (Throwable e) {
-			System.err.println("[TDLib] 加载失败: " + e.getMessage());
-			e.printStackTrace();
+			log.error("[TDLib] 加载失败: ", e);
 			System.exit(1);
 		}
 	}
@@ -53,7 +55,7 @@ public final class Client {
 	public static String getAppRootDir() {
 		try {
 			// 获取当前 jar 或 class 文件的绝对路径
-			String path = Client.class
+			final String path = Client.class
 					.getProtectionDomain()
 					.getCodeSource()
 					.getLocation()
@@ -80,22 +82,6 @@ public final class Client {
 		 * @param object 查询或更新TdApi类型的结果。更新新事件。
 		 */
 		void onResult(TdApi.Object object);
-
-	}
-
-	/**
-	 * 调用ResultHandler时抛出的异常处理程序的接口。
-	 * 默认情况下，所有这些异常都会被忽略。
-	 * 所有从ExceptionHandler抛出的异常都会被忽略。
-	 */
-	public interface ExceptionHandler {
-
-		/**
-		 * 在调用ResultHandler时抛出异常时调用的回调。
-		 *
-		 * @param e 由ResultHandler抛出的异常。
-		 */
-		void onException(Throwable e);
 
 	}
 
@@ -141,14 +127,11 @@ public final class Client {
 	 * @param resultHandler Result handler with onResult method which will be called with result
 	 * of the query or with TdApi.Error as parameter. If it is null, nothing
 	 * will be called.
-	 * @param exceptionHandler Exception handler with onException method which will be called on
-	 * exception thrown from resultHandler. If it is null, then
-	 * defaultExceptionHandler will be called.
 	 */
-	public void send(TdApi.Function query, ResultHandler resultHandler, ExceptionHandler exceptionHandler) {
+	public void send(TdApi.Function query, ResultHandler resultHandler) {
 		long queryId = currentQueryId.incrementAndGet();
 		if (resultHandler != null) {
-			handlers.put(queryId, new Handler(resultHandler, exceptionHandler));
+			handlers.put(queryId, resultHandler);
 		}
 		nativeClientSend(nativeClientId, queryId, query);
 	}
@@ -157,30 +140,19 @@ public final class Client {
 		return sendSync(query, timeoutMillis, TimeUnit.MILLISECONDS);
 	}
 
+	@SuppressWarnings("unchecked")
 	public <T extends TdApi.Object> T sendSync(TdApi.Function query, long timeout, TimeUnit unit) {
 		CompletableFuture<TdApi.Object> future = new CompletableFuture<>();
 
-		this.send(query, future::complete, future::completeExceptionally);
+		this.send(query, future::complete);
 
 		try {
-			@SuppressWarnings("unchecked")
-			T result = (T) future.get(timeout, unit);
-			return result;
+			return (T) future.get(timeout, unit);
 		} catch (TimeoutException e) {
 			throw new RuntimeException("TDLib request timeout", e);
 		} catch (Exception e) {
 			throw new RuntimeException("TDLib request failed", e);
 		}
-	}
-
-	/**
-	 * 使用空的ExceptionHandler向TDLib发送请求。
-	 *
-	 * @param query 对象，表示对TDLib的查询。
-	 * @param resultHandler 带有onResult方法的结果处理程序，该方法将在查询结果或TdApi时调用。错误作为参数。如果它为空，则将调用defaultExceptionHandler。
-	 */
-	public void send(TdApi.Function query, ResultHandler resultHandler) {
-		send(query, resultHandler, null);
 	}
 
 	/** 同步执行TDLib请求。只有少数相应标记的请求可以同步执行。 */
@@ -194,8 +166,8 @@ public final class Client {
 	}
 
 	/** 创建一个新的客户端 */
-	public static Client create(ResultHandler updateHandler, ExceptionHandler updateExceptionHandler, ExceptionHandler defaultExceptionHandler) {
-		Client client = new Client(updateHandler, updateExceptionHandler, defaultExceptionHandler);
+	public static Client create(ResultHandler updateHandler) {
+		Client client = new Client(updateHandler);
 		synchronized (responseReceiver) {
 			if (!responseReceiver.isRun) {
 				responseReceiver.isRun = true;
@@ -255,33 +227,24 @@ public final class Client {
 		/** 线程数量不宜过多，避免 内存占用过大 以及 增加 资源IO 争用 */
 		static final ThreadPoolExecutor tdTaskThreadPool = TaskUtils.newThreadPool(8, 20, 8192, "td-task-");
 
-		private void processResult(int clientId, long eventId, TdApi.Object object) {
-			boolean isClosed = eventId == 0 && object instanceof TdApi.UpdateAuthorizationState updateAuth
+		private void processResult(int clientId, long eventId, TdApi.Object obj) {
+			boolean isClosed = eventId == 0 && obj instanceof TdApi.UpdateAuthorizationState updateAuth
 					&& updateAuth.authorizationState instanceof TdApi.AuthorizationStateClosed;
 
-			Handler handler = eventId == 0 ? updateHandlers.get(clientId) : handlers.remove(eventId);
+			ResultHandler handler = eventId == 0 ? updateHandlers.get(clientId) : handlers.remove(eventId);
 			if (handler != null) {
-				try {
-					// TODO: 2025/11/17 onResult需要通过多线程异步处理
-					handler.resultHandler.onResult(object);
-				} catch (Throwable cause) {
-					// TODO: 2025/11/17 异常处理逻辑 全局应该被忽略，在onResult内部独立进行
-					ExceptionHandler exceptionHandler = handler.exceptionHandler;
-					if (exceptionHandler == null) {
-						exceptionHandler = defaultExceptionHandlers.get(clientId);
+				tdTaskThreadPool.execute(() -> {
+					try {
+						handler.onResult(obj);
+					} catch (Throwable e) {
+						// 关键业务，上报异常信息
+						SpringUtil.logError(log, "处理结果异常：clientId=" + clientId + "，eventId=" + eventId, e);
 					}
-					if (exceptionHandler != null) {
-						try {
-							exceptionHandler.onException(cause);
-						} catch (Throwable ignored) {
-						}
-					}
-				}
+				});
 			}
 
 			if (isClosed) {
-				updateHandlers.remove(clientId);           // 不会有更多的更新
-				defaultExceptionHandlers.remove(clientId); // 忽略其他异常
+				updateHandlers.remove(clientId); // 不会有更多的更新
 			}
 		}
 
@@ -290,26 +253,18 @@ public final class Client {
 	@Getter
 	private final int nativeClientId;
 
-	private static final ConcurrentHashMap<Integer, ExceptionHandler> defaultExceptionHandlers = new ConcurrentHashMap<>();
-	private static final ConcurrentHashMap<Integer, Handler> updateHandlers = new ConcurrentHashMap<>();
-	private static final ConcurrentHashMap<Long, Handler> handlers = new ConcurrentHashMap<>();
+	private static final ConcurrentHashMap<Integer, ResultHandler> updateHandlers = new ConcurrentHashMap<>();
+	private static final ConcurrentHashMap<Long, ResultHandler> handlers = new ConcurrentHashMap<>();
 	private static final AtomicLong currentQueryId = new AtomicLong();
 
 	private static final ResponseReceiver responseReceiver = new ResponseReceiver();
 
-	private record Handler(ResultHandler resultHandler, ExceptionHandler exceptionHandler) {
-
-	}
-
-	private Client(ResultHandler updateHandler, ExceptionHandler updateExceptionHandler, ExceptionHandler defaultExceptionHandler) {
+	private Client(ResultHandler updateHandler) {
 		nativeClientId = createNativeClient();
 		if (updateHandler != null) {
-			updateHandlers.put(nativeClientId, new Handler(updateHandler, updateExceptionHandler));
+			updateHandlers.put(nativeClientId, updateHandler);
 		}
-		if (defaultExceptionHandler != null) {
-			defaultExceptionHandlers.put(nativeClientId, defaultExceptionHandler);
-		}
-		send(new TdApi.GetOption("version"), null, null);
+		send(new TdApi.GetOption("version"), null);
 	}
 
 	private static native int createNativeClient();

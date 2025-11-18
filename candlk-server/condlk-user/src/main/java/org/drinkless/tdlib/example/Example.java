@@ -7,15 +7,11 @@
 package org.drinkless.tdlib.example;
 
 import java.io.*;
-import java.nio.charset.StandardCharsets;
-import java.nio.file.Files;
-import java.nio.file.Paths;
 import java.util.*;
 import java.util.concurrent.*;
 import java.util.concurrent.atomic.AtomicLong;
 import java.util.concurrent.locks.*;
 
-import com.bojiu.common.context.Context;
 import org.drinkless.tdlib.Client;
 import org.drinkless.tdlib.TdApi;
 
@@ -161,7 +157,7 @@ public final class Example {
 			case TdApi.AuthorizationStateClosed.CONSTRUCTOR:
 				print("Closed");
 				if (!needQuit) {
-					client = Client.create(new UpdateHandler(), null, null); // recreate client after previous has closed
+					client = Client.create(new UpdateHandler()); // recreate client after previous has closed
 				} else {
 					canQuit = true;
 				}
@@ -341,7 +337,7 @@ public final class Example {
 		}
 
 		// create client
-		client = Client.create(new UpdateHandler(), null, null);
+		client = Client.create(new UpdateHandler());
 
 
 		// main loop
