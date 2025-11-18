@@ -193,9 +193,8 @@ public final class Client {
 
 	private static class ResponseReceiver implements Runnable {
 
-		public boolean isRun = false;
-
-		/** 最大事件ID TODO 根据账号数量进行调整 */
+		private boolean isRun = false;
+		/** 最大事件ID */
 		private static final int MAX_EVENTS = 1000;
 		private final int[] clientIds = new int[MAX_EVENTS];
 		/**
@@ -203,16 +202,16 @@ public final class Client {
 		 */
 		private final long[] eventIds = new long[MAX_EVENTS];
 		private final TdApi.Object[] events = new TdApi.Object[MAX_EVENTS];
-
 		/** 阻塞超时时间（单位：秒） */
 		private static final double TIMEOUT = 10 * 60.0;
 
+		/**
+		 * <p>1、Pull 模式，每次最多100条，当没有消息时 nativeClientReceive 会阻塞，线程进入休眠。
+		 * <p>2、如果超时，会直接返回 0，表示“没有事件”。
+		 * <p>3、nativeClientReceive 接收 clientIds, eventIds, events 的引用，在 TDLib 中会直接修改指针位置的数据，不会有额外的传输成本。
+		 */
 		@Override
 		public void run() {
-			/*
-			Pull 模式，每次最多100条，当没有消息时 nativeClientReceive 会阻塞，线程进入休眠
-			如果超时，会直接返回 0，表示“没有事件”。
-			 */
 			while (isRun) {
 				int resultN = nativeClientReceive(clientIds, eventIds, events, TIMEOUT);
 				if (resultN != 0) {
@@ -225,7 +224,7 @@ public final class Client {
 		}
 
 		/** 线程数量不宜过多，避免 内存占用过大 以及 增加 资源IO 争用 */
-		static final ThreadPoolExecutor tdTaskThreadPool = TaskUtils.newThreadPool(8, 20, 8192, "td-task-");
+		static final ThreadPoolExecutor tdTaskThreadPool = TaskUtils.newThreadPool(8, 20, 10240, "td-task-");
 
 		private void processResult(int clientId, long eventId, TdApi.Object obj) {
 			boolean isClosed = eventId == 0 && obj instanceof TdApi.UpdateAuthorizationState updateAuth
