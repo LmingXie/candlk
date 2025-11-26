@@ -39,6 +39,7 @@ public interface RemoteSyncService {
 	String TicketGrantService = "TicketGrantService";
 	/* ======= user ====== */
 
+	String UserService = "UserService";
 	String BannerService = "BannerService";
 	String OauthUserService = "OauthUserService";
 	String RegionLimitService = "RegionLimitService";

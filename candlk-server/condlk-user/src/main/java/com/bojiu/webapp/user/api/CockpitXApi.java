@@ -11,17 +11,15 @@ import com.bojiu.common.util.BaseHttpUtil;
 import com.bojiu.context.web.Jsons;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.http.HttpMethod;
+import org.springframework.stereotype.Component;
 
 @Slf4j
+@Component
 public class CockpitXApi extends BaseHttpUtil {
 
 	public static final String baseURI = "http://127.0.0.1:8985";
 	public static final URI loadUri = URI.create(baseURI + "/user/j/load"),
 			closeUri = URI.create(baseURI + "/user/j/close");
-
-	public static CockpitXApi getInstance() {
-		return new CockpitXApi();
-	}
 
 	final HttpClient proxyHttpClient;
 

@@ -9,11 +9,15 @@ package org.drinkless.tdlib;
 import java.io.*;
 import java.nio.file.Path;
 import java.nio.file.Paths;
+import java.util.Map;
 import java.util.concurrent.*;
 import java.util.concurrent.atomic.AtomicLong;
 
+import javax.annotation.Nullable;
+
 import com.bojiu.common.util.SpringUtil;
 import com.bojiu.context.web.TaskUtils;
+import com.bojiu.webapp.user.handler.DefaultUpdateHandler;
 import lombok.Getter;
 import lombok.extern.slf4j.Slf4j;
 
@@ -166,8 +170,15 @@ public final class Client {
 	}
 
 	/** 创建一个新的客户端 */
-	public static Client create(ResultHandler updateHandler) {
-		Client client = new Client(updateHandler);
+	public static Client create(@Nullable ResultHandler updateHandler) {
+		final Client client;
+		if (updateHandler == null) {
+			DefaultUpdateHandler handler = new DefaultUpdateHandler();
+			client = new Client(handler);
+			handler.setClient(client); // 传递给内部使用
+		} else {
+			client = new Client(updateHandler);
+		}
 		synchronized (responseReceiver) {
 			if (!responseReceiver.isRun) {
 				responseReceiver.isRun = true;
@@ -230,7 +241,7 @@ public final class Client {
 			boolean isClosed = eventId == 0 && obj instanceof TdApi.UpdateAuthorizationState updateAuth
 					&& updateAuth.authorizationState instanceof TdApi.AuthorizationStateClosed;
 
-			ResultHandler handler = eventId == 0 ? updateHandlers.get(clientId) : handlers.remove(eventId);
+			ResultHandler handler = eventId == 0/*TDLib主动消息，而非Client请求消息*/ ? defaultUpdateHandlers.get(clientId) : handlers.remove(eventId);
 			if (handler != null) {
 				tdTaskThreadPool.execute(() -> {
 					try {
@@ -243,7 +254,7 @@ public final class Client {
 			}
 
 			if (isClosed) {
-				updateHandlers.remove(clientId); // 不会有更多的更新
+				defaultUpdateHandlers.remove(clientId); // 不会有更多的更新
 			}
 		}
 
@@ -251,17 +262,19 @@ public final class Client {
 
 	@Getter
 	private final int nativeClientId;
+	private static final Map<Integer, Client> nativeClientMap = new ConcurrentHashMap<>();
 
-	private static final ConcurrentHashMap<Integer, ResultHandler> updateHandlers = new ConcurrentHashMap<>();
+	/** 默认更新处理器（处理TDLib接收到的来自User、Chat、Group、Supergroup等的更新信息） */
+	private static final ConcurrentHashMap<Integer, ResultHandler> defaultUpdateHandlers = new ConcurrentHashMap<>();
 	private static final ConcurrentHashMap<Long, ResultHandler> handlers = new ConcurrentHashMap<>();
 	private static final AtomicLong currentQueryId = new AtomicLong();
 
 	private static final ResponseReceiver responseReceiver = new ResponseReceiver();
 
-	private Client(ResultHandler updateHandler) {
+	private Client(ResultHandler defaultUpdateHandler) {
 		nativeClientId = createNativeClient();
-		if (updateHandler != null) {
-			updateHandlers.put(nativeClientId, updateHandler);
+		if (defaultUpdateHandler != null) {
+			defaultUpdateHandlers.put(nativeClientId, defaultUpdateHandler);
 		}
 		send(new TdApi.GetOption("version"), null);
 	}

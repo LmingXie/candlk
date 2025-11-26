@@ -16,7 +16,6 @@ import com.bojiu.context.ContextImpl;
 import com.bojiu.context.model.*;
 import com.bojiu.context.web.RequestContextImpl;
 import com.bojiu.webapp.base.entity.Merchant;
-import com.bojiu.webapp.base.service.*;
 import com.xxl.job.core.executor.impl.XxlJobSpringExecutor;
 import lombok.extern.slf4j.Slf4j;
 import me.codeplayer.util.ArrayUtil;
@@ -26,9 +25,8 @@ import net.sf.jsqlparser.expression.LongValue;
 import net.sf.jsqlparser.expression.operators.conditional.AndExpression;
 import net.sf.jsqlparser.expression.operators.relational.*;
 import net.sf.jsqlparser.schema.Column;
-import org.apache.dubbo.config.annotation.DubboService;
 import org.mybatis.spring.annotation.MapperScan;
-import org.springframework.boot.autoconfigure.condition.*;
+import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
 import org.springframework.boot.context.properties.ConfigurationProperties;
 import org.springframework.context.annotation.*;
 import org.springframework.context.support.ResourceBundleMessageSource;
@@ -158,43 +156,44 @@ public class GlobalConfig {
 
 	/**
 	 * 本地缓存跨服务同步刷新支持配置
+	 * TODO 需要进行远程同步时，需先进行注册
 	 */
-	@Configuration(proxyBeanMethods = false)
-	@ConditionalOnBean(CacheSyncService.class)
-	static class RemoteSyncServiceConfig {
-
-		static RemoteSyncService createRemoteSyncServiceIfNecessary(List<CacheSyncService> cacheSyncServiceList) {
-			return new RemoteSyncServiceImpl(cacheSyncServiceList);
-		}
-
-		@ConditionalOnClass(name = "com.bojiu.webapp.UserApplication")
-		@Bean(name = "remoteCacheSyncService")
-		@DubboService(group = RemoteSyncService.USER)
-		public RemoteSyncService userRemoteCacheSyncService(List<CacheSyncService> cacheSyncServiceList) {
-			return createRemoteSyncServiceIfNecessary(cacheSyncServiceList);
-		}
-
-		@ConditionalOnClass(name = "com.bojiu.webapp.TradeApplication")
-		@Bean(name = "remoteCacheSyncService")
-		@DubboService(group = RemoteSyncService.TRADE)
-		public RemoteSyncService tradeRemoteSyncService(List<CacheSyncService> cacheSyncServiceList) {
-			return createRemoteSyncServiceIfNecessary(cacheSyncServiceList);
-		}
-
-		@ConditionalOnClass(name = "com.bojiu.webapp.GameApplication")
-		@Bean(name = "remoteCacheSyncService")
-		@DubboService(group = RemoteSyncService.GAME)
-		public RemoteSyncService gameRemoteSyncService(List<CacheSyncService> cacheSyncServiceList) {
-			return createRemoteSyncServiceIfNecessary(cacheSyncServiceList);
-		}
-
-		@ConditionalOnClass(name = "com.bojiu.webapp.AdminApplication")
-		@Bean(name = "remoteCacheSyncService")
-		@DubboService(group = RemoteSyncService.ADMIN)
-		public RemoteSyncService adminRemoteSyncService(List<CacheSyncService> cacheSyncServiceList) {
-			return createRemoteSyncServiceIfNecessary(cacheSyncServiceList);
-		}
-
-	}
+	// @Configuration(proxyBeanMethods = false)
+	// @ConditionalOnBean(CacheSyncService.class)
+	// static class RemoteSyncServiceConfig {
+	//
+	// 	static RemoteSyncService createRemoteSyncServiceIfNecessary(List<CacheSyncService> cacheSyncServiceList) {
+	// 		return new RemoteSyncServiceImpl(cacheSyncServiceList);
+	// 	}
+	//
+	// 	@ConditionalOnClass(name = "com.bojiu.webapp.UserApplication")
+	// 	@Bean(name = "remoteCacheSyncService")
+	// 	@DubboService(group = RemoteSyncService.USER)
+	// 	public RemoteSyncService userRemoteCacheSyncService(List<CacheSyncService> cacheSyncServiceList) {
+	// 		return createRemoteSyncServiceIfNecessary(cacheSyncServiceList);
+	// 	}
+	//
+	// 	@ConditionalOnClass(name = "com.bojiu.webapp.TradeApplication")
+	// 	@Bean(name = "remoteCacheSyncService")
+	// 	@DubboService(group = RemoteSyncService.TRADE)
+	// 	public RemoteSyncService tradeRemoteSyncService(List<CacheSyncService> cacheSyncServiceList) {
+	// 		return createRemoteSyncServiceIfNecessary(cacheSyncServiceList);
+	// 	}
+	//
+	// 	@ConditionalOnClass(name = "com.bojiu.webapp.GameApplication")
+	// 	@Bean(name = "remoteCacheSyncService")
+	// 	@DubboService(group = RemoteSyncService.GAME)
+	// 	public RemoteSyncService gameRemoteSyncService(List<CacheSyncService> cacheSyncServiceList) {
+	// 		return createRemoteSyncServiceIfNecessary(cacheSyncServiceList);
+	// 	}
+	//
+	// 	@ConditionalOnClass(name = "com.bojiu.webapp.AdminApplication")
+	// 	@Bean(name = "remoteCacheSyncService")
+	// 	@DubboService(group = RemoteSyncService.ADMIN)
+	// 	public RemoteSyncService adminRemoteSyncService(List<CacheSyncService> cacheSyncServiceList) {
+	// 		return createRemoteSyncServiceIfNecessary(cacheSyncServiceList);
+	// 	}
+	//
+	// }
 
 }

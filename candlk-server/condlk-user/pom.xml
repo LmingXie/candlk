@@ -19,11 +19,6 @@
 	</properties>
 
 	<dependencies>
-		<dependency>
-			<groupId>com.bojiu</groupId>
-			<artifactId>base</artifactId>
-			<version>${env-version}</version>
-		</dependency>
 
 		<!--
 		<dependency>
@@ -31,6 +26,12 @@
 			<artifactId>javax.mail</artifactId>
 		</dependency>
 		-->
+
+		<dependency>
+			<groupId>com.bojiu</groupId>
+			<artifactId>share</artifactId>
+			<version>${env-version}</version>
+		</dependency>
 
 		<dependency>
 			<groupId>com.bojiu</groupId>

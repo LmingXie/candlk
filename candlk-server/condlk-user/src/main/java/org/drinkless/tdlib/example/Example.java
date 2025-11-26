@@ -157,7 +157,7 @@ public final class Example {
 			case TdApi.AuthorizationStateClosed.CONSTRUCTOR:
 				print("Closed");
 				if (!needQuit) {
-					client = Client.create(new UpdateHandler()); // recreate client after previous has closed
+					client = Client.create(new UpdateHandler()); // 在先前关闭后重新创建客户端
 				} else {
 					canQuit = true;
 				}
