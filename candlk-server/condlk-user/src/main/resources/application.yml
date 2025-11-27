@@ -54,7 +54,7 @@ mybatis-plus:
     default-enum-type-handler: org.apache.ibatis.type.EnumOrdinalTypeHandler
   global-config:
     db-config:
-      table-prefix: gs_
+      table-prefix: tg_
       id-type: auto # 数据库 ID 自增
       logic-delete-field: state
       logic-delete-value: 0
@@ -78,6 +78,9 @@ mybatis-plus:
     store-type: redis
     timeout: 600
 webapp:
+  context:
+    encrypt:
+      aes-key: eJeJylXMuqtUb11wNPG5krsEAQCdc0gN
   api-id: 28029815
   api-hash: 321b6f198f684830bc6878e6c0b6bdbc
 

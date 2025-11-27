@@ -8,7 +8,7 @@ import com.bojiu.context.web.Jsons;
 import com.bojiu.webapp.config.UserConfig;
 import com.bojiu.webapp.user.dto.JsonInfo;
 import com.bojiu.webapp.user.entity.User;
-import com.bojiu.webapp.user.service.UserService;
+import com.bojiu.webapp.user.service.*;
 import lombok.Setter;
 import lombok.extern.slf4j.Slf4j;
 import me.codeplayer.util.X;
@@ -20,7 +20,7 @@ import org.drinkless.tdlib.TdApi;
 public class DefaultUpdateHandler implements Client.ResultHandler {
 
 	/** 初始化时设置 */
-	private Client client;
+	public Client client;
 	private User user;
 	private TdApi.AuthorizationState authorizationState = null;
 	/** 是否已完成授权 */

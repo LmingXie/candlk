@@ -12,7 +12,7 @@ public class CodeGeneratorTest {
 	@Test
 	public void winCreate() {
 		MvcTemplateGenerator.GeneratorConfig config = initDbConfig();
-		MvcTemplateGenerator.generate("", config, "tg_user");
+		MvcTemplateGenerator.generate("", config, "tg_larp_bot_actor");
 	}
 
 	private MvcTemplateGenerator.GeneratorConfig initDbConfig() {
