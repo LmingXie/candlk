@@ -383,18 +383,6 @@ public class DefaultUpdateHandler implements Client.ResultHandler {
 		}
 	}
 
-	transient UserConfig userConfig;
-
-	public UserConfig getUserConfig() {
-		return userConfig == null ? userConfig = SpringUtil.getBean(UserConfig.class) : userConfig;
-	}
-
-	transient UserService userService;
-
-	public UserService getUserService() {
-		return userService == null ? userService = SpringUtil.getBean(UserService.class) : userService;
-	}
-
 	private void onAuthorizationStateUpdated(TdApi.AuthorizationState authorizationState) {
 		if (authorizationState != null) {
 			this.authorizationState = authorizationState;
@@ -412,10 +400,10 @@ public class DefaultUpdateHandler implements Client.ResultHandler {
 				client.send(new TdApi.GetOption("enabled_proxy_id")/*查询当前使用的代理ID*/, obj -> {
 					List<String> proxyInfo = jsonInfo.proxy;
 					if (obj instanceof TdApi.OptionValueEmpty) {
-						client.send(new TdApi.AddProxy(proxyInfo.get(1), Integer.parseInt(proxyInfo.get(2)), true, jsonInfo.proxyType()), new AuthorizationRequestHandler());
+						client.send(new TdApi.AddProxy(proxyInfo.get(1), Integer.parseInt(proxyInfo.get(2)), true, jsonInfo.proxyType()), getAuthorizationRequestHandler());
 					} else if (obj instanceof TdApi.OptionValueInteger proxyId) { // 代理已存在，进行修改操作
 						// client.send(new TdApi.PingProxy(2), obj1 -> { });
-						client.send(new TdApi.EditProxy((int) proxyId.value, proxyInfo.get(1), Integer.parseInt(proxyInfo.get(2)), true, jsonInfo.proxyType()), new AuthorizationRequestHandler());
+						client.send(new TdApi.EditProxy((int) proxyId.value, proxyInfo.get(1), Integer.parseInt(proxyInfo.get(2)), true, jsonInfo.proxyType()), getAuthorizationRequestHandler());
 					}
 				});
 
@@ -434,16 +422,16 @@ public class DefaultUpdateHandler implements Client.ResultHandler {
 				client.send(request, this);
 				break;
 			case TdApi.AuthorizationStateWaitPhoneNumber.CONSTRUCTOR: {
-				client.send(new TdApi.SetAuthenticationPhoneNumber(user.getPhone(), null), new AuthorizationRequestHandler());
+				client.send(new TdApi.SetAuthenticationPhoneNumber(user.getPhone(), null), getAuthorizationRequestHandler());
 				break;
 			}
 			case TdApi.AuthorizationStateWaitCode.CONSTRUCTOR: {
 				// String code = promptString("请输入授权验证码: "); TODO 需要不断查询数据是否收到验证码，超时回收客户端释放资源
-				// client.send(new TdApi.CheckAuthenticationCode(code), new AuthorizationRequestHandler());
+				// client.send(new TdApi.CheckAuthenticationCode(code), getAuthorizationRequestHandler());
 				break;
 			}
 			case TdApi.AuthorizationStateWaitPassword.CONSTRUCTOR: {
-				client.send(new TdApi.CheckAuthenticationPassword(jsonInfo.password), new AuthorizationRequestHandler());
+				client.send(new TdApi.CheckAuthenticationPassword(jsonInfo.password), getAuthorizationRequestHandler());
 				break;
 			}
 			case TdApi.AuthorizationStateReady.CONSTRUCTOR:
@@ -465,13 +453,13 @@ public class DefaultUpdateHandler implements Client.ResultHandler {
 			}
 			case TdApi.AuthorizationStateWaitEmailAddress.CONSTRUCTOR: {
 				// String emailAddress = promptString("请输入电子邮件地址: ");
-				// client.send(new TdApi.SetAuthenticationEmailAddress(emailAddress), new AuthorizationRequestHandler());
+				// client.send(new TdApi.SetAuthenticationEmailAddress(emailAddress), getAuthorizationRequestHandler());
 				log.warn("不支持 AuthorizationStateWaitEmailAddress 请输入电子邮件地址：{}", user.getUserId());
 				break;
 			}
 			case TdApi.AuthorizationStateWaitEmailCode.CONSTRUCTOR: {
 				// String code = promptString("请输入电子邮件授权验证码: ");
-				// client.send(new TdApi.CheckAuthenticationEmailCode(new TdApi.EmailAddressAuthenticationCode(code)), new AuthorizationRequestHandler());
+				// client.send(new TdApi.CheckAuthenticationEmailCode(new TdApi.EmailAddressAuthenticationCode(code)), getAuthorizationRequestHandler());
 				log.warn("不支持 AuthorizationStateWaitEmailCode 请输入电子邮件授权验证码：{}", user.getUserId());
 				break;
 			}
@@ -479,7 +467,7 @@ public class DefaultUpdateHandler implements Client.ResultHandler {
 				// String firstName = promptString("请输入您的名字: ");
 				// String lastName = promptString("请输入您的姓: ");
 				log.warn("不支持【注册】 AuthorizationStateWaitRegistration 请输入您的名字和姓：{}", user.getUserId());
-				client.send(new TdApi.RegisterUser(jsonInfo.firstName, jsonInfo.lastName, false), new AuthorizationRequestHandler());
+				client.send(new TdApi.RegisterUser(jsonInfo.firstName, jsonInfo.lastName, false), getAuthorizationRequestHandler());
 				break;
 			}
 			default:
@@ -487,22 +475,22 @@ public class DefaultUpdateHandler implements Client.ResultHandler {
 		}
 	}
 
-	private static class AuthorizationRequestHandler implements Client.ResultHandler {
+	transient AuthorizationRequestHandler authorizationRequestHandler;
 
-		@Override
-		public void onResult(TdApi.Object object) {
-			switch (object.getConstructor()) {
-				case TdApi.Error.CONSTRUCTOR:
-					log.error("【授权】接收错误:" + object);
-					break;
-				case TdApi.Ok.CONSTRUCTOR:
-					// 结果已经通过UpdateAuthorizationState收到，无需做任何事情
-					break;
-				default:
-					log.warn("【授权】从TDLib接收错误的响应:" + object);
-			}
-		}
+	public AuthorizationRequestHandler getAuthorizationRequestHandler() {
+		return authorizationRequestHandler == null ? authorizationRequestHandler = new AuthorizationRequestHandler() : authorizationRequestHandler;
+	}
 
+	transient UserConfig userConfig;
+
+	public UserConfig getUserConfig() {
+		return userConfig == null ? userConfig = SpringUtil.getBean(UserConfig.class) : userConfig;
+	}
+
+	transient UserService userService;
+
+	public UserService getUserService() {
+		return userService == null ? userService = SpringUtil.getBean(UserService.class) : userService;
 	}
 
 }
