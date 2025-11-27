@@ -6,14 +6,12 @@
 //
 package org.drinkless.tdlib;
 
-import java.io.*;
+import java.io.File;
 import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.util.Map;
 import java.util.concurrent.*;
 import java.util.concurrent.atomic.AtomicLong;
-
-import javax.annotation.Nullable;
 
 import com.bojiu.common.util.SpringUtil;
 import com.bojiu.context.web.TaskUtils;
@@ -170,10 +168,9 @@ public final class Client {
 	}
 
 	/** 创建一个新的客户端 */
-	public static Client create(@Nullable ResultHandler updateHandler) {
+	public static Client create(ResultHandler updateHandler) {
 		final Client client;
-		if (updateHandler == null) {
-			DefaultUpdateHandler handler = new DefaultUpdateHandler();
+		if (updateHandler instanceof DefaultUpdateHandler handler) {
 			client = new Client(handler);
 			handler.setClient(client); // 传递给内部使用
 		} else {

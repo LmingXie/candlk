@@ -78,9 +78,8 @@ mybatis-plus:
     store-type: redis
     timeout: 600
 webapp:
-  context:
-    encrypt:
-      aes-key: eJeJylXMuqtUb11wNPG5krsEAQCdc0gN
+  api-id: 28029815
+  api-hash: 321b6f198f684830bc6878e6c0b6bdbc
 
 # 暴露健康检查访问入口
 management:

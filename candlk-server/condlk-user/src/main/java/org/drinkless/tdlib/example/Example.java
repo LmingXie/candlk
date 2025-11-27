@@ -12,6 +12,7 @@ import java.util.concurrent.*;
 import java.util.concurrent.atomic.AtomicLong;
 import java.util.concurrent.locks.*;
 
+import com.bojiu.context.web.Jsons;
 import org.drinkless.tdlib.Client;
 import org.drinkless.tdlib.TdApi;
 
@@ -87,8 +88,15 @@ public final class Example {
 		}
 		switch (Example.authorizationState.getConstructor()) {
 			case TdApi.AuthorizationStateWaitTdlibParameters.CONSTRUCTOR:
+				List<String> proxyInfo = Jsons.parseArray("[2, \"dc.decodo.com\", 10002, true, \"user-sp7l0kg3ky-country-tr\", \"0R0_xeaiJvnF5fv7Zz\"]", String.class);
+				// client.send(new TdApi.AddProxy(proxyInfo.get(1), Integer.parseInt(proxyInfo.get(2)), true, new TdApi.ProxyTypeSocks5(proxyInfo.get(4), proxyInfo.get(5))),
+				// 		new AuthorizationRequestHandler());
+				client.send(new TdApi.GetProxyLink(2), obj -> System.out.println(obj.getConstructor() + "\t" + Jsons.encode(obj)));
+				long startTime = System.currentTimeMillis();
+				client.send(new TdApi.PingProxy(2), obj -> System.out.println(obj.getConstructor() + "\t" + Jsons.encode(obj) + "\t" + (System.currentTimeMillis() - startTime)));
+				client.send(new TdApi.GetOption("enabled_proxy_id"), obj -> System.out.println("当前使用的代理ID：\t" + obj.getConstructor() + "\t" + Jsons.encode(obj)));
 				TdApi.SetTdlibParameters request = new TdApi.SetTdlibParameters();
-				request.databaseDirectory = "tdlib";
+				request.databaseDirectory = "8388590159";
 				// request.databaseEncryptionKey = "123456".getBytes(StandardCharsets.UTF_8);
 				request.useMessageDatabase = true;
 				request.useSecretChats = true;
@@ -338,7 +346,6 @@ public final class Example {
 
 		// create client
 		client = Client.create(new UpdateHandler());
-
 
 		// main loop
 		while (!needQuit) {
@@ -762,6 +769,9 @@ public final class Example {
 		@Override
 		public void onResult(TdApi.Object object) {
 			switch (object.getConstructor()) {
+				case TdApi.Proxy.CONSTRUCTOR:
+					System.out.println("添加代理成功:" + newLine + Jsons.encode(object));
+					break;
 				case TdApi.Error.CONSTRUCTOR:
 					System.err.println("接收错误:" + newLine + object);
 					onAuthorizationStateUpdated(null); // repeat last action
@@ -770,7 +780,7 @@ public final class Example {
 					// 结果已经通过UpdateAuthorizationState收到，无需做任何事情
 					break;
 				default:
-					System.err.println("从TDLib接收错误的响应:" + newLine + object);
+					System.err.println("从TDLib接收错误的响应:" + object.getConstructor() + newLine + object);
 			}
 		}
 

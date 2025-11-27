@@ -2,9 +2,12 @@ package com.bojiu.webapp.user.entity;
 
 import java.util.Date;
 
+import javax.annotation.Nullable;
+
+import com.bojiu.context.web.Jsons;
 import com.bojiu.webapp.base.entity.BaseEntity;
-import lombok.Getter;
-import lombok.Setter;
+import com.bojiu.webapp.user.dto.JsonInfo;
+import lombok.*;
 
 /**
  * 账号表
@@ -45,6 +48,18 @@ public class User extends BaseEntity {
 	Date inviteTime;
 	/** 风控原因 */
 	String issue;
+
+	@Nullable
+	@Setter(AccessLevel.NONE)
+	@Getter(AccessLevel.NONE)
+	public transient JsonInfo parsedJsonInfo;
+
+	public JsonInfo jsonInfo() {
+		if (parsedJsonInfo == null) {
+			parsedJsonInfo = Jsons.parseObject(jsonInfo, JsonInfo.class);
+		}
+		return parsedJsonInfo;
+	}
 
 	public static final String USER_ID = "user_id";
 	public static final String PHONE = "phone";
