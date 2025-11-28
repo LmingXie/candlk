@@ -15,6 +15,7 @@ import java.util.concurrent.atomic.AtomicLong;
 import com.bojiu.common.util.SpringUtil;
 import com.bojiu.context.web.TaskUtils;
 import com.bojiu.webapp.user.handler.DefaultUpdateHandler;
+import com.bojiu.webapp.user.handler.LogMessageHandler;
 import lombok.Getter;
 import lombok.extern.slf4j.Slf4j;
 
@@ -83,21 +84,6 @@ public final class Client {
 		 * @param object 查询或更新TdApi类型的结果。更新新事件。
 		 */
 		void onResult(TdApi.Object object);
-
-	}
-
-	/** 用于处理添加到内部TDLib日志的消息的接口。 */
-	public interface LogMessageHandler {
-
-		/**
-		 * 对添加到内部TDLib日志的消息调用回调。
-		 *
-		 * @param verbosityLevel 添加消息的日志冗长级别，从-1到1024。
-		 * 如果为0，则TDLib将在回调返回时立即崩溃。
-		 * 任何TDLib方法都不能从回调中调用。
-		 * @param message 添加到内部TDLib日志中的消息。
-		 */
-		void onLogMessage(int verbosityLevel, String message);
 
 	}
 

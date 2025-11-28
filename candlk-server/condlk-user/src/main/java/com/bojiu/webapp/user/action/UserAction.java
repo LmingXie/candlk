@@ -5,6 +5,8 @@ import java.util.concurrent.ThreadPoolExecutor;
 import javax.annotation.Resource;
 
 import com.bojiu.common.model.Messager;
+import com.bojiu.common.web.Ready;
+import com.bojiu.context.auth.Permission;
 import com.bojiu.context.web.TaskUtils;
 import com.bojiu.webapp.base.action.BaseAction;
 import com.bojiu.webapp.base.service.RemoteSyncService;
@@ -16,8 +18,7 @@ import com.bojiu.webapp.user.service.UserService;
 import lombok.extern.slf4j.Slf4j;
 import me.codeplayer.util.ArrayUtil;
 import org.drinkless.tdlib.Client;
-import org.springframework.web.bind.annotation.RequestMapping;
-import org.springframework.web.bind.annotation.RestController;
+import org.springframework.web.bind.annotation.*;
 
 /* 账号表 控制器 */
 @Slf4j
@@ -34,12 +35,17 @@ public class UserAction extends BaseAction {
 
 	static final ThreadPoolExecutor loadTaskThreadPool = TaskUtils.newThreadPool(4, 20, 1024, "user-load-");
 
-	@RequestMapping("/sync")
+	@Ready("从Cockpit_TG同步全部账号")
+	@PostMapping("/sync")
+	@Permission(Permission.NONE)
 	public Messager<String> sync() {
 		// 查询全部账号
 		List<User> allUser = userService.findAllNormal();
 		if (!allUser.isEmpty()) {
 			for (User user : allUser) {
+				if (!user.getPhone().equals("66953918358")) {
+					continue; // TODO: 2025/11/28 测试
+				}
 				loadTaskThreadPool.execute(() -> {
 					Long userId = user.getUserId();
 					// 通知启动py客户端，收录消息

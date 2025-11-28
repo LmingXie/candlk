@@ -13,6 +13,7 @@ import java.util.concurrent.atomic.AtomicLong;
 import java.util.concurrent.locks.*;
 
 import com.bojiu.context.web.Jsons;
+import com.bojiu.webapp.user.handler.LogMessageHandler;
 import org.drinkless.tdlib.Client;
 import org.drinkless.tdlib.TdApi;
 
@@ -334,7 +335,7 @@ public final class Example {
 		 */
 
 		// 设置日志消息处理程序，只处理致命错误(0)和普通日志消息（-1）
-		Client.setLogMessageHandler(0, new LogMessageHandler());
+		Client.setLogMessageHandler(0, new TestLogMessageHandler());
 
 		// 禁用TDLib日志，并将致命错误和普通日志消息重定向到一个文件
 		try {
@@ -786,7 +787,7 @@ public final class Example {
 
 	}
 
-	private static class LogMessageHandler implements Client.LogMessageHandler {
+	private static class TestLogMessageHandler implements LogMessageHandler {
 
 		@Override
 		public void onLogMessage(int verbosityLevel, String message) {
