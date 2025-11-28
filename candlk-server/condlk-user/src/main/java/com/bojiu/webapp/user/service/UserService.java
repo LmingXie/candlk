@@ -62,6 +62,7 @@ public class UserService extends BaseServiceImpl<User, UserDao, Long> implements
 		return cache.asMap().values();
 	}
 
+	/** 查询全部正常的账号 */
 	public List<User> findAllNormal() {
 		List<User> users = selectList(smartEq(User.STATUS, Status.YES.value));
 		if (!users.isEmpty()) {
