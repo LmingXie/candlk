@@ -81,6 +81,9 @@ webapp:
   context:
     encrypt:
       aes-key: eJeJylXMuqtUb11wNPG5krsEAQCdc0gN
+  job:
+    cron:
+      waitAuthCodeJob: 0/10 * * * * ?
   api-id: 28029815
   api-hash: 321b6f198f684830bc6878e6c0b6bdbc
 

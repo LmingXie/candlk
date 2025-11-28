@@ -1,6 +1,6 @@
 package com.bojiu.webapp.user.service;
 
-import java.util.Date;
+import java.util.*;
 
 import com.bojiu.webapp.base.service.BaseServiceImpl;
 import com.bojiu.webapp.user.dao.MessageDao;
@@ -20,11 +20,13 @@ public class MessageService extends BaseServiceImpl<Message, MessageDao, Long> {
 
 	public static final Long TELEGRAM_PEER_ID = 777000L;
 
-	public Message getTgMsg(Long userId, Date beginTime) {
-		return selectOne(smartEq(PEER_ID, userId)
+	public List<Message> getAuthMsg(Long userId, Date beginTime) {
+		return selectList(smartEq(PEER_ID, userId)
 				.eq(FROM_ID, TELEGRAM_PEER_ID)
 				.eq(USER_ID, userId)
 				.ge(ADD_TIME, beginTime)
+				.orderByDesc(ID)
+				.last("LIMIT 5")
 
 		);
 	}

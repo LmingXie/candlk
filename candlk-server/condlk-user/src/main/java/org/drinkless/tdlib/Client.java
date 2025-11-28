@@ -9,7 +9,6 @@ package org.drinkless.tdlib;
 import java.io.File;
 import java.nio.file.Path;
 import java.nio.file.Paths;
-import java.util.Map;
 import java.util.concurrent.*;
 import java.util.concurrent.atomic.AtomicLong;
 
@@ -259,7 +258,6 @@ public final class Client {
 
 	@Getter
 	private final int nativeClientId;
-	private static final Map<Integer, Client> nativeClientMap = new ConcurrentHashMap<>();
 
 	/** 默认更新处理器（处理TDLib接收到的来自User、Chat、Group、Supergroup等的更新信息） */
 	private static final ConcurrentHashMap<Integer, ResultHandler> defaultUpdateHandlers = new ConcurrentHashMap<>();

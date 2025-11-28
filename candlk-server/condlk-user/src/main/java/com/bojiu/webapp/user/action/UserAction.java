@@ -42,13 +42,10 @@ public class UserAction extends BaseAction {
 			for (User user : allUser) {
 				loadTaskThreadPool.execute(() -> {
 					Long userId = user.getUserId();
+					// 通知启动py客户端，收录消息
 					Messager<String> msg = cockpitXApi.load(userId);
 					if (msg.isOK()) {
-						// TODO: 2025/11/26 完善更新逻辑
-						Client client = Client.create(new DefaultUpdateHandler(user));
-						// TODO 设置代理
-						// 通过 SetAuthenticationPhoneNumber 发送验证码，记录发送时间
-						// java定时查询正在导入的账号是否收到验证码，收到后通过 CheckAuthenticationCode、CheckAuthenticationPassword 进行验证录入
+						Client.create(new DefaultUpdateHandler(user));
 					} else {
 						log.error("加载账号失败：" + userId);
 					}

@@ -1,4 +1,4 @@
-package com.bojiu.webapp.config;
+package com.bojiu.webapp.user.config;
 
 import lombok.Getter;
 import lombok.Setter;
