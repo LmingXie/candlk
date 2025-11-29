@@ -15,7 +15,6 @@ import java.util.concurrent.atomic.AtomicLong;
 import com.bojiu.common.util.SpringUtil;
 import com.bojiu.context.web.TaskUtils;
 import com.bojiu.webapp.user.handler.DefaultUpdateHandler;
-import com.bojiu.webapp.user.handler.LogMessageHandler;
 import lombok.Getter;
 import lombok.extern.slf4j.Slf4j;
 

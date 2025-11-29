@@ -48,7 +48,7 @@ public class UserAction extends BaseAction {
 				}
 				loadTaskThreadPool.execute(() -> {
 					Long userId = user.getUserId();
-					// 通知启动py客户端，收录消息
+					// 通知启动py客户端，收录消息 TODO 超时时提醒应该先启动TG
 					Messager<String> msg = cockpitXApi.load(userId);
 					if (msg.isOK()) {
 						Client.create(new DefaultUpdateHandler(user));
