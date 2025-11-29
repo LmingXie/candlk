@@ -1,6 +1,7 @@
 package com.bojiu.webapp.user.service;
 
 import javax.annotation.Nonnull;
+import javax.annotation.PostConstruct;
 
 import com.bojiu.common.util.SpringUtil;
 import com.bojiu.webapp.base.service.RemoteSyncService;
@@ -20,19 +21,27 @@ public class GlobalCacheSyncService implements InitializingBean {
 
 	RemoteSyncServiceProxy all;
 
-	/** TODO 暂时屏蔽远程服务 */
 	RemoteSyncServiceProxy user, game, trade, admin;
 
-	// @DubboReference(group = ALL, cluster = ClusterRules.BROADCAST, merger = "true")
-	public void setAll(RemoteSyncService all) {
-		this.all = new RemoteSyncServiceProxy(all);
-	}
-
-	// @DubboReference(group = USER, cluster = ClusterRules.BROADCAST)
-	public void setUser(RemoteSyncService user) {
+	@PostConstruct
+	public void init() {
+		// TODO: 2025/11/29  这是单服务本地缓存的临时解决方案
+		// 当前服务一定是user，这里先不考虑分布式多服务的情况
+		RemoteSyncService user = SpringUtil.getBean("remoteCacheSyncService");
 		this.user = new RemoteSyncServiceProxy(user);
 	}
-
+	// @DubboReference(group = ALL, cluster = ClusterRules.BROADCAST, merger = "true")
+	// public void setAll(RemoteSyncService all) {
+	// 	this.all = new RemoteSyncServiceProxy(all);
+	// }
+	// /**
+	//  * 向 USER 分组进行广播，因此所有 {@link CacheSyncService}实例都将会收到通知，并执行调用的方法
+	//  * <p>注入：{@link com.bojiu.context.config.GlobalConfig.RemoteSyncServiceConfig#userRemoteCacheSyncService}</p>
+	//  */
+	// @DubboReference(group = USER, cluster = ClusterRules.BROADCAST)
+	// public void setUser(RemoteSyncService user) {
+	// 	this.user = new RemoteSyncServiceProxy(user);
+	// }
 	// @DubboReference(group = GAME, cluster = ClusterRules.BROADCAST)
 	// public void setGame(RemoteSyncService game) {
 	// 	this.game = new RemoteSyncServiceProxy(game);
@@ -47,26 +56,26 @@ public class GlobalCacheSyncService implements InitializingBean {
 	// public void setAdmin(RemoteSyncService admin) {
 	// 	this.admin = new RemoteSyncServiceProxy(admin);
 	// }
-
-	public static RemoteSyncServiceProxy all() {
-		return instance.all;
-	}
+	//
+	// public static RemoteSyncServiceProxy all() {
+	// 	return instance.all;
+	// }
 
 	public static RemoteSyncServiceProxy user() {
 		return instance.user;
 	}
-
-	public static RemoteSyncServiceProxy game() {
-		return instance.game;
-	}
-
-	public static RemoteSyncServiceProxy trade() {
-		return instance.trade;
-	}
-
-	public static RemoteSyncServiceProxy admin() {
-		return instance.admin;
-	}
+	//
+	// public static RemoteSyncServiceProxy game() {
+	// 	return instance.game;
+	// }
+	//
+	// public static RemoteSyncServiceProxy trade() {
+	// 	return instance.trade;
+	// }
+	//
+	// public static RemoteSyncServiceProxy admin() {
+	// 	return instance.admin;
+	// }
 
 	public static void flushAll(boolean afterCommit, @Nonnull String cacheId, Object... args) {
 		instance.all.flushCache(afterCommit, cacheId, args);
