@@ -1,6 +1,7 @@
 package com.bojiu.webapp.user.handler;
 
-import java.util.*;
+import java.util.Date;
+import java.util.List;
 import java.util.concurrent.TimeUnit;
 
 import com.bojiu.common.util.SpringUtil;
@@ -9,9 +10,12 @@ import com.bojiu.webapp.user.config.UserConfig;
 import com.bojiu.webapp.user.dto.JsonInfo;
 import com.bojiu.webapp.user.entity.User;
 import com.bojiu.webapp.user.service.UserService;
+import com.github.benmanes.caffeine.cache.Cache;
+import com.github.benmanes.caffeine.cache.Caffeine;
 import lombok.Setter;
 import lombok.extern.slf4j.Slf4j;
-import me.codeplayer.util.*;
+import me.codeplayer.util.EasyDate;
+import me.codeplayer.util.X;
 import org.drinkless.tdlib.Client;
 import org.drinkless.tdlib.TdApi;
 
@@ -27,6 +31,11 @@ public class DefaultUpdateHandler implements Client.ResultHandler {
 	private static volatile boolean haveAuthorization = false;
 	/** 授权开始时间（授权成功后将会重置为当前时间） */
 	public Date beginTime;
+	private static final Cache<Integer, Long> updateChatPhotoTempsCache = Caffeine.newBuilder()
+			.initialCapacity(100)
+			.maximumSize(1024)
+			.expireAfterWrite(10, TimeUnit.MINUTES)
+			.build();
 
 	public DefaultUpdateHandler(User user) {
 		this.user = user;
@@ -58,52 +67,62 @@ public class DefaultUpdateHandler implements Client.ResultHandler {
 			}
 			case TdApi.UpdateChatPhoto.CONSTRUCTOR -> { // 更新对话的照片
 				TdApi.UpdateChatPhoto updateChat = (TdApi.UpdateChatPhoto) object;
-				TdApi.File big = updateChat.photo.big;
-				TdApi.LocalFile localFile = big.local;
+				TdApi.File fileToDownload = updateChat.photo.big;
+				TdApi.LocalFile localFile = fileToDownload.local;
 				if (localFile.isDownloadingCompleted) {
+					// 1. 已下载完成，直接使用本地路径
 					String localPath = localFile.path;
-					log.info("下载完成：" + localPath);
+					log.info("图片已在本地：" + localPath);
 				} else if (localFile.canBeDownloaded) {
-					// 1. 获取要下载的 File ID
-					int fileId = big.id;
+					client.send(new TdApi.DownloadFile(
+							fileToDownload.id, // **使用文件的本地 ID (id)**
+							1,                 // 优先级 (1-32)
+							0,                 // offset (通常为 0)
+							0,                 // limit (0 表示下载整个文件)
+							false              // synchronous (通常为 false)
+					), obj -> {
+						// 请求成功发送，但文件内容下载的完成状态需要监听 UpdateFile 事件
+						switch (obj.getConstructor()) {
+							case TdApi.File.CONSTRUCTOR -> {
+								TdApi.File file = (TdApi.File) obj;
 
-					// 2. 构造 DownloadFile 请求
-					TdApi.DownloadFile downloadFileRequest = new TdApi.DownloadFile(
-							fileId,
-							1,          // priority (优先级，1-32，最高 32)
-							0,          // offset (从文件的哪个字节开始下载，通常为 0)
-							0,          // limit (要下载的最大字节数，0 表示下载整个文件)
-							false       // synchronous (是否同步下载，通常为 false 异步)
-					);
-
-					// 3. 将请求发送给 TDLib 客户端
-					// 假设您有一个发送请求的 client 对象
-					client.send(downloadFileRequest, obj -> {
-						// TODO: 2025/11/29 修改头像同步本地文件问题
-						if (obj instanceof TdApi.UpdateFile updateFile) {
-							TdApi.File updatedFile = updateFile.file;
-
-							// 检查这个更新是否是我们请求下载的文件
-							if (updatedFile.id == fileId) { // 这里的 fileId 是您在步骤 2 中请求下载的 ID
-								if (updatedFile.local.isDownloadingCompleted) {
-									// 下载完成!
-									String localPath = updatedFile.local.path;
-									log.info("文件下载完成，本地路径: " + localPath);
-
-									// 现在可以使用该路径加载图片了
-								} else {
-									// 下载中，可以根据 updatedFile.local.downloadedSize 和 updatedFile.size
-									// 来显示下载进度
-									long downloaded = updatedFile.local.downloadedSize;
-									long total = updatedFile.size;
-									double progress = (double) downloaded / total * 100;
-									log.info("下载进度: {}", progress);
+								if (file.local.isDownloadingCompleted) {
+									log.warn("异步下载完成：{}", Jsons.encode(file));
+									// 此时可以根据 file.id 匹配到对应的聊天，并更新 UI
+								} else if (file.local.isDownloadingActive) {
+									updateChatPhotoTempsCache.put(file.id, updateChat.chatId);
+									// 正在下载中...
+									// 可以利用 file.local.downloadedSize 和 file.size 来显示进度
+									log.info("正在下载中222...{}", Jsons.encode(file));
 								}
 							}
-						} else {
-							log.info("收到文件更新：{}->{} ", object.getConstructor(), Jsons.encode(object));
+							case TdApi.Error.CONSTRUCTOR -> {
+								log.error("启动 DownloadFile 失败: " + obj);
+							}
+							default -> log.info("意外的下载事件: {}->{}", obj.getConstructor(), Jsons.encode(obj));
 						}
 					});
+				}
+			}
+			case TdApi.UpdateFile.CONSTRUCTOR -> {
+				TdApi.UpdateFile updateFile = (TdApi.UpdateFile) object;
+				TdApi.File file = updateFile.file;
+
+				if (file.local.isDownloadingCompleted) {
+					int id = file.id;
+					Long chatId = updateChatPhotoTempsCache.getIfPresent(id);
+					if (chatId != null) {
+						// 下载真正完成!
+						final String localPath = file.local.path;
+						log.info("异步下载完成，本地路径111：" + localPath);
+						updateChatPhotoTempsCache.invalidate(id);
+						// TODO: 2025/11/29 更新头像文件路径（调整为重命名并迁移到指定目录）
+					}
+
+				} else if (file.local.isDownloadingActive) {
+					// 正在下载中...
+					// 可以利用 file.local.downloadedSize 和 file.size 来显示进度
+					log.info("正在下载中1111...{}", Jsons.encode(file));
 				}
 			}
 			case TdApi.UpdateChatLastMessage.CONSTRUCTOR -> { // 更新聊天最后一条消息
