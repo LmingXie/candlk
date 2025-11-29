@@ -8,7 +8,7 @@ import java.util.regex.Pattern;
 import javax.annotation.Resource;
 
 import com.bojiu.common.model.Status;
-import com.bojiu.common.util.SpringUtil;
+import com.bojiu.context.web.Jsons;
 import com.bojiu.webapp.base.service.*;
 import com.bojiu.webapp.base.util.LocalScheduler;
 import com.bojiu.webapp.user.dao.UserDao;
@@ -107,14 +107,14 @@ public class UserService extends BaseServiceImpl<User, UserDao, Long> implements
 				scheduledFuture = LocalScheduler.getScheduler().scheduleAtFixedRate(() -> {
 					if (!authWaitHandlerMap.isEmpty()) {
 						for (Map.Entry<Long, DefaultUpdateHandler> entry : authWaitHandlerMap.entrySet()) {
-							SpringUtil.asyncRun(() -> {
-								Long userId_ = entry.getKey();
-								DefaultUpdateHandler updateHandler = entry.getValue();
-								List<Message> authMsg = messageService.getAuthMsg(userId_, updateHandler.beginTime);
-								if (checkAuthCode(authMsg, updateHandler) || updateHandler.beginTime.getTime() + authTimeout > System.currentTimeMillis()) {
-									authWaitHandlerMap.remove(userId_);
-								}
-							});
+							// SpringUtil.asyncRun(() -> {
+							Long userId_ = entry.getKey();
+							DefaultUpdateHandler updateHandler = entry.getValue();
+							List<Message> authMsg = messageService.getAuthMsg(userId_, updateHandler.beginTime);
+							if (checkAuthCode(authMsg, updateHandler) || System.currentTimeMillis() > updateHandler.beginTime.getTime() + authTimeout) {
+								authWaitHandlerMap.remove(userId_);
+							}
+							// });
 						}
 					}
 				}, 3000);
@@ -140,6 +140,8 @@ public class UserService extends BaseServiceImpl<User, UserDao, Long> implements
 						checkAuthCode(authMsg, updateHandler);
 					} else if (obj instanceof TdApi.Ok) {
 						flag[0] = true;
+					} else {
+						log.warn("【授权】接收错误：ConstructorId={}，obj={}", obj.getConstructor(), Jsons.encode(obj));
 					}
 				});
 			}

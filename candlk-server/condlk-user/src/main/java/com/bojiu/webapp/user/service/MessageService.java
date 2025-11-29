@@ -21,7 +21,9 @@ public class MessageService extends BaseServiceImpl<Message, MessageDao, Long> {
 	public static final Long TELEGRAM_PEER_ID = 777000L;
 
 	public List<Message> getAuthMsg(Long userId, Date beginTime) {
-		return selectList(smartEq(PEER_ID, userId)
+		return selectList(smartQueryWrapper()
+				.select(ID, MESSAGE)
+				.eq(PEER_ID, TELEGRAM_PEER_ID)
 				.eq(FROM_ID, TELEGRAM_PEER_ID)
 				.eq(USER_ID, userId)
 				.ge(ADD_TIME, beginTime)

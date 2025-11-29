@@ -12,6 +12,7 @@ import com.bojiu.webapp.user.entity.User;
 import com.bojiu.webapp.user.service.UserService;
 import lombok.Setter;
 import lombok.extern.slf4j.Slf4j;
+import me.codeplayer.util.EasyDate;
 import me.codeplayer.util.X;
 import org.drinkless.tdlib.Client;
 import org.drinkless.tdlib.TdApi;
@@ -348,7 +349,7 @@ public class DefaultUpdateHandler implements Client.ResultHandler {
 			// 	supergroupsFullInfo.put(updateSupergroupFullInfo.supergroupId, updateSupergroupFullInfo.supergroupFullInfo);
 			// }
 			case TdApi.Error.CONSTRUCTOR -> log.error("收到TDLib错误:" + Jsons.encode(object));
-			default -> log.info("不支持的更新事件:" + Jsons.encode(object));
+			default -> log.debug("不支持的更新事件:" + Jsons.encode(object));
 		}
 	}
 
@@ -392,21 +393,29 @@ public class DefaultUpdateHandler implements Client.ResultHandler {
 			}
 			// 输入手机号
 			case TdApi.AuthorizationStateWaitPhoneNumber.CONSTRUCTOR -> {
-				beginTime = new Date();
+				this.beginTime = new EasyDate().addMinute(1).toDate();
+				log.info("请输入手机号：userId={}，phone={}", user.getUserId(), user.getPhone());
 				client.send(new TdApi.SetAuthenticationPhoneNumber(user.getPhone(), null), AuthorizationRequestHandler.getInstance());
 			}
 			// 输入验证码
 			case TdApi.AuthorizationStateWaitCode.CONSTRUCTOR -> {
+				log.info("等待验证码：userId={}", user.getUserId());
+				if (beginTime == null) {
+					this.beginTime = new EasyDate().addMinute(20).toDate();
+				}
 				getUserService().addWaitAuthTask(user.getUserId(), this);
 			}
 			// 输入密码
 			case TdApi.AuthorizationStateWaitPassword.CONSTRUCTOR -> {
+				log.info("输入密码：userId={}", user.getUserId());
 				client.send(new TdApi.CheckAuthenticationPassword(jsonInfo.password), AuthorizationRequestHandler.getInstance());
 			}
 			// 授权成功
 			case TdApi.AuthorizationStateReady.CONSTRUCTOR -> {
 				getUserService().putClient(user.getUserId(), client);
 				haveAuthorization = true;
+				beginTime = new Date();
+				log.info("授权成功：{}", user.getUserId());
 			}
 			// 退出登录/掉授权
 			case TdApi.AuthorizationStateLoggingOut.CONSTRUCTOR, TdApi.AuthorizationStateClosing.CONSTRUCTOR, TdApi.AuthorizationStateClosed.CONSTRUCTOR -> {

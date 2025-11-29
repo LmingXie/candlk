@@ -13,8 +13,7 @@ import com.bojiu.webapp.base.service.RemoteSyncService;
 import com.bojiu.webapp.user.api.CockpitXApi;
 import com.bojiu.webapp.user.entity.User;
 import com.bojiu.webapp.user.handler.DefaultUpdateHandler;
-import com.bojiu.webapp.user.service.GlobalCacheSyncService;
-import com.bojiu.webapp.user.service.UserService;
+import com.bojiu.webapp.user.service.*;
 import lombok.extern.slf4j.Slf4j;
 import me.codeplayer.util.ArrayUtil;
 import org.drinkless.tdlib.Client;
@@ -32,6 +31,8 @@ public class UserAction extends BaseAction {
 	CockpitXApi cockpitXApi;
 	@Resource
 	UserService userService;
+	@Resource
+	MessageService messageService;
 
 	static final ThreadPoolExecutor loadTaskThreadPool = TaskUtils.newThreadPool(4, 20, 1024, "user-load-");
 
@@ -46,7 +47,7 @@ public class UserAction extends BaseAction {
 				if (!user.getPhone().equals("66953918358")) {
 					continue; // TODO: 2025/11/28 测试
 				}
-				loadTaskThreadPool.execute(() -> {
+				// loadTaskThreadPool.execute(() -> {
 					Long userId = user.getUserId();
 					// 通知启动py客户端，收录消息 TODO 超时时提醒应该先启动TG
 					Messager<String> msg = cockpitXApi.load(userId);
@@ -55,7 +56,7 @@ public class UserAction extends BaseAction {
 					} else {
 						log.error("加载账号失败：" + userId);
 					}
-				});
+				// });
 			}
 			GlobalCacheSyncService.user().flushCache(RemoteSyncService.UserService, (Object[]) ArrayUtil.toArray(allUser, Long.class, User::getUserId));
 		}

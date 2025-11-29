@@ -1,33 +1,40 @@
 <?xml version="1.0" encoding="UTF-8"?>
-<Configuration status="error">
+<Configuration status="error" packages="com.bojiu.context.config">
 
 	<Properties>
 		<property name="appName" value="${spring:spring.application.name}-${spring:spring.profiles.active}"/>
-		<Property name="LOG_EXCEPTION_CONVERSION_WORD">%xwEx</Property>
+		<Property name="LOG_EXCEPTION_CONVERSION_WORD">%thinEx{com.bojiu}</Property>
 		<Property name="LOG_LEVEL_PATTERN">%5p</Property>
 		<Property name="LOG_DATEFORMAT_PATTERN">yyyy-MM-dd HH:mm:ss.SSS</Property>
-		<Property name="PATTERN">%d{${LOG_DATEFORMAT_PATTERN}} ${sys:LOG_LEVEL_PATTERN} ${appName} %c - %m%n</Property>
+		<Property name="PATTERN">%d{${LOG_DATEFORMAT_PATTERN}} ${sys:LOG_LEVEL_PATTERN} ${appName} %c - %m%n${sys:LOG_EXCEPTION_CONVERSION_WORD}</Property>
 		<Property name="JSON_LOG_PATTERN">%m%n</Property>
 		<Property name="CONSOLE_LOG_PATTERN">%clr{%d{${sys:LOG_DATEFORMAT_PATTERN}}}{faint} %clr{${sys:LOG_LEVEL_PATTERN}} %clr{%pid}{magenta} %clr{---}{faint} %clr{[%15.15t]}{faint} %clr{%-40.40c{1.}}{cyan} %clr{:}{faint} %m%n${sys:LOG_EXCEPTION_CONVERSION_WORD}</Property>
 		<Property name="ERROR_LOG_PATTERN">%d{${LOG_DATEFORMAT_PATTERN}} ${LOG_LEVEL_PATTERN} %pid --- [%t] %-40.40c{1.} : %m%n${sys:LOG_EXCEPTION_CONVERSION_WORD}</Property>
 		<Property name="LOG_DIR">logs</Property>
 	</Properties>
 
+	<DynamicThresholdFilter key="logLevel" defaultThreshold="INFO" onMatch="ACCEPT" onMismatch="NEUTRAL">
+		<KeyValuePair key="trace" value="TRACE" />
+		<KeyValuePair key="debug" value="DEBUG" />
+		<KeyValuePair key="warn" value="WARN" />
+		<KeyValuePair key="error" value="ERROR" />
+	</DynamicThresholdFilter>
+
 	<Appenders>
 		<Console name="Console" target="SYSTEM_OUT" follow="true">
 			<PatternLayout pattern="${sys:CONSOLE_LOG_PATTERN}"/>
 		</Console>
 
-		<RollingRandomAccessFile name="webappLog" fileName="${LOG_DIR}/webapp.log" filePattern="${LOG_DIR}/webapp-%d{yyyy-MM-dd}.log.gz">
+		<RollingRandomAccessFile name="webappLog" fileName="${LOG_DIR}/webapp.log" filePattern="${LOG_DIR}/webapp-%d{yyyy-MM-dd}-%03i.log">
 			<PatternLayout pattern="${PATTERN}"/>
-			<!-- 每天生成一次归档日志文件 -->
-			<TimeBasedTriggeringPolicy modulate="true"/>
+			<SizeBasedTriggeringPolicy size="200 MB"/>
+			<DefaultRolloverStrategy max="100"/>
 		</RollingRandomAccessFile>
 
-		<RollingRandomAccessFile name="requestLog" fileName="${LOG_DIR}/request.json" filePattern="${LOG_DIR}/request-%d{yyyy-MM-dd}.log.gz">
+		<RollingRandomAccessFile name="requestLog" fileName="${LOG_DIR}/request.json" filePattern="${LOG_DIR}/request-%d{yyyy-MM-dd}-%03i.json">
 			<PatternLayout pattern="${JSON_LOG_PATTERN}"/>
-			<!-- 每天生成一次归档日志文件 -->
-			<TimeBasedTriggeringPolicy modulate="true"/>
+			<SizeBasedTriggeringPolicy size="200 MB"/>
+			<DefaultRolloverStrategy max="100"/>
 		</RollingRandomAccessFile>
 
 	</Appenders>
@@ -39,14 +46,18 @@
 			<AppenderRef ref="Console"/>
 		</Root>
 
-		<Logger name="com.candlk" level="debug" additivity="false">
-			<AppenderRef ref="webappLog" level="info"/>
+		<Logger name="com.bojiu" level="debug" additivity="false">
+			<AppenderRef ref="webappLog"/>
 			<AppenderRef ref="Console"/>
 		</Logger>
 
 		<Logger name="com.bojiu.common.web.Logs" level="info" additivity="false">
 			<AppenderRef ref="requestLog"/>
 			<AppenderRef ref="Console"/>
+		</Logger>
+
+		<Logger name="com.alibaba.nacos.client.config" level="warn" additivity="false">
+			<AppenderRef ref="webappLog"/>
 		</Logger>
 	</Loggers>
 
