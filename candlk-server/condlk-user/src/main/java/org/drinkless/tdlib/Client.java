@@ -167,6 +167,7 @@ public final class Client {
 				Thread receiverThread = new Thread(responseReceiver, "TDClient thread");
 				receiverThread.setDaemon(true);
 				receiverThread.start();
+				log.info("[TDLib] 启动成功: {}", receiverThread.getName());
 			}
 		}
 		return client;

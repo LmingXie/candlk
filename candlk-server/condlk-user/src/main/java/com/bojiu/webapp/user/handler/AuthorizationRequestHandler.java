@@ -14,7 +14,7 @@ public class AuthorizationRequestHandler implements Client.ResultHandler {
 			case TdApi.Error.CONSTRUCTOR:
 				log.error("【授权】接收错误：ConstructorId={}，obj={}", obj.getConstructor(), Jsons.encode(obj));
 				break;
-			case TdApi.Ok.CONSTRUCTOR:
+			case TdApi.Ok.CONSTRUCTOR, TdApi.Proxy.CONSTRUCTOR:
 				// 结果已经通过 UpdateAuthorizationState 收到，无需做任何事情
 				break;
 			default:

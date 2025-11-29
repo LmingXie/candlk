@@ -5,16 +5,18 @@ import java.util.concurrent.*;
 import java.util.function.Function;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
-import javax.annotation.Resource;
+import javax.annotation.*;
 
 import com.bojiu.common.model.Status;
 import com.bojiu.context.web.Jsons;
+import com.bojiu.context.web.TaskUtils;
 import com.bojiu.webapp.base.service.*;
 import com.bojiu.webapp.base.util.LocalScheduler;
 import com.bojiu.webapp.user.dao.UserDao;
 import com.bojiu.webapp.user.entity.Message;
 import com.bojiu.webapp.user.entity.User;
 import com.bojiu.webapp.user.handler.DefaultUpdateHandler;
+import com.bojiu.webapp.user.model.UserType;
 import com.github.benmanes.caffeine.cache.Cache;
 import com.github.benmanes.caffeine.cache.Caffeine;
 import lombok.extern.slf4j.Slf4j;
@@ -25,6 +27,7 @@ import org.drinkless.tdlib.Client;
 import org.drinkless.tdlib.TdApi;
 import org.jspecify.annotations.NonNull;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 
 /** 账号表 服务实现类 */
 @Slf4j
@@ -43,7 +46,15 @@ public class UserService extends BaseServiceImpl<User, UserDao, Long> implements
 	/** 活跃客户端 */
 	static final Map<Long, Client> clientMap = new ConcurrentHashMap<>();
 
+	@Transactional
 	public void putClient(Long userId, Client client) {
+		update(updateWrapper()
+				.set(User.TYPE, UserType.TD_LIB.value)
+				.set(User.UPDATE_TIME, new Date())
+				.ne(User.TYPE, UserType.TD_LIB.value)
+
+				.eq(User.USER_ID, userId)
+		);
 		clientMap.put(userId, client);
 	}
 
@@ -64,13 +75,35 @@ public class UserService extends BaseServiceImpl<User, UserDao, Long> implements
 
 	/** 查询全部正常的账号 */
 	public List<User> findAllNormal() {
-		List<User> users = selectList(smartEq(User.STATUS, Status.YES.value));
+		return findAll(null);
+	}
+
+	/** 查询全部TDLib账号 */
+	public List<User> findAll(@Nullable UserType type) {
+		List<User> users = selectList(smartEq(User.STATUS, Status.YES.value)
+				.eq(User.TYPE, type == null ? null : type.value)
+		);
 		if (!users.isEmpty()) {
 			for (User user : users) {
 				cache.put(user.getUserId(), user);
 			}
 		}
 		return users;
+	}
+
+	public static final ThreadPoolExecutor loadTaskThreadPool = TaskUtils.newThreadPool(4, 20, 1024, "user-load-");
+
+	@PostConstruct
+	public void init() {
+		List<User> tdUsers = findAll(UserType.TD_LIB);
+		if (!tdUsers.isEmpty()) {
+			// 加载全部TDLib账号
+			for (User user : tdUsers) {
+				loadTaskThreadPool.execute(() -> {
+					Client.create(new DefaultUpdateHandler(user));
+				});
+			}
+		}
 	}
 
 	@Override

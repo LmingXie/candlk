@@ -1,13 +1,11 @@
 package com.bojiu.webapp.user.action;
 
 import java.util.List;
-import java.util.concurrent.ThreadPoolExecutor;
 import javax.annotation.Resource;
 
 import com.bojiu.common.model.Messager;
 import com.bojiu.common.web.Ready;
 import com.bojiu.context.auth.Permission;
-import com.bojiu.context.web.TaskUtils;
 import com.bojiu.webapp.base.action.BaseAction;
 import com.bojiu.webapp.base.service.RemoteSyncService;
 import com.bojiu.webapp.user.api.CockpitXApi;
@@ -34,8 +32,6 @@ public class UserAction extends BaseAction {
 	@Resource
 	MessageService messageService;
 
-	static final ThreadPoolExecutor loadTaskThreadPool = TaskUtils.newThreadPool(4, 20, 1024, "user-load-");
-
 	@Ready("从Cockpit_TG同步全部账号")
 	@PostMapping("/sync")
 	@Permission(Permission.NONE)
@@ -48,14 +44,14 @@ public class UserAction extends BaseAction {
 					continue; // TODO: 2025/11/28 测试
 				}
 				// loadTaskThreadPool.execute(() -> {
-					Long userId = user.getUserId();
-					// 通知启动py客户端，收录消息 TODO 超时时提醒应该先启动TG
-					Messager<String> msg = cockpitXApi.load(userId);
-					if (msg.isOK()) {
-						Client.create(new DefaultUpdateHandler(user));
-					} else {
-						log.error("加载账号失败：" + userId);
-					}
+				Long userId = user.getUserId();
+				// 通知启动py客户端，收录消息 TODO 超时时提醒应该先启动TG
+				Messager<String> msg = cockpitXApi.load(userId);
+				if (msg.isOK()) {
+					Client.create(new DefaultUpdateHandler(user));
+				} else {
+					log.error("加载账号失败：" + userId);
+				}
 				// });
 			}
 			GlobalCacheSyncService.user().flushCache(RemoteSyncService.UserService, (Object[]) ArrayUtil.toArray(allUser, Long.class, User::getUserId));

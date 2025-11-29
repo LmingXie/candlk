@@ -1,7 +1,6 @@
 package com.bojiu.webapp.user.handler;
 
-import java.util.Date;
-import java.util.List;
+import java.util.*;
 import java.util.concurrent.TimeUnit;
 
 import com.bojiu.common.util.SpringUtil;
@@ -12,8 +11,7 @@ import com.bojiu.webapp.user.entity.User;
 import com.bojiu.webapp.user.service.UserService;
 import lombok.Setter;
 import lombok.extern.slf4j.Slf4j;
-import me.codeplayer.util.EasyDate;
-import me.codeplayer.util.X;
+import me.codeplayer.util.*;
 import org.drinkless.tdlib.Client;
 import org.drinkless.tdlib.TdApi;
 
@@ -37,9 +35,97 @@ public class DefaultUpdateHandler implements Client.ResultHandler {
 	@Override
 	public void onResult(TdApi.Object object) {
 		switch (object.getConstructor()) {
+			case TdApi.UpdateNewChat.CONSTRUCTOR -> { // 添加新对话
+				TdApi.UpdateNewChat updateNewChat = (TdApi.UpdateNewChat) object;
+				TdApi.Chat chat = updateNewChat.chat;
+				// synchronized (chat) {
+				// 	chats.put(chat.id, chat);
+				//
+				// 	TdApi.ChatPosition[] positions = chat.positions;
+				// 	chat.positions = new TdApi.ChatPosition[0];
+				// 	setChatPositions(chat, positions);
+				// }
+			}
+
+			case TdApi.UpdateUserFullInfo.CONSTRUCTOR -> { // 更新用户完整信息
+				// TODO: 2025/11/29 更新user_info信息，并同步更新用户的头像信息
+				TdApi.UpdateUserFullInfo updateUserFullInfo = (TdApi.UpdateUserFullInfo) object;
+				// 简介
+				String text = updateUserFullInfo.userFullInfo.bio.text;
+
+				TdApi.ChatPhoto photo = updateUserFullInfo.userFullInfo.photo;
+				// usersFullInfo.put(updateUserFullInfo.userId, updateUserFullInfo.userFullInfo);
+			}
+			case TdApi.UpdateChatPhoto.CONSTRUCTOR -> { // 更新对话的照片
+				TdApi.UpdateChatPhoto updateChat = (TdApi.UpdateChatPhoto) object;
+				TdApi.File big = updateChat.photo.big;
+				TdApi.LocalFile localFile = big.local;
+				if (localFile.isDownloadingCompleted) {
+					String localPath = localFile.path;
+					log.info("下载完成：" + localPath);
+				} else if (localFile.canBeDownloaded) {
+					// 1. 获取要下载的 File ID
+					int fileId = big.id;
+
+					// 2. 构造 DownloadFile 请求
+					TdApi.DownloadFile downloadFileRequest = new TdApi.DownloadFile(
+							fileId,
+							1,          // priority (优先级，1-32，最高 32)
+							0,          // offset (从文件的哪个字节开始下载，通常为 0)
+							0,          // limit (要下载的最大字节数，0 表示下载整个文件)
+							false       // synchronous (是否同步下载，通常为 false 异步)
+					);
+
+					// 3. 将请求发送给 TDLib 客户端
+					// 假设您有一个发送请求的 client 对象
+					client.send(downloadFileRequest, obj -> {
+						// TODO: 2025/11/29 修改头像同步本地文件问题
+						if (obj instanceof TdApi.UpdateFile updateFile) {
+							TdApi.File updatedFile = updateFile.file;
+
+							// 检查这个更新是否是我们请求下载的文件
+							if (updatedFile.id == fileId) { // 这里的 fileId 是您在步骤 2 中请求下载的 ID
+								if (updatedFile.local.isDownloadingCompleted) {
+									// 下载完成!
+									String localPath = updatedFile.local.path;
+									log.info("文件下载完成，本地路径: " + localPath);
+
+									// 现在可以使用该路径加载图片了
+								} else {
+									// 下载中，可以根据 updatedFile.local.downloadedSize 和 updatedFile.size
+									// 来显示下载进度
+									long downloaded = updatedFile.local.downloadedSize;
+									long total = updatedFile.size;
+									double progress = (double) downloaded / total * 100;
+									log.info("下载进度: {}", progress);
+								}
+							}
+						} else {
+							log.info("收到文件更新：{}->{} ", object.getConstructor(), Jsons.encode(object));
+						}
+					});
+				}
+			}
+			case TdApi.UpdateChatLastMessage.CONSTRUCTOR -> { // 更新聊天最后一条消息
+				TdApi.UpdateChatLastMessage updateChat = (TdApi.UpdateChatLastMessage) object;
+				// TdApi.Chat chat = chats.get(updateChat.chatId);
+				// synchronized (chat) {
+				// 	chat.lastMessage = updateChat.lastMessage;
+				// 	setChatPositions(chat, updateChat.positions);
+				// }
+			}
+			case TdApi.UpdateChatReadInbox.CONSTRUCTOR -> { // 更新对话未读计数
+				TdApi.UpdateChatReadInbox updateChat = (TdApi.UpdateChatReadInbox) object;
+				// TdApi.Chat chat = chats.get(updateChat.chatId);
+				// synchronized (chat) {
+				// 	chat.lastReadInboxMessageId = updateChat.lastReadInboxMessageId;
+				// 	chat.unreadCount = updateChat.unreadCount;
+				// }
+			}
 			case TdApi.UpdateNewMessage.CONSTRUCTOR -> {
 				TdApi.UpdateNewMessage newMsg = (TdApi.UpdateNewMessage) object;
 				TdApi.Message msg = newMsg.message;
+				log.info("收到新消息：{}->{}", object.getConstructor(), Jsons.encode(object));
 				long chatId = msg.chatId;
 				TdApi.MessageContent content = msg.content;
 				if (content instanceof TdApi.MessageText text) {
@@ -85,6 +171,8 @@ public class DefaultUpdateHandler implements Client.ResultHandler {
 			}
 			case TdApi.UpdateUserStatus.CONSTRUCTOR -> { // TODO 更新用户状态，可用于检测内部账号状态
 				TdApi.UpdateUserStatus updateUserStatus = (TdApi.UpdateUserStatus) object;
+				TdApi.UserStatus status = updateUserStatus.status;
+				log.info("更新用户状态：{}->{}", updateUserStatus.userId, Jsons.encode(status));
 				// TdApi.User user = users.get(updateUserStatus.userId);
 				// synchronized (user) {
 				// 	user.status = updateUserStatus.status;
@@ -103,17 +191,6 @@ public class DefaultUpdateHandler implements Client.ResultHandler {
 				// secretChats.put(updateSecretChat.secretChat.id, updateSecretChat.secretChat);
 			}
 
-			case TdApi.UpdateNewChat.CONSTRUCTOR -> { // 更新新聊天
-				TdApi.UpdateNewChat updateNewChat = (TdApi.UpdateNewChat) object;
-				TdApi.Chat chat = updateNewChat.chat;
-				// synchronized (chat) {
-				// 	chats.put(chat.id, chat);
-				//
-				// 	TdApi.ChatPosition[] positions = chat.positions;
-				// 	chat.positions = new TdApi.ChatPosition[0];
-				// 	setChatPositions(chat, positions);
-				// }
-			}
 			// case TdApi.UpdateChatTitle.CONSTRUCTOR -> { // 更新聊天标题
 			// 	TdApi.UpdateChatTitle updateChat = (TdApi.UpdateChatTitle) object;
 			// 	TdApi.Chat chat = chats.get(updateChat.chatId);
@@ -121,26 +198,11 @@ public class DefaultUpdateHandler implements Client.ResultHandler {
 			// 		chat.title = updateChat.title;
 			// 	}
 			// }
-			// case TdApi.UpdateChatPhoto.CONSTRUCTOR -> { // 更新聊天照片
-			// 	TdApi.UpdateChatPhoto updateChat = (TdApi.UpdateChatPhoto) object;
-			// 	TdApi.Chat chat = chats.get(updateChat.chatId);
-			// 	synchronized (chat) {
-			// 		chat.photo = updateChat.photo;
-			// 	}
-			// }
 			// case TdApi.UpdateChatPermissions.CONSTRUCTOR -> { // 更新聊天权限
 			// 	TdApi.UpdateChatPermissions update = (TdApi.UpdateChatPermissions) object;
 			// 	TdApi.Chat chat = chats.get(update.chatId);
 			// 	synchronized (chat) {
 			// 		chat.permissions = update.permissions;
-			// 	}
-			// }
-			// case TdApi.UpdateChatLastMessage.CONSTRUCTOR -> { // 更新聊天最后一条消息
-			// 	TdApi.UpdateChatLastMessage updateChat = (TdApi.UpdateChatLastMessage) object;
-			// 	TdApi.Chat chat = chats.get(updateChat.chatId);
-			// 	synchronized (chat) {
-			// 		chat.lastMessage = updateChat.lastMessage;
-			// 		setChatPositions(chat, updateChat.positions);
 			// 	}
 			// }
 			// case TdApi.UpdateChatPosition.CONSTRUCTOR -> { // 更新聊天位置
@@ -170,14 +232,6 @@ public class DefaultUpdateHandler implements Client.ResultHandler {
 			// 		assert pos == new_positions.length;
 			//
 			// 		setChatPositions(chat, new_positions);
-			// 	}
-			// }
-			// case TdApi.UpdateChatReadInbox.CONSTRUCTOR -> { // 更新聊天阅读收件箱
-			// 	TdApi.UpdateChatReadInbox updateChat = (TdApi.UpdateChatReadInbox) object;
-			// 	TdApi.Chat chat = chats.get(updateChat.chatId);
-			// 	synchronized (chat) {
-			// 		chat.lastReadInboxMessageId = updateChat.lastReadInboxMessageId;
-			// 		chat.unreadCount = updateChat.unreadCount;
 			// 	}
 			// }
 			// case TdApi.UpdateChatReadOutbox.CONSTRUCTOR -> { // 更新聊天阅读发件箱
@@ -335,11 +389,6 @@ public class DefaultUpdateHandler implements Client.ResultHandler {
 			// 		chat.unreadReactionCount = updateChat.unreadReactionCount;
 			// 	}
 			// }
-			//
-			// case TdApi.UpdateUserFullInfo.CONSTRUCTOR -> { // 更新用户完整信息
-			// 	TdApi.UpdateUserFullInfo updateUserFullInfo = (TdApi.UpdateUserFullInfo) object;
-			// 	usersFullInfo.put(updateUserFullInfo.userId, updateUserFullInfo.userFullInfo);
-			// }
 			// case TdApi.UpdateBasicGroupFullInfo.CONSTRUCTOR -> {// 更新基本组的完整信息
 			// 	TdApi.UpdateBasicGroupFullInfo updateBasicGroupFullInfo = (TdApi.UpdateBasicGroupFullInfo) object;
 			// 	basicGroupsFullInfo.put(updateBasicGroupFullInfo.basicGroupId, updateBasicGroupFullInfo.basicGroupFullInfo);
@@ -441,6 +490,9 @@ public class DefaultUpdateHandler implements Client.ResultHandler {
 				// String lastName = promptString("请输入您的姓: ");
 				log.warn("不支持【注册】 AuthorizationStateWaitRegistration 请输入您的名字和姓：{}", user.getUserId());
 				client.send(new TdApi.RegisterUser(jsonInfo.firstName, jsonInfo.lastName, false), AuthorizationRequestHandler.getInstance());
+			}
+			// 可以忽略的更新事件
+			case TdApi.UpdateConnectionState.CONSTRUCTOR -> {
 			}
 			default -> log.error("不支持的响应数据类型:{}", Jsons.encode(authorizationState));
 		}
