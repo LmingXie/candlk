@@ -334,7 +334,7 @@ public final class Example {
 		 */
 
 		// 设置日志消息处理程序，只处理致命错误(0)和普通日志消息（-1）
-		Client.setLogMessageHandler(0, new LogMessageHandler());
+		Client.setLogMessageHandler(0, new TestLogMessageHandler());
 
 		// 禁用TDLib日志，并将致命错误和普通日志消息重定向到一个文件
 		try {
@@ -786,7 +786,7 @@ public final class Example {
 
 	}
 
-	private static class LogMessageHandler implements org.drinkless.tdlib.LogMessageHandler {
+	private static class TestLogMessageHandler implements Client.LogMessageHandler {
 
 		@Override
 		public void onLogMessage(int verbosityLevel, String message) {

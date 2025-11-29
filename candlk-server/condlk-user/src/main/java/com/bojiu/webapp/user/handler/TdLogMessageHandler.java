@@ -1,12 +1,13 @@
 package com.bojiu.webapp.user.handler;
 
 import lombok.extern.slf4j.Slf4j;
+import org.drinkless.tdlib.Client;
 
 /**
  * TDLib 不允许在 Log 回调线程中直接抛异常，否则会导致 native 层死锁/崩溃！！
  */
 @Slf4j
-public class LogMessageHandler implements org.drinkless.tdlib.LogMessageHandler {
+public class TdLogMessageHandler implements Client.LogMessageHandler {
 
 	@Override
 	public void onLogMessage(int verbosityLevel, String message) {
