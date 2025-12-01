@@ -23,7 +23,7 @@ spring:
     enabled: false
   datasource:
     driver-class-name: com.mysql.cj.jdbc.Driver
-    url: jdbc:mysql://127.0.0.1:3607/tg_local?useUnicode=true
+    url: jdbc:mysql://127.0.0.1:3607/local?useUnicode=true
     username: root
     password: PzxELStGI2MzEhoFBQk4Bw
     hikari:
@@ -81,11 +81,6 @@ webapp:
   context:
     encrypt:
       aes-key: eJeJylXMuqtUb11wNPG5krsEAQCdc0gN
-  job:
-    cron:
-      waitAuthCodeJob: 0/10 * * * * ?
-  api-id: 28029815
-  api-hash: 321b6f198f684830bc6878e6c0b6bdbc
 
 # 暴露健康检查访问入口
 management:
