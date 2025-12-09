@@ -5,7 +5,11 @@ package com.bojiu.webapp.user.utils;
  */
 public class HGOddsConverter {
 
-	public static double[] calcOddsRatio(double iorH, double iorC, int configIor, String odd) {
+	/**
+	 * 转换赔率
+	 * <p>源码：_self.getOBT</p>
+	 */
+	public static double[] convertOddsRatio(double iorH, double iorC, int configIor, String odd) {
 		if ("HK".equals(odd)) {
 			odd = "H";
 		}
