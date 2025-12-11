@@ -33,6 +33,9 @@ public enum GameType implements LabelI18nProxy<GameType, Integer>, BizFlag {
 	public final Integer value;
 	final ValueProxy<GameType, Integer> proxy;
 
+	/** 只有厂商图片的游戏类型（子游戏无图片） */
+	public static final List<GameType> onlyVendorImageGameTypes = List.of(SPORT, LIVE);
+
 	GameType(Integer value, String label) {
 		this.bizFlag = 1L << ordinal();
 		this.value = value;
@@ -41,6 +44,7 @@ public enum GameType implements LabelI18nProxy<GameType, Integer>, BizFlag {
 
 	/** 注意：此处必须是 = value()，否则有些基于下标获取枚举的代码也需要同步变动 */
 	public static final GameType[] CACHE = values();
+	public static final GameType[] TAG_CACHE = { TABLE, FISH, DIGITAL, LIVE, SPORT, LOTTERY, BLOCKCHAIN };
 
 	public static GameType of(@Nullable Integer value) {
 		return Common.getEnum(CACHE, value, +1);

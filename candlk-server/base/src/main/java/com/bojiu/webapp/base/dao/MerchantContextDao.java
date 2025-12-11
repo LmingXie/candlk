@@ -45,4 +45,7 @@ public interface MerchantContextDao extends BaseDao<Merchant> {
 	@InterceptorIgnore(tenantLine = "1")
 	int updateRiskStatus(@Param("riskStatus") Integer riskStatus, @Param("id") Long id);
 
+	@Select("SELECT COUNT(*) FROM gs_user WHERE merchant_id = #{merchantId} AND state = 3")
+	Long countMerchantUser(@Param("merchantId") Long merchantId);
+
 }

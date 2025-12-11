@@ -36,6 +36,8 @@ public enum FeatureType implements ValueProxyImpl<FeatureType, String> {
 	private transient String camelCaseName;
 	final ValueProxy<FeatureType, String> proxy;
 
+	public static final FeatureType[] CACHE = values();
+
 	FeatureType(String label) {
 		this.value = name();
 		this.label = label;

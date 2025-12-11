@@ -292,10 +292,12 @@ public interface UserI18nKey extends BaseI18nKey {
 	// 弹窗方式
 	/** 不弹窗 */
 	String POP_MODE_NO_POP = "pop.mode.no.pop";
-	/** 每次刷新 */
-	String POP_MODE_EVERY_POP = "pop.mode.every.pop";
+	/** 只弹一次 */
+	String POP_MODE_POP_ONLY = "pop.mode.pop.only";
 	/** 每日一次 */
 	String POP_MODE_DAILY_POP = "pop.mode.daily.pop";
+	/** 高频弹窗 */
+	String POP_MODE_HIGH_FREQUENCY = "pop.mode.high.frequency";
 
 	// 登录方式
 	/** 密码 */
@@ -371,8 +373,6 @@ public interface UserI18nKey extends BaseI18nKey {
 	String TICKET_RECEIVE_FAIL_TASK = "ticket.receive.fail.task";
 	/** 领取失败，此票券只能在APP领取！ */
 	String TICKET_RECEIVE_FAIL_SCOPE_APP = "ticket.receive.fail.scope.app";
-	/** VIP系统默认规则 */
-	String VIP_DEFAULT_RULE_DESC = "vip.default.rule.desc";
 	/** 会员层级受限，无法领取 */
 	String MARKET_LIMIT_FIX_LAYER = "market.limit.fix.layer";
 	/** 会员VIP等级受限，无法领取 */
@@ -484,6 +484,10 @@ public interface UserI18nKey extends BaseI18nKey {
 	String AGENT_QUERY_TYPE_PLAY_COUNT = "agent.query.type.playCount";
 	/** 额外成就 */
 	String AGENT_QUERY_TYPE_ADDITIONAL = "agent.query.type.additional";
+	/** 组员奖励 */
+	String AGENT_QUERY_TYPE_SIMPLE_TEAM = "agent.query.type.simple.team";
+	/** 首充成就 */
+	String AGENT_QUERY_TYPE_FIRST_RECHARGE_ADDITIONAL = "agent.query.type.first.recharge.additional";
 	/** 首充人数 */
 	String AGENT_QUERY_TYPE_FIRST_RECHARGE_COUNT = "agent.query.type.firstRechargeCount";
 	/** 邀请人数达标 */
@@ -554,6 +558,8 @@ public interface UserI18nKey extends BaseI18nKey {
 	String REWARD_SOURCE_REBATE = "reward.source.rebate";
 	/** 公积金奖励 */
 	String REWARD_SOURCE_DEPOSIT_POOL = "reward.source.deposit.pool";
+	/** 幸运转盘 */
+	String REWARD_SOURCE_TURNTABLE = "reward.source.turntable";
 	/** 签到活动说明 1.每日充值、有效投注满足活动条件，才可进行签到，签到成功可领取对应奖金，最高{2}（最高金额）；<br/>2.签到投注不限制平台，奖励预计10分钟后更新，请等待奖励发放；<br/> */
 	String SIGN_REMARK_ONE_TWO = "sign.remark.one.two";
 	/** 签到活动说明 3.此活动属{0}{1} */
@@ -564,7 +570,7 @@ public interface UserI18nKey extends BaseI18nKey {
 	String SIGN_REMARK_FOUR = "sign.remark.four";
 	/** 仅限在{0}端 */
 	String SIGN_REMARK_FOUR_LIMIT = "sign.remark.four.limit";
-	/** 5.本活动所赠送的奖金（不含本金）需{0}倍有效投注才能提现，投注{1}；<br/>6.本活动仅限账号本人进行正常的人为操作，禁止租借、使用外挂、机器人、不同账号对赌、互刷、套利、接口、协议、利用漏洞、群控或其他技术手段参与，否则将取消或扣除奖励、冻结、甚至拉入黑名单；<br/>7.为避免文字理解差异，平台将保留本活动最终解释权。 */
+	/** {0}.本活动所赠送的奖金（不含本金）需{1}倍有效投注才能提现{3} {4}；<br/>{5}.本活动仅限账号本人进行正常的人为操作，禁止租借、使用外挂、机器人、不同账号对赌、互刷、套利、接口、协议、利用漏洞、群控或其他技术手段参与，否则将取消或扣除奖励、冻结、甚至拉入黑名单；<br/>{6}.为避免文字理解差异，平台将保留本活动最终解释权。 */
 	String SIGN_REMARK_FIVE = "sign.remark.five";
 	/** 仅限：{0} */
 	String SIGN_REMARK_FIVE_GAME_LIMIT = "sign.remark.five.game.limit";
@@ -584,7 +590,7 @@ public interface UserI18nKey extends BaseI18nKey {
 	String DEPOSIT_REMARK_THIRD_RIGHT = "deposit.remark.third.right";
 	/** <br/>4、稽核倍数：<br/>取出的公积金奖金需{0}倍有效投注，才能申请提现，投注 */
 	String DEPOSIT_REMARK_FOUR = "deposit.remark.four";
-	/** 仅限{0}端手动领取， */
+	/** {0}手动领取， */
 	String DEPOSIT_REMARK_FIVE_MID = "deposit.remark.five.mid";
 	/** 5、领取限制： {0}活动期间内，{1} */
 	String DEPOSIT_REMARK_FIVE = "deposit.remark.five";
@@ -594,5 +600,331 @@ public interface UserI18nKey extends BaseI18nKey {
 	String DEPOSIT_REMARK_FIVE_RIGHT_LATTER = "deposit.remark.five.right.latter";
 	/** <br/>6、违规声明： 仅限账号本人进行正常的人为操作，禁止租借、使用外挂、机器人、不同账号对赌、互刷、套利、接口、协议、利用漏洞、群控或其他技术手段参与，否则将取消或扣除奖励、冻结、甚至拉入黑名单。<br/>7、最终解释： 为避免文字理解差异，平台将保留本活动最终解释权。 */
 	String DEPOSIT_REMARK_SIX = "deposit.remark.six";
+	/** 充值获得幸运值 */
+	String TURNTABLE_TRADE_TYPE_RECHARGE = "turntable.trade.type.recharge";
+	/** 投注获得幸运值 */
+	String TURNTABLE_TRADE_TYPE_PLAY = "turntable.trade.type.play";
+	/** 白银转盘消耗 */
+	String TURNTABLE_TRADE_TYPE_SILVER_OUT = "turntable.trade.type.silver.out";
+	/** 黄金转盘消耗 */
+	String TURNTABLE_TRADE_TYPE_GOLD_OUT = "turntable.trade.type.gold.out";
+	/** 钻石转盘消耗 */
+	String TURNTABLE_TRADE_TYPE_DIAMOND_OUT = "turntable.trade.type.diamond.out";
+	/** 幸运值过期 */
+	String TURNTABLE_TRADE_TYPE_EXPIRED = "turntable.trade.type.expired";
+	/** 人工增加 */
+	String TURNTABLE_TRADE_TYPE_ADJUST_IN = "turntable.trade.type.adjust.in";
+	/** 白银转盘 */
+	String TURNTABLE_TYPE_SILVER = "turntable.type.silver";
+	/** 黄金转盘 */
+	String TURNTABLE_TYPE_GOLD = "turntable.type.gold";
+	/** 钻石转盘 */
+	String TURNTABLE_TYPE_DIAMOND = "turntable.type.diamond";
+
+	/** 仿Google商店 */
+	String APP_STORE_CONFIG_GOOGLE = "app.store.config.google";
+	/** 仿APP商店 */
+	String APP_STORE_CONFIG_APP = "app.store.config.app";
+	/** .此活动属于"人道救援,江湖救急",当您{0}在游戏中亏损{1}或以上,即可获得对应金额的救援金,奖金高低由亏损金额决定,亏损越多,救援金额越高,最高{2};<br/> */
+	String RELIEF_REMARK_1 = "relief.remark.one";
+	/** .亏损不限制平台,奖励预计次日01:00左右更新,请等特奖励发放;<br/> */
+	String RELIEF_REMARK_2 = "relief.remark.two";
+	/** .计算公式:赠送金额=周期内亏损金额(扣除领取的优惠)×返奖比例;<br/> */
+	String RELIEF_REMARK_3 = "relief.remark.three";
+	/** .{0},{1};<br/> */
+	String RELIEF_REMARK_4 = "relief.remark.four";
+	/** .每个周期结束{0}天后,获得的奖励过期,过期自动发放<br/> */
+	String RELIEF_REMARK_5_1 = "relief.remark.five.one";
+	/** .每个周期结束{0}天后,获得的奖励过期,过期直接作废<br/> */
+	String RELIEF_REMARK_5_2 = "relief.remark.five.two";
+	/** .本活动所赠送的奖金(不含本金)需{0}倍有效投注才能提现, */
+	String RELIEF_REMARK_6 = "relief.remark.six";
+	/**
+	 * 每月几号的描述
+	 * 使用： I18N.msg(UserI18nKey.DAY_OF_MONTH_NAME + this.allotDay)
+	 */
+	String DAY_OF_MONTH_NAME = "day.of.month.name.";
+	/** 获得的奖励次日:{0}之后才可领取 */
+	String CLAIM_LIMIT_NEXT_DAY = "claim.limit.next.day";
+	/** 获得的奖励每日:{0}之间才可领取 */
+	String CLAIM_LIMIT_EVERYDAY = "claim.limit.everyday";
+	/** 获得的奖励下周{0}:{1}之后才可领取 */
+	String CLAIM_LIMIT_NEXT_WEEK = "claim.limit.next.week";
+	/** 获得的奖励每周{0}:{1}之间才可领取 */
+	String CLAIM_LIMIT_WEEKLY = "claim.limit.weekly";
+	/** 获得的奖励下月{0}:{1}之后才可领取 */
+	String CLAIM_LIMIT_NEXT_MONTH = "claim.limit.next.month";
+	/** 获得的奖励每月{0}:{1}之间才可领取 */
+	String CLAIM_LIMIT_MONTHLY = "claim.limit.monthly";
+	/** 仅限在{0}端手动领取 */
+	String DEVICE_CLAIM_LIMIT = "device.claim.limit";
+	/** 同时需要绑定{0} */
+	String BIND_CLAIM_LIMIT = "bind.claim.limit";
+	/** 昨日 */
+	String RELIEF_REMARK_CYCLE_DAY = "relief.remark.cycle.day";
+	/** 上周 */
+	String RELIEF_REMARK_CYCLE_WEEK = "relief.remark.cycle.week";
+	/** 上月 */
+	String RELIEF_REMARK_CYCLE_MONTH = "relief.remark.cycle.month";
+	/** 余额救援金活动说明 1.当您余额过低时，系统会随机为您赠送一笔神秘奖金，最高奖励可达{0}.<br/> */
+	String RELIEF_BALANCE_REMARK_ONE = "relief.balance.remark.one";
+	/** 余额救援金活动说明 {0}仅限在{1}端 */
+	String RELIEF_BALANCE_REMARK_TWO_FIRST_HALF = "relief.balance.remark.two.first.half";
+	/** 余额救援金活动说明 2.奖励{0}自动派发。<br/> */
+	String RELIEF_BALANCE_REMARK_TWO_LATTER_HALF = "relief.balance.remark.two.latter.half";
+	/** 余额救援金活动说明 3.本活动所赠送的奖金(不含本金)需{0}倍有效投注才能提现,投注不限游戏平台;<br/> */
+	String RELIEF_BALANCE_REMARK_THIRD = "relief.balance.remark.third";
+	/** 余额救援金活动说明 4.本活动仅限账号本人进行正常的人为操作,禁止租借、使用外挂、机器人、不同账号对赌、互刷、套利、接口、协议、利用漏洞、群控或其他技术手段参与,否则将取消或扣除奖励、冻结、甚至拉入黑名单;<br/> */
+	String RELIEF_BALANCE_REMARK_FOUR = "relief.balance.remark.four";
+	/** 余额救援金活动说明 5.为避免文字理解差异,平台将保留本活动最终解释权。 */
+	String RELIEF_BALANCE_REMARK_FIVE = "relief.balance.remark.five";
+	/** 1.活动期间，{0}累计投注将获得不同程度的奖励，投注越多，奖励越多，最高奖励 {1}； */
+	String PLAY_REMARK_ONE = "play.remark.one";
+	/** 2.投注不限制平台，奖励预计10分钟后更新，请等待奖励发放； */
+	String PLAY_REMARK_TWO = "play.remark.two";
+	/** 3.获得的奖励{0}领取，{1}{2}； */
+	String PLAY_REMARK_THIRD = "play.remark.third";
+	/** 仅限在{0} */
+	String PLAY_REMARK_THIRD_FIRST_HALF = "play.remark.third.first.half";
+	/** {0}.每个周期结束{1}后，获得的奖励过期{2}； */
+	String PLAY_REMARK_FOUR = "play.remark.four";
+	/** 过期天数 0天 */
+	String PLAY_REMARK_FOUR_ZERO_DAY = "play.remark.four.zero.day";
+	/** 过期天数 1天 */
+	String PLAY_REMARK_FOUR_GT_DAY = "play.remark.four.gt.day";
+	/** {0}.本活动所赠送的奖金{1}需{2}倍有效投注才能提现，投注{3} */
+	String PLAY_REMARK_FIVE = "play.remark.five";
+	/** 稽核本金+奖金 */
+	String REMARK_AUDIT_MODE_CAPITAL_BONUS = "remark.audit.mode.capital.bonus";
+	/** 稽核余额+奖金 */
+	String REMARK_AUDIT_MODE_BALANCE_BONUS = "remark.audit.mode.balance.bonus";
+	/** 天 */
+	String PLAY_REMARK_DAY = "play.remark.day";
+	/** 天 */
+	String PLAY_REMARK_DAYS = "play.remark.days";
+	/** {0} */
+	String PLAY_REMARK_EXPIRE_DAYS = "play.remark.expire.days";
+	/** 不含本金 */
+	String PLAY_REMARK_BONUS = "play.remark.bonus";
+	/** 累计 */
+	String RECHARGE_REMARK_CYCLE_CUMULATIVE = "recharge.remark.cycle.cumulative";
+	/** 单次 */
+	String RECHARGE_REMARK_CYCLE_SINGLE = "recharge.remark.cycle.single";
+	/** 每日 */
+	String PLAY_REMARK_EVERYDAY = "play.remark.everyday";
+	/** 每周 */
+	String PLAY_REMARK_WEEKLY = "play.remark.weekly";
+	/** 每月 */
+	String PLAY_REMARK_MONTHLY = "play.remark.monthly";
+	/** 次日{0}后才可 */
+	String PLAY_REMARK_NEXT_DAY = "play.remark.next.day";
+	/** 每日{0}之间才可 */
+	String PLAY_REMARK_EVERYDAY_PERIOD = "play.remark.everyday.period";
+	/** 周一 */
+	String REMARK_NEXT_MONDAY = "remark.next.monday";
+	/** 周二 */
+	String REMARK_NEXT_TUESDAY = "remark.next.tuesday";
+	/** 周三 */
+	String REMARK_NEXT_WEDNESDAY = "remark.next.wednesday";
+	/** 周四 */
+	String REMARK_NEXT_THURSDAY = "remark.next.thursday";
+	/** 周五 */
+	String REMARK_NEXT_FRIDAY = "remark.next.friday";
+	/** 周六 */
+	String REMARK_NEXT_SATURDAY = "remark.next.saturday";
+	/** 周日 */
+	String REMARK_NEXT_SUNDAY = "remark.next.sunday";
+	/** 下周{0}后才可 */
+	String PLAY_REMARK_NEXT_WEEK = "play.remark.next.week";
+	/** 每周{0}之间才可 */
+	String PLAY_REMARK_WEEKLY_PERIOD = "play.remark.weekly.period";
+	/** 下月{0}日{1}后才可 */
+	String PLAY_REMARK_NEXT_MONTH = "play.remark.next.month";
+	/** 每月{0}日{1}之间才可 */
+	String PLAY_REMARK_MONTHLY_PERIOD = "play.remark.monthly.period";
+	/** 直接作废 */
+	String PLAY_REMARK_EXPIRED = "play.remark.expired";
+	/** 自动派发到账 */
+	String REMARK_EXPIRED_AUTO = "remark.expired.auto";
+
+	/** 1.账号首次充值专享，只有一次机会，充值越多，奖励越多，最高奖励{0}； */
+	String RECHARGE_REMARK_FIRST = "recharge.remark.first";
+	/** 1.活动期间，每日首次充值将获得额外奖励，充值越多，奖励越多，最高奖励{0}； */
+	String RECHARGE_REMARK_DAILY_FIRST = "recharge.remark.daily.first";
+	/** 1.活动期间，{0}累计充值将获得不同程度的奖励，充值越多，奖励越多，最高奖励{1}； */
+	String RECHARGE_REMARK_TOTAL = "recharge.remark.total";
+	/** 1.活动期间，{0}单笔充值将获得不同程度的奖励，充值越多，奖励越多，最高奖励{1}； */
+	String RECHARGE_REMARK_SINGLE = "recharge.remark.single";
+	/** 1.活动期间内充值次数以及充值金额满足活动要求，可获得对应奖励，最高奖励{0}； */
+	String RECHARGE_REMARK_TIMES = "recharge.remark.times";
+	/** 2.充值不限充值方式，若充值成功后，未获得奖励，可尝试刷新奖励或等待几分钟后再查看； */
+	String RECHARGE_REMARK_TWO = "recharge.remark.two";
+	/** 1.发展好友开{0},完成不同人数,可获得对应{0},金额最高{1},发展越多,奖励越高;<br/>2.此活动属平台额外赠送,同时享有其他代理奖励和佣金,即直接享受多倍快乐,每个周期内{2},满足活动条件才算有效; */
+	String AGENT_REMARK_FIRST = "agent.remark.first";
+	/** 1.发展好友绑定手机,完成不同人数,可获得对应奖励展越多,奖励越高;<br/>2.此活动属平台额外赠送,同时享有其他代理奖励和佣金,即直接享受多倍快乐,满足活动条件才算有效; */
+	String AGENT_REMARK_REG_FIRST = "agent.remark.reg.first";
+	/** 宝箱 */
+	String BOX = "box";
+	/** 红包 */
+	String RED_POCKET = "red.pocket";
+	/** 历史下级 */
+	String AGENT_REMARK_HISTORY_USER = "agent.remark.history.user";
+	/** 仅限周期内新用户下级 */
+	String AGENT_REMARK_REGISTER_USER = "agent.remark.register.user";
+	/** 3.下级会员的有效投注{0} */
+	String AGENT_REMARK_SECOND = "agent.remark.second";
+	/** {0}.奖励仅限在{1}端{2}; */
+	String AGENT_REMARK_FOUR = "agent.remark.four";
+	/** 1.晋级标准：满足VIP晋级要求（即充值或有效投注都满足条件），即可晋级相应VIP等级，获得相应晋级奖金，如连续晋级多级，可获得全部等级晋级奖金，晋级奖金没有过期时间； */
+	String VIP_REMARK_ONE = "vip.remark.one";
+	/** 2.日俸禄：每日充值及有效投注满足当前等级日俸禄要求，可获得对应日俸禄奖金，如连续晋级多级，仅可获得当前等级日俸禄奖金，{0}可领取，周期结束{1}后过期； */
+	String VIP_REMARK_TWO = "vip.remark.two";
+	/** 3.周俸禄：每周充值及有效投注满足当前等级周俸禄要求，可获得对应周俸禄奖金，如连续晋级多级，仅可获得当前等级周俸禄奖金，{0}可领取，周期结束{1}后过期； */
+	String VIP_REMARK_THIRD = "vip.remark.third";
+	/** 4.月俸禄：每月充值及有效投注满足当前等级月俸禄要求，可获得对应月俸禄奖金，如连续晋级多级，仅可获得当前等级月俸禄奖金，{0}可领取；周期结束{1}后过期； */
+	String VIP_REMARK_FOUR = "vip.remark.four";
+	/** 奖金发放后即 */
+	String VIP_REMARK_TWO_MIDDLE = "vip.remark.two.middle";
+	/** 今日00:00:00以后才 */
+	String VIP_REMARK_TWO_LATTER_DAY = "vip.remark.two.latter.day";
+	/** 每周周一00:00:00以后才 */
+	String VIP_REMARK_TWO_LATTER_WEEK = "vip.remark.two.latter.week";
+	/** 每月1日00:00:00以后才 */
+	String VIP_REMARK_TWO_LATTER_MONTH = "vip.remark.two.latter.month";
+	/** 5.奖励过期说明：奖励过期{0}，可在领取记录进行查看 */
+	String VIP_REMARK_FIVE = "vip.remark.five";
+	/** 自动作废 */
+	String VIP_REMARK_FIVE_NULLIFY = "vip.remark.five.nullify";
+	/** 自动派发到账 */
+	String VIP_REMARK_FIVE_AUTO = "vip.remark.five.auto";
+	/** {0}.保级说明：会员在达到某VIP等级后，若上个月充值及有效投注未达到保级要求，则自动降一个等级； */
+	String VIP_REMARK_SIX = "vip.remark.six";
+	/** {0}.稽核说明：VIP所赠送的奖金需{1}倍流水（即稽核或有效投注）才能提现； */
+	String VIP_REMARK_SEVEN = "vip.remark.seven";
+	/** {0}.活动声明：本功能仅限账号本人进行正常游戏投注，禁止租借账号、无风险投注(对赌、对刷、低赔刷水)、恶意套利、使用外挂程式、机器人、利用协议、漏洞、接口、群控或其他技术手段参与，一经查核属实，本平台有权终止会员登录、暂停会员使用网站、及没收奖金和不当盈利的权利，无需特别通知； */
+	String VIP_REMARK_EIGHT = "vip.remark.eight";
+	/** {0}.解释说明：会员领取VIP奖励时，本平台将默认会员同意且遵守对应条件等相关规定，为避免文字理解歧义，本平台保有本活动最终解释权。 */
+	String VIP_REMARK_NINE = "vip.remark.nine";
+	/**
+	 * {@code
+	 * <br/>仅限于:<br/>{0}
+	 * }
+	 */
+	String REMARK_AUDIT_LIMIT = "remark.audit.limit";
+	/** 投注不限游戏平台 */
+	String REMARK_PLAY_UNRESTRICTED_GAME_PLATFORMS = "remark.play.unrestricted.game.platforms";
+	/** 所有游戏 */
+	String REMARK_ALL_GAME = "remark.all.game";
+
+	/** 1.每日每个时间段单个最高0,10，全凭运气，先到先得，抢完为止！ */
+	String RED_ENVELOPE_REMARK_1 = "redEnvelope.remark_1";
+	String RED_ENVELOPE_REMARK_2 = "redEnvelope.remark_2";
+	String RED_ENVELOPE_REMARK_3_1 = "redEnvelope.remark_3_1";
+	String RED_ENVELOPE_REMARK_3_2 = "redEnvelope.remark_3_2";
+	/** 1.发展好友,进入游戏投注,发展越多,奖励越高;2.此活动属平台额外赠送,同时享有其他代理奖励和佣金,即直接享受多倍快乐。 */
+	String CHALLENGE_INVITE_REMARK_FIRST = "challenge.invite.remark.first";
+
+	/** 利息宝结算周期分钟 */
+	String USER_INCOME_PERIOD_MINUTES = "user.income.period.minutes";
+	/** 利息宝结算周期小时 */
+	String USER_INCOME_PERIOD_HOURS = "user.income.period.hours";
+	/** 利息宝结算周期无限制 */
+	String USER_INCOME_MAX_PERIOD_UNLIMITED = "user.income.max.period.unlimited";
+
+	/** <strong>1、</strong><strong>收益介绍：</strong>存入利息宝的金额，至少满足一个完整周期才能产生利息，若中途提前转出则该周期不计算收益，例如：当前结算周期为{0}分钟，则2025/01/01 00:00:01转入的金额，将在{1}产生第一个周期利息;<br/> */
+	String USER_INCOME_REMARK_1 = "userIncome.remark_1";
+	/** <strong>2、</strong><strong>结算周期：</strong>当前利息的结算周期为{0}分钟;<br/> */
+	String USER_INCOME_REMARK_2 = "userIncome.remark_2";
+	/** <strong>3、</strong><strong>年利率：</strong>当前年利率为{0}%;<br/><strong>4、</strong><strong>计算公式：</strong>利息收益=存入金额 * 年利率 / 结算周期;<br/> */
+	String USER_INCOME_REMARK_3 = "userIncome.remark_3";
+	/** <strong>5、</strong><strong>举例说明：</strong>A于2025/01/01 00:00:01存入10.000，年利率为{0}%，结算周期为{1}分钟，则于{2}获得首次利息收益，计算方式如下:首次利息 =10.000*{3}%/365天/24小时/60分钟*{4}= {5}，最低领取金额需≥{6}，即当利息≥{7}后，客户端才能领取;<br/> */
+	String USER_INCOME_REMARK_4 = "userIncome.remark_4";
+	/** <strong>6、</strong><strong>转入门槛：</strong>每次转入金额必须大于等于{0}（即≥{1}），转入金额无上限，越多收益越大;<br/> */
+	String USER_INCOME_REMARK_5 = "userIncome.remark_5";
+	/** <strong>7、</strong><strong>利息封顶：</strong>{0};<br/> */
+	String USER_INCOME_REMARK_6 = "userIncome.remark_6";
+	/** 当前利息封顶最多只能结算{0}个周期，超出则不再产生利息，记得定期或经常来领取收益，以免错过更多收益哦 */
+	String USER_INCOME_REMARK_6_1 = "userIncome.remark_6_1";
+	/** 当前没有利息封顶限制 */
+	String USER_INCOME_REMARK_6_2 = "userIncome.remark_6_2";
+	/** <strong>8、</strong><strong>领取时间：</strong>{0};<br/> */
+	String USER_INCOME_REMARK_7 = "userIncome.remark_7";
+	/** 当前为隔天领取，即当天产生的利息，要等到第二天0点后才能领取 */
+	String USER_INCOME_REMARK_7_1 = "userIncome.remark.7_1";
+	/** 实时领取：当前为实时领取 */
+	String USER_INCOME_REMARK_7_2 = "userIncome.remark.7_2";
+	/** <strong>9、</strong><strong>稽核倍数：</strong>当前稽核倍数为{0}倍（投注流水要求），即所领取的利息，需要进行投注后，才能提现，投注不限有效平台，仅限于所领取的利息需要稽核，所转入转出的本金则无稽核要求;<br/> */
+	String USER_INCOME_REMARK_8 = "userIncome.remark_8";
+	/** <strong>10、</strong>本功能仅限账号本人进行正常游戏投注，禁止租借账号、无风险投注(对赌、对刷、低赔刷水)、恶意套利、使用外挂程式、机器人、利用协议、漏洞、接口、群控或其他技术手段参与，一经查核属实，本平台有权终止会员登录、暂停会员使用网站、及没收奖金和不当盈利的权利，无需特别通知;<br/> */
+	String USER_INCOME_REMARK_9 = "userIncome.remark_9";
+	/** <strong>11、</strong><strong>解释说明：</strong>会员领取利息宝奖励时，本平台将默认会员同意且遵守对应条件等相关规定，为避免文字理解歧义，本平台保有本活动最终解释权。<br/> */
+	String USER_INCOME_REMARK_10 = "userIncome.remark_10";
+
+	/** 建设中的站点只能注册不超过3个用户 */
+	String MERCHANT_INIT_OVER_USER_NUM = "merchant.init.over.user.num";
+
+	/** 攒金转盘 系统规则国际化 */
+	String GOLD_REMARK_1 = "gold.remark_1";
+	String GOLD_REMARK_1_1 = "gold.remark_1_1";
+	String GOLD_REMARK_1_2 = "gold.remark_1_2";
+	String GOLD_REMARK_1_3 = "gold.remark_1_3";
+	String GOLD_REMARK_2 = "gold.remark_2";
+	String GOLD_REMARK_2_1 = "gold.remark_2_1";
+	String GOLD_REMARK_2_2 = "gold.remark_2_2";
+	String GOLD_REMARK_3_1 = "gold.remark_3_1";
+	String GOLD_REMARK_3_2 = "gold.remark_3_2";
+	String GOLD_REMARK_3_3 = "gold.remark_3_3";
+	String GOLD_REMARK_3_4 = "gold.remark_3_4";
+	String GOLD_REMARK_3_5 = "gold.remark_3_5";
+	String GOLD_REMARK_3_6 = "gold.remark_3_6";
+	String GOLD_REMARK_3_7 = "gold.remark_3_7";
+	String GOLD_REMARK_3_8 = "gold.remark_3_8";
+	String GOLD_REMARK_4_1 = "gold.remark_4_1";
+	String GOLD_REMARK_4_2 = "gold.remark_4_2";
+	String GOLD_REMARK_4_3 = "gold.remark_4_3";
+	String GOLD_REMARK_4_4 = "gold.remark_4_4";
+	String GOLD_REMARK_5 = "gold.remark_5";
+	String GOLD_REMARK_6 = "gold.remark_6";
+
+	/** 任务中心-新人福利任务 系统规则国际化 */
+	String TASK_REMARK_1 = "task.remark_1";
+	String TASK_REMARK_2 = "task.remark_2";
+	String TASK_REMARK_3 = "task.remark_3";
+	String TASK_REMARK_3_1 = "task.remark_3_1";
+	String TASK_REMARK_4 = "task.remark_4";
+	String TASK_REMARK_5 = "task.remark_5";
+	String TASK_REMARK_6 = "task.remark_6";
+	String TASK_REMARK_6_1 = "task.remark_6_1";
+	String TASK_REMARK_6_2 = "task.remark_6_2";
+	String TASK_REMARK_7 = "task.remark_7";
+
+	String TASK_REMARK_DAY_1 = "task.remark_day_1";
+	String TASK_REMARK_DAY_2 = "task.remark_day_2";
+	String TASK_REMARK_DAY_3 = "task.remark_day_3";
+	String TASK_REMARK_DAY_3_1 = "task.remark_day_3_1";
+	String TASK_REMARK_DAY_3_2 = "task.remark_day_3_2";
+	String TASK_REMARK_DAY_3_3 = "task.remark_day_3_3";
+	String TASK_REMARK_DAY_4 = "task.remark_day_4";
+	String TASK_REMARK_DAY_5 = "task.remark_day_5";
+	String TASK_REMARK_DAY_5_1 = "task.remark_day_5_1";
+	String TASK_REMARK_DAY_6 = "task.remark_day_6";
+	String TASK_REMARK_DAY_7 = "task.remark_day_7";
+	/** 任务中心 */
+	String SYS_INTERNAL_MODULE_TASK = "sys.internal.module.task";
+	/** 找到我们 */
+	String SYS_INTERNAL_MODULE_FIND_US = "sys.internal.module.find.us";
+	/** 复制推广链接 */
+	String SYS_INTERNAL_MODULE_COPY_AGENT_LINK = "sys.internal.module.copy.agent.link";
+	/** 用户修改 */
+	String USER_EDIT_WITHOUT_ANY_MODIFICATION = "user.edit.without.any.modification";
+	String USER_EDIT_SUCCESSFUL = "user.edit.success";
+	/** 1.输入正确的兑换码可领取彩金，领取成功彩金直接到账<br/> */
+	String REDEEM_CODE_REMARK_1 = "redeem.code.remark.1";
+	/** 2.一个兑换码仅能兑换一次，兑换后即作废<br/> */
+	String REDEEM_CODE_REMARK_2 = "redeem.code.remark.2";
+	/** 3.发放的兑换码请在有效期内使用，过期使用该兑换码将会失效，且活动期间仅可兑换一次<br/> */
+	String REDEEM_CODE_REMARK_3 = "redeem.code.remark.3";
+	/** 4.本活动所赠送的奖金（稽核奖金）需{0}倍有效投注才能提现， */
+	String REDEEM_CODE_REMARK_4 = "redeem.code.remark.4";
 
 }

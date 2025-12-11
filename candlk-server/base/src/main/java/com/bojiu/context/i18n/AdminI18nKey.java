@@ -2511,6 +2511,10 @@ public interface AdminI18nKey extends BaseI18nKey {
 	String MERCHANT_PARAM_CHANNEL_ID = "merchant.param.channel.id";
 	/** 交易通道 */
 	String MERCHANT_PARAM_CHANNEL_TYPE = "merchant.param.channel.type";
+	/** 代收通道编号 */
+	String MERCHANT_PARAM_COLLECT_CHANNEL_NO = "merchant.param.collect.channel.no";
+	/** 代付通道编号 */
+	String MERCHANT_PARAM_PAY_CHANNEL_NO = "merchant.param.pay.channel.no";
 	/** 代收支付地址 */
 	String MERCHANT_PARAM_CREATE_ORDER_KEY = "merchant.param.create.order.key";
 	/** 代付支付地址 */
@@ -3356,38 +3360,12 @@ public interface AdminI18nKey extends BaseI18nKey {
 	String DEFAULT_LEFT_BOTTOM_CAROUSEL_FLOAT_IMG = "default.left.bottom.carousel.float.img";
 	/** 默认右下角展开悬浮图 */
 	String DEFAULT_RIGHT_BOTTOM_EXPAND_FLOAT_IMG = "default.right.bottom.expand.float.img";
-	/** 默认右下角展开悬浮图 */
+	/** 默认左下角展开悬浮图 */
 	String DEFAULT_LEFT_BOTTOM_EXPAND_FLOAT_IMG = "default.left.bottom.expand.float.img";
-
-	/** 利息宝结算周期分钟 */
-	String USER_INCOME_PERIOD_MINUTES = "user.income.period.minutes";
-	/** 利息宝结算周期小时 */
-	String USER_INCOME_PERIOD_HOURS = "user.income.period.hours";
-	/** 利息宝结算周期无限制 */
-	String USER_INCOME_MAX_PERIOD_UNLIMITED = "user.income.max.period.unlimited";
-	/** 存在展示中的数据，不允许删除！ */
-	String MODULE_MANAGE_NOT_ALLOW_DELETE = "module.manage.not.allow.delete";
-
-	/** 白银转盘 */
-	String TURNTABLE_TYPE_SILVER = "turntable.type.silver";
-	/** 黄金转盘 */
-	String TURNTABLE_TYPE_GOLD = "turntable.type.gold";
-	/** 钻石转盘 */
-	String TURNTABLE_TYPE_DIAMOND = "turntable.type.diamond";
-	/** 充值获得幸运值 */
-	String TURNTABLE_TRADE_TYPE_RECHARGE = "turntable.trade.type.recharge";
-	/** 投注获得幸运值 */
-	String TURNTABLE_TRADE_TYPE_PLAY = "turntable.trade.type.play";
-	/** 白银转盘消耗 */
-	String TURNTABLE_TRADE_TYPE_SILVER_OUT = "turntable.trade.type.silver.out";
-	/** 黄金转盘消耗 */
-	String TURNTABLE_TRADE_TYPE_GOLD_OUT = "turntable.trade.type.gold.out";
-	/** 钻石转盘消耗 */
-	String TURNTABLE_TRADE_TYPE_DIAMOND_OUT = "turntable.trade.type.diamond.out";
-	/** 幸运值过期 */
-	String TURNTABLE_TRADE_TYPE_EXPIRED = "turntable.trade.type.expired";
-	/** 手动增加 */
-	String TURNTABLE_TRADE_TYPE_ADJUST_IN = "turntable.trade.type.adjust.in";
+	/** 幸运值抽奖 */
+	String TURNTABLE_TRADE_TYPE_OUT = "turntable.trade.type.out";
+	/** 获取幸运值 */
+	String TURNTABLE_TRADE_TYPE_IN = "turntable.trade.type.in";
 	/** 固定奖金 */
 	String TURNTABLE_RATE_TYPE_FIXED_BONUS = "turntable.rate.type.fixed.bonus";
 	/** 随机奖金 */
@@ -3398,8 +3376,21 @@ public interface AdminI18nKey extends BaseI18nKey {
 	String TURNTABLE_RATE_TYPE_NO_PROBABILITY = "turntable.rate.type.no.probability";
 	/** 谢谢惠顾 */
 	String TURNTABLE_RATE_TYPE_THANK = "turntable.rate.type.thank";
-	/** 成本范围%s ~ %s，计算总概率为 %.2f%%，无法变更，请调整成本或奖金 */
+	/** 成本范围%s ~ %s */
 	String REWARD_ITEM_LIMIT_MSG = "reward.item.limit.msg";
 
+	/** 最多上传{0}张APP宣传图！ */
+	String FROM_APP_PROMOTION_IMG_MAX = "from.app.promotion.img.max";
+	/** 评论不能超过{0}条 */
+	String APP_STORE_COMMENT_NUM_LIMIT = "app.store.comment.num.limit";
+	/** 注册成功弹窗配置达到上限 */
+	String REGISTER_POP_NUM_LIMIT = "register.pop.num.limit";
+
+	/** 注册成功弹窗配置展示推荐活动开启[充值活动,任务]必须选择一个 */
+	String REGISTER_POP_SHOW_PROMOTION_ERROR = "register.pop.show.promotion.error";
+	/** 当前有正在展示中的内容，下架后才可关闭或删除模块 */
+	String MODULE_MANAGE_NOT_ALLOW_DELETE_SHOWING = "module.manage.not.allow.delete.showing";
+	/** 首页 和 我的 模块不允许关闭！ */
+	String MODULE_MANAGE_NOT_ALLOW_CLOSE_HOME_ME = "module.manage.not.allow.close.home.me";
 
 }

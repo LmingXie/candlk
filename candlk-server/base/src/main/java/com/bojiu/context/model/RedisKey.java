@@ -25,6 +25,7 @@ public interface RedisKey {
 	 * <p>
 	 * 【注意】这里存的不是全量数据，只有变更为异常状态时，才必定有值
 	 */
+	@Permanent
 	String MERCHANT_SITE_STATUS = "merchant:site:status";
 
 	/**
@@ -42,23 +43,27 @@ public interface RedisKey {
 	 * <p> < "域名", 商户ID >
 	 * 【注意】域名存入之前一定要先转小写
 	 */
+	@Permanent
 	String MERCHANT_DOMAINS = "merchantDomains";
 	/**
 	 * 商户后台域名 Hash
 	 * <p> < "域名", 商户ID >
 	 * 【注意】域名存入之前一定要先转小写
 	 */
+	@Permanent
 	String MERCHANT_BG_DOMAINS = "merchantBgDomains";
 	/**
 	 * 用户的游戏 有效投入 汇总 ZSet
 	 * <p> $prefix + $merchantId =  < 用户ID, 打码金额（最后两位表示小数） >
 	 * <p> 累计打码是自动层级的晋级条件，更新后一同出发层级刷新，不可更改为重量级任务！</p>
 	 */
+	@Permanent
 	String USER_STAT_PLAY_PREFIX = "userStat:play:";
 	/**
 	 * 用户的游戏 净输赢 汇总 ZSet
 	 * <p> $prefix + $merchantId =  < 用户ID, 净输赢金额（负数表示输了，最后两位表示小数） >
 	 */
+	@Permanent
 	String USER_STAT_WIN_PREFIX = "userStat:win:";
 	/**
 	 * 用户的 【充值】汇总统计数据 ZSet
@@ -66,6 +71,7 @@ public interface RedisKey {
 	 * <p> $prefix + $merchantId =  < $userId, 充值金额（最后两位表示小数）>
 	 * <p> $prefix + $merchantId + "-count" =  < $userId, 充值次数>
 	 */
+	@Permanent
 	String USER_STAT_RECHARGE_PREFIX = "userStat:recharge:";
 
 	/**
@@ -112,6 +118,7 @@ public interface RedisKey {
 	 * 任务中心用户活跃度
 	 * <pre>{@code ZSet $userTaskPoint-$merchantId-D/W-yyyyMMdd "< $userId, $point >" }</pre>
 	 */
+	@Permanent
 	String USER_TASK_POINT_PREFIX = "userTaskPoint:";
 	/**
 	 * 已完成新人任务记录
@@ -125,6 +132,7 @@ public interface RedisKey {
 	 *      "incrementScore(-$RewardCollectType.getBizFlag())"
 	 *  }</pre>
 	 */
+	@Permanent
 	String USER_TASK_LOGS_PREFIX = "userTaskLogs:";
 
 	/**
@@ -132,6 +140,7 @@ public interface RedisKey {
 	 * <pre>{@code Set userTaskLimit:$merchantId < "$ip/deviceId-$rewardType" > }
 	 * 取消限制时，将删除历史记录：@see UserTaskConfigAdminService#addOrEditBase</pre>
 	 */
+	@Permanent
 	String USER_TASK_LIMIT_PREFIX = "userTaskLimit:";
 
 	/**
@@ -145,6 +154,7 @@ public interface RedisKey {
 	String USER_RECHARGE_PREFIX = "userRecharge";
 
 	/** VIP升级候选人（用于依次检测用户是否可升级VIP） Set < "upgradeCandidates-$merchantId , $userId" > */
+	@Permanent
 	String UPGRADE_CANDIDATES = "upgradeCandidates";
 	/**
 	 * VIP降级候选人 ZSet < "degradeCandidates, "$merchantId-$userId" , $nextMonthBeginTime >
@@ -156,15 +166,16 @@ public interface RedisKey {
 	 * VIP升级用户 累计充值金额、月充值、充值次数偏移值 ZSet （最后2位表示小数）
 	 * <p> $prefix + 商户ID = < "$userId" , 充值总额偏移值（一般为负数） >
 	 * <p> 用户VIP升级后，下个月会检测是否符合保级条件，如果不符合则会被降级，用于判断升级的指标也会重置到上一级
-	 * <p> $prefix + 商户ID + $yyyyMM = < "$userId" , 月充值偏移值（一般为负数） >
+	 * <p> $prefix + 商户ID + "-" + $yyyyMM = < "$userId" , 月充值偏移值（一般为负数） >
 	 * <p> $prefix + 商户ID + "-count" = < "$userId" , 充值次数偏移值 >
 	 */
+	@Permanent
 	String UPGRADE_OFFSET_RECHARGE_PREFIX = "upgradeOffset:recharge:";
 	/**
 	 * VIP升级用户 累计打码金额偏移值 ZSet （最后2位表示小数）
 	 * <p> $prefix + 商户ID = < "$userId" , 打码总额偏移值（一般为负数） >
 	 * <p> 用户VIP升级后，下个月会检测是否符合保级条件，如果不符合则会被降级，用于判断升级的指标也会重置到上一级
-	 * <p> $prefix + 商户ID + $yyyyMM = < "$userId" , 月打码偏移值（一般为负数） >
+	 * <p> $prefix + 商户ID + "-" + $yyyyMM = < "$userId" , 月打码偏移值（一般为负数） >
 	 */
 	String UPGRADE_OFFSET_PLAY_PREFIX = "upgradeOffset:play:";
 	/**
@@ -177,6 +188,7 @@ public interface RedisKey {
 	 *  $rtpType：0 = 大于100；1=小于100
 	 * </pre>
 	 */
+	@Permanent
 	String MERCHANT_TYPE_WINS_PREFIX = "merchantTypeWin:";
 	/**
 	 * 待风控检查的站点ID Set 集合
@@ -195,12 +207,14 @@ public interface RedisKey {
 	 *     }
 	 * </pre>
 	 */
+	@Permanent
 	String MERCHANT_BLACKLIST = "merchant:blacklist";
 
 	/**
 	 * 商户充值 汇总
 	 * hash < "merchantRecharge", "merchantId", 充值金额（最后6位整数表示小数） >
 	 */
+	@Permanent
 	String MERCHANT_RECHARGE = "merchantRecharge";
 
 	/** 商户是否晋级前缀 Set < merchantId > */
@@ -243,7 +257,7 @@ public interface RedisKey {
 	 */
 	String TIMES_RECHARGE_PROMOTION = "timesRechargePromotion";
 	/**
-	 * 累计打码活动 ZSet < "totalPayPromotion"+$promotionId+$expireTime, $merchantId+$type+$promotionId+$cycleMode+$yyyyMMdd+$userId, payAmount >
+	 * 累计打码活动 ZSet < "totalPayPromotion-"+$promotionId+"-"+$expireTime, $merchantId+$type+$promotionId+$cycleMode+$yyyyMMdd+$userId, payAmount >
 	 * $expireTime = yyyyMMdd（周期结束时间）
 	 * $payAmount 最后两位为小数
 	 */
@@ -319,7 +333,7 @@ public interface RedisKey {
 	 */
 	String BOT_SPY_COUNTER_PREFIX = "merchant:botSpyCounter:";
 
-	/** 用户签到 ZSet < "userSign"+$promotionId, $userId+$signMode+yyyyMMdd|次数|领取金额|领取积分 > */
+	/** 用户签到 ZSet < "userSign-"+$promotionId, $userId+$signMode+yyyyMMdd|次数|领取金额|领取积分 > */
 	String USER_SIGN = "userSign";
 
 	/** 大R登录提醒 ZSet $merchantId < $userId, $seconds+$level > */
@@ -502,7 +516,7 @@ public interface RedisKey {
 	String PROMOTION_USER_STAT = "promotionUserStat";
 	/**
 	 * 商户单日触发获利监控次数限制
-	 * Set < $merchantId, $counter >
+	 * ZSet < "$merchantId-$yyyyMMdd", $counter >
 	 */
 	String PROFIT_SPY_COUNTER = "profitSpyCounter";
 	/**
@@ -849,12 +863,6 @@ public interface RedisKey {
 	 * Hash < "userGroupTaskReward"+$merchantId, $userId, $taskIds >
 	 */
 	String USER_GROUP_TASK_REWARD = "userGroupTaskReward";
-
-	/**
-	 * Jackpot活动非真实活动的奖池金额
-	 * Hash < "promotionJackpotAmount", $promotionId, $amount >
-	 */
-	String PROMOTION_JACKPOT_AMOUNT = "promotionJackpotAmount";
 	/** 待处理的推广奖励 ZSet < merchantId+promotionId+agentId, 秒级时间戳 > */
 	String AGENT_PROMOTION_AWARD_KEY = "agentPromotionAward:";
 	/** 待处理的幸运转盘奖励 ZSet < merchantId+promotionId+agentId, 秒级时间戳 > */
@@ -863,13 +871,20 @@ public interface RedisKey {
 	/**
 	 * 商户消息发送循环方式 Hash
 	 * <p>
-	 * 按天 < "msgSentKey", "$msgId-day", 1 >
+	 * 一次性 < "msgSentKey-$msgId", "$userId", 1 >
 	 * <p>
-	 * 按周 < "msgSentKey", "$msgIdW-$周几", 1 >
+	 * 按天 < "msgSentKey-$msgId", "20251114-$userId", 1 >
 	 * <p>
-	 * 按月 < "msgSentKey", "$msgIdM-day", 1 >
+	 * 按周 < "msgSentKey-$msgId", "W-2025-11-2-3-$userId", 1 >
+	 * <p>
+	 * 按月 < "msgSentKey-$msgId", "M-20251114-$userId", 1 >
 	 */
 	String MSG_SENT_KEY = "msgSentKey";
+	/**
+	 * 商户由建站中修改正常状态的开始时间
+	 * ZSet < "merchant:OkStartTime", $groupId, $time(开始时间) >
+	 */
+	String MERCHANT_OK_START_TIME = "merchant:okStartTime";
 
 	/**
 	 * 用户设置自动登录过期时间 ZSet < "userAutoLoginExpire", $merchantId-$userId, 时间戳 >
@@ -883,7 +898,7 @@ public interface RedisKey {
 	 */
 	String DEPOSIT_AGAIN_PARTICIPATE = "depositAgainParticipate";
 	/**
-	 * 排行榜循环周期 (当前轮) TODO 可以重设活动过期时间,所以要更新redis的过期时间
+	 * 排行榜循环周期 (当前轮)
 	 * ZSet < "rankCycle:"+$promotionId,  $cycle, $cycleEndTime >
 	 */
 	String RANK_CYCLE = "pRankCycle:";
@@ -899,4 +914,17 @@ public interface RedisKey {
 	 * Hash < "loginDeviceSession", $merchantId-$userId-$sessionId, "1" >
 	 */
 	String LOGIN_DEVICE_SESSION = "loginDeviceSession";
+
+	/**
+	 * 推广域名
+	 * ZSet < "domainMarketing-$name域名", $jumpDomain, domainId >
+	 */
+	String DOMAIN_MARKETING = "domainMarketing";
+
+	/**
+	 * 模块内容的状态变动时间
+	 * ZSet < "merchant:moduleContentStatusChange", $moduleContendId, $time(状态变动时间) >
+	 */
+	String MERCHANT_MODULE_CONTENT_STATUS_CHANGE = "merchant:moduleContentStatusChange";
+
 }

@@ -88,7 +88,7 @@ public interface UserModelI18nKey extends BaseI18nKey {
 	String PROMOTION_TYPE_SIGN = "promotion.type.sign";
 	/** 救援金 */
 	String PROMOTION_TYPE_RELIEF = "promotion.type.relief";
-	/** 转盘 */
+	/** 幸运转盘 */
 	String PROMOTION_TYPE_TURNTABLE = "promotion.type.turntable";
 	/** 红包 */
 	String PROMOTION_TYPE_RED_ENVELOPE = "promotion.type.red.envelope";
@@ -151,6 +151,20 @@ public interface UserModelI18nKey extends BaseI18nKey {
 	String PRIVILEGE_TYPE_TOTAL_CASH_LIMIT = "privilege.type.total.cash.limit";
 	/** 每日免手续费交易笔数 */
 	String PRIVILEGE_TYPE_DAILY_FEE_NUM = "privilege.type.daily.fee.num";
+	/** 特权限制 */
+	String PRIVILEGE_TYPE_LIMIT = "privilege.type.limit";
+	/** 特权笔数 */
+	String PRIVILEGE_TYPE_NUM = "privilege.type.num";
+	/** 每日提款次数 */
+	String PRIVILEGE_TYPE_DAILY_CASH_TITLE = "privilege.type.daily.cash.title";
+	/** 每日提款总额 */
+	String PRIVILEGE_TYPE_CASH_TITLE = "privilege.type.cash.title";
+	/** 提款总次数 */
+	String PRIVILEGE_TYPE_TOTAL_CASH_NUM_TITLE = "privilege.type.total.cash.num.title";
+	/** 提款总额 */
+	String PRIVILEGE_TYPE_TOTAL_CASH_TITLE = "privilege.type.total.cash.title";
+	/** 每日免手续费 */
+	String PRIVILEGE_TYPE_DAILY_FEE_NUM_TITLE = "privilege.type.daily.fee.num.title";
 	/** VIP限制提示 */
 	String PRIVILEGE_TYPE_CASH_LIMIT_TIPS = "privilege.type.cash.limit.tips";
 	// RewardStatus
@@ -335,12 +349,14 @@ public interface UserModelI18nKey extends BaseI18nKey {
 	String TASK_REWARD_BIND_AVATAR = "task.reward.bind.avatar";
 	/** 首次提现（成功才算） */
 	String TASK_REWARD_FIRST_CASH = "task.reward.first.cash";
-	/** 首次绑定CPF */
-	String TASK_REWARD_BIND_CPF = "task.reward.bind.cpf";
+	/** 绑定提现账户 */
+	String TASK_REWARD_BIND_CASH = "task.reward.bind.cash";
 	/** 绑定手机号 */
 	String TASK_REWARD_BIND_PHONE = "task.reward.bind.phone";
 	/** 首次下载安装并登录APP任务 */
 	String TASK_REWARD_LOGIN_APP = "task.reward.login.app";
+	/** 绑定Google身份验证器 */
+	String TASK_REWARD_BIND_GOOGLE_AUTH = "task.reward.bind.google_auth";
 	// Country
 	/** 巴西 */
 	String COUNTRY_BR = "country.br";
@@ -424,7 +440,7 @@ public interface UserModelI18nKey extends BaseI18nKey {
 	String TEMPLATE_TYPE_CLASSIC = "template.type.classic";
 	/** 亚太 */
 	String TEMPLATE_TYPE_ASIA = "template.type.asia";
-	/** WG新欧美 */
+	/** WG新欧美(综合版2) */
 	String TEMPLATE_TYPE_WG_EUROPE = "template.type.wg.europe";
 	/** 定制版 */
 	String TEMPLATE_TYPE_CUSTOMIZED = "template.type.customized";
@@ -432,6 +448,12 @@ public interface UserModelI18nKey extends BaseI18nKey {
 	String TEMPLATE_TYPE_EUROPE_SIMPLIFIED = "template.type.europe.simplified";
 	/** panda */
 	String TEMPLATE_TYPE_PANDA = "template.type.panda";
+	/** 综合版1 */
+	String COMPREHENSIVE_VERSION_ONE = "comprehensive.version.one";
+	/** 综合版1 */
+	String COMPREHENSIVE_VERSION_THIRD = "comprehensive.version.third";
+	/** 综合版1 */
+	String COMPREHENSIVE_VERSION_FOUR = "comprehensive.version.four";
 
 	/** 皮肤蓝紫色 */
 	String COLOR_TYPE_BLUE_PURPLE = "color.type.blue.purple";
@@ -480,4 +502,39 @@ public interface UserModelI18nKey extends BaseI18nKey {
 	String COLLECT_LIMIT_BIRTHDAY = "collect.limit.birthday";
 	/** 不在领取时间范围内 */
 	String COLLECT_TIME_LIMIT = "collect.time.limit";
+	// ChannelPosition
+	/** 主域名 */
+	String CHANNEL_POSITION_FRONT = "channel.position.front";
+	/** 仿Google页 */
+	String CHANNEL_POSITION_GOOGLE = "channel.position.google";
+	/** H5页面 */
+	String CHANNEL_POSITION_HOME = "channel.position.home";
+	/** 短信营销 */
+	String CHANNEL_POSITION_MOBILE_MARKETING = "channel.position.mobile.marketing";
+	/** 右下角悬浮 */
+	String MODULE_POSITION_RIGHT_BOTTOM = "module.position.right.bottom";
+	/** 左下角悬浮 */
+	String MODULE_POSITION_LEFT_BOTTOM = "module.position.left.bottom";
+	/** 网页顶部下方 */
+	String MODULE_POSITION_TOP_BOTTOM = "module.position.top.bottom";
+	/** Banner图下方 */
+	String MODULE_POSITION_BANNER_BOTTOM = "module.position.banner.bottom";
+	/** 跑马灯下面 */
+	String MODULE_POSITION_MARQUEE_BOTTOM = "module.position.marquee.bottom";
+	/** 三方游戏最上方 */
+	String MODULE_POSITION_THIRD_GAME_TOP = "module.position.third.game.top";
+	/** 热门游戏上方 */
+	String MODULE_POSITION_HOT_GAME_TOP = "module.position.hot.game.top";
+	/** 热门游戏下方 */
+	String MODULE_POSITION_HOT_GAME_BOTTOM = "module.position.hot.game.bottom";
+	/** 三方游戏最下方 */
+	String MODULE_POSITION_THIRD_GAME_BOTTOM = "module.position.third.game.bottom";
+	/** 首页底部上方 */
+	String MODULE_POSITION_HOME_BOTTOM_TOP = "module.position.home.bottom.top";
+	/** 首页最底部 */
+	String MODULE_POSITION_HOME_BOTTOM = "module.position.home.bottom";
+	/** 用户消息状态 */
+	String USER_MSG_READ = "user.msg.read";
+	String USER_MSG_UN_READ = "user.msg.unRead";
+
 }

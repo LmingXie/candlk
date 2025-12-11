@@ -39,7 +39,6 @@ public interface RemoteSyncService {
 	String TicketGrantService = "TicketGrantService";
 	/* ======= user ====== */
 
-	String UserService = "UserService";
 	String BannerService = "BannerService";
 	String OauthUserService = "OauthUserService";
 	String RegionLimitService = "RegionLimitService";
@@ -53,7 +52,12 @@ public interface RemoteSyncService {
 	String MediaManagementService = "MediaManagementService";
 	String QuickShareConfigService = "QuickShareConfigService";
 	String UserModuleManagementService = "UserModuleManagementService";
+	String RegisterPopService = "RegisterPopService";
+	String AppStoreConfigService = "AppStoreConfigService";
 	String AppDownloadService = "AppDownloadService";
+	String BrandJackpotService = "BrandJackpotService";
+	String UserMerchantVendorService = "UserMerchantVendorService";
+	String SiteContentService = "SiteContentService";
 
 	/* ======= trade ====== */
 	String SnsItemService = "SnsItemService";
@@ -83,6 +87,7 @@ public interface RemoteSyncService {
 
 	String AdminModuleManagementService = "AdminModuleManagementService";
 	String AdminModuleContentService = "AdminModuleContentService";
+
 	/**
 	 * 刷新缓存
 	 */

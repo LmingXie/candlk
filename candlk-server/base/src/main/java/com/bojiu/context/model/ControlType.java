@@ -106,7 +106,7 @@ public enum ControlType implements ValueProxyImpl<ControlType, Integer> {
 		final ControlType[] pgcTypes = new ControlType[] { L5, L7, L8, L9, L10, NONE, W2, W5, W8 };
 		Arrays.sort(pgcTypes, Comparator.comparing(ControlType::pgcSort));
 		PGC_CACHE = pgcTypes;
-		pgcDefaultTiers = parseInitTiers(PGC_CACHE);
+		pgcDefaultTiers = parseInitTiers(PGC_CACHE, true);
 		PGC_CACHE_CALC = ArrayUtil.filter(pgcTypes, c -> c != NONE && c.pgcVal != null);
 		PGC_CACHE_FRONT_LOSE = ArrayUtil.filter(pgcTypes, c -> !c.ctrlWin && c.pgcVal != null);
 
@@ -117,22 +117,24 @@ public enum ControlType implements ValueProxyImpl<ControlType, Integer> {
 		bpgTypes = ArrayUtil.filter(all, c -> !c.ctrlWin || c == W5);
 		Arrays.sort(bpgTypes, Comparator.comparing(ControlType::getRtp));
 		BPG_CACHE_OUT = bpgTypes;
-		bpgDefaultTiers = parseInitTiers(bpgTypes);
+		bpgDefaultTiers = parseInitTiers(bpgTypes, false);
 
 		/*初始化BBGT可用RTP元数据*/
 		BGT_CACHE = ArrayUtil.filter(all, c -> c.rtp <= 95); // BBGT支持 95%以下
-		bgtDefaultTiers = parseInitTiers(BGT_CACHE);
+		bgtDefaultTiers = parseInitTiers(BGT_CACHE, false);
 
 		/*初始化HBO可用RTP元数据*/
 		HBO_CACHE = new ControlType[] { L10, L11, L12, NONE, L13 };
-		hboDefaultTiers = parseInitTiers(HBO_CACHE);
+		hboDefaultTiers = parseInitTiers(HBO_CACHE, false);
 
 		// 避免枚举值改变
 		Assert.isTrue(CTRL_WIN_VALUES.equals(Common.join(Common.toList(Arrays.asList(all), c -> c.asCalcWin() ? c.value : null, false), ",")));
 	}
 
-	private static List<BigDecimal> parseInitTiers(ControlType[] bpgTypes) {
-		return Stream.concat(Stream.of(BigDecimal.ONE), Stream.generate(() -> BigDecimal.ZERO).limit(bpgTypes.length - 1)).toList();
+	private static List<BigDecimal> parseInitTiers(ControlType[] bpgTypes, boolean isPGC) {
+		return Stream.concat(Stream.of(BigDecimal.ONE), Stream.generate(() -> BigDecimal.ZERO)
+				// 特别注意最后一位表示开关（PGC排除默认RTP因此本身就会多出一位无需-1）
+				.limit(isPGC ? (bpgTypes.length - 1) : bpgTypes.length)).toList();
 	}
 
 	public boolean asCalcWin() {

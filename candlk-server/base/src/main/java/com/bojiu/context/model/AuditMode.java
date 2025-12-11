@@ -3,9 +3,11 @@ package com.bojiu.context.model;
 import javax.annotation.Nullable;
 
 import com.baomidou.mybatisplus.annotation.EnumValue;
+import com.bojiu.common.context.I18N;
 import com.bojiu.common.model.ValueProxy;
 import com.bojiu.common.util.Common;
 import com.bojiu.context.i18n.AdminI18nKey;
+import com.bojiu.context.i18n.UserI18nKey;
 import lombok.Getter;
 
 /**
@@ -35,4 +37,11 @@ public enum AuditMode implements LabelI18nProxy<AuditMode, Integer> {
 		return Common.getEnum(CACHE, value, 1);
 	}
 
+	public String genDesc() {
+		return switch (this) {
+			case BONUS -> "";
+			case CAPITAL_BONUS -> "(" + I18N.msg(UserI18nKey.REMARK_AUDIT_MODE_CAPITAL_BONUS) + ")";
+			case BALANCE_BONUS -> "(" + I18N.msg(UserI18nKey.REMARK_AUDIT_MODE_BALANCE_BONUS) + ")";
+		};
+	}
 }

@@ -57,4 +57,7 @@ public interface Game18nKey extends BaseI18nKey {
 	/** 打码模式 */
 	String COMMISSION_MODE_PLAY = "commission.mode.play";
 
+	/** 领取成功 */
+	String REWARD_RECEIVED_SUCCESS = "game.reward.received.success";
+
 }

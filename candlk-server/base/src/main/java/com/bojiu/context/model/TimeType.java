@@ -62,7 +62,11 @@ public enum TimeType implements LabelI18nProxy<TimeType, Integer> {
 		}
 		Date endTime, beginTime;
 		switch (this) {
-			case TODAY, YESTERDAY, DAYS_7, DAYS_15, DAYS_30 -> {
+			case YESTERDAY -> {
+				endTime = base.addDay(offsetDays).endOf(Calendar.DATE).toDate();
+				beginTime = base.beginOf(Calendar.DATE).toDate();
+			}
+			case TODAY, DAYS_7, DAYS_15, DAYS_30 -> {
 				endTime = base.endOf(Calendar.DATE).toDate();
 				beginTime = base.addDay(offsetDays).beginOf(Calendar.DATE).toDate();
 			}
