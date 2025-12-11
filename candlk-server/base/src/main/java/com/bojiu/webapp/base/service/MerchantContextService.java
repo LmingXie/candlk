@@ -102,4 +102,11 @@ public class MerchantContextService extends BaseServiceImpl<Merchant, MerchantCo
 		instance = this;
 	}
 
+	/**
+	 * 统计商户下的用户数量(建设中商户低频触发该方法)
+	 */
+	public static Long countMerchantUser(Long merchantId) {
+		return instance.baseDao.countMerchantUser(merchantId);
+	}
+
 }

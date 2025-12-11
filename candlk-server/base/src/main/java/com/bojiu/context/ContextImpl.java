@@ -42,11 +42,11 @@ public class ContextImpl extends Context implements ServletContextAware, CacheSy
 	/** 前台默认域名 */
 	public static final String frontDomain = AppRegion.inAsia() ? "hnb2user.com" : "hnb1user.com";
 	/** 后台默认域名 */
-	public static final String backstageDomain = AppRegion.inAsia() ? "hnb2manage.com" : "hnb1manage.com";
+	public static final String backstageDomain = AppRegion.inAsia() ? "hnb2manage.com" : "xeamanage.com";
 	/** 【旧的】前台默认域名 */
-	public static final String oldFrontDomain = AppRegion.inAsia() ? "hcg2mem.com" : "hcgmem.com";
+	public static final String oldFrontDomain = AppRegion.inAsia() ? "hcg2mem.com" : "hnb1user.com";
 	/** 【旧的】后台默认域名 */
-	public static final String oldBackstageDomain = AppRegion.inAsia() ? "hcg2manage.com" : "hcgmanage.com";
+	public static final String oldBackstageDomain = AppRegion.inAsia() ? "hcg2manage.com" : "hnb1manage.com";
 
 	/** 本服务节点IP */
 	private static String nodeIP;

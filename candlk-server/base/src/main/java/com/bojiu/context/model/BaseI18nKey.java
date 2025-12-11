@@ -87,6 +87,8 @@ public interface BaseI18nKey {
 	/** 已通过 */
 	String VERIFY_TRUE = "verify.true";
 
+	/** Google身份验证已成功启用 */
+	String GOOGLE_SET_SUCCESS = "google.set.success";
 	/** 请输入{0}的appid！ */
 	String REGISTER_GOOGLE_APPID_REQUIRED = "register.google.appid.required";
 	/** 请输入{0}的secret！ */
@@ -206,8 +208,12 @@ public interface BaseI18nKey {
 	String DISPATCH_MODE_MANUAL = "dispatch.mode.manual";
 	/** 自动派发 */
 	String DISPATCH_MODE_AUTO = "dispatch.mode.auto";
+	/** 活动系统说明-奖励系统自动派发 */
+	String REMARK_DISPATCH_MODE_AUTO = "remark.dispatch.mode.auto";
+	/** 活动系统说明-奖励手动领取 */
+	String REMARK_DISPATCH_MODE_MANUAL = "remark.dispatch.mode.manual";
 	/** 玩家申请-人工派发 */
-	String DISPATCH_MODE_ARTIFICIAL = "dispatch.mode.artificial";
+	String DISPATCH_MODE_REVIEW = "dispatch.mode.artificial";
 	/** 次日领取 */
 	String COLLECT_TIME_TYPE_NEXT_DAY = "collect.time.type.next.day";
 	/** 实时领取（影响留存） */
@@ -470,5 +476,54 @@ public interface BaseI18nKey {
 	String RANGE_GT_MIN_INVALID = "@validate.range.gt.invalid";
 	/** 当前幸运值不足，去赚幸运值 */
 	String NOT_ENOUGH_EXPEND = "not.enough.expend";
+
+	/** 每日 */
+	String DAILY = "daily";
+	/** 每周 */
+	String WEEKLY = "weekly";
+	/** 每月 */
+	String MONTHLY = "monthly";
+	/** 投注 */
+	String PLAY = "play";
+	/** 盈利 */
+	String PROFIT = "profit";
+	/** 充值 */
+	String RECHARGE = "recharge";
+	/** 累计充值 */
+	String ACCUMULATED_RECHARGE = "accumulated.recharge";
+	/** 有效投注 */
+	String EFFECTIVE_BET_AMOUNT = "effective.bet.amount";
+	/** 盈利额度 */
+	String CUMULATIVE_PROFIT_AMOUNT = "cumulative.profit.amount";
+	/** 充值额度 */
+	String CUMULATIVE_RECHARGE_AMOUNT = "cumulative.recharge.amount";
+	/** 次日 */
+	String NEXT_DAY = "next.day";
+
+	/** 排行榜-活动说明-系统模板 */
+	String RANK_REMARK_SYSTEM_TEMPLATE = "rank.remark.system.template";
+	/** ，最低充值金额需≥ */
+	String RANK_REMARK_MIN_RECHARGE = "rank.remark.min.recharge";
+	/** 每日{0}之间 */
+	String RANK_REMARK_DAILY_BETWEEN = "rank.remark.daily.between";
+	/** 自动派发到账 */
+	String RANK_REMARK_AUTOMATIC_DELIVERY = "rank.remark.automatic.delivery";
+	/** 作废 */
+	String RANK_REMARK_INVALID = "rank.remark.invalid";
+
+	/** 幸运转盘-活动说明-系统模板-幸运值获取方式 */
+	String TURNTABLE_REMARK_SYSTEM_TEMPLATE_PRE = "turntable.remark.system.template.pre";
+	/** 幸运转盘-活动说明-系统模板 */
+	String TURNTABLE_REMARK_SYSTEM_TEMPLATE = "turntable.remark.system.template";
+	/** 有效投注 */
+	String TURNTABLE_REMARK_PLAY = "turntable.remark.play";
+	/** 不限制游戏平台 */
+	String TURNTABLE_REMARK_ALL_GAME = "turntable.remark.all.game";
+	/** 不限制充值方式<br> */
+	String TURNTABLE_REMARK_RECHARGE_LIMIT = "turntable.remark.recharge.limit";
+	/** {0}抽奖一次需消耗{1}幸运值; */
+	String TURNTABLE_REMARK_TURNTABLE_DESC = "turntable.remark.turntable.desc";
+	/** ,同时需要已完成绑定{0}才可参与 */
+	String TURNTABLE_REMARK_BIND_LIMIT = "turntable.remark.bind.limit";
 
 }

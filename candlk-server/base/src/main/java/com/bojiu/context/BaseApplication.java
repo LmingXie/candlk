@@ -43,6 +43,9 @@ public abstract class BaseApplication {
 		System.setProperty("log4j2.includeLocation", "false");
 
 		System.setProperty("jdk.tls.ephemeralDHKeySize", "1024"); // JDK 17.0.9 调整 TLSv1.2 默认值为 2048
+		// 禁用 SSL Session Resumption，避免 Amazon Linux 2023新版 6.10 内核 + JDK 17环境下，空闲的 HTTP/2 连接再次发出请求时触发 java.net.http.HttpTimeoutException: request timed out
+		System.setProperty("jdk.tls.client.enableSessionTicketExtension", "false");
+		System.setProperty("jdk.tls.client.enableSessionResumption", "false");
 		System.setProperty("dubbo.application.qos-enable", "false"); // 禁止 Dubbo 的 QoS Server 服务
 		// 国际化信息 初始化设置
 		I18N.setLocaleSupplier(() -> {

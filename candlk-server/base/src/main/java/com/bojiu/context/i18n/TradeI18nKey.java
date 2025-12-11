@@ -10,6 +10,8 @@ public interface TradeI18nKey extends BaseI18nKey {
 	String PAYMENT_FORCE_PROFILE = "payment.force.profile";
 	/** 该支付渠道暂不支持兑换，请更换其他渠道！ */
 	String PAYMENT_CLOSE = "payment.close";
+	/** 支付通道不可用，请联系客服 */
+	String PAYMENT_SUSPEND = "payment.suspend";
 	/** 当前支付通道暂不支持该货币类型！ */
 	String PAYMENT_CURRENCY_CLOSE = "payment.currency.close";
 	/** 请输入有效的转出地址！ */
@@ -123,23 +125,29 @@ public interface TradeI18nKey extends BaseI18nKey {
 	String CASH_STATUS_REJECT = "cash.status.reject";
 	/** 提现审核 */
 	String CASH_STATUS_REVIEW = "cash.status.review";
-	/** 成功 */
+	/** 提现成功 */
 	String CASH_SUCCESS = "cash.success";
-	/** 拒绝 */
+	/** 提现拒绝 */
 	String CASH_REJECT = "cash.reject";
-	/** 审核 */
+	/** 出款中 */
 	String CASH_REVIEW = "cash.review";
+	/** 提现取消 */
+	String CASH_CANCELED = "cash.canceled";
 
 	// RechargeStatus
-	/** 已关闭 */
+	/** 存款取消 */
 	String RECHARGE_STATUS_CLOSED = "recharge.status.closed";
-	/** 待付款 */
+	/** 存款失败 */
+	String RECHARGE_STATUS_FAIL = "recharge.status.fail";
+	/** 存款超时 */
+	String RECHARGE_STATUS_TIMEOUT = "recharge.status.timeount";
+	/** 等待付款 */
 	String RECHARGE_STATUS_INIT = "recharge.status.init";
-	/** 待审核 */
+	/** 确认中 */
 	String RECHARGE_STATUS_PENDING = "recharge.status.pending";
 	/** 锁定 */
 	String RECHARGE_STATUS_LOCK = "recharge.status.lock";
-	/** 充值成功 */
+	/** 存款成功 */
 	String RECHARGE_STATUS_OK = "recharge.status.ok";
 	// CoinTradeType
 	/** 充值 */

@@ -88,12 +88,28 @@ public class MerchantContext {
 		return MerchantContextService.getCached(merchantId);
 	}
 
-	public static MerchantContext checkStatus(@Nonnull Long merchantId) throws ErrorMessageException {
+	/**
+	 * 检查商户状态
+	 *
+	 * @param forAuth 是否是认证(非注册)
+	 */
+	public static MerchantContext checkStatus(@Nonnull Long merchantId, boolean forAuth) throws ErrorMessageException {
 		MerchantContext context = MerchantContextService.getCached(merchantId);
-		if (context == null || context.groupStatus != SiteStatus.OK || context.getStatus() != SiteStatus.OK) {
+		if (context == null || context.groupStatus.value.compareTo(SiteStatus.INIT.value) < 0 || context.status.value.compareTo(SiteStatus.INIT.value) < 0) {
 			throw new ErrorMessageException(I18N.msg(UserI18nKey.SITE_ABNORMAL), MessagerStatus.ABNORMAL, false);
 		}
+		// 商户状态为建设中，只能注册最多3个用户
+		if (!forAuth && context.groupStatus == SiteStatus.INIT && MerchantContextService.countMerchantUser(context.groupId) >= 3) {
+			throw new ErrorMessageException(I18N.msg(UserI18nKey.MERCHANT_INIT_OVER_USER_NUM), MessagerStatus.INIT, false);
+		}
 		return context;
+	}
+
+	/**
+	 * 检查商户状态(默认非注册)
+	 */
+	public static MerchantContext checkStatus(@Nonnull Long merchantId) throws ErrorMessageException {
+		return checkStatus(merchantId, true);
 	}
 
 	public static Map<Long, MerchantContext> findByIds(Collection<Long> merchantIds) {

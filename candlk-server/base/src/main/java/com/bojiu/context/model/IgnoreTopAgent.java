@@ -1,10 +1,8 @@
 package com.bojiu.context.model;
 
-import java.util.Collections;
 import java.util.List;
 import javax.annotation.Nullable;
 
-import com.bojiu.common.util.Common;
 import me.codeplayer.util.StringUtil;
 
 /**
@@ -13,7 +11,7 @@ import me.codeplayer.util.StringUtil;
 public interface IgnoreTopAgent {
 
 	static List<Long> splitChain(@Nullable String chain) {
-		return StringUtil.notEmpty(chain) ? Common.splitAsLongList(chain) : Collections.emptyList();
+		return StringUtil.splitAsLongList(chain);
 	}
 
 }

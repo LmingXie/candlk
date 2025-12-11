@@ -9,10 +9,6 @@ public enum SiteConfigBitmask implements BizFlag {
 
 	/** 快速指引关闭位 */
 	QUICK_GUIDE,
-	/** 站点配置->创建新站点标识 */
-	SITE_NEW,
-	/** 站点配置->前端模版 */
-	SITE_TEMPLATE,
 	/** 站点配置->前端域名配置 */
 	SITE_WEB_DOMAIN,
 
@@ -20,10 +16,6 @@ public enum SiteConfigBitmask implements BizFlag {
 	SITE_BASE_LOGIN,
 	/** 基础功能配置->Logo启动页 */
 	SITE_BASE_BOOTSTRAP,
-	/** 基础功能配置->首页 */
-	SITE_BASE_HOME,
-	/** 基础功能配置->消息 */
-	SITE_BASE_MSG,
 	/** 基础功能配置->我的 */
 	SITE_BASE_ME,
 	/** 基础功能配置->代理 */
@@ -33,8 +25,6 @@ public enum SiteConfigBitmask implements BizFlag {
 	/** 基础功能配置->底部导航 */
 	SITE_BASE_BOTTOM_NAVIGATION,
 
-	/** 运营配置->vip等级配置 */
-	SITE_OPERATION_VIP,
 	/** 运营配置->任务管理中心 */
 	SITE_OPERATION_TASK,
 	/** 运营配置->运营活动列表 */

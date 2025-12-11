@@ -16,7 +16,6 @@ import com.bojiu.common.web.mvc.ActuatorFilter;
 import com.bojiu.context.auth.AsyncExportInterceptor;
 import com.bojiu.context.auth.ExportInterceptor;
 import com.bojiu.context.model.BaseI18nKey;
-import com.bojiu.context.model.MemberType;
 import com.bojiu.webapp.base.util.Export;
 import lombok.Getter;
 import lombok.Setter;
@@ -109,7 +108,7 @@ public class EnhanceResponseBodyAdapter implements ResponseBodyAdvice<Object> {
 		}
 		if (body != null) {
 			// 所有的 POST 请求，如果没有设置响应消息，则默认加上操作成功的提示
-			if (MemberType.fromBackstage() && "POST".equals(request.getMethod())
+			if ("POST".equals(request.getMethod())
 					&& body instanceof Messager<?> msger && msger.isOK() && msger.getData() == null && StringUtil.isEmpty(msger.getMsg())) {
 				final Ready ready = methodParameter.getMethodAnnotation(Ready.class);
 				if (ready == null || !"x".equals(ready.extra())) {

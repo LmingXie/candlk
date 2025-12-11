@@ -38,13 +38,13 @@ public enum PromotionType implements LabelI18nProxy<PromotionType, Integer> {
 	/** 自定义活动 */
 	CUSTOM(9, PROMOTION_TYPE_CUSTOM, true, true, true, 9),
 	/** 闯关邀请活动 */
-	CHALLENGE_INVITE(10, PROMOTION_TYPE_CHALLENGE_INVITE, false, true, true, 10),
+	CHALLENGE_INVITE(10, PROMOTION_TYPE_CHALLENGE_INVITE, true, true, true, 10),
 	/** 闯关打码活动 */
-	CHALLENGE_PLAY(11, PROMOTION_TYPE_CHALLENGE_PLAY, false, false, true, 11),
+	CHALLENGE_PLAY(11, PROMOTION_TYPE_CHALLENGE_PLAY, true, false, true, 11),
 	/** 余额救援金 */
 	RELIEF_BALANCE(12, PROMOTION_TYPE_RELIEF_BALANCE, false, true, true, 14),
 	/** 排行榜 */
-	RANK(13, PROMOTION_TYPE_RANK, false, true, true, 12),
+	RANK(13, PROMOTION_TYPE_RANK, true, true, true, 12),
 	/** 奖金转盘活动 */
 	REWARD_TURNTABLE(14, PROMOTION_TYPE_REWARD_TURNTABLE, false, false, false),
 	/** 公积金 */

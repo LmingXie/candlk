@@ -95,7 +95,20 @@ public class ProxyRequest extends BaseProxyRequest {
 
 	@Override
 	public TimeInterval parseInterval(@Nullable String beginTime, @Nullable String endTime, boolean localized) {
-		TimeInterval interval = parseRelativeInterval(beginTime, endTime, localized ? getTimeZone() : null);
+		TimeZone from, to;
+		if (localized) {
+			if (MemberType.fromBackstage()) { // 后台不转换时区表示
+				from = getTimeZone();
+				to = null;
+			} else {
+				from = requestContext.getClientInfo().timeZone();
+				to = getTimeZone();
+			}
+		} else {
+			from = null;
+			to = null;
+		}
+		TimeInterval interval = parseRelativeInterval(beginTime, endTime, from, to);
 		if (interval != null) {
 			return interval;
 		}
@@ -461,7 +474,7 @@ public class ProxyRequest extends BaseProxyRequest {
 	}
 
 	@Nullable
-	public static TimeInterval parseRelativeInterval(@Nullable String beginStr, @Nullable String endStr, @Nullable TimeZone timeZone) {
+	public static TimeInterval parseRelativeInterval(@Nullable String beginStr, @Nullable String endStr, @Nullable TimeZone fromTimeZone, @Nullable TimeZone toTimeZone) {
 		final int[] beginMeta = parseRelative(beginStr);
 		if (beginMeta == null) {
 			return null;
@@ -471,7 +484,7 @@ public class ProxyRequest extends BaseProxyRequest {
 			return null;
 		}
 		final long nowInMs = System.currentTimeMillis();
-		final EasyDate d = timeZone == null ? new EasyDate(nowInMs) : new EasyDate(nowInMs, timeZone);
+		final EasyDate d = fromTimeZone == null ? new EasyDate(nowInMs) : new EasyDate(nowInMs, fromTimeZone);
 		applyWith(d, beginMeta);
 		Date begin = d.beginOf(beginMeta[1]).toDate(), end;
 		if (beginMeta[0] == endMeta[0] && beginMeta[1] == endMeta[1]) {
@@ -480,6 +493,14 @@ public class ProxyRequest extends BaseProxyRequest {
 			d.setTime(nowInMs);
 			applyWith(d, endMeta);
 			end = d.endOf(endMeta[1]).toDate();
+		}
+		if (toTimeZone != null && fromTimeZone != null) {
+			final int diff = fromTimeZone.getRawOffset() - toTimeZone.getRawOffset();
+			if (diff != 0) {
+				begin.setTime(begin.getTime() + diff);
+				end.setTime(end.getTime() + diff);
+				d.setTimeZone(toTimeZone);
+			}
 		}
 		TimeInterval interval = new TimeInterval(begin, end, -1, -1);
 		return interval.setEasyDate(d);

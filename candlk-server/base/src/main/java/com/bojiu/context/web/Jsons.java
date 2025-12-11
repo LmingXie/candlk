@@ -17,7 +17,7 @@ import me.codeplayer.util.X;
 public abstract class Jsons {
 
 	static String dateFormat = "millis";   // 日期时间类型默认输出为 毫秒级时间戳
-	static JSONWriter.Context encodeContext, encodeRawContext, serializeContext;
+	public static JSONWriter.Context encodeContext, encodeRawContext, serializeContext;
 	static JSONReader.Context decodeContext, deserializeContext;
 
 	static {

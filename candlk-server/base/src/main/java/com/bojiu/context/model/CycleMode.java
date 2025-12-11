@@ -2,6 +2,7 @@ package com.bojiu.context.model;
 
 import java.util.Calendar;
 import java.util.Date;
+import javax.annotation.Nonnull;
 import javax.annotation.Nullable;
 
 import com.baomidou.mybatisplus.annotation.EnumValue;
@@ -107,6 +108,7 @@ public enum CycleMode implements LabelI18nProxy<CycleMode, Integer> {
 	/**
 	 * 根据循环模式获取 Calendar模式(目前支持小时,日,周,月,年)
 	 */
+	@Nullable
 	public static Integer castCalendar(CycleMode cycleMode) {
 		return switch (cycleMode) {
 			case DAILY_CYCLE:
@@ -124,4 +126,18 @@ public enum CycleMode implements LabelI18nProxy<CycleMode, Integer> {
 		};
 	}
 
+	/**
+	 * 根据排行榜时长(0=天；1=周；2=月)获取 Calendar模式
+	 */
+	@Nonnull
+	public static Integer castCalendar(Integer duration) {
+		return switch (duration) {
+			case 1:
+				yield Calendar.DAY_OF_WEEK;
+			case 2:
+				yield Calendar.MONTH;
+			default:
+				yield Calendar.DATE;
+		};
+	}
 }
