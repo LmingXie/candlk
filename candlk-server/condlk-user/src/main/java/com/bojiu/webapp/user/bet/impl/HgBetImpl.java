@@ -37,9 +37,9 @@ public class HgBetImpl implements BetApi {
 	 */
 	// final HttpClient proxyHttpClient;
 
-	public HgBetImpl(@Value("${service.proxy-conf}") String proxyConfig) {
-		// proxyHttpClient = BaseHttpUtil.getProxyOrDefaultClient(proxyConfig);
-	}
+	// public HgBetImpl(@Value("${service.proxy-conf}") String proxyConfig) {
+	// 	// proxyHttpClient = BaseHttpUtil.getProxyOrDefaultClient(proxyConfig);
+	// }
 
 	@Override
 	public Set<String> pull() throws IOException {

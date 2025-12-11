@@ -23,7 +23,7 @@ spring:
     enabled: false
   datasource:
     driver-class-name: com.mysql.cj.jdbc.Driver
-    url: jdbc:mysql://127.0.0.1:3607/local?useUnicode=true
+    url: jdbc:mysql://127.0.0.1:3607/bet_local?useUnicode=true
     username: root
     password: PzxELStGI2MzEhoFBQk4Bw
     hikari:
