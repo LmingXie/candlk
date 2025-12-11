@@ -142,14 +142,6 @@ public enum BonusType implements LabelI18nProxy<BonusType, Integer> {
 			return result;
 		}
 
-		public BigDecimal outMax() {
-			return showMax == null ? max : showMax;
-		}
-
-		public BigDecimal outMin() {
-			return showMin == null ? min : showMin;
-		}
-
 		public void checkAvg() {
 			I18N.assertTrue(min != null && min.compareTo(BigDecimal.ZERO) > 0, AdminI18nKey.PROMOTION_AWARD_MIN_INVALID); // 最小金额错误
 			I18N.assertTrue(max != null && max.compareTo(min) > 0, AdminI18nKey.PROMOTION_AWARD_MAX_INVALID); // 最大金额错误

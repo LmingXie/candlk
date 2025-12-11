@@ -87,8 +87,6 @@ public interface BaseI18nKey {
 	/** 已通过 */
 	String VERIFY_TRUE = "verify.true";
 
-	/** Google身份验证已成功启用 */
-	String GOOGLE_SET_SUCCESS = "google.set.success";
 	/** 请输入{0}的appid！ */
 	String REGISTER_GOOGLE_APPID_REQUIRED = "register.google.appid.required";
 	/** 请输入{0}的secret！ */

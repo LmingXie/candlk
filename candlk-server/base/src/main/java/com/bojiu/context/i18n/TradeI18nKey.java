@@ -10,8 +10,6 @@ public interface TradeI18nKey extends BaseI18nKey {
 	String PAYMENT_FORCE_PROFILE = "payment.force.profile";
 	/** 该支付渠道暂不支持兑换，请更换其他渠道！ */
 	String PAYMENT_CLOSE = "payment.close";
-	/** 支付通道不可用，请联系客服 */
-	String PAYMENT_SUSPEND = "payment.suspend";
 	/** 当前支付通道暂不支持该货币类型！ */
 	String PAYMENT_CURRENCY_CLOSE = "payment.currency.close";
 	/** 请输入有效的转出地址！ */

@@ -352,4 +352,18 @@ public class FeatureContext {
 		return this.featuresJson = Jsons.encodeRaw(featuresJson);
 	}
 
+	public static Set<Integer> getGameType(FeatureContext context) {
+		FeatureConfig config = context.getConfig(Feature.Game);
+		LinkedHashMap<String, Map<Long, JSONObject>> currencyVendorMap = config.getParsedValue(new TypeReference<>() {
+		}, false);
+		Set<Integer> types = new HashSet<>();
+		for (Map<Long, JSONObject> m : currencyVendorMap.values()) {
+			for (JSONObject dto : m.values()) {
+				types.add(dto.getInteger("type"));
+			}
+		}
+		return types;
+	}
+
+
 }

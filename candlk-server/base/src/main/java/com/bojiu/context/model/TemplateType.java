@@ -33,10 +33,6 @@ public enum TemplateType implements LabelI18nProxy<TemplateType, Integer> {
 	PD(6, TEMPLATE_TYPE_PANDA, false, new int[] { 2, 1 }, 6),
 	/** 综合版1 */
 	COMPREHENSIVE_VERSION_1(7, COMPREHENSIVE_VERSION_ONE, new int[] { 3, 5 }, new int[] { 1, 1 }, new int[] { 0, 1 }, 7),
-	/** 综合版3 */
-	COMPREHENSIVE_VERSION_3(8, COMPREHENSIVE_VERSION_THIRD, new int[] { 3, 5 }, new int[] { 1, 1 }, new int[] { 0, 1 }, 8),
-	/** 综合版4 */
-	COMPREHENSIVE_VERSION_4(9, COMPREHENSIVE_VERSION_FOUR, new int[] { 3, 5 }, new int[] { 1, 1 }, new int[] { 0, 1 }, 9),
 	;
 	@EnumValue
 	public final Integer value;

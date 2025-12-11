@@ -558,8 +558,6 @@ public interface UserI18nKey extends BaseI18nKey {
 	String REWARD_SOURCE_REBATE = "reward.source.rebate";
 	/** 公积金奖励 */
 	String REWARD_SOURCE_DEPOSIT_POOL = "reward.source.deposit.pool";
-	/** 幸运转盘 */
-	String REWARD_SOURCE_TURNTABLE = "reward.source.turntable";
 	/** 签到活动说明 1.每日充值、有效投注满足活动条件，才可进行签到，签到成功可领取对应奖金，最高{2}（最高金额）；<br/>2.签到投注不限制平台，奖励预计10分钟后更新，请等待奖励发放；<br/> */
 	String SIGN_REMARK_ONE_TWO = "sign.remark.one.two";
 	/** 签到活动说明 3.此活动属{0}{1} */
@@ -574,6 +572,10 @@ public interface UserI18nKey extends BaseI18nKey {
 	String SIGN_REMARK_FIVE = "sign.remark.five";
 	/** 仅限：{0} */
 	String SIGN_REMARK_FIVE_GAME_LIMIT = "sign.remark.five.game.limit";
+	/** 投注仅限<br/> {0} */
+	String DEPOSIT_REMARK_FIVE_GAME_LIMIT = "deposit.remark.five.game.limit";
+	/** 投注不限游戏平台 */
+	String DEPOSIT_REMARK_FIVE_ALL_GAME = "deposit.remark.five.all.game";
 	/** 不限游戏平台 */
 	String SIGN_REMARK_FIVE_ALL_GAME = "sign.remark.five.all.game";
 	/** 公积金活动说明 1、赠送方式： 每次充值≥{0}，会赠送充值金额{1}%的奖金，该奖金存放至公积金账户，充值越多，奖励越多。<br/>2、取出条件： 每次充值都会积累新的公积金，所以每次都要完成该充值本金的{2}倍有效投注，才能取出公积金；若公积金无赠送或已封顶的，则需要完成该充值的 {3}倍有效投注；<br/> */
@@ -588,13 +590,19 @@ public interface UserI18nKey extends BaseI18nKey {
 	String DEPOSIT_REMARK_THIRD_RIGHT_LATTER = "deposit.remark.third.right.latter";
 	/** 3、赠送封顶： 活动周期内，{0}公积金累计{1} */
 	String DEPOSIT_REMARK_THIRD_RIGHT = "deposit.remark.third.right";
-	/** <br/>4、稽核倍数：<br/>取出的公积金奖金需{0}倍有效投注，才能申请提现，投注 */
+	/** 4、重置周期： 公积金有效期为 每月，周期结束7天后未取出，公积金奖励自动作废 */
+	String DEPOSIT_REMARK_CYCLE_FOUR = "deposit.remark.cycle.four";
+	/** 公积金奖励自动派发 */
+	String DEPOSIT_REMARK_DISPATCH_MODE_AUTO = "deposit.remark.dispatch.mode.auto";
+	/** 公积金奖励自动作废 */
+	String DEPOSIT_REMARK_DISPATCH_MODE_MANUAL = "deposit.remark.dispatch.mode.manual";
+	/** {0}、稽核倍数：取出的公积金奖金需{1}倍有效投注，才能申请提现，{2} */
 	String DEPOSIT_REMARK_FOUR = "deposit.remark.four";
 	/** {0}手动领取， */
 	String DEPOSIT_REMARK_FIVE_MID = "deposit.remark.five.mid";
 	/** 5、领取限制： {0}活动期间内，{1} */
 	String DEPOSIT_REMARK_FIVE = "deposit.remark.five";
-	/** 可领取多次。 */
+	/** 可多次领取奖励。 */
 	String DEPOSIT_REMARK_FIVE_RIGHT_FIRST = "deposit.remark.five.right.first";
 	/** 仅可领取1次奖励。 */
 	String DEPOSIT_REMARK_FIVE_RIGHT_LATTER = "deposit.remark.five.right.latter";
@@ -911,10 +919,6 @@ public interface UserI18nKey extends BaseI18nKey {
 	String TASK_REMARK_DAY_7 = "task.remark_day_7";
 	/** 任务中心 */
 	String SYS_INTERNAL_MODULE_TASK = "sys.internal.module.task";
-	/** 找到我们 */
-	String SYS_INTERNAL_MODULE_FIND_US = "sys.internal.module.find.us";
-	/** 复制推广链接 */
-	String SYS_INTERNAL_MODULE_COPY_AGENT_LINK = "sys.internal.module.copy.agent.link";
 	/** 用户修改 */
 	String USER_EDIT_WITHOUT_ANY_MODIFICATION = "user.edit.without.any.modification";
 	String USER_EDIT_SUCCESSFUL = "user.edit.success";
