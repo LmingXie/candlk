@@ -28,7 +28,7 @@ public enum PromotionType implements LabelI18nProxy<PromotionType, Integer> {
 	/** 救援金 */
 	RELIEF(4, PROMOTION_TYPE_RELIEF, true, true, true, 4),
 	/** 幸运转盘 */
-	TURNTABLE(5, PROMOTION_TYPE_TURNTABLE, false, false, true, 5),
+	TURNTABLE(5, PROMOTION_TYPE_TURNTABLE, false, true, true, 5),
 	/** 红包 */
 	RED_ENVELOPE(6, PROMOTION_TYPE_RED_ENVELOPE, false, true, true, 6),
 	/** 推广 */

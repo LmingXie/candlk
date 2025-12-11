@@ -921,10 +921,4 @@ public interface RedisKey {
 	 */
 	String DOMAIN_MARKETING = "domainMarketing";
 
-	/**
-	 * 模块内容的状态变动时间
-	 * ZSet < "merchant:moduleContentStatusChange", $moduleContendId, $time(状态变动时间) >
-	 */
-	String MERCHANT_MODULE_CONTENT_STATUS_CHANGE = "merchant:moduleContentStatusChange";
-
 }

@@ -94,10 +94,8 @@ public interface Member extends Bean<Long>, MemberRole, WithMerchant {
 	 *
 	 * @see #idPrefix()
 	 */
-	String ID_BR_PREFIX = "bg";
-	String ID_ASIA_PREFIX = "ag";
 	@Deprecated
-	String ID_PREFIX = AppRegion.inBr() ? ID_BR_PREFIX : ID_ASIA_PREFIX;
+	String ID_PREFIX = AppRegion.inBr() ? "bg" : "ag";
 
 	static String idPrefix() {
 		return idPrefix(Env.CURRENT);
@@ -115,7 +113,7 @@ public interface Member extends Bean<Long>, MemberRole, WithMerchant {
 
 	static Env envByIdPrefix(String prefix) {
 		return switch (prefix) {
-			case ID_BR_PREFIX, ID_ASIA_PREFIX -> Env.PROD;
+			case "bg", "ag" -> Env.PROD;
 			case "bu", "au" -> Env.UAT;
 			case "bt", "at" -> Env.TEST;
 			case "bd" -> Env.DEV;

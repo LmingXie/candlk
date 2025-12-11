@@ -8,6 +8,7 @@ import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
 
 import com.bojiu.common.context.I18N;
+import com.bojiu.common.context.RequestContext;
 import com.bojiu.common.model.Messager;
 import com.bojiu.common.security.AES;
 import com.bojiu.common.util.Common;
@@ -108,8 +109,8 @@ public class EnhanceResponseBodyAdapter implements ResponseBodyAdvice<Object> {
 		}
 		if (body != null) {
 			// 所有的 POST 请求，如果没有设置响应消息，则默认加上操作成功的提示
-			if ("POST".equals(request.getMethod())
-					&& body instanceof Messager<?> msger && msger.isOK() && msger.getData() == null && StringUtil.isEmpty(msger.getMsg())) {
+			if ("POST".equals(request.getMethod()) && body instanceof Messager<?> msger && msger.isOK()
+					&& msger.getData() == null && StringUtil.isEmpty(msger.getMsg()) && RequestContext.getSessionUser(request) != null) {
 				final Ready ready = methodParameter.getMethodAnnotation(Ready.class);
 				if (ready == null || !"x".equals(ready.extra())) {
 					body = msger.setMsg(I18N.msg(BaseI18nKey.OPERATE_SUCCESS));

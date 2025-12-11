@@ -57,7 +57,6 @@ public interface RemoteSyncService {
 	String AppDownloadService = "AppDownloadService";
 	String BrandJackpotService = "BrandJackpotService";
 	String UserMerchantVendorService = "UserMerchantVendorService";
-	String SiteContentService = "SiteContentService";
 
 	/* ======= trade ====== */
 	String SnsItemService = "SnsItemService";

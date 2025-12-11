@@ -355,8 +355,6 @@ public interface UserModelI18nKey extends BaseI18nKey {
 	String TASK_REWARD_BIND_PHONE = "task.reward.bind.phone";
 	/** 首次下载安装并登录APP任务 */
 	String TASK_REWARD_LOGIN_APP = "task.reward.login.app";
-	/** 绑定Google身份验证器 */
-	String TASK_REWARD_BIND_GOOGLE_AUTH = "task.reward.bind.google_auth";
 	// Country
 	/** 巴西 */
 	String COUNTRY_BR = "country.br";
@@ -450,10 +448,6 @@ public interface UserModelI18nKey extends BaseI18nKey {
 	String TEMPLATE_TYPE_PANDA = "template.type.panda";
 	/** 综合版1 */
 	String COMPREHENSIVE_VERSION_ONE = "comprehensive.version.one";
-	/** 综合版1 */
-	String COMPREHENSIVE_VERSION_THIRD = "comprehensive.version.third";
-	/** 综合版1 */
-	String COMPREHENSIVE_VERSION_FOUR = "comprehensive.version.four";
 
 	/** 皮肤蓝紫色 */
 	String COLOR_TYPE_BLUE_PURPLE = "color.type.blue.purple";

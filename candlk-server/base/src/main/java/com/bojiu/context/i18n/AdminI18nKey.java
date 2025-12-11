@@ -682,7 +682,7 @@ public interface AdminI18nKey extends BaseI18nKey {
 	String MERCHANT_ID_REQUIRED = "merchant.id.required";
 	/** 商户名重复 */
 	String MERCHANT_NAME_DUPLICATE = "merchant.name.duplicate";
-	/** 账户余额不够支付开版费 + 线路费，无法开站，开版费：{0}U，服务器费用：{1}U */
+	/** 账户余额不够支付开版费 + 线路费，开版费：{0}U，服务器费用：{1}U，请先充值 */
 	String MERCHANT_NOT_ENOUGH_BALANCE = "merchant.not.enough.balance";
 	/** 商户抽成不能大于厂家抽成 */
 	String MERCHANT_NOT_ALLOW_GREATER = "merchant.not.allow.greater";
@@ -2511,10 +2511,6 @@ public interface AdminI18nKey extends BaseI18nKey {
 	String MERCHANT_PARAM_CHANNEL_ID = "merchant.param.channel.id";
 	/** 交易通道 */
 	String MERCHANT_PARAM_CHANNEL_TYPE = "merchant.param.channel.type";
-	/** 代收通道编号 */
-	String MERCHANT_PARAM_COLLECT_CHANNEL_NO = "merchant.param.collect.channel.no";
-	/** 代付通道编号 */
-	String MERCHANT_PARAM_PAY_CHANNEL_NO = "merchant.param.pay.channel.no";
 	/** 代收支付地址 */
 	String MERCHANT_PARAM_CREATE_ORDER_KEY = "merchant.param.create.order.key";
 	/** 代付支付地址 */
@@ -3155,8 +3151,6 @@ public interface AdminI18nKey extends BaseI18nKey {
 	String PROMOTION_TAG_LIMIT = "promotion.tag.limit";
 	/** 标签重复 */
 	String PROMOTION_TAG_REPEAT = "promotion.tag.repeat";
-	/** VIP系统默认规则 */
-	String VIP_DEFAULT_RULE_DESC = "vip.default.rule.desc";
 	String COMMON_STATUS_EXECUTED = "common.status.executed";   // 已执行
 	String COMMON_STATUS_CANCELED = "common.status.canceled";   // 已取消
 	String USER_BIZ_FLAG_GAME_LIMIT = "user.biz.flag.game_limit";     // 禁止进入游戏
