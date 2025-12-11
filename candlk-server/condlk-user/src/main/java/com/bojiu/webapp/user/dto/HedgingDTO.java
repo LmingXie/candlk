@@ -1,8 +1,9 @@
 package com.bojiu.webapp.user.dto;
 
-import java.util.*;
+import java.util.ArrayList;
+import java.util.List;
 
-import com.bojiu.context.web.Jsons;
+import lombok.Getter;
 import lombok.extern.slf4j.Slf4j;
 
 /** 预估对冲算法类 */
@@ -133,6 +134,7 @@ public class HedgingDTO {
 
 	}
 
+	@Getter
 	transient List<Out> outs;
 
 	/** 计算三串一利润 */
@@ -153,14 +155,6 @@ public class HedgingDTO {
 			result.add(new Out("串子全中", getWin() + (bLossFactor_ * sumBInCoin)));
 			outs = result;
 		}
-		return outs;
-	}
-
-	public List<Out> getOuts() {
-		List<Out> outs = calcProfit(hedgingCoins);
-		// 盈利排名 (按最大净收益从高到低排序)
-		outs.sort(Comparator.comparingDouble(r -> r.out));
-		Collections.reverse(outs);
 		return outs;
 	}
 
