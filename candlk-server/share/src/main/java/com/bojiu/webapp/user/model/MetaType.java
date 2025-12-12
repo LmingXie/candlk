@@ -1,13 +1,11 @@
 package com.bojiu.webapp.user.model;
 
-import java.util.*;
 import javax.annotation.Nullable;
 
 import com.baomidou.mybatisplus.annotation.EnumValue;
 import com.bojiu.common.context.Context;
 import com.bojiu.common.context.Env;
 import com.bojiu.common.model.*;
-import com.bojiu.common.util.Common;
 import com.bojiu.context.web.Jsons;
 import com.bojiu.webapp.base.entity.MetaValue;
 import lombok.Getter;
@@ -20,24 +18,15 @@ import static com.bojiu.webapp.base.service.RemoteSyncService.*;
 /**
  * 元数据 类型 枚举
  */
-@SuppressWarnings({ "JavadocReference", "rawtypes" })
+@SuppressWarnings({ "rawtypes" })
 @Getter
 public enum MetaType implements ValueProxyImpl<MetaType, Integer>, Visible {
 
-	@Deprecated
 	game(0, "游戏配置", State.INTERNAL, false, true, GAME),
-	/**
-	 * 推送机器人配置
-	 *
-	 * @see com.bojiu.webapp.admin.dto.PaymentConfigDTO 仅限商户ID = 0
-	 */
-	bot_config(1, "推送机器人配置", State.PROTECTED, false, false, USER),
-	/** 全局账号配置 */
-	global_user_config(2, "全局账号配置", State.PROTECTED, true, false, USER),
+	/** 游戏供应商配置 */
+	bet_config(1, "游戏供应商配置", State.PROTECTED, false, false, USER),
 	/** 数据库升级标记 */
 	db_upgrade(3, "全局账号配置", State.PROTECTED, true, false, USER),
-	/** 剧本聊天机器人配置 */
-	larp_bot_config(4, "剧本聊天机器人配置", State.PROTECTED, true, false, USER),
 	;
 
 	@EnumValue
@@ -93,27 +82,6 @@ public enum MetaType implements ValueProxyImpl<MetaType, Integer>, Visible {
 
 	public static MetaType of(@Nullable Integer value) {
 		return game.getValueOf(value);
-	}
-
-	/**
-	 * 需要系统初始化的数据
-	 */
-	public static String valuesForInitCopyFromGlobal() {
-		List<Integer> metaTypes = Common.toList(Arrays.asList(game.proxy.values()), t -> t.initCopyFromGlobal ? t.getValue() : null, false);
-		return Common.join(metaTypes, ",");
-	}
-
-	/**
-	 * 复制商户时，剔除指定配置
-	 */
-	public static List<Integer> valuesForRejectSpecifiedConfig() {
-		final List<Integer> result = new ArrayList<>();
-		for (MetaType mt : game.proxy.values()) {
-			if (!mt.copySpecifiedConfig) {
-				result.add(mt.value);
-			}
-		}
-		return result;
 	}
 
 	@Nullable

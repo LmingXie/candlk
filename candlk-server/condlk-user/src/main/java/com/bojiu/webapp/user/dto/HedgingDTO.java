@@ -36,7 +36,9 @@ public class HedgingDTO {
 	/** 赔率信息 */
 	public static class Odds {
 
+		/** A平台 赔率 */
 		public double aRate;
+		/** B平台 赔率 */
 		public double bRate;
 
 		public Odds(double aRate, double bRate) {

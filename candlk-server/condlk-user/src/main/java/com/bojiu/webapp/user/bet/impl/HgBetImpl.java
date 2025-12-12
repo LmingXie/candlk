@@ -4,18 +4,21 @@ import java.io.IOException;
 import java.net.http.HttpClient;
 import java.util.Map;
 import java.util.Set;
+import javax.annotation.Resource;
 
-import com.bojiu.common.util.BaseHttpUtil;
-import com.bojiu.webapp.user.bet.BetApi;
+import com.bojiu.webapp.user.bet.BaseBetApiImpl;
 import com.bojiu.webapp.user.model.BetProvider;
+import com.bojiu.webapp.user.service.MetaService;
 import lombok.extern.slf4j.Slf4j;
 import me.codeplayer.util.CollectionUtil;
-import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
 
 @Slf4j
 @Service
-public class HgBetImpl implements BetApi {
+public class HgBetImpl extends BaseBetApiImpl {
+
+	@Resource
+	MetaService metaService;
 
 	@Override
 	public BetProvider getProvider() {
@@ -37,14 +40,22 @@ public class HgBetImpl implements BetApi {
 		FS_FU_count + P3_FU_count   早盘
 
 	 */
-	final HttpClient proxyHttpClient;
+	@Override
+	protected HttpClient currentClient() {
+		HttpClient client = proxyClient;
+		return client == null ? defaultClient() : client;
+	}
 
-	public HgBetImpl(@Value("${service.proxy-conf}") String proxyConfig) {
-		proxyHttpClient = BaseHttpUtil.getProxyOrDefaultClient(proxyConfig);
+	public HgBetImpl() {
+		super();
+		// TODO: 2025/12/11 获取版本信息
+		// 1、获取登录token
 	}
 
 	@Override
 	public Set<String> pull() throws IOException {
+		// TODO: 2025/12/11 循环查询5大联赛赛事赔率
+		// TODO: 2025/12/11  
 		return null;
 	}
 

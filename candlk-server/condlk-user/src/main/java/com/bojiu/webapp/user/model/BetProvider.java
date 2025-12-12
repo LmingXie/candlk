@@ -21,11 +21,11 @@ public enum BetProvider implements ValueProxyImpl<BetProvider, Integer> {
 	 * <li>D盘口账密：Bet20251202/123456789Cr</a>
 	 * </ul>
 	 */
-	HG("HG"),
-	/** D盘口 <a href="https://d1ce.com/">D1CE</a>（账密：1611826811@qq.com/123456789Cr） */
+	HG("皇冠"),
+	/** D1CE/皇冠D盘口 <a href="https://d1ce.com/">D1CE</a>（账密：1611826811@qq.com/123456789Cr） */
 	D1CE("D1CE"),
 	/** <a href="https://www.g9i3sr.vip:8443/">开云体育</a>（账密：anxiu55m/rewq4321） */
-	KAI_YUN("D1CE"),
+	KAI_YUN("开云体育"),
 	;
 
 	@EnumValue
