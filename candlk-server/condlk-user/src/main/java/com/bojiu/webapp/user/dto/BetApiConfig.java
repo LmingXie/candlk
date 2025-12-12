@@ -5,7 +5,6 @@ import lombok.experimental.Accessors;
 
 @Getter
 @Setter
-@NoArgsConstructor
 @Accessors(chain = true)
 public class BetApiConfig {
 
@@ -17,5 +16,11 @@ public class BetApiConfig {
 	public String password;
 	/** 代理配置（格式：proxy://username:password@host:port） */
 	public String proxy;
+	/** API接口地址 */
+	public String endPoint;
+
+	public BetApiConfig() {
+		this.endPoint = "https://" + domain;
+	}
 
 }

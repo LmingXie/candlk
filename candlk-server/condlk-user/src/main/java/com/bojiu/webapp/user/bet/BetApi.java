@@ -1,7 +1,9 @@
 package com.bojiu.webapp.user.bet;
 
-import java.util.*;
+import java.util.EnumMap;
+import java.util.Set;
 
+import com.bojiu.common.model.Messager;
 import com.bojiu.common.util.SpringUtil;
 import com.bojiu.webapp.user.model.BetProvider;
 import me.codeplayer.util.LazyCacheLoader;
@@ -13,7 +15,12 @@ import org.slf4j.LoggerFactory;
  */
 public interface BetApi {
 
-	Logger log = LoggerFactory.getLogger(BetApi.class);
+	/** 正在维护中 */
+	String STATUS_MAINTAIN = "game503";
+	/** 已被限流的 */
+	String STATUS_FREQ_LIMITED = "freqLimited";
+
+	Logger LOGGER = LoggerFactory.getLogger(BetApi.class);
 
 	/** 生产厂商 */
 	BetProvider getProvider();
@@ -33,5 +40,8 @@ public interface BetApi {
 	 * 拉取赔率数据
 	 */
 	Set<String> pull() throws Exception;
+
+	/** 检查当前API服务器状态是否正常 */
+	Messager<Void> ping();
 
 }
