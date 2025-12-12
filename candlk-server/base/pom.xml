@@ -83,6 +83,13 @@
 						<phase>process-classes</phase>
 						<configuration>
 							<proc>only</proc>
+							<annotationProcessorPaths>
+								<path>
+									<groupId>org.apache.logging.log4j</groupId>
+									<artifactId>log4j-core</artifactId>
+									<version>${log4j2.version}</version>
+								</path>
+							</annotationProcessorPaths>
 							<annotationProcessors>
 								<annotationProcessor>
 									org.apache.logging.log4j.core.config.plugins.processor.PluginProcessor
