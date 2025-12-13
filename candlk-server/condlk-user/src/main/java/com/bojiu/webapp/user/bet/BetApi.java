@@ -32,8 +32,8 @@ public interface BetApi {
 
 	LazyCacheLoader<EnumMap<BetProvider, BetApi>> implMapRef = new LazyCacheLoader<>(BetApi::init);
 
-	static BetApi getInstance(BetProvider tweetProvider) {
-		return implMapRef.get().get(tweetProvider);
+	static BetApi getInstance(BetProvider betProvider) {
+		return implMapRef.get().get(betProvider);
 	}
 
 	/** 查询游戏赔率数据 */
