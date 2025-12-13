@@ -54,9 +54,11 @@ public class AsyncExportInterceptor implements HandlerInterceptor {
 		return true;
 	}
 
-	public static void response(HttpServletResponse response, HttpServletRequest request) {
-		Messager<String> msger = Messager.status(MessagerStatus.ASYNC_EXPORT, I18N.msg(BaseI18nKey.EXPORT_SUCCESS));
-		ProxyRequest.writeJSON(response, msger.setCode(0), request);
+	public static void response(Object result, HttpServletResponse response, HttpServletRequest request) {
+		// 允许处理方法自定义 result，但必须是 Messager 并且不能有 data 属性
+		Messager<?> data = result instanceof Messager<?> msger && msger.data() == null ? msger
+				: Messager.status(MessagerStatus.ASYNC_EXPORT, I18N.msg(BaseI18nKey.EXPORT_SUCCESS)).setCode(0);
+		ProxyRequest.writeJSON(response, data, request);
 	}
 
 }
