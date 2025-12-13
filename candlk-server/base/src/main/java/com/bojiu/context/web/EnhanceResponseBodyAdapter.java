@@ -3,7 +3,6 @@ package com.bojiu.context.web;
 import java.security.GeneralSecurityException;
 import java.util.Collections;
 import java.util.List;
-import javax.annotation.Nullable;
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
 
@@ -24,6 +23,7 @@ import lombok.extern.slf4j.Slf4j;
 import me.codeplayer.util.JavaUtil;
 import me.codeplayer.util.StringUtil;
 import org.apache.commons.lang3.RandomStringUtils;
+import org.jspecify.annotations.Nullable;
 import org.springframework.core.MethodParameter;
 import org.springframework.http.MediaType;
 import org.springframework.http.converter.HttpMessageConverter;
@@ -84,7 +84,7 @@ public class EnhanceResponseBodyAdapter implements ResponseBodyAdvice<Object> {
 			final Export export = methodParameter.getMethodAnnotation(Export.class);
 			if (export != null) {
 				if (export.async()) {
-					AsyncExportInterceptor.response(response, request);
+					AsyncExportInterceptor.response(body, response, request);
 					return null;
 				}
 				Object listToExport = request.getAttribute(Export.attrData);
