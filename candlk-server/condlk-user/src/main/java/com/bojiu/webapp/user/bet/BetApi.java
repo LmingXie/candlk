@@ -1,10 +1,10 @@
 package com.bojiu.webapp.user.bet;
 
-import java.util.EnumMap;
-import java.util.Set;
+import java.util.*;
 
 import com.bojiu.common.model.Messager;
 import com.bojiu.common.util.SpringUtil;
+import com.bojiu.webapp.user.dto.GameDTO;
 import com.bojiu.webapp.user.model.BetProvider;
 import me.codeplayer.util.LazyCacheLoader;
 import org.slf4j.Logger;
@@ -36,10 +36,8 @@ public interface BetApi {
 		return implMapRef.get().get(tweetProvider);
 	}
 
-	/**
-	 * 拉取赔率数据
-	 */
-	Set<String> pull() throws Exception;
+	/** 查询游戏赔率数据 */
+	List<GameDTO> getGameBets();
 
 	/** 检查当前API服务器状态是否正常 */
 	Messager<Void> ping();

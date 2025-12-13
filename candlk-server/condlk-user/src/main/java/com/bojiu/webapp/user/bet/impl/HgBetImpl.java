@@ -5,6 +5,9 @@ import java.io.StringReader;
 import java.net.URI;
 import java.net.http.HttpClient;
 import java.net.http.HttpResponse;
+import java.text.ParseException;
+import java.time.ZoneId;
+import java.time.ZonedDateTime;
 import java.util.*;
 import javax.xml.parsers.DocumentBuilderFactory;
 import javax.xml.parsers.ParserConfigurationException;
@@ -13,10 +16,13 @@ import com.alibaba.fastjson2.JSONArray;
 import com.alibaba.fastjson2.JSONObject;
 import com.bojiu.common.model.Messager;
 import com.bojiu.webapp.user.bet.BaseBetApiImpl;
+import com.bojiu.webapp.user.dto.GameDTO;
+import com.bojiu.webapp.user.dto.GameDTO.OddsInfo;
 import com.bojiu.webapp.user.model.BetProvider;
+import com.bojiu.webapp.user.model.OddsType;
 import lombok.extern.slf4j.Slf4j;
-import me.codeplayer.util.CollectionUtil;
-import me.codeplayer.util.StringUtil;
+import me.codeplayer.util.*;
+import org.apache.commons.lang3.time.FastDateFormat;
 import org.apache.commons.lang3.tuple.Pair;
 import org.jspecify.annotations.NonNull;
 import org.springframework.http.HttpMethod;
@@ -205,8 +211,11 @@ public class HgBetImpl extends BaseBetApiImpl {
 		return result.castDataType(null);
 	}
 
+	/** 需要查询的非主场赔率类型（OU|MIX=让球&大小；CN=角球；RN=罚牌数；PD=波胆；SFS=进球球员） */
+	List<String> betObtType = List.of("OU|MIX");
+
 	@Override
-	public Set<String> pull() throws IOException {
+	public List<GameDTO> getGameBets() {
 		JSONObject login = doLogin();
 		final String uid = login.getString("uid");
 		// 查询赛事统计数据
@@ -228,47 +237,91 @@ public class HgBetImpl extends BaseBetApiImpl {
 					stat[1] = ft.getIntValue("FS_FU_count", 0) + ft.getIntValue("P3_FU_count", 0);
 				}
 			}
+			List<GameDTO> gameDTOs = new ArrayList<>();
 			// 若存在今日则读取今日赛事赔率，若存在早盘赛事才读取早盘赛事赔率
 			for (int i = 0; i < stat.length; i++) {
 				int count = stat[i];
-				// 查询场次赔率
-				if (count > 0) {
-					/*
-					让球盘：
-						RATIO_R = 0.5
-						1/1.5：
-							主队 = IOR_RH = -1/1.5
-							客队 = IOR_RC = +1/1.5
-
-						RATIO_R = 1：
-							主队 = IOR_RH = -1（此时应该+1）
-							客队 = IOR_RC = +1（取原始IOR_RC）
-					 */
-					switch (i) {
-						case 0 -> { // 今日盘
-							result = doGetGameList(uid, true, null);
-							if (result.isOK()) {
-								data = result.data();
-								JSONArray ecs = data.getJSONArray("ec");
-								for (int j = 0, size = ecs.size(); j < size; j++) {
-									JSONObject game = ecs.getJSONObject(j).getJSONObject("game");
-								}
-							}
-						}
-						case 1 -> { // 早盘
-							for (Integer leagueId : leagueMap.keySet()) {
-								result = doGetGameList(uid, false, leagueId);
-								if (result.isOK()) {
-
-								}
-							}
+				if (count > 0) { // 存在赛事
+					List<GameDTO> dtos = switch (i) {
+						// 今日赛事
+						case 0 -> parseGames(doGetGameList(uid, true), false, false);
+						// 早盘赛事
+						case 1 -> parseGames(doGetGameList(uid, false), true, false);
+						default -> throw new IllegalArgumentException("未知状态：" + i);
+					};
+					if (dtos != null) {
+						gameDTOs.addAll(dtos);
+					}
+				}
+			}
+			// 拉取非主场赔率数据
+			if (!gameDTOs.isEmpty() && !betObtType.isEmpty()) {
+				int size = gameDTOs.size();
+				for (String model : betObtType) {
+					for (int i = 0; i < size; i++) {
+						GameDTO dto = gameDTOs.get(i);
+						List<GameDTO> dtos = parseGames(doGetGameOBT(uid, dto, model), false, true);
+						if (dtos != null) {
+							gameDTOs.addAll(dtos);
 						}
 					}
 				}
 			}
-
+			return gameDTOs;
 		}
 		return null;
+	}
+
+	private List<GameDTO> parseGames(Messager<JSONObject> result, boolean filterLeague, boolean filterMaster) {
+		if (result.isOK()) {
+			JSONObject data = result.data();
+			JSONArray ecs = data.getJSONArray("ec");
+			int size = ecs.size();
+			List<GameDTO> gameDTOs = new ArrayList<>(size);
+			for (int j = 0; j < size; j++) {
+				JSONObject game = ecs.getJSONObject(j).getJSONObject("game");
+				if ((filterLeague && !leagueMap.containsKey(game.getInteger("LID")))
+						|| (filterMaster && "Y".equals(game.getString("ISMASTER")))) {
+					continue;
+				}
+				List<OddsInfo> odds = new ArrayList<>(OddsType.CACHE.length);
+				for (OddsType oddsType : OddsType.CACHE) {
+					odds.add(switch (oddsType) {
+						case R -> new OddsInfo(oddsType, handleRatioRate(game.getString("RATIO_R")),
+								game.getDouble("IOR_RH"), game.getDouble("IOR_RC"));
+						case OU -> new OddsInfo(oddsType, handleRatioRate(game.getString("RATIO_OUO")),
+								game.getDouble("IOR_OUH"), game.getDouble("IOR_OUC"));
+						case M -> new OddsInfo(oddsType, game.getDouble("IOR_MH"), game.getDouble("IOR_MC"), game.getDouble("IOR_MN"));
+						case HR -> new OddsInfo(oddsType, handleRatioRate(game.getString("RATIO_HR")),
+								game.getDouble("IOR_HRH"), game.getDouble("IOR_HRC"));
+						case HOU -> new OddsInfo(oddsType, handleRatioRate(game.getString("RATIO_HOUO")),
+								game.getDouble("IOR_HOUH"), game.getDouble("IOR_HOUC"));
+						case HM -> new OddsInfo(oddsType, game.getDouble("IOR_HMH"), game.getDouble("IOR_HMC"), game.getDouble("IOR_HMN"));
+						case TS -> new OddsInfo(oddsType, game.getDouble("IOR_TSY"), game.getDouble("IOR_TSN"));
+						case EO -> new OddsInfo(oddsType, game.getDouble("IOR_EOO"), game.getDouble("IOR_EOE"));
+					});
+				}
+				GameDTO dto = new GameDTO(game.getLong("ECID"), getProvider(), parseTime(game.getString("DATETIME")), game.getString("LEAGUE"),
+						game.getString("TEAM_H"), game.getString("TEAM_C"), odds, new Date());
+				dto.setExt(filterLeague);
+				gameDTOs.add(dto);
+			}
+			return gameDTOs;
+		}
+		return null;
+	}
+
+	final ZoneId zoneId = ZoneId.of("GMT-4");
+	final FastDateFormat DATE_FORMAT = FastDateFormat.getInstance("YYYY-MM-dd hh:mma", TimeZone.getTimeZone(zoneId), Locale.ENGLISH);
+
+	private Date parseTime(String time) {
+		try {
+			// 获取当前年份 (在 GMT-4 时区下的当前年份)
+			int currentYear = ZonedDateTime.now(zoneId).getYear();
+			return DATE_FORMAT.parse(currentYear + "-" + time);
+		} catch (ParseException e) {
+			throw new IllegalArgumentException(e);
+		}
 	}
 
 	/** 赛事统计数据 */
@@ -300,7 +353,7 @@ public class HgBetImpl extends BaseBetApiImpl {
 	}
 
 	/** 查询游戏场次列表 */
-	protected Messager<JSONObject> doGetGameList(String uid, boolean isToday, Integer leagueId) {
+	protected Messager<JSONObject> doGetGameList(String uid, boolean isToday) {
 		final Map<String, Object> params = new TreeMap<>();
 		Pair<String, String> pair = getVersion();
 		final String ver = pair.getKey();
@@ -318,7 +371,7 @@ public class HgBetImpl extends BaseBetApiImpl {
 			params.put("date", "all");
 			params.put("showtype", "early");
 			params.put("filter", "FU");
-			params.put("lid", leagueId);
+			// params.put("lid", leagueId);
 			params.put("action", "click_league");
 		}
 		params.put("rtype", "r");
@@ -331,12 +384,34 @@ public class HgBetImpl extends BaseBetApiImpl {
 		return sendRequest(HttpMethod.POST, buildURI(ver), params, FLAG_RETURN_TEXT);
 	}
 
+	protected Messager<JSONObject> doGetGameOBT(String uid, GameDTO dto, String model) {
+		final Map<String, Object> params = new TreeMap<>();
+		Pair<String, String> pair = getVersion();
+		final String ver = pair.getKey();
+		params.put("uid", uid);
+		params.put("ver", ver);
+		params.put("langx", "zh-cn");
+		params.put("p", "get_game_OBT");
+		params.put("gtype", "ft"); // 足球
+		params.put("isSpecial", "");
+		params.put("isEarly", "N");
+		params.put("model", model); // OU|MIX=让球&大小；CN=角球；RN=罚牌数；PD=波胆；SFS=进球球员
+		params.put("ecid", dto.getId());
+		params.put("showtype", (((boolean) dto.ext) ? "early" : "today"));
+		params.put("isETWI", "N");
+		params.put("ltype", "3");
+		params.put("is_rb", "N");
+		params.put("ts", System.currentTimeMillis());
+		params.put("isClick", "Y");
+		return sendRequest(HttpMethod.POST, buildURI(ver), params, FLAG_RETURN_TEXT);
+	}
+
 	/** 抓取的联赛赔率数据 */
 	static final Map<Integer, String> leagueMap = CollectionUtil.asHashMap(
 			100021, "英格兰超级联赛",
 			100794, "英格兰联赛杯",
-			// 100235, "英格兰冠军联赛",
-			// 100127, "英格兰甲组联赛",
+			100235, "英格兰冠军联赛",
+			100127, "英格兰甲组联赛",
 			// 100128, "英格兰乙组联赛",
 			// 100283, "英格兰足球协会全国联赛",
 			// 101912, "英格兰足球协会北部全国联赛",

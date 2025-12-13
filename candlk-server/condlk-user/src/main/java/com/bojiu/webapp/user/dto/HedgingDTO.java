@@ -4,6 +4,7 @@ import java.util.ArrayList;
 import java.util.List;
 
 import lombok.Getter;
+import lombok.NoArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 
 /** 预估对冲算法类 */
@@ -34,6 +35,7 @@ public class HedgingDTO {
 	}
 
 	/** 赔率信息 */
+	@NoArgsConstructor
 	public static class Odds {
 
 		/** A平台 赔率 */

@@ -103,6 +103,15 @@ public abstract class BaseBetApiImpl extends BaseHttpUtil implements BetApi {
 
 	protected abstract Object getErrorCode(JSONObject json);
 
+	/**
+	 * 解析赔率盘口值/比率
+	 *
+	 * @see com.bojiu.webapp.user.dto.GameDTO.OddsInfo#ratioRate
+	 */
+	protected String handleRatioRate(String ratioRate) {
+		return ratioRate.replace(" ", "");
+	}
+
 	protected static Date getDate(JSONObject node, FastDateFormat format, String field) {
 		String dateStr = node.getString(field);
 		if (dateStr != null) {
