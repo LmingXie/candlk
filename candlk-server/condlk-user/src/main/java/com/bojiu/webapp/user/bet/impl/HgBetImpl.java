@@ -218,7 +218,7 @@ public class HgBetImpl extends BaseBetApiImpl {
 
 	@Override
 	protected String mapStatus(JSONObject json, HttpResponse<String> response) {
-		String errorCode = (String) getErrorCode(json);
+		final String errorCode = (String) getErrorCode(json);
 		if (errorCode != null) {
 			if ("doubleLogin".equals(errorCode)) { // 掉登录状态，清除登录信息
 				clearLoginToken();
