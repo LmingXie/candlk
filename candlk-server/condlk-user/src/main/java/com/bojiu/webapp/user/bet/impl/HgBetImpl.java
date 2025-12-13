@@ -9,12 +9,14 @@ import java.text.ParseException;
 import java.time.ZoneId;
 import java.time.ZonedDateTime;
 import java.util.*;
+import java.util.concurrent.TimeUnit;
 import javax.xml.parsers.DocumentBuilderFactory;
 import javax.xml.parsers.ParserConfigurationException;
 
-import com.alibaba.fastjson2.JSONArray;
-import com.alibaba.fastjson2.JSONObject;
+import com.alibaba.fastjson2.*;
 import com.bojiu.common.model.Messager;
+import com.bojiu.common.redis.RedisUtil;
+import com.bojiu.context.web.Jsons;
 import com.bojiu.webapp.user.bet.BaseBetApiImpl;
 import com.bojiu.webapp.user.dto.GameDTO;
 import com.bojiu.webapp.user.dto.GameDTO.OddsInfo;
@@ -25,6 +27,7 @@ import me.codeplayer.util.*;
 import org.apache.commons.lang3.time.FastDateFormat;
 import org.apache.commons.lang3.tuple.Pair;
 import org.jspecify.annotations.NonNull;
+import org.springframework.data.redis.core.ValueOperations;
 import org.springframework.http.HttpMethod;
 import org.springframework.stereotype.Service;
 import org.w3c.dom.*;
@@ -72,22 +75,30 @@ public class HgBetImpl extends BaseBetApiImpl {
 	transient long lastUpdateTime = 0;
 
 	Pair<String, String> getVersion() {
-		if (version == null || System.currentTimeMillis() - lastUpdateTime > flushInterval) {
-			Messager<JSONObject> result = doVersion();
-			if (result.isOK()) {
-				// 该接口返回的是 HTML
-				final String html = result.getCallback();
-				if (StringUtil.notEmpty(html)) {
-					String beginStr = "top.ver = '";
-					int begin = html.indexOf(beginStr) + beginStr.length();
-					final String ver = html.substring(begin, html.indexOf("';", begin));
-					beginStr = "top.iovationKey = '";
-					begin = html.indexOf(beginStr) + beginStr.length();
-					final String iovationKey = html.substring(begin, html.indexOf("';", begin));
-					version = Pair.of(ver, iovationKey);
-					lastUpdateTime = System.currentTimeMillis();
-					LOGGER.info("【{}游戏】获取版本信息：{}", getProvider(), version);
-					return version;
+		if (version == null) {
+			ValueOperations<String, String> opsForValue = RedisUtil.template().opsForValue();
+			final String key = getProvider() + "_version", versionJson = opsForValue.get(key);
+			if (versionJson != null) {
+				version = Jsons.parseObject(versionJson, new TypeReference<>() {
+				});
+			} else {
+				Messager<JSONObject> result = doVersion();
+				if (result.isOK()) {
+					// 该接口返回的是 HTML
+					final String html = result.getCallback();
+					if (StringUtil.notEmpty(html)) {
+						String beginStr = "top.ver = '";
+						int begin = html.indexOf(beginStr) + beginStr.length();
+						final String ver = html.substring(begin, html.indexOf("';", begin));
+						beginStr = "top.iovationKey = '";
+						begin = html.indexOf(beginStr) + beginStr.length();
+						final String iovationKey = html.substring(begin, html.indexOf("';", begin));
+						version = Pair.of(ver, iovationKey);
+						opsForValue.set(key, Jsons.encode(version), 30, TimeUnit.MINUTES);
+						lastUpdateTime = System.currentTimeMillis();
+						LOGGER.info("【{}游戏】获取版本信息：{}", getProvider(), version);
+						return version;
+					}
 				}
 			}
 		}
@@ -108,25 +119,38 @@ public class HgBetImpl extends BaseBetApiImpl {
 
 	protected JSONObject doLogin() {
 		if (loginInfo == null) {
-			final Map<String, Object> params = new TreeMap<>();
-			Pair<String, String> pair = getVersion();
-			final String ver = pair.getKey();
-			params.put("ver", ver);
-			params.put("p", "chk_login");
-			params.put("langx", "zh-cn");
-			params.put("username", this.config.username);
-			params.put("password", this.config.password);
-			params.put("app", "N");
-			params.put("auto", pair.getValue());
-			params.put("blackbox", "");
-			// Base64加密 Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/142.0.0.0 Safari/537.36
-			params.put("userAgent", "TW96aWxsYS81LjAgKFdpbmRvd3MgTlQgMTAuMDsgV2luNjQ7IHg2NCkgQXBwbGVXZWJLaXQvNTM3LjM2IChLSFRNTCwgbGlrZSBHZWNrbykgQ2hyb21lLzE0Mi4wLjAuMCBTYWZhcmkvNTM3LjM2");
-			Messager<JSONObject> result = sendRequest(HttpMethod.POST, buildURI(ver), params, FLAG_RETURN_TEXT);
-			if (result.isOK()) {
-				loginInfo = result.data();
+			ValueOperations<String, String> opsForValue = RedisUtil.template().opsForValue();
+			final String key = getProvider() + "_login", loginJson = opsForValue.get(key);
+			if (loginJson != null) {
+				loginInfo = Jsons.parseObject(loginJson, new TypeReference<>() {
+				});
+			} else {
+				final Map<String, Object> params = new TreeMap<>();
+				Pair<String, String> pair = getVersion();
+				final String ver = pair.getKey();
+				params.put("ver", ver);
+				params.put("p", "chk_login");
+				params.put("langx", "zh-cn");
+				params.put("username", this.config.username);
+				params.put("password", this.config.password);
+				params.put("app", "N");
+				params.put("auto", pair.getValue());
+				params.put("blackbox", "");
+				// Base64加密 Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/142.0.0.0 Safari/537.36
+				params.put("userAgent", "TW96aWxsYS81LjAgKFdpbmRvd3MgTlQgMTAuMDsgV2luNjQ7IHg2NCkgQXBwbGVXZWJLaXQvNTM3LjM2IChLSFRNTCwgbGlrZSBHZWNrbykgQ2hyb21lLzE0Mi4wLjAuMCBTYWZhcmkvNTM3LjM2");
+				Messager<JSONObject> result = sendRequest(HttpMethod.POST, buildURI(ver), params, FLAG_RETURN_TEXT);
+				if (result.isOK()) {
+					loginInfo = result.data();
+					opsForValue.set(key, Jsons.encode(loginInfo), 1, TimeUnit.DAYS);
+				}
 			}
 		}
 		return loginInfo;
+	}
+
+	private void clearLoginToken() {
+		loginInfo = null;
+		RedisUtil.template().delete(getProvider() + "_login");
 	}
 
 	final DocumentBuilderFactory factory = DocumentBuilderFactory.newInstance();
@@ -194,7 +218,14 @@ public class HgBetImpl extends BaseBetApiImpl {
 
 	@Override
 	protected String mapStatus(JSONObject json, HttpResponse<String> response) {
-		return getErrorCode(json) == null ? Messager.OK : null;
+		String errorCode = (String) getErrorCode(json);
+		if (errorCode != null) {
+			if ("doubleLogin".equals(errorCode)) { // 掉登录状态，清除登录信息
+				clearLoginToken();
+			}
+			return null;
+		}
+		return Messager.OK;
 	}
 
 	@Override

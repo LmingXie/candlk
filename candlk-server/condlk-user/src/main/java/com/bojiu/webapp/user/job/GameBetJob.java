@@ -64,7 +64,7 @@ public class GameBetJob {
 		final String nextJson = RedisUtil.opsForHash().get(UserRedisKey.BET_SYNC_RELAY, providerName);
 		final GameBetQueryDTO begin = StringUtil.isEmpty(nextJson) ? new GameBetQueryDTO() : Jsons.parseObject(nextJson, GameBetQueryDTO.class);
 		if (begin.lastTime == null || begin.lastTime.getTime() + 1000 * 60 * 5 < System.currentTimeMillis()) {
-			RedisUtil.fastAttemptInLock((UserRedisKey.BET_SYNC_RELAY + "_" + providerName), 1000 * 60 * 20L, () -> {
+			RedisUtil.fastAttemptInLock((UserRedisKey.BET_SYNC_RELAY + "_" + providerName), 1000 * 60 * 10L, () -> {
 				List<GameDTO> gameBets = gameApi.getGameBets();
 				if (!gameBets.isEmpty()) {
 					begin.lastTime = new Date();
