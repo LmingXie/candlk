@@ -31,7 +31,7 @@ public class GameBetJob {
 	}
 
 	// 线程数量不宜过多，避免 内存占用过大 以及 增加 资源IO 争用
-	static final ThreadPoolExecutor smallTaskThreadPool = TaskUtils.newThreadPool(4, BetProvider.CACHE.length
+	static final ThreadPoolExecutor smallTaskThreadPool = TaskUtils.newThreadPool(3, BetProvider.CACHE.length
 			// 这里的队列容量（ 128 ） 一定不能小于 BetProvider.CACHE.length
 			, 128, "game-bet-sync-", new ThreadPoolExecutor.AbortPolicy());
 
@@ -64,7 +64,7 @@ public class GameBetJob {
 		final String nextJson = RedisUtil.opsForHash().get(UserRedisKey.BET_SYNC_RELAY, providerName);
 		final GameBetQueryDTO begin = StringUtil.isEmpty(nextJson) ? new GameBetQueryDTO() : Jsons.parseObject(nextJson, GameBetQueryDTO.class);
 		if (begin.lastTime == null || begin.lastTime.getTime() + 1000 * 60 * 5 < System.currentTimeMillis()) {
-			RedisUtil.fastAttemptInLock((UserRedisKey.BET_SYNC_RELAY + "_" + providerName), 1000 * 60 * 10L, () -> {
+			// RedisUtil.fastAttemptInLock((UserRedisKey.BET_SYNC_RELAY + "_" + providerName), 1000 * 60 * 10L, () -> { TODO
 				List<GameDTO> gameBets = gameApi.getGameBets();
 				if (!gameBets.isEmpty()) {
 					begin.lastTime = new Date();
@@ -74,8 +74,8 @@ public class GameBetJob {
 						opsForHash.put(UserRedisKey.GAME_BETS_PERFIX, providerName, Jsons.encode(gameBets));
 					});
 				}
-				return true;
-			});
+			// 	return true;
+			// });
 		}
 
 	}

@@ -19,11 +19,13 @@ import com.bojiu.common.context.I18N;
 import com.bojiu.common.model.*;
 import com.bojiu.common.util.BaseHttpUtil;
 import com.bojiu.common.util.EnhanceHttpResponseBodyHandler;
-import com.bojiu.context.model.*;
+import com.bojiu.context.model.BaseI18nKey;
+import com.bojiu.context.model.MessagerStatus;
 import com.bojiu.context.web.Jsons;
 import com.bojiu.webapp.base.entity.Merchant;
 import com.bojiu.webapp.base.util.LocalScheduler;
 import com.bojiu.webapp.user.dto.BetApiConfig;
+import com.bojiu.webapp.user.entity.Meta;
 import com.bojiu.webapp.user.model.BetProvider;
 import com.bojiu.webapp.user.model.MetaType;
 import com.bojiu.webapp.user.service.MetaService;
@@ -41,6 +43,8 @@ public abstract class BaseBetApiImpl extends BaseHttpUtil implements BetApi {
 	protected static final int FLAG_RETURN_TEXT = 1 << 1;
 	/** 在日志中记录 URL编码前请求地址 */
 	protected static final int FLAG_LOG_DECODED_URI = 1 << 2;
+	/** 在日志中是否记录正常响应数据 */
+	protected static final int FLAG_LOG_OUT_BODY = 1 << 3;
 
 	/** 增加超时时间 + 解码URL */
 	protected static final int FLAG_QUERY_PLAY_LOG_BY_TIME = FLAG_LONG_TIMEOUT | FLAG_LOG_DECODED_URI;
@@ -54,21 +58,28 @@ public abstract class BaseBetApiImpl extends BaseHttpUtil implements BetApi {
 	@Resource
 	MetaService metaService;
 
-	protected BetApiConfig config;
+	private BetApiConfig config;
+	private transient Date metaUpdateTime;
+
+	protected BetApiConfig getConfig() {
+		Meta meta = metaService.getCached(Merchant.PLATFORM_ID, MetaType.bet_config, getProvider().name());
+		if (config == null || metaUpdateTime == null || meta.getUpdateTime() != metaUpdateTime) {
+			config = meta.getParsedValue(BetApiConfig.class);
+			config.endPoint = "https://" + config.domain;
+			metaUpdateTime = meta.getUpdateTime();
+		}
+		return config;
+	}
 
 	@Nullable
-	protected static volatile HttpClient proxyClient;
+	private HttpClient proxyClient;
 
 	/** 初始化代理客户端 */
-	protected void initProxyClientAndConfig() {
+	protected HttpClient getProxyClient() {
 		if (proxyClient == null) {
-			synchronized (BetApi.class) {
-				if (proxyClient == null) {
-					config = metaService.getCachedParsedValue(Merchant.PLATFORM_ID, MetaType.bet_config, BetProvider.HG.name(), BetApiConfig.class);
-					proxyClient = getProxyOrDefaultClient(config.proxy);
-				}
-			}
+			proxyClient = getProxyOrDefaultClient(getConfig().proxy);
 		}
+		return proxyClient;
 	}
 
 	protected boolean requestBodyAsJson() {
@@ -109,7 +120,7 @@ public abstract class BaseBetApiImpl extends BaseHttpUtil implements BetApi {
 	 * @see com.bojiu.webapp.user.dto.GameDTO.OddsInfo#ratioRate
 	 */
 	protected String handleRatioRate(String ratioRate) {
-		return ratioRate.replace(" ", "");
+		return ratioRate == null ? null : ratioRate.replace(" ", "");
 	}
 
 	protected static Date getDate(JSONObject node, FastDateFormat format, String field) {
@@ -273,7 +284,7 @@ public abstract class BaseBetApiImpl extends BaseHttpUtil implements BetApi {
 	}
 
 	protected static HttpRequest degradeHttpVersion(HttpRequest request) {
-		return HttpRequest.newBuilder(request, (n, v) -> true).version(HttpClient.Version.HTTP_1_1).build();
+		return HttpRequest.newBuilder(request, (n, v) -> true).version(java.net.http.HttpClient.Version.HTTP_1_1).build();
 	}
 
 	protected HttpClient currentClient() {
@@ -343,7 +354,8 @@ public abstract class BaseBetApiImpl extends BaseHttpUtil implements BetApi {
 			final String uri = uriToString(request.uri(), BizFlag.hasFlag(flags, FLAG_LOG_DECODED_URI));
 			if (ex == null) {
 				if (statusCode == 200) {
-					if (shouldSplit(responseBody)) {
+					boolean outBody = BizFlag.hasFlag(flags, FLAG_LOG_OUT_BODY);
+					if (!outBody && shouldSplit(responseBody)) {
 						// 如果返回的数据太多，上报到 ES 将会报错，因此需要拆分处理
 						final int length = responseBody.length();
 						int startPos = 0, endPos;
@@ -356,7 +368,7 @@ public abstract class BaseBetApiImpl extends BaseHttpUtil implements BetApi {
 							startPos = endPos + 1;
 						} while (startPos < length);
 					} else {
-						LOGGER.info("【{}游戏】请求地址：{}\n请求参数：{}\n返回数据：{}", getProvider(), uri, body, responseBody);
+						LOGGER.info("【{}游戏】请求地址：{}\n请求参数：{}\n返回数据：{}", getProvider(), uri, body, outBody ? "屏蔽Body输出！" : responseBody);
 					}
 				} else { // 非正常响应时记录 响应码
 					LOGGER.warn("【{}游戏】请求地址：{}\n请求参数：{}\n响应码={}，返回数据：{}", getProvider(), uri, body, statusCode, responseBody);
@@ -464,8 +476,8 @@ public abstract class BaseBetApiImpl extends BaseHttpUtil implements BetApi {
 	 * 基于代理配置信息创建HTTP客户端
 	 */
 	public static HttpClient.Builder prepareProxyClient(String host, int port, @Nullable String username, @Nullable String password) {
-		final HttpClient.Builder builder = HttpClient.newBuilder()
-				.version(HttpClient.Version.HTTP_1_1)
+		final HttpClient.Builder builder = java.net.http.HttpClient.newBuilder()
+				.version(java.net.http.HttpClient.Version.HTTP_1_1)
 				.connectTimeout(Duration.of(5, ChronoUnit.SECONDS))
 				.proxy(ProxySelector.of(new InetSocketAddress(host, port)));
 

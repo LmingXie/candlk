@@ -6,8 +6,11 @@ import java.util.List;
 import com.bojiu.webapp.base.entity.TimeBasedEntity;
 import com.bojiu.webapp.user.model.BetProvider;
 import com.bojiu.webapp.user.model.OddsType;
+import com.bojiu.webapp.user.utils.HGOddsConverter;
 import lombok.*;
+import lombok.extern.slf4j.Slf4j;
 
+@Slf4j
 @Setter
 @Getter
 @NoArgsConstructor
@@ -150,8 +153,14 @@ public class GameDTO extends TimeBasedEntity {
 		public OddsInfo(OddsType type, String ratioRate, Double hRate, Double cRate, Double nRate) {
 			this.type = type;
 			this.ratioRate = ratioRate;
-			this.hRate = hRate;
-			this.cRate = cRate;
+			if (nRate == null) {
+				double[] doubles = HGOddsConverter.convertOddsRatio(hRate, cRate, 2, null);
+				this.hRate = doubles[0];
+				this.cRate = doubles[1];
+			} else {
+				this.hRate = hRate;
+				this.cRate = cRate;
+			}
 			this.nRate = nRate;
 		}
 

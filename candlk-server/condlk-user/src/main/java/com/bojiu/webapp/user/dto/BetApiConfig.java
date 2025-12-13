@@ -19,8 +19,4 @@ public class BetApiConfig {
 	/** API接口地址 */
 	public String endPoint;
 
-	public BetApiConfig() {
-		this.endPoint = "https://" + domain;
-	}
-
 }

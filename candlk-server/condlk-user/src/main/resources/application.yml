@@ -23,29 +23,25 @@ spring:
     enabled: false
   datasource:
     driver-class-name: com.mysql.cj.jdbc.Driver
-    url: jdbc:mysql://127.0.0.1:3607/bet_local?useUnicode=true
+    url: jdbc:mysql://127.0.0.1:3607/bet_local?useUnicode=true&allowMultiQueries=true&rewriteBatchedStatements=true
     username: root
     password: PzxELStGI2MzEhoFBQk4Bw
-    hikari:
-      connection-timeout: 10000
-      max-lifetime: 300000
-      auto-commit: false
-      data-source-properties:
-        characterEncoding: UTF-8
-        serverTimezone: GMT+8
-        useSSL: false # 5.5.45+ / 5.6.26+ / 5.7.6+ 默认为true
-        allowPublicKeyRetrieval: true
-        useServerPrepStmts: true
-        cachePrepStmts: true
-        useLocalSessionState: true
-        useUnbufferedInput: false
-        # maintainTimeStats: false #为 false 减少系统时间调用
-        elideSetAutoCommits: true
-        cacheServerConfiguration: true
-        # enableQueryTimeouts: false # 高性能负载环境下可以考虑为false
-        # connectionAttributes: none # since 5.1.25(MySQL 5.6+) 可提高数据库连接创建/初始化速度
-        prepStmtCacheSize: 250 # 默认 25
-        prepStmtCacheSqlLimit: 1024 # 默认 256
+    connection-timeout: 10000
+    max-lifetime: 300000
+    auto-commit: true
+    data-source-properties:
+      characterEncoding: UTF-8
+      serverTimezone: GMT+8
+      useSSL: false
+      allowPublicKeyRetrieval: true
+      useServerPrepStmts: true
+      cachePrepStmts: true
+      useLocalSessionState: true
+      useUnbufferedInput: false
+      elideSetAutoCommits: true
+      cacheServerConfiguration: true
+      prepStmtCacheSize: 250 # 默认 25
+      prepStmtCacheSqlLimit: 1024 # 默认 256
 mybatis-plus:
   type-handlers-package: com.bojiu.context.dao
   mapper-locations: classpath:/mapper/**/*.xml
@@ -54,8 +50,8 @@ mybatis-plus:
     default-enum-type-handler: org.apache.ibatis.type.EnumOrdinalTypeHandler
   global-config:
     db-config:
-      table-prefix: tg_
-      id-type: auto # 数据库 ID 自增
+      table-prefix: gs_
+      id-type: auto
       logic-delete-field: state
       logic-delete-value: 0
       logic-not-delete-value: 3
