@@ -75,7 +75,7 @@ public class HgBetImpl extends BaseBetApiImpl {
 	transient Pair<String, String> version;
 	transient long lastUpdateTime = 0;
 
-	Pair<String, String> getVersion() {
+	protected Pair<String, String> getVersion() {
 		if (version == null) {
 			ValueOperations<String, String> opsForValue = RedisUtil.template().opsForValue();
 			final String key = getProvider() + "_version", versionJson = opsForValue.get(key);
@@ -83,25 +83,36 @@ public class HgBetImpl extends BaseBetApiImpl {
 				version = Jsons.parseObject(versionJson, new TypeReference<>() {
 				});
 			} else {
-				Messager<JSONObject> result = doVersion();
-				final String html = result.getCallback();
+				String html = doVersion().getCallback();
 				// 该接口返回的是 HTML
 				if (StringUtil.notEmpty(html)) {
-					String beginStr = "top.ver = '";
-					int begin = html.indexOf(beginStr) + beginStr.length();
-					final String ver = html.substring(begin, html.indexOf("';", begin));
-					beginStr = "top.iovationKey = '";
-					begin = html.indexOf(beginStr) + beginStr.length();
-					final String iovationKey = html.substring(begin, html.indexOf("';", begin));
-					version = Pair.of(ver, iovationKey);
-					opsForValue.set(key, Jsons.encode(version), 1, TimeUnit.DAYS);
-					lastUpdateTime = System.currentTimeMillis();
-					LOGGER.info("【{}游戏】获取版本信息：{}", getProvider(), version);
+					version = doGetVersion(html);
+					setVersion(version, key);
 					return version;
 				}
 			}
 		}
 		return version;
+	}
+
+	protected int getTimeoutDay() {
+		return 1;
+	}
+
+	protected void setVersion(Pair<String, String> version, String key) {
+		RedisUtil.template().opsForValue().set(key == null ? (getProvider() + "_version") : key, Jsons.encode(version), getTimeoutDay(), TimeUnit.DAYS);
+		lastUpdateTime = System.currentTimeMillis();
+		LOGGER.info("【{}游戏】获取版本信息：{}", getProvider(), version);
+	}
+
+	protected Pair<String, String> doGetVersion(String html) {
+		String beginStr = "top.ver = '";
+		int begin = html.indexOf(beginStr) + beginStr.length();
+		final String ver = html.substring(begin, html.indexOf("';", begin));
+		beginStr = "top.iovationKey = '";
+		begin = html.indexOf(beginStr) + beginStr.length();
+		final String iovationKey = html.substring(begin, html.indexOf("';", begin));
+		return Pair.of(ver, iovationKey);
 	}
 
 	private @NonNull Messager<JSONObject> doVersion() {
@@ -124,27 +135,31 @@ public class HgBetImpl extends BaseBetApiImpl {
 				loginInfo = Jsons.parseObject(loginJson, new TypeReference<>() {
 				});
 			} else {
-				final Map<String, Object> params = new TreeMap<>();
-				Pair<String, String> pair = getVersion();
-				final String ver = pair.getKey();
-				params.put("ver", ver);
-				params.put("p", "chk_login");
-				params.put("langx", "zh-cn");
-				params.put("username", this.getConfig().username);
-				params.put("password", this.getConfig().password);
-				params.put("app", "N");
-				params.put("auto", pair.getValue());
-				params.put("blackbox", "");
-				// Base64加密 Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/142.0.0.0 Safari/537.36
-				params.put("userAgent", "TW96aWxsYS81LjAgKFdpbmRvd3MgTlQgMTAuMDsgV2luNjQ7IHg2NCkgQXBwbGVXZWJLaXQvNTM3LjM2IChLSFRNTCwgbGlrZSBHZWNrbykgQ2hyb21lLzE0Mi4wLjAuMCBTYWZhcmkvNTM3LjM2");
-				Messager<JSONObject> result = sendRequest(HttpMethod.POST, buildURI(ver), params, FLAG);
+				Messager<JSONObject> result = doGetLogin();
 				if (result.isOK()) {
 					loginInfo = result.data();
-					opsForValue.set(key, Jsons.encode(loginInfo), 1, TimeUnit.DAYS);
+					opsForValue.set(key, Jsons.encode(loginInfo), getTimeoutDay(), TimeUnit.DAYS);
 				}
 			}
 		}
 		return loginInfo;
+	}
+
+	protected @NonNull Messager<JSONObject> doGetLogin() {
+		final Map<String, Object> params = new TreeMap<>();
+		Pair<String, String> pair = getVersion();
+		final String ver = pair.getKey();
+		params.put("ver", ver);
+		params.put("p", "chk_login");
+		params.put("langx", "zh-cn");
+		params.put("username", this.getConfig().username);
+		params.put("password", this.getConfig().password);
+		params.put("app", "N");
+		params.put("auto", pair.getValue());
+		params.put("blackbox", "");
+		// Base64加密 Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/142.0.0.0 Safari/537.36
+		params.put("userAgent", "TW96aWxsYS81LjAgKFdpbmRvd3MgTlQgMTAuMDsgV2luNjQ7IHg2NCkgQXBwbGVXZWJLaXQvNTM3LjM2IChLSFRNTCwgbGlrZSBHZWNrbykgQ2hyb21lLzE0Mi4wLjAuMCBTYWZhcmkvNTM3LjM2");
+		return sendRequest(HttpMethod.POST, buildURI(ver), params, FLAG);
 	}
 
 	private void clearLoginToken() {
@@ -215,10 +230,16 @@ public class HgBetImpl extends BaseBetApiImpl {
 		return jsonObject.isEmpty() ? null : jsonObject;
 	}
 
+	protected boolean extErrVerify(JSONObject json, HttpResponse<String> response) {
+		return true;
+	}
+
 	@Override
 	protected String mapStatus(JSONObject json, HttpResponse<String> response) {
 		final String errorCode = (String) getErrorCode(json);
-		if (errorCode != null && !"100".equals(errorCode)) {
+		if ((errorCode != null && !"100".equals(errorCode))
+				|| !extErrVerify(json, response)
+		) {
 			if ("doubleLogin".equals(errorCode)) { // 掉登录状态，清除登录信息
 				clearLoginToken();
 			}
@@ -242,7 +263,7 @@ public class HgBetImpl extends BaseBetApiImpl {
 	}
 
 	/** 需要查询的非主场赔率类型（OU|MIX=让球&大小；CN=角球；RN=罚牌数；PD=波胆；SFS=进球球员） */
-	List<String> betObtType = List.of("OU|MIX");
+	static final List<String> betObtType = List.of("OU|MIX");
 
 	@Override
 	public List<GameDTO> getGameBets() {
@@ -456,7 +477,7 @@ public class HgBetImpl extends BaseBetApiImpl {
 		params.put("langx", "zh-cn");
 		params.put("sorttype", "league");
 		params.put("date", "ALL");
-		params.put("ltype", "3");
+		params.put("ltype", getProvider() == BetProvider.HG ? "3" : "4");
 		params.put("mode", "home");
 		params.put("ts", System.currentTimeMillis());
 		return sendRequest(HttpMethod.POST, buildURI(ver), params, FLAG);

@@ -1,7 +1,8 @@
 package com.bojiu.webapp.user.job;
 
 import java.util.*;
-import java.util.concurrent.*;
+import java.util.concurrent.CountDownLatch;
+import java.util.concurrent.ThreadPoolExecutor;
 import javax.annotation.PostConstruct;
 
 import com.bojiu.common.redis.RedisUtil;
@@ -17,7 +18,6 @@ import lombok.extern.slf4j.Slf4j;
 import me.codeplayer.util.StringUtil;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.data.redis.core.HashOperations;
-import org.springframework.scheduling.annotation.Scheduled;
 
 @Slf4j
 @Configuration
@@ -35,7 +35,7 @@ public class GameBetJob {
 			// 这里的队列容量（ 128 ） 一定不能小于 BetProvider.CACHE.length
 			, 128, "game-bet-sync-", new ThreadPoolExecutor.AbortPolicy());
 
-	@Scheduled(cron = "${service.cron.GameBetJob:0 0/5 * * * ?}")
+	// @Scheduled(cron = "${service.cron.GameBetJob:0 0/5 * * * ?}")
 	public void run() throws InterruptedException {
 		log.info("开始执行心跳任务...");
 		EnumMap<BetProvider, BetApi> enumMap = BetApi.implMapRef.get();
@@ -64,7 +64,7 @@ public class GameBetJob {
 		final String nextJson = RedisUtil.opsForHash().get(UserRedisKey.BET_SYNC_RELAY, providerName);
 		final GameBetQueryDTO begin = StringUtil.isEmpty(nextJson) ? new GameBetQueryDTO() : Jsons.parseObject(nextJson, GameBetQueryDTO.class);
 		if (begin.lastTime == null || begin.lastTime.getTime() + 1000 * 60 * 5 < System.currentTimeMillis()) {
-			// RedisUtil.fastAttemptInLock((UserRedisKey.BET_SYNC_RELAY + "_" + providerName), 1000 * 60 * 10L, () -> { TODO
+			RedisUtil.fastAttemptInLock((UserRedisKey.BET_SYNC_RELAY + "_" + providerName), 1000 * 60 * 10L, () -> {
 				List<GameDTO> gameBets = gameApi.getGameBets();
 				if (!gameBets.isEmpty()) {
 					begin.lastTime = new Date();
@@ -74,8 +74,8 @@ public class GameBetJob {
 						opsForHash.put(UserRedisKey.GAME_BETS_PERFIX, providerName, Jsons.encode(gameBets));
 					});
 				}
-			// 	return true;
-			// });
+				return true;
+			});
 		}
 
 	}
