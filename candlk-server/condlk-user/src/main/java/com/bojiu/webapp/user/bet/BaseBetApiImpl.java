@@ -119,8 +119,8 @@ public abstract class BaseBetApiImpl extends BaseHttpUtil implements BetApi {
 	 *
 	 * @see com.bojiu.webapp.user.dto.GameDTO.OddsInfo#ratioRate
 	 */
-	protected String handleRatioRate(String ratioRate) {
-		return ratioRate == null ? null : ratioRate.replace(" ", "");
+	protected String handleRatioRate(String strongPrefix, String ratioRate) {
+		return ratioRate == null ? null : strongPrefix + "_" + ratioRate.replace(" ", "");
 	}
 
 	protected static Date getDate(JSONObject node, FastDateFormat format, String field) {

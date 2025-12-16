@@ -379,18 +379,19 @@ public class HgBetImpl extends BaseBetApiImpl {
 	private @NonNull GameDTO parseGameDTO(boolean isToday, JSONObject game) {
 		List<OddsInfo> odds = new ArrayList<>(OddsType.CACHE.length);
 		for (OddsType oddsType : OddsType.CACHE) {
+			final String strong = game.getString("STRONG"), hstrong = game.getString("HSTRONG");
 			switch (oddsType) {
 				case R -> {
 					Double iorRh = game.getDouble("IOR_RH");
 					if (iorRh != null) {
-						odds.add(new OddsInfo(oddsType, handleRatioRate(game.getString("RATIO_R")),
+						odds.add(new OddsInfo(oddsType, handleRatioRate(strong, game.getString("RATIO_R")),
 								iorRh, game.getDouble("IOR_RC")));
 					}
 				}
 				case OU -> {
 					Double iorOuh = game.getDouble("IOR_OUH");
 					if (iorOuh != null) {
-						odds.add(new OddsInfo(oddsType, handleRatioRate(game.getString("RATIO_OUO")),
+						odds.add(new OddsInfo(oddsType, handleRatioRate(hstrong, game.getString("RATIO_OUO")),
 								iorOuh, game.getDouble("IOR_OUC")));
 					}
 				}
@@ -404,14 +405,14 @@ public class HgBetImpl extends BaseBetApiImpl {
 				case HR -> {
 					Double iorHrh = game.getDouble("IOR_HRH");
 					if (iorHrh != null) {
-						odds.add(new OddsInfo(oddsType, handleRatioRate(game.getString("RATIO_HR")),
+						odds.add(new OddsInfo(oddsType, handleRatioRate(strong, game.getString("RATIO_HR")),
 								iorHrh, game.getDouble("IOR_HRC")));
 					}
 				}
 				case HOU -> {
 					Double iorHouh = game.getDouble("IOR_HOUH");
 					if (iorHouh != null) {
-						odds.add(new OddsInfo(oddsType, handleRatioRate(game.getString("RATIO_HOUO")),
+						odds.add(new OddsInfo(oddsType, handleRatioRate(hstrong, game.getString("RATIO_HOUO")),
 								iorHouh, game.getDouble("IOR_HOUC")));
 					}
 				}
