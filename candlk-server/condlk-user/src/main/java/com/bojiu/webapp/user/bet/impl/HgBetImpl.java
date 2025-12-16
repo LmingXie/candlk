@@ -21,6 +21,7 @@ import com.bojiu.webapp.user.dto.GameDTO;
 import com.bojiu.webapp.user.dto.GameDTO.OddsInfo;
 import com.bojiu.webapp.user.model.BetProvider;
 import com.bojiu.webapp.user.model.OddsType;
+import com.bojiu.webapp.user.utils.HGOddsConverter;
 import lombok.extern.slf4j.Slf4j;
 import me.codeplayer.util.CollectionUtil;
 import me.codeplayer.util.StringUtil;
@@ -384,54 +385,52 @@ public class HgBetImpl extends BaseBetApiImpl {
 				case R -> {
 					Double iorRh = game.getDouble("IOR_RH");
 					if (iorRh != null) {
-						odds.add(new OddsInfo(oddsType, handleRatioRate(strong, game.getString("RATIO_R")),
-								iorRh, game.getDouble("IOR_RC")));
+						double[] values = HGOddsConverter.convertOddsRatio(iorRh, game.getDouble("IOR_RC"), 2, null);
+						odds.add(new OddsInfo(oddsType, handleRatioRate(strong, game.getString("RATIO_R")), values[0], values[1]));
 					}
 				}
 				case OU -> {
 					Double iorOuh = game.getDouble("IOR_OUH");
 					if (iorOuh != null) {
-						odds.add(new OddsInfo(oddsType, handleRatioRate(hstrong, game.getString("RATIO_OUO")),
-								iorOuh, game.getDouble("IOR_OUC")));
+						double[] values = HGOddsConverter.convertOddsRatio(iorOuh, game.getDouble("IOR_OUC"), 2, null);
+						odds.add(new OddsInfo(oddsType, handleRatioRate(hstrong, game.getString("RATIO_OUO")), values[0], values[1]));
 					}
 				}
 				case M -> {
 					Double iorMh = game.getDouble("IOR_MH");
 					if (iorMh != null) {
-						odds.add(new OddsInfo(oddsType, iorMh,
-								game.getDouble("IOR_MC"), game.getDouble("IOR_MN")));
+						odds.add(new OddsInfo(oddsType, iorMh, game.getDouble("IOR_MC"), game.getDouble("IOR_MN")));
 					}
 				}
 				case HR -> {
 					Double iorHrh = game.getDouble("IOR_HRH");
 					if (iorHrh != null) {
-						odds.add(new OddsInfo(oddsType, handleRatioRate(strong, game.getString("RATIO_HR")),
-								iorHrh, game.getDouble("IOR_HRC")));
+						double[] values = HGOddsConverter.convertOddsRatio(iorHrh, game.getDouble("IOR_HRC"), 2, null);
+						odds.add(new OddsInfo(oddsType, handleRatioRate(strong, game.getString("RATIO_HR")), values[0], values[1]));
 					}
 				}
 				case HOU -> {
 					Double iorHouh = game.getDouble("IOR_HOUH");
 					if (iorHouh != null) {
-						odds.add(new OddsInfo(oddsType, handleRatioRate(hstrong, game.getString("RATIO_HOUO")),
-								iorHouh, game.getDouble("IOR_HOUC")));
+						double[] values = HGOddsConverter.convertOddsRatio(iorHouh, game.getDouble("IOR_HOUC"), 2, null);
+						odds.add(new OddsInfo(oddsType, handleRatioRate(hstrong, game.getString("RATIO_HOUO")), values[0], values[1]));
 					}
 				}
 				case HM -> {
 					Double iorHmh = game.getDouble("IOR_HMH");
 					if (iorHmh != null) {
-						odds.add(new OddsInfo(oddsType, iorHmh, game.getDouble("IOR_HMC"),
-								game.getDouble("IOR_HMN")));
+						odds.add(new OddsInfo(oddsType, iorHmh, game.getDouble("IOR_HMC"), game.getDouble("IOR_HMN")));
 					}
 				}
 				case TS -> {
 					Double iorTsy = game.getDouble("IOR_TSY");
-					if (iorTsy != null) {
+					if (iorTsy != null) { // 已经算入本金无需转换
 						odds.add(new OddsInfo(oddsType, iorTsy, game.getDouble("IOR_TSN")));
 					}
 				}
 				case EO -> {
 					Double iorEoo = game.getDouble("IOR_EOO");
-					if (iorEoo != null) {
+					if (iorEoo != null) { // 已经算入本金无需转换
 						odds.add(new OddsInfo(oddsType, iorEoo, game.getDouble("IOR_EOE")));
 					}
 				}

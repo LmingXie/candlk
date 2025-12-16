@@ -6,7 +6,6 @@ import java.util.List;
 import com.bojiu.webapp.base.entity.TimeBasedEntity;
 import com.bojiu.webapp.user.model.BetProvider;
 import com.bojiu.webapp.user.model.OddsType;
-import com.bojiu.webapp.user.utils.HGOddsConverter;
 import lombok.*;
 import lombok.extern.slf4j.Slf4j;
 
@@ -53,7 +52,8 @@ public class GameDTO extends TimeBasedEntity {
 		public OddsType type;
 		/**
 		 * <h3>赔率盘口值/比率（Ratio Rate）</h3>
-		 * <p>可能同时存在（主队+0/0.5，客队-0/0.5）和（主队-0/0.5，客队+0/0.5）</p>
+		 * <p>让球方（-）为强队，受让方（+）为弱队</p>
+		 * <p>可以同时存在（主队+0/0.5，客队-0/0.5）和（主队-0/0.5，客队+0/0.5）</p>
 		 * <h4>强队前缀：主队强=H_；客队强=C_</h4>
 		 * <p>
 		 * 该字段用于表示让球盘（让分盘）或大小盘（总进球数盘）的具体盘口数值。
@@ -155,14 +155,8 @@ public class GameDTO extends TimeBasedEntity {
 		public OddsInfo(OddsType type, String ratioRate, Double hRate, Double cRate, Double nRate) {
 			this.type = type;
 			this.ratioRate = ratioRate;
-			if (nRate == null) {
-				double[] doubles = HGOddsConverter.convertOddsRatio(hRate, cRate, 2, null);
-				this.hRate = doubles[0];
-				this.cRate = doubles[1];
-			} else {
-				this.hRate = hRate;
-				this.cRate = cRate;
-			}
+			this.hRate = hRate;
+			this.cRate = cRate;
 			this.nRate = nRate;
 		}
 

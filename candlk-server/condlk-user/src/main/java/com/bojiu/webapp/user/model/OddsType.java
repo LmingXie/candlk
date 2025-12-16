@@ -22,9 +22,9 @@ public enum OddsType implements ValueProxyImpl<OddsType, Integer> {
 	/** 上半场独赢盘/胜负平（Moneyline） */
 	HM("上半场独赢", PeriodType.HALF),
 	/** 双方球队进球（Both Teams To Score） */
-	TS("双方球队进球", PeriodType.FULL),
+	TS("两队都进球", PeriodType.FULL),
 	/** 单双盘（预测比赛最终总进球数是单数 (Odd) 还是双数 (Even)） */
-	EO("单双盘", PeriodType.FULL),
+	EO("全场单双", PeriodType.FULL),
 	;
 
 	@EnumValue
