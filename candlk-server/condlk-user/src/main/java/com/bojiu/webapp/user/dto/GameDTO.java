@@ -133,11 +133,11 @@ public class GameDTO extends TimeBasedEntity {
 		 * </ul>
 		 */
 		public String ratioRate;
-		/** 主队/是/单 赔率 */
+		/** 主队/是/单 赔率（包含本金） */
 		public Double hRate;
-		/** 客队/否/双 赔率 */
+		/** 客队/否/双 赔率（包含本金） */
 		public Double cRate;
-		/** 平局赔率 */
+		/** 平局赔率（包含本金） */
 		public Double nRate;
 
 		public OddsInfo(OddsType type, String ratioRate, Double hRate, Double cRate) {

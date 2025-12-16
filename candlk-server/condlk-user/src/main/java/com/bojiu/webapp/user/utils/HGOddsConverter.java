@@ -6,7 +6,7 @@ package com.bojiu.webapp.user.utils;
 public class HGOddsConverter {
 
 	/**
-	 * 转换赔率
+	 * 转换赔率（不包含本金）
 	 * <p>源码：_self.getOBT</p>
 	 */
 	public static double[] convertOddsRatio(double iorH, double iorC, int configIor, String odd) {

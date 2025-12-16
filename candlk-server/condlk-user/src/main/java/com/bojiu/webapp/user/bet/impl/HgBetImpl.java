@@ -3,7 +3,8 @@ package com.bojiu.webapp.user.bet.impl;
 import java.io.IOException;
 import java.io.StringReader;
 import java.net.URI;
-import java.net.http.*;
+import java.net.http.HttpClient;
+import java.net.http.HttpResponse;
 import java.text.ParseException;
 import java.time.ZoneId;
 import java.time.ZonedDateTime;
@@ -21,7 +22,6 @@ import com.bojiu.webapp.user.dto.GameDTO;
 import com.bojiu.webapp.user.dto.GameDTO.OddsInfo;
 import com.bojiu.webapp.user.model.BetProvider;
 import com.bojiu.webapp.user.model.OddsType;
-import com.bojiu.webapp.user.utils.HGOddsConverter;
 import lombok.extern.slf4j.Slf4j;
 import me.codeplayer.util.CollectionUtil;
 import me.codeplayer.util.StringUtil;
@@ -34,6 +34,8 @@ import org.springframework.stereotype.Service;
 import org.w3c.dom.*;
 import org.xml.sax.InputSource;
 import org.xml.sax.SAXException;
+
+import static com.bojiu.webapp.user.utils.HGOddsConverter.convertOddsRatio;
 
 @Slf4j
 @Service
@@ -385,15 +387,15 @@ public class HgBetImpl extends BaseBetApiImpl {
 				case R -> {
 					Double iorRh = game.getDouble("IOR_RH");
 					if (iorRh != null) {
-						double[] values = HGOddsConverter.convertOddsRatio(iorRh, game.getDouble("IOR_RC"), 2, null);
-						odds.add(new OddsInfo(oddsType, handleRatioRate(strong, game.getString("RATIO_R")), values[0], values[1]));
+						double[] values = convertOddsRatio(iorRh, game.getDouble("IOR_RC"), 2, null);
+						odds.add(new OddsInfo(oddsType, handleRatioRate(strong, game.getString("RATIO_R")), values[0] + 1, values[1] + 1));
 					}
 				}
 				case OU -> {
 					Double iorOuh = game.getDouble("IOR_OUH");
 					if (iorOuh != null) {
-						double[] values = HGOddsConverter.convertOddsRatio(iorOuh, game.getDouble("IOR_OUC"), 2, null);
-						odds.add(new OddsInfo(oddsType, handleRatioRate(hstrong, game.getString("RATIO_OUO")), values[0], values[1]));
+						double[] values = convertOddsRatio(iorOuh, game.getDouble("IOR_OUC"), 2, null);
+						odds.add(new OddsInfo(oddsType, handleRatioRate(hstrong, game.getString("RATIO_OUO")), values[0] + 1, values[1] + 1));
 					}
 				}
 				case M -> {
@@ -405,15 +407,15 @@ public class HgBetImpl extends BaseBetApiImpl {
 				case HR -> {
 					Double iorHrh = game.getDouble("IOR_HRH");
 					if (iorHrh != null) {
-						double[] values = HGOddsConverter.convertOddsRatio(iorHrh, game.getDouble("IOR_HRC"), 2, null);
-						odds.add(new OddsInfo(oddsType, handleRatioRate(strong, game.getString("RATIO_HR")), values[0], values[1]));
+						double[] values = convertOddsRatio(iorHrh, game.getDouble("IOR_HRC"), 2, null);
+						odds.add(new OddsInfo(oddsType, handleRatioRate(strong, game.getString("RATIO_HR")), values[0] + 1, values[1] + 1));
 					}
 				}
 				case HOU -> {
 					Double iorHouh = game.getDouble("IOR_HOUH");
 					if (iorHouh != null) {
-						double[] values = HGOddsConverter.convertOddsRatio(iorHouh, game.getDouble("IOR_HOUC"), 2, null);
-						odds.add(new OddsInfo(oddsType, handleRatioRate(hstrong, game.getString("RATIO_HOUO")), values[0], values[1]));
+						double[] values = convertOddsRatio(iorHouh, game.getDouble("IOR_HOUC"), 2, null);
+						odds.add(new OddsInfo(oddsType, handleRatioRate(hstrong, game.getString("RATIO_HOUO")), values[0] + 1, values[1] + 1));
 					}
 				}
 				case HM -> {
