@@ -18,5 +18,7 @@ public class BetApiConfig {
 	public String proxy;
 	/** API接口地址 */
 	public String endPoint;
+	/** 登录Token */
+	public String token;
 
 }
