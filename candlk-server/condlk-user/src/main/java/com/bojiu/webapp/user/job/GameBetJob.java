@@ -80,25 +80,4 @@ public class GameBetJob {
 
 	}
 
-	/*
-	五大联赛日期赛事统计：
-	https://api.q7stajv.com/yewu11/v2/menu/tournament/getDateMenuListPB?t=1765856576322
-
-        6107: "五大联赛",
-
-	赛事列表：
-	https://api.q7stajv.com/yewu11/v2/w/structureTournamentMatchesNewPB?t=1765857757875
-
-	查询多场赛事详情：
-	https://api.q7stajv.com/yewu11/v1/w/structureMatchBaseInfoByMidsPB?t=1765856582762
-
-	让球盘 赔率-1 = 香港盘赔率
-
-	mhn = T1 = 第一支队伍，man = T2 = 第二支队伍
-	st（STRONG） = T1/T2 = 主队（不存在时默认为 T2）
-
-	让球盘存在 ots = T1/T2，代表各自队伍的赔率信息.
-
-	ratioRate = hl.hv = 赔率盘口值
-	 */
 }

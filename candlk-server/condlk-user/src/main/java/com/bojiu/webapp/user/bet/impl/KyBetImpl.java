@@ -1,14 +1,17 @@
 package com.bojiu.webapp.user.bet.impl;
 
 import java.net.URI;
+import java.net.http.HttpRequest;
 import java.net.http.HttpResponse;
-import java.util.List;
+import java.util.*;
 
+import com.alibaba.fastjson2.JSONArray;
 import com.alibaba.fastjson2.JSONObject;
 import com.bojiu.common.model.Messager;
 import com.bojiu.common.util.SpringUtil;
 import com.bojiu.webapp.user.bet.BaseBetApiImpl;
 import com.bojiu.webapp.user.dto.GameDTO;
+import com.bojiu.webapp.user.dto.GameDTO.OddsInfo;
 import com.bojiu.webapp.user.model.BetProvider;
 import com.bojiu.webapp.user.model.OddsType;
 import lombok.extern.slf4j.Slf4j;
@@ -24,7 +27,7 @@ public class KyBetImpl extends BaseBetApiImpl {
 		return BetProvider.KY;
 	}
 
-	public OddsType getOddsType(String hpid) {
+	public OddsType parseOddsType(String hpid) {
 		return switch (hpid) {
 			case "4" -> OddsType.R; // 全场让球
 			case "2" -> OddsType.OU; // 全场大小
@@ -36,6 +39,157 @@ public class KyBetImpl extends BaseBetApiImpl {
 			case "15" -> OddsType.EO; // 全场单双
 			default -> throw new IllegalArgumentException("未知的盘口类型：" + hpid);
 		};
+	}
+
+	/**
+	 * 固定拉取的赛事信息
+	 * <p>tid的映射写死在 index-BhTHtuiB.js</p>
+	 *
+	 */
+	final Map<String, String> euidToTidMap = Map.of(
+			"6107", "180,239,276,320,79", // 五大联赛
+			"6110", "41837,166,230,37106,10821,17755,7722,5425,3170,3169" // 世界杯-2026
+	);
+
+	@Override
+	public List<GameDTO> getGameBets() {
+		final Map<String, Object> params = new TreeMap<>();
+		final StringBuilder sb = new StringBuilder();
+		List<GameDTO> gameDTOs = new ArrayList<>();
+		BetProvider provider = getProvider();
+		Date now = new Date();
+		for (Map.Entry<String, String> entry : euidToTidMap.entrySet()) {
+			params.put("cuid", userId);
+			params.put("sort", 1);
+			params.put("tid", entry.getValue());
+			params.put("apiType", 1);
+			params.put("category", 1);
+			params.put("euid", entry.getKey());
+
+			// 联赛ID列表
+			Messager<JSONObject> result = sendRequest(HttpMethod.POST, buildURI("/yewu11/v2/w/structureTournamentMatchesNew"), params);
+			if (!result.isOK()) {
+				params.clear();
+				continue;
+			}
+			final JSONArray nolivedata = result.data().getJSONObject("data").getJSONArray("nolivedata");
+			int size;
+			if (nolivedata != null && (size = nolivedata.size()) > 0) {
+				for (int i = 0; i < size; i++) { // 最多查40条数据，多余将会被截断
+					sb.append(nolivedata.getJSONObject(i).getString("mids")).append(",");
+					if (i > 0 && i % 40 == 0) {
+						handlerBatch(entry, params, sb, gameDTOs, provider, now);
+						sb.setLength(0);
+					}
+				}
+				if (!sb.isEmpty()) {
+					handlerBatch(entry, params, sb, gameDTOs, provider, now);
+				}
+			}
+			params.clear();
+		}
+		return gameDTOs;
+	}
+
+	private void handlerBatch(Map.Entry<String, String> entry, Map<String, Object> params, StringBuilder sb, List<GameDTO> gameDTOs, BetProvider provider, Date now) {
+		int size;
+		Messager<JSONObject> result;
+		// 根据ID查询赛事信息列表
+		params.clear();
+		params.put("mids", sb.substring(0, sb.length() - 1));
+		params.put("cuid", userId);
+		params.put("cos", 0);
+		params.put("euid", entry.getKey());
+		result = sendRequest(HttpMethod.POST, buildURI("/yewu11/v1/w/structureMatchBaseInfoByMids"), params);
+		if (!result.isOK()) {
+			params.clear();
+			return;
+		}
+		JSONArray games = result.data().getJSONObject("data").getJSONArray("data");
+		if (games != null && (size = games.size()) > 0) {
+			for (int i = 0; i < size; i++) {
+				// 解析赛事赔率信息（开云赔率包含本金无需二次转换）
+				JSONObject game = (JSONObject) games.get(i);
+
+				final JSONObject hpsData = (JSONObject) game.getJSONArray("hpsData").get(0);
+
+				// 主队：mhn = T1 = 第一支队伍，man = T2 = 第二支队伍，st（STRONG） = T1/T2 = 主队（不存在时默认为 T2）
+				List<OddsInfo> odds = new ArrayList<>();
+				// 解析主盘信息
+				for (Object hp : hpsData.getJSONArray("hps")) {
+					final JSONObject oddsData = (JSONObject) hp;
+					OddsType oddsType = parseOddsType(oddsData.getString("hpid"));
+					JSONObject hl = oddsData.getJSONObject("hl");
+					parseOdds(hl, oddsType, odds);
+				}
+				// 解析拓展盘口信息
+				for (Object hpsAdd : hpsData.getJSONArray("hpsAdd")) {
+					final JSONObject oddsData = (JSONObject) hpsAdd;
+					OddsType oddsType = parseOddsType(oddsData.getString("hpid"));
+					JSONArray hls = oddsData.getJSONArray("hl"); // hpsAdd中是 Array
+					if (hls != null && !hls.isEmpty()) {
+						int offset = switch (oddsType) {
+							case R, HR, OU, HOU -> 2; // 2个为一组，可能存在多组
+							case M, HM -> 3;
+							default -> throw new IllegalArgumentException("未知的盘口类型：" + oddsData.getString("hpid"));
+						};
+						for (Object hlObj : hls) {
+							JSONObject hl = ((JSONObject) hlObj);
+							// 拓展数据中的ol会包含多组赔率数据
+							for (int j = 0; j < hl.getJSONArray("ol").size(); j += offset) {
+								parseOdds(hl, oddsType, odds);
+							}
+						}
+					}
+				}
+				if (!odds.isEmpty()) {
+					gameDTOs.add(new GameDTO(game.getLong("mid"), provider, new Date(game.getLong("mgt")), game.getString("tn"),
+							game.getString("mhn"), game.getString("man"), odds, now));
+				}
+			}
+		}
+	}
+
+	private void parseOdds(JSONObject hl, OddsType oddsType, List<OddsInfo> odds) {
+		JSONArray ol = hl.getJSONArray("ol");
+		if (oddsType != null) {
+			switch (oddsType) {
+				case R, HR -> odds.add(new OddsInfo(oddsType, ((JSONObject) ol.get(0)).getString("onb"),
+						parseOdds(ol, 0), parseOdds(ol, 1)));
+				case OU, HOU -> odds.add(new OddsInfo(oddsType, hl.getString("hv"), parseOdds(ol, 0), parseOdds(ol, 1)));
+				case M, HM -> odds.add(new OddsInfo(oddsType, parseOdds(ol, 0), parseOdds(ol, 1), parseOdds(ol, 2)));
+			}
+		}
+	}
+
+	public double parseOdds(JSONArray ol, int idx) {
+		final long odds = ((JSONObject) ol.get(idx)).getLongValue("ov");
+		return odds / 100_000D; // 赔率（包含本金）
+	}
+
+	/** 账号ID并未跟token强制关联验证 */
+	final String userId = "529740290458888888";
+
+	@Override
+	protected HttpRequest.Builder createRequest(HttpMethod method, URI uri, Map<String, Object> params, int flags) {
+		HttpRequest.Builder builder = super.createRequest(method, uri, params, flags);
+		builder.setHeader("Accept-Language", "zh-CN,zh;q=0.9");
+		builder.setHeader("Origin", "https://user-pc-new.zlshelves.com");
+		builder.setHeader("Referer", "https://user-pc-new.zlshelves.com/");
+		builder.setHeader("User-Agent", "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/143.0.0.0 Safari/537.36");
+		final String token = getConfig().token;
+		builder.setHeader("checkId", "pc-" + token + "-" + userId + "-" + System.currentTimeMillis());
+		builder.setHeader("lang", "zh");
+		builder.setHeader("request-code", "{\"panda-bss-source\":\"2\"}");
+		builder.setHeader("requestId", token);
+		builder.setHeader("sec-ch-ua", "\"Google Chrome\";v=\"143\", \"Chromium\";v=\"143\", \"Not A(Brand\";v=\"24\"");
+		builder.setHeader("sec-ch-ua-mobile", "?0");
+		builder.setHeader("sec-ch-ua-platform", "\"Windows\"");
+		return builder;
+	}
+
+	protected URI buildURI(String url) {
+		return URI.create(this.getConfig().endPoint + url + "?t=" + System.currentTimeMillis());
 	}
 
 	@Override
@@ -57,15 +211,8 @@ public class KyBetImpl extends BaseBetApiImpl {
 	}
 
 	@Override
-	public List<GameDTO> getGameBets() {
-		// TODO 查询五大联赛ID列表
-
-		// TODO 根据ID查询赛事信息列表
-		return List.of();
-	}
-
-	protected URI buildURI(String url) {
-		return URI.create(this.getConfig().endPoint + url + "?t=" + System.currentTimeMillis());
+	protected boolean requestBodyAsJson() {
+		return true;
 	}
 
 	@Override

@@ -273,6 +273,8 @@ public class HgBetImpl extends BaseBetApiImpl {
 		JSONObject login = doLogin();
 		final String uid = login.getString("uid");
 		// 查询赛事统计数据
+		Date now = new Date();
+		List<GameDTO> gameDTOs = new ArrayList<>();
 		Messager<JSONObject> result = doGetLeagueCount(uid);
 		if (result.isOK()) {
 			JSONObject data = result.data();
@@ -291,16 +293,15 @@ public class HgBetImpl extends BaseBetApiImpl {
 					stat[1] = ft.getIntValue("FS_FU_count", 0) + ft.getIntValue("P3_FU_count", 0);
 				}
 			}
-			List<GameDTO> gameDTOs = new ArrayList<>();
 			// 若存在今日则读取今日赛事赔率，若存在早盘赛事才读取早盘赛事赔率
 			for (int i = 0; i < stat.length; i++) {
 				int count = stat[i];
 				if (count > 0) { // 存在赛事
 					List<GameDTO> dtos = switch (i) {
 						// 今日赛事
-						case 0 -> parseGames(doGetGameList(uid, true), true);
+						case 0 -> parseGames(doGetGameList(uid, true), true, now);
 						// 早盘赛事
-						case 1 -> parseGames(doGetGameList(uid, false), false);
+						case 1 -> parseGames(doGetGameList(uid, false), false, now);
 						default -> throw new IllegalArgumentException("未知状态：" + i);
 					};
 					if (dtos != null) {
@@ -314,19 +315,18 @@ public class HgBetImpl extends BaseBetApiImpl {
 			// 	for (String model : betObtType) {
 			// 		for (int i = 0; i < size; i++) {
 			// 			GameDTO dto = gameDTOs.get(i);
-			// 			List<GameDTO> dtos = parseGamesOBT(doGetGameOBT(uid, dto, model), (Boolean) dto.ext);
+			// 			List<GameDTO> dtos = parseGamesOBT(doGetGameOBT(uid, dto, model), (Boolean) dto.ext, now);
 			// 			if (dtos != null) {
 			// 				gameDTOs.addAll(dtos);
 			// 			}
 			// 		}
 			// 	}
 			// }
-			return gameDTOs;
 		}
-		return null;
+		return gameDTOs;
 	}
 
-	private List<GameDTO> parseGamesOBT(Messager<JSONObject> result, boolean isToday) {
+	private List<GameDTO> parseGamesOBT(Messager<JSONObject> result, boolean isToday, Date now) {
 		if (result.isOK()) {
 			JSONObject data = result.data();
 			JSONArray ecs = data.getJSONArray("ec");
@@ -339,12 +339,12 @@ public class HgBetImpl extends BaseBetApiImpl {
 					if (games != null) { // 存在多个game标签时将被解析为 JSONArray
 						for (int k = 0, len = games.size(); k < len; k++) {
 							JSONObject game = games.getJSONObject(k);
-							parseGameSingle(isToday, game, gameDTOs);
+							parseGameSingle(isToday, game, gameDTOs, now);
 						}
 					} else { // 只存在一个game标签是被解析为 JSONObject
 						JSONObject game = dto.getJSONObject("game");
 						if (game != null) {
-							parseGameSingle(isToday, game, gameDTOs);
+							parseGameSingle(isToday, game, gameDTOs, now);
 						}
 					}
 				}
@@ -354,14 +354,14 @@ public class HgBetImpl extends BaseBetApiImpl {
 		return null;
 	}
 
-	private void parseGameSingle(boolean isToday, JSONObject game, List<GameDTO> gameDTOs) {
+	private void parseGameSingle(boolean isToday, JSONObject game, List<GameDTO> gameDTOs, Date now) {
 		if ("Y".equals(game.getString("ISMASTER"))) {
 			return;
 		}
-		gameDTOs.add(parseGameDTO(isToday, game));
+		gameDTOs.add(parseGameDTO(isToday, game, now));
 	}
 
-	private List<GameDTO> parseGames(Messager<JSONObject> result, boolean isToday) {
+	private List<GameDTO> parseGames(Messager<JSONObject> result, boolean isToday, Date now) {
 		if (result.isOK()) {
 			JSONObject data = result.data();
 			JSONArray ecs = data.getJSONArray("ec");
@@ -372,30 +372,32 @@ public class HgBetImpl extends BaseBetApiImpl {
 				if (!isToday && !leagueMap.containsKey(game.getInteger("LID"))) {
 					continue;
 				}
-				gameDTOs.add(parseGameDTO(isToday, game));
+				gameDTOs.add(parseGameDTO(isToday, game, now));
 			}
 			return gameDTOs;
 		}
 		return null;
 	}
 
-	private @NonNull GameDTO parseGameDTO(boolean isToday, JSONObject game) {
+	private @NonNull GameDTO parseGameDTO(boolean isToday, JSONObject game, Date now) {
 		List<OddsInfo> odds = new ArrayList<>(OddsType.CACHE.length);
+		// 以第一只队伍为准（H表示强队与第一支队伍相同，此时 第一支队伍为 让球方 ）
+		final String strongPrefix = "H".equals(game.getString("STRONG")) ? "-" : "+", // 全场
+				strongHPrefix = "H".equals(game.getString("HSTRONG")) ? "-" : "+"; // 上半场
 		for (OddsType oddsType : OddsType.CACHE) {
-			final String strong = game.getString("STRONG"), hstrong = game.getString("HSTRONG");
 			switch (oddsType) {
 				case R -> {
 					Double iorRh = game.getDouble("IOR_RH");
 					if (iorRh != null) {
 						double[] values = convertOddsRatio(iorRh, game.getDouble("IOR_RC"), 2, null);
-						odds.add(new OddsInfo(oddsType, handleRatioRate(strong, game.getString("RATIO_R")), values[0] + 1, values[1] + 1));
+						odds.add(new OddsInfo(oddsType, parseRatioRate(strongPrefix, game.getString("RATIO_R")), values[0] + 1, values[1] + 1));
 					}
 				}
 				case OU -> {
 					Double iorOuh = game.getDouble("IOR_OUH");
 					if (iorOuh != null) {
 						double[] values = convertOddsRatio(iorOuh, game.getDouble("IOR_OUC"), 2, null);
-						odds.add(new OddsInfo(oddsType, handleRatioRate(hstrong, game.getString("RATIO_OUO")), values[0] + 1, values[1] + 1));
+						odds.add(new OddsInfo(oddsType, parseRatioRate(null, game.getString("RATIO_OUO")), values[0] + 1, values[1] + 1));
 					}
 				}
 				case M -> {
@@ -408,14 +410,14 @@ public class HgBetImpl extends BaseBetApiImpl {
 					Double iorHrh = game.getDouble("IOR_HRH");
 					if (iorHrh != null) {
 						double[] values = convertOddsRatio(iorHrh, game.getDouble("IOR_HRC"), 2, null);
-						odds.add(new OddsInfo(oddsType, handleRatioRate(strong, game.getString("RATIO_HR")), values[0] + 1, values[1] + 1));
+						odds.add(new OddsInfo(oddsType, parseRatioRate(strongHPrefix, game.getString("RATIO_HR")), values[0] + 1, values[1] + 1));
 					}
 				}
 				case HOU -> {
 					Double iorHouh = game.getDouble("IOR_HOUH");
 					if (iorHouh != null) {
 						double[] values = convertOddsRatio(iorHouh, game.getDouble("IOR_HOUC"), 2, null);
-						odds.add(new OddsInfo(oddsType, handleRatioRate(hstrong, game.getString("RATIO_HOUO")), values[0] + 1, values[1] + 1));
+						odds.add(new OddsInfo(oddsType, parseRatioRate(null, game.getString("RATIO_HOUO")), values[0] + 1, values[1] + 1));
 					}
 				}
 				case HM -> {
@@ -439,9 +441,18 @@ public class HgBetImpl extends BaseBetApiImpl {
 			}
 		}
 		GameDTO dto = new GameDTO(game.getLong("ECID"), getProvider(), parseTime(game.getString("DATETIME")), game.getString("LEAGUE"),
-				game.getString("TEAM_H"), game.getString("TEAM_C"), odds, new Date());
+				game.getString("TEAM_H"), game.getString("TEAM_C"), odds, now);
 		dto.setExt(isToday);
 		return dto;
+	}
+
+	/**
+	 * 解析赔率盘口值/比率
+	 *
+	 * @see com.bojiu.webapp.user.dto.GameDTO.OddsInfo#ratioRate
+	 */
+	protected String parseRatioRate(String strongPrefix, String ratioRate) {
+		return ("0".equals(ratioRate) ? "0" : (strongPrefix == null ? "" : strongPrefix) + ratioRate.replace(" ", ""));
 	}
 
 	final ZoneId zoneId = ZoneId.of("GMT-4");
