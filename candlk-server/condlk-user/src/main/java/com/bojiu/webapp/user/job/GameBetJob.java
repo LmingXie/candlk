@@ -18,6 +18,7 @@ import lombok.extern.slf4j.Slf4j;
 import me.codeplayer.util.StringUtil;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.data.redis.core.HashOperations;
+import org.springframework.scheduling.annotation.Scheduled;
 
 @Slf4j
 @Configuration
@@ -31,13 +32,12 @@ public class GameBetJob {
 	}
 
 	// 线程数量不宜过多，避免 内存占用过大 以及 增加 资源IO 争用
-	static final ThreadPoolExecutor smallTaskThreadPool = TaskUtils.newThreadPool(3, BetProvider.CACHE.length
+	static final ThreadPoolExecutor smallTaskThreadPool = TaskUtils.newThreadPool(4, 4
 			// 这里的队列容量（ 128 ） 一定不能小于 BetProvider.CACHE.length
 			, 128, "game-bet-sync-", new ThreadPoolExecutor.AbortPolicy());
 
-	// @Scheduled(cron = "${service.cron.GameBetJob:0 0/5 * * * ?}")
+	@Scheduled(cron = "${service.cron.GameBetJob:0 0/1 * * * ?}")
 	public void run() throws InterruptedException {
-		log.info("开始执行心跳任务...");
 		EnumMap<BetProvider, BetApi> enumMap = BetApi.implMapRef.get();
 		int size = enumMap.size();
 		final CountDownLatch latch = new CountDownLatch(size);
@@ -63,7 +63,7 @@ public class GameBetJob {
 
 		final String nextJson = RedisUtil.opsForHash().get(UserRedisKey.BET_SYNC_RELAY, providerName);
 		final GameBetQueryDTO begin = StringUtil.isEmpty(nextJson) ? new GameBetQueryDTO() : Jsons.parseObject(nextJson, GameBetQueryDTO.class);
-		if (begin.lastTime == null || begin.lastTime.getTime() + 1000 * 60 * 5 < System.currentTimeMillis()) {
+		if (begin.lastTime == null || begin.lastTime.getTime() + 1000 * 60 * 2 < System.currentTimeMillis()) {
 			RedisUtil.fastAttemptInLock((UserRedisKey.BET_SYNC_RELAY + "_" + providerName), 1000 * 60 * 10L, () -> {
 				List<GameDTO> gameBets = gameApi.getGameBets();
 				if (!gameBets.isEmpty()) {
@@ -73,6 +73,7 @@ public class GameBetJob {
 						opsForHash.put(UserRedisKey.BET_SYNC_RELAY, providerName, Jsons.encode(begin));
 						opsForHash.put(UserRedisKey.GAME_BETS_PERFIX, providerName, Jsons.encode(gameBets));
 					});
+					log.info("同步游戏赔率成功：厂商=" + providerName + "，数量=" + gameBets.size());
 				}
 				return true;
 			});

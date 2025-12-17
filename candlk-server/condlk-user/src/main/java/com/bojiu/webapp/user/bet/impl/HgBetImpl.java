@@ -276,53 +276,56 @@ public class HgBetImpl extends BaseBetApiImpl {
 		Date now = new Date();
 		List<GameDTO> gameDTOs = new ArrayList<>();
 		Messager<JSONObject> result = doGetLeagueCount(uid);
-		if (result.isOK()) {
-			JSONObject data = result.data();
-			JSONArray games = data.getJSONArray("game");
-			int[] stat = { 0, 0 };
-			if (!games.isEmpty()) {
+		if (!result.isOK()) {
+			clearLoginToken();
+			log.warn("获取赛事统计数据失败：{}", result.getMsg());
+			return gameDTOs;
+		}
+		JSONObject data = result.data();
+		JSONArray games = data.getJSONArray("game");
+		int[] stat = { 0, 0 };
+		if (!games.isEmpty()) {
 				/*
 				查询足球统计数据：
 					RB_count    滚球
 					FT_count    今日
 					FS_FU_count + P3_FU_count   早盘
 				 */
-				JSONObject ft = (JSONObject) CollectionUtil.findFirst(games, g -> "FT".equals(((JSONObject) g).getString("gtype")));
-				if (ft != null) {
-					stat[0] = ft.getIntValue("FT_count", 0);
-					stat[1] = ft.getIntValue("FS_FU_count", 0) + ft.getIntValue("P3_FU_count", 0);
-				}
+			JSONObject ft = (JSONObject) CollectionUtil.findFirst(games, g -> "FT".equals(((JSONObject) g).getString("gtype")));
+			if (ft != null) {
+				stat[0] = ft.getIntValue("FT_count", 0);
+				stat[1] = ft.getIntValue("FS_FU_count", 0) + ft.getIntValue("P3_FU_count", 0);
 			}
-			// 若存在今日则读取今日赛事赔率，若存在早盘赛事才读取早盘赛事赔率
-			for (int i = 0; i < stat.length; i++) {
-				int count = stat[i];
-				if (count > 0) { // 存在赛事
-					List<GameDTO> dtos = switch (i) {
-						// 今日赛事
-						case 0 -> parseGames(doGetGameList(uid, true), true, now);
-						// 早盘赛事
-						case 1 -> parseGames(doGetGameList(uid, false), false, now);
-						default -> throw new IllegalArgumentException("未知状态：" + i);
-					};
-					if (dtos != null) {
-						gameDTOs.addAll(dtos);
-					}
-				}
-			}
-			// 拉取非主场赔率数据 TODO 暂时不拉取更多赔率数据
-			// if (!gameDTOs.isEmpty() && !betObtType.isEmpty()) {
-			// 	int size = gameDTOs.size();
-			// 	for (String model : betObtType) {
-			// 		for (int i = 0; i < size; i++) {
-			// 			GameDTO dto = gameDTOs.get(i);
-			// 			List<GameDTO> dtos = parseGamesOBT(doGetGameOBT(uid, dto, model), (Boolean) dto.ext, now);
-			// 			if (dtos != null) {
-			// 				gameDTOs.addAll(dtos);
-			// 			}
-			// 		}
-			// 	}
-			// }
 		}
+		// 若存在今日则读取今日赛事赔率，若存在早盘赛事才读取早盘赛事赔率
+		for (int i = 0; i < stat.length; i++) {
+			int count = stat[i];
+			if (count > 0) { // 存在赛事
+				List<GameDTO> dtos = switch (i) {
+					// 今日赛事
+					case 0 -> parseGames(doGetGameList(uid, true), true, now);
+					// 早盘赛事
+					case 1 -> parseGames(doGetGameList(uid, false), false, now);
+					default -> throw new IllegalArgumentException("未知状态：" + i);
+				};
+				if (dtos != null) {
+					gameDTOs.addAll(dtos);
+				}
+			}
+		}
+		// 拉取非主场赔率数据 TODO 暂时不拉取更多赔率数据
+		// if (!gameDTOs.isEmpty() && !betObtType.isEmpty()) {
+		// 	int size = gameDTOs.size();
+		// 	for (String model : betObtType) {
+		// 		for (int i = 0; i < size; i++) {
+		// 			GameDTO dto = gameDTOs.get(i);
+		// 			List<GameDTO> dtos = parseGamesOBT(doGetGameOBT(uid, dto, model), (Boolean) dto.ext, now);
+		// 			if (dtos != null) {
+		// 				gameDTOs.addAll(dtos);
+		// 			}
+		// 		}
+		// 	}
+		// }
 		return gameDTOs;
 	}
 

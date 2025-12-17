@@ -23,7 +23,7 @@ public class BetApiTest {
 
 	@Test
 	public void getGameBetsTest() {
-		BetProvider type = BetProvider.KY;
+		BetProvider type = BetProvider.D1CE;
 		BetApi api = BetApi.getInstance(type);
 		gameBetJob.doQueryAndSyncGameBetsForSingleVendor(api);
 	}

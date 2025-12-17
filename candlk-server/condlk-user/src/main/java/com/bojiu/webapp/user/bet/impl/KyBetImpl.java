@@ -51,6 +51,9 @@ public class KyBetImpl extends BaseBetApiImpl {
 			"6110", "41837,166,230,37106,10821,17755,7722,5425,3170,3169" // 世界杯-2026
 	);
 
+	/** 返回结果为文档，且屏蔽Body输出 */
+	final int FLAG = FLAG_LOG_OUT_BODY;
+
 	@Override
 	public List<GameDTO> getGameBets() {
 		final Map<String, Object> params = new TreeMap<>();
@@ -67,7 +70,7 @@ public class KyBetImpl extends BaseBetApiImpl {
 			params.put("euid", entry.getKey());
 
 			// 联赛ID列表
-			Messager<JSONObject> result = sendRequest(HttpMethod.POST, buildURI("/yewu11/v2/w/structureTournamentMatchesNew"), params);
+			Messager<JSONObject> result = sendRequest(HttpMethod.POST, buildURI("/yewu11/v2/w/structureTournamentMatchesNew"), params, FLAG);
 			if (!result.isOK()) {
 				params.clear();
 				continue;
@@ -100,7 +103,7 @@ public class KyBetImpl extends BaseBetApiImpl {
 		params.put("cuid", userId);
 		params.put("cos", 0);
 		params.put("euid", entry.getKey());
-		result = sendRequest(HttpMethod.POST, buildURI("/yewu11/v1/w/structureMatchBaseInfoByMids"), params);
+		result = sendRequest(HttpMethod.POST, buildURI("/yewu11/v1/w/structureMatchBaseInfoByMids"), params, FLAG);
 		if (!result.isOK()) {
 			params.clear();
 			return;
