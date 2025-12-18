@@ -176,11 +176,15 @@ public class KyBetImpl extends BaseBetApiImpl {
 				}
 				if (!odds.isEmpty()) {
 					String league = game.getString("tn").replaceAll(" ", "");
-					if (league.endsWith("级联赛") && !league.contains("超级联赛")) {
-						league = league.replace("级联赛", "组联赛");
+					if (!"梦幻对垒".equals(game.getString("tn"))) {  // 排除虚拟球赛
+						if (league.endsWith("级联赛") && !league.contains("超级联赛")) {
+							league = league.replace("级联赛", "组联赛");
+						} else if ("玻利维亚杯".equals(league)) {
+							league = "玻利维亚职业联赛杯";
+						}
+						gameDTOs.add(new GameDTO(game.getLong("mid"), provider, new Date(game.getLong("mgt")), league,
+								game.getString("mhn"), game.getString("man"), odds, now));
 					}
-					gameDTOs.add(new GameDTO(game.getLong("mid"), provider, new Date(game.getLong("mgt")), league,
-							game.getString("mhn"), game.getString("man"), odds, now));
 				}
 			}
 		}
