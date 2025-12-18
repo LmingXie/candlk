@@ -269,12 +269,12 @@ public class HgBetImpl extends BaseBetApiImpl {
 	static final List<String> betObtType = List.of("OU|MIX");
 
 	@Override
-	public List<GameDTO> getGameBets() {
+	public Set<GameDTO> getGameBets() {
 		JSONObject login = doLogin();
 		final String uid = login.getString("uid");
 		// 查询赛事统计数据
 		Date now = new Date();
-		List<GameDTO> gameDTOs = new ArrayList<>();
+		Set<GameDTO> gameDTOs = new HashSet<>();
 		Messager<JSONObject> result = doGetLeagueCount(uid);
 		if (!result.isOK()) {
 			final String callback = result.getCallback();
@@ -384,7 +384,9 @@ public class HgBetImpl extends BaseBetApiImpl {
 					continue;
 				}
 				final Date openTime = parseTime(game.getString("DATETIME"));
-				if (openTime.getTime() >= startTimeThreshold) {
+				if (openTime.getTime() >= startTimeThreshold &&
+						!"奇幻赛事".equals(game.getString("LEAGUE")) // 排除虚拟球赛
+				) {
 					gameDTOs.add(parseGameDTO(isToday, game, openTime, now));
 				}
 			}

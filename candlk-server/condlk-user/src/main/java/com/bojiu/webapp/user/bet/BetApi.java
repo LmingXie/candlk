@@ -37,7 +37,7 @@ public interface BetApi {
 	}
 
 	/** 查询游戏赔率数据 */
-	List<GameDTO> getGameBets();
+	Set<GameDTO> getGameBets();
 
 	/** 检查当前API服务器状态是否正常 */
 	Messager<Void> ping();

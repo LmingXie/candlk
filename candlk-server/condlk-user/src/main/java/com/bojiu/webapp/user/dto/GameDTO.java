@@ -1,7 +1,6 @@
 package com.bojiu.webapp.user.dto;
 
-import java.util.Date;
-import java.util.List;
+import java.util.*;
 
 import com.bojiu.webapp.base.entity.TimeBasedEntity;
 import com.bojiu.webapp.user.model.BetProvider;
@@ -40,6 +39,23 @@ public class GameDTO extends TimeBasedEntity {
 		this.teamClient = teamClient;
 		this.odds = odds;
 		this.initTime(now);
+	}
+
+	@Override
+	public int hashCode() {
+		return Objects.hash(id);
+	}
+
+	@Override
+	public boolean equals(Object o) { // 累计充值金额=阶梯，必须唯一
+		if (this == o) {
+			return true;
+		}
+		if (o == null || getClass() != o.getClass()) {
+			return false;
+		}
+		GameDTO tier = (GameDTO) o;
+		return tier.eqId(id);
 	}
 
 	/** 赔率信息 */

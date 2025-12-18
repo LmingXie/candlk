@@ -70,10 +70,10 @@ public class KyBetImpl extends BaseBetApiImpl {
 	 */
 	// https://api.togav85.com/yewu11/v2/w/getAllMatchesOddsPB?t=1766047765942
 	@Override
-	public List<GameDTO> getGameBets() {
+	public Set<GameDTO> getGameBets() {
 		final Map<String, Object> params = new TreeMap<>();
 		final StringBuilder sb = new StringBuilder();
-		List<GameDTO> gameDTOs = new ArrayList<>();
+		Set<GameDTO> gameDTOs = new HashSet<>();
 		BetProvider provider = getProvider();
 		Date now = new Date();
 		// 比赛的最小开赛时间
@@ -115,7 +115,7 @@ public class KyBetImpl extends BaseBetApiImpl {
 		return gameDTOs;
 	}
 
-	private void handlerBatch(Map.Entry<String, String> entry, Map<String, Object> params, StringBuilder sb, List<GameDTO> gameDTOs, BetProvider provider, Date now) {
+	private void handlerBatch(Map.Entry<String, String> entry, Map<String, Object> params, StringBuilder sb, Set<GameDTO> gameDTOs, BetProvider provider, Date now) {
 		int size;
 		Messager<JSONObject> result;
 		// 根据ID查询赛事信息列表
@@ -175,7 +175,11 @@ public class KyBetImpl extends BaseBetApiImpl {
 					}
 				}
 				if (!odds.isEmpty()) {
-					gameDTOs.add(new GameDTO(game.getLong("mid"), provider, new Date(game.getLong("mgt")), game.getString("tn"),
+					String league = game.getString("tn").replaceAll(" ", "");
+					if (league.endsWith("级联赛") && !league.contains("超级联赛")) {
+						league = league.replace("级联赛", "组联赛");
+					}
+					gameDTOs.add(new GameDTO(game.getLong("mid"), provider, new Date(game.getLong("mgt")), league,
 							game.getString("mhn"), game.getString("man"), odds, now));
 				}
 			}
