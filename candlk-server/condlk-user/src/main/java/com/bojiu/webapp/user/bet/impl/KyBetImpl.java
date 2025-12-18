@@ -77,7 +77,7 @@ public class KyBetImpl extends BaseBetApiImpl {
 		BetProvider provider = getProvider();
 		Date now = new Date();
 		// 比赛的最小开赛时间
-		long minTime = now.getTime() + 1000 * 60 * 60 * 3;
+		final long startTimeThreshold = getStartTimeThreshold(now.getTime());
 		for (Map.Entry<String, String> entry : euidToTidMap.entrySet()) {
 			params.put("cuid", userId);
 			params.put("sort", 1);
@@ -98,7 +98,7 @@ public class KyBetImpl extends BaseBetApiImpl {
 				for (int i = 0; i < size; i++) { // 最多查40条数据，多余将会被截断
 					JSONObject game = nolivedata.getJSONObject(i);
 					long mgt = game.getLongValue("mgt"); // 赛事开始时间
-					if (mgt > minTime) {
+					if (mgt > startTimeThreshold) {
 						sb.append(game.getString("mids")).append(",");
 						if (i > 0 && i % 40 == 0) {
 							handlerBatch(entry, params, sb, gameDTOs, provider, now);

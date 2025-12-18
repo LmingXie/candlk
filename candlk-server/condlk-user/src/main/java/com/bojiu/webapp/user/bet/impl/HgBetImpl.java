@@ -302,15 +302,18 @@ public class HgBetImpl extends BaseBetApiImpl {
 				stat[1] = ft.getIntValue("FS_FU_count", 0) + ft.getIntValue("P3_FU_count", 0);
 			}
 		}
+
+		final long startTimeThreshold = getStartTimeThreshold(now.getTime());
+
 		// 若存在今日则读取今日赛事赔率，若存在早盘赛事才读取早盘赛事赔率
 		for (int i = 0; i < stat.length; i++) {
 			int count = stat[i];
 			if (count > 0) { // 存在赛事
 				List<GameDTO> dtos = switch (i) {
 					// 今日赛事
-					case 0 -> parseGames(doGetGameList(uid, true), true, now);
+					case 0 -> parseGames(doGetGameList(uid, true), startTimeThreshold, true, now);
 					// 早盘赛事
-					case 1 -> parseGames(doGetGameList(uid, false), false, now);
+					case 1 -> parseGames(doGetGameList(uid, false), startTimeThreshold, false, now);
 					default -> throw new IllegalArgumentException("未知状态：" + i);
 				};
 				if (dtos != null) {
@@ -334,7 +337,7 @@ public class HgBetImpl extends BaseBetApiImpl {
 		return gameDTOs;
 	}
 
-	private List<GameDTO> parseGamesOBT(Messager<JSONObject> result, boolean isToday, Date now) {
+	private List<GameDTO> parseGamesOBT(Messager<JSONObject> result, boolean isToday, Date openTime, Date now) {
 		if (result.isOK()) {
 			JSONObject data = result.data();
 			JSONArray ecs = data.getJSONArray("ec");
@@ -347,12 +350,12 @@ public class HgBetImpl extends BaseBetApiImpl {
 					if (games != null) { // 存在多个game标签时将被解析为 JSONArray
 						for (int k = 0, len = games.size(); k < len; k++) {
 							JSONObject game = games.getJSONObject(k);
-							parseGameSingle(isToday, game, gameDTOs, now);
+							parseGameSingle(isToday, game, gameDTOs, openTime, now);
 						}
 					} else { // 只存在一个game标签是被解析为 JSONObject
 						JSONObject game = dto.getJSONObject("game");
 						if (game != null) {
-							parseGameSingle(isToday, game, gameDTOs, now);
+							parseGameSingle(isToday, game, gameDTOs, openTime, now);
 						}
 					}
 				}
@@ -362,14 +365,14 @@ public class HgBetImpl extends BaseBetApiImpl {
 		return null;
 	}
 
-	private void parseGameSingle(boolean isToday, JSONObject game, List<GameDTO> gameDTOs, Date now) {
+	private void parseGameSingle(boolean isToday, JSONObject game, List<GameDTO> gameDTOs, Date openTime, Date now) {
 		if ("Y".equals(game.getString("ISMASTER"))) {
 			return;
 		}
-		gameDTOs.add(parseGameDTO(isToday, game, now));
+		gameDTOs.add(parseGameDTO(isToday, game, openTime, now));
 	}
 
-	private List<GameDTO> parseGames(Messager<JSONObject> result, boolean isToday, Date now) {
+	private List<GameDTO> parseGames(Messager<JSONObject> result, long startTimeThreshold, boolean isToday, Date now) {
 		if (result.isOK()) {
 			JSONObject data = result.data();
 			JSONArray ecs = data.getJSONArray("ec");
@@ -380,14 +383,17 @@ public class HgBetImpl extends BaseBetApiImpl {
 				if (!isToday && !leagueMap.containsKey(game.getInteger("LID"))) {
 					continue;
 				}
-				gameDTOs.add(parseGameDTO(isToday, game, now));
+				final Date openTime = parseTime(game.getString("DATETIME"));
+				if (openTime.getTime() >= startTimeThreshold) {
+					gameDTOs.add(parseGameDTO(isToday, game, openTime, now));
+				}
 			}
 			return gameDTOs;
 		}
 		return null;
 	}
 
-	private @NonNull GameDTO parseGameDTO(boolean isToday, JSONObject game, Date now) {
+	private @NonNull GameDTO parseGameDTO(boolean isToday, JSONObject game, Date openTime, Date now) {
 		List<OddsInfo> odds = new ArrayList<>(OddsType.CACHE.length);
 		// 以第一只队伍为准（H表示强队与第一支队伍相同，此时 第一支队伍为 让球方 ）
 		final String strongPrefix = "H".equals(game.getString("STRONG")) ? "-" : "+", // 全场
@@ -448,7 +454,7 @@ public class HgBetImpl extends BaseBetApiImpl {
 				}
 			}
 		}
-		GameDTO dto = new GameDTO(game.getLong("ECID"), getProvider(), parseTime(game.getString("DATETIME")), game.getString("LEAGUE"),
+		GameDTO dto = new GameDTO(game.getLong("ECID"), getProvider(), openTime, game.getString("LEAGUE"),
 				game.getString("TEAM_H"), game.getString("TEAM_C"), odds, now);
 		dto.setExt(isToday);
 		return dto;

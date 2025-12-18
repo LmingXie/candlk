@@ -46,6 +46,9 @@ public abstract class BaseBetApiImpl extends BaseHttpUtil implements BetApi {
 	/** 在日志中是否记录简短响应数据 */
 	protected static final int FLAG_LOG_OUT_BRIEF_BODY = 1 << 3;
 
+	/** 赛事采集阈值：仅处理开赛时间在未来 3 小时内的赛事 */
+	protected static final long START_TIME_THRESHOLD = 1000 * 60 * 60 * 3;
+
 	/** 增加超时时间 + 解码URL */
 	protected static final int FLAG_QUERY_PLAY_LOG_BY_TIME = FLAG_LONG_TIMEOUT | FLAG_LOG_DECODED_URI;
 
@@ -515,6 +518,11 @@ public abstract class BaseBetApiImpl extends BaseHttpUtil implements BetApi {
 	 */
 	public static HttpClient getProxyOrDefaultClient(@Nullable String proxyConfig) {
 		return StringUtil.isBlank(proxyConfig) ? defaultClient() : prepareProxyClient(proxyConfig).build();
+	}
+
+	/** 赛事采集阈值：仅处理开赛时间在未来 3 小时内的赛事 */
+	public long getStartTimeThreshold(long now) {
+		return now + START_TIME_THRESHOLD;
 	}
 
 }
