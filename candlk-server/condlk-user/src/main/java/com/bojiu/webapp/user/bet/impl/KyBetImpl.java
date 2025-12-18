@@ -1,13 +1,19 @@
 package com.bojiu.webapp.user.bet.impl;
 
+import java.io.*;
 import java.net.URI;
+import java.net.URLDecoder;
 import java.net.http.HttpRequest;
 import java.net.http.HttpResponse;
+import java.nio.charset.StandardCharsets;
 import java.util.*;
+import java.util.stream.Collectors;
+import java.util.zip.GZIPInputStream;
 
 import com.alibaba.fastjson2.JSONArray;
 import com.alibaba.fastjson2.JSONObject;
 import com.bojiu.common.model.Messager;
+import com.bojiu.common.util.Common;
 import com.bojiu.common.util.SpringUtil;
 import com.bojiu.webapp.user.bet.BaseBetApiImpl;
 import com.bojiu.webapp.user.dto.GameDTO;
@@ -15,6 +21,7 @@ import com.bojiu.webapp.user.dto.GameDTO.OddsInfo;
 import com.bojiu.webapp.user.model.BetProvider;
 import com.bojiu.webapp.user.model.OddsType;
 import lombok.extern.slf4j.Slf4j;
+import me.codeplayer.util.StringUtil;
 import org.springframework.http.HttpMethod;
 import org.springframework.stereotype.Service;
 
@@ -225,6 +232,30 @@ public class KyBetImpl extends BaseBetApiImpl {
 			result.setStatus(STATUS_MAINTAIN);
 		}
 		return result.castDataType(null);
+	}
+
+	/**
+	 * 对 PB 格式数据进行解密
+	 * 流程：Base64解码 -> Gzip解压 -> UTF-8转换 -> URL解码
+	 */
+	public static String decryptPBData(String encodedData) throws Exception {
+		if (StringUtil.isEmpty(encodedData)) {
+			return null;
+		}
+
+		// 自动处理换行符
+		final byte[] compressedBytes = Common.decodeBase64(encodedData.replaceAll("\\\\n", ""));
+
+		// Gzip 解压 (对应 pako.inflate)
+		// 使用 try-with-resources 自动管理资源
+		try (
+				var bis = new ByteArrayInputStream(compressedBytes);
+				final var reader = new BufferedReader(new InputStreamReader(new GZIPInputStream(bis), StandardCharsets.UTF_8))
+		) {
+
+			// 读取解压后的内容
+			return URLDecoder.decode(reader.lines().collect(Collectors.joining()), StandardCharsets.UTF_8);
+		}
 	}
 
 }
