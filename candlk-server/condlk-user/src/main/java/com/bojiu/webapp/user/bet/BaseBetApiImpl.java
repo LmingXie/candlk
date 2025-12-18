@@ -43,8 +43,8 @@ public abstract class BaseBetApiImpl extends BaseHttpUtil implements BetApi {
 	protected static final int FLAG_RETURN_TEXT = 1 << 1;
 	/** 在日志中记录 URL编码前请求地址 */
 	protected static final int FLAG_LOG_DECODED_URI = 1 << 2;
-	/** 在日志中是否记录正常响应数据 */
-	protected static final int FLAG_LOG_OUT_BODY = 1 << 3;
+	/** 在日志中是否记录简短响应数据 */
+	protected static final int FLAG_LOG_OUT_BRIEF_BODY = 1 << 3;
 
 	/** 增加超时时间 + 解码URL */
 	protected static final int FLAG_QUERY_PLAY_LOG_BY_TIME = FLAG_LONG_TIMEOUT | FLAG_LOG_DECODED_URI;
@@ -113,7 +113,6 @@ public abstract class BaseBetApiImpl extends BaseHttpUtil implements BetApi {
 	}
 
 	protected abstract Object getErrorCode(JSONObject json);
-
 
 	protected static Date getDate(JSONObject node, FastDateFormat format, String field) {
 		String dateStr = node.getString(field);
@@ -346,7 +345,7 @@ public abstract class BaseBetApiImpl extends BaseHttpUtil implements BetApi {
 			final String uri = uriToString(request.uri(), BizFlag.hasFlag(flags, FLAG_LOG_DECODED_URI));
 			if (ex == null) {
 				if (statusCode == 200) {
-					boolean outBody = BizFlag.hasFlag(flags, FLAG_LOG_OUT_BODY);
+					boolean outBody = BizFlag.hasFlag(flags, FLAG_LOG_OUT_BRIEF_BODY);
 					if (!outBody && shouldSplit(responseBody)) {
 						// 如果返回的数据太多，上报到 ES 将会报错，因此需要拆分处理
 						final int length = responseBody.length();
@@ -360,7 +359,8 @@ public abstract class BaseBetApiImpl extends BaseHttpUtil implements BetApi {
 							startPos = endPos + 1;
 						} while (startPos < length);
 					} else {
-						LOGGER.info("【{}游戏】请求地址：{}\n请求参数：{}\n返回数据：{}", getProvider(), uri, body, outBody ? "屏蔽Body输出！" : responseBody);
+						LOGGER.info("【{}游戏】请求地址：{}\n请求参数：{}\n返回数据：{}", getProvider(), uri, body,
+								(outBody && responseBody.length() > 200) ? responseBody.substring(0, 200) : responseBody);
 					}
 				} else { // 非正常响应时记录 响应码
 					LOGGER.warn("【{}游戏】请求地址：{}\n请求参数：{}\n响应码={}，返回数据：{}", getProvider(), uri, body, statusCode, responseBody);

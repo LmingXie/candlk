@@ -38,8 +38,8 @@ public class GameBetJob {
 
 	@Scheduled(cron = "${service.cron.GameBetJob:0 0/1 * * * ?}")
 	public void run() throws InterruptedException {
-		EnumMap<BetProvider, BetApi> enumMap = BetApi.implMapRef.get();
-		int size = enumMap.size();
+		final EnumMap<BetProvider, BetApi> enumMap = BetApi.implMapRef.get();
+		final int size = enumMap.size();
 		final CountDownLatch latch = new CountDownLatch(size);
 		for (Map.Entry<BetProvider, BetApi> entry : enumMap.entrySet()) {
 			smallTaskThreadPool.execute(() -> {
@@ -58,7 +58,7 @@ public class GameBetJob {
 	}
 
 	public void doQueryAndSyncGameBetsForSingleVendor(BetApi gameApi) {
-		BetProvider provider = gameApi.getProvider();
+		final BetProvider provider = gameApi.getProvider();
 		final String providerName = provider.name();
 
 		final String nextJson = RedisUtil.opsForHash().get(UserRedisKey.BET_SYNC_RELAY, providerName);

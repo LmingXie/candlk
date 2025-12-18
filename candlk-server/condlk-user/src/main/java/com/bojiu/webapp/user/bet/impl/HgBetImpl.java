@@ -70,7 +70,7 @@ public class HgBetImpl extends BaseBetApiImpl {
 	}
 
 	/** 返回结果为文档，且屏蔽Body输出 */
-	final int FLAG = FLAG_RETURN_TEXT | FLAG_LOG_OUT_BODY;
+	final int FLAG = FLAG_RETURN_TEXT | FLAG_LOG_OUT_BRIEF_BODY;
 
 	/** 更新间隔 */
 	static final long flushInterval = 1000 * 60 * 60 * 10;
@@ -277,8 +277,13 @@ public class HgBetImpl extends BaseBetApiImpl {
 		List<GameDTO> gameDTOs = new ArrayList<>();
 		Messager<JSONObject> result = doGetLeagueCount(uid);
 		if (!result.isOK()) {
+			final String callback = result.getCallback();
+			if (callback != null && callback.startsWith("无可执行的采集UID")) {
+				log.warn("获取赔率数据失败，厂商【{}】维护，返回数据：{}", getProvider(), callback);
+				return gameDTOs;
+			}
 			clearLoginToken();
-			log.warn("获取赛事统计数据失败：{}", result.getMsg());
+			log.warn("获取赛事统计数据失败：{}", Jsons.encodeRaw(result));
 			return gameDTOs;
 		}
 		JSONObject data = result.data();

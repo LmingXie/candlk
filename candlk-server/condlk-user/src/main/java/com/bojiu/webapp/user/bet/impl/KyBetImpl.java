@@ -59,7 +59,7 @@ public class KyBetImpl extends BaseBetApiImpl {
 	);
 
 	/** 返回结果为文档，且屏蔽Body输出 */
-	final int FLAG = FLAG_LOG_OUT_BODY;
+	final int FLAG = FLAG_LOG_OUT_BRIEF_BODY;
 
 	@Override
 	public List<GameDTO> getGameBets() {
