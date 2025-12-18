@@ -317,7 +317,7 @@ public abstract class BaseBetApiImpl extends BaseHttpUtil implements BetApi {
 			if (!BizFlag.hasFlag(flags, FLAG_RETURN_TEXT) && responseJson(response)) { // 如果响应内容为 JSON，则装配为 data
 				JSONObject json = responseBodyToJSON(responseBody);
 				result.setPayload(json);
-				String status = mapStatus(json, response); // 有可能为 null
+				final String status = mapStatus(json, response); // 有可能为 null
 				result.setStatus(status);
 			} else {
 				result.setCallback(responseBody);

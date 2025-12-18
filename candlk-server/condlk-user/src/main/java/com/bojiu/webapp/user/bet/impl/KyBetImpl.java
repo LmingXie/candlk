@@ -54,13 +54,21 @@ public class KyBetImpl extends BaseBetApiImpl {
 	 *
 	 */
 	final Map<String, String> euidToTidMap = Map.of(
-			"6107", "180,239,276,320,79", // 五大联赛
-			"6110", "41837,166,230,37106,10821,17755,7722,5425,3170,3169" // 世界杯-2026
+			// "6107", "180,239,276,320,79", // 五大联赛
+			// "6110", "41837,166,230,37106,10821,17755,7722,5425,3170,3169", // 世界杯-2026
+			"3020101", "", // 全部今日赛事列表
+			"3020201", "" // 全部早盘赛事
 	);
 
 	/** 返回结果为文档，且屏蔽Body输出 */
 	final int FLAG = FLAG_LOG_OUT_BRIEF_BODY;
 
+	/*
+	可用域名：
+		api.q7stajv.com
+		api.togav85.com
+	 */
+	// https://api.togav85.com/yewu11/v2/w/getAllMatchesOddsPB?t=1766047765942
 	@Override
 	public List<GameDTO> getGameBets() {
 		final Map<String, Object> params = new TreeMap<>();
@@ -68,6 +76,8 @@ public class KyBetImpl extends BaseBetApiImpl {
 		List<GameDTO> gameDTOs = new ArrayList<>();
 		BetProvider provider = getProvider();
 		Date now = new Date();
+		// 比赛的最小开赛时间
+		long minTime = now.getTime() + 1000 * 60 * 60 * 3;
 		for (Map.Entry<String, String> entry : euidToTidMap.entrySet()) {
 			params.put("cuid", userId);
 			params.put("sort", 1);
@@ -77,7 +87,7 @@ public class KyBetImpl extends BaseBetApiImpl {
 			params.put("euid", entry.getKey());
 
 			// 联赛ID列表
-			Messager<JSONObject> result = sendRequest(HttpMethod.POST, buildURI("/yewu11/v2/w/structureTournamentMatchesNew"), params, FLAG);
+			Messager<JSONObject> result = sendRequest(HttpMethod.POST, buildURI("/yewu11/v2/w/structureTournamentMatches"), params, FLAG);
 			if (!result.isOK()) {
 				params.clear();
 				continue;
@@ -86,10 +96,14 @@ public class KyBetImpl extends BaseBetApiImpl {
 			int size;
 			if (nolivedata != null && (size = nolivedata.size()) > 0) {
 				for (int i = 0; i < size; i++) { // 最多查40条数据，多余将会被截断
-					sb.append(nolivedata.getJSONObject(i).getString("mids")).append(",");
-					if (i > 0 && i % 40 == 0) {
-						handlerBatch(entry, params, sb, gameDTOs, provider, now);
-						sb.setLength(0);
+					JSONObject game = nolivedata.getJSONObject(i);
+					long mgt = game.getLongValue("mgt"); // 赛事开始时间
+					if (mgt > minTime) {
+						sb.append(game.getString("mids")).append(",");
+						if (i > 0 && i % 40 == 0) {
+							handlerBatch(entry, params, sb, gameDTOs, provider, now);
+							sb.setLength(0);
+						}
 					}
 				}
 				if (!sb.isEmpty()) {
@@ -113,6 +127,14 @@ public class KyBetImpl extends BaseBetApiImpl {
 		result = sendRequest(HttpMethod.POST, buildURI("/yewu11/v1/w/structureMatchBaseInfoByMids"), params, FLAG);
 		if (!result.isOK()) {
 			params.clear();
+			final String msg = result.data().getString("msg");
+			if (msg != null && msg.startsWith("当前访问人数过多")) {
+				try {
+					Thread.sleep(2100);
+				} catch (InterruptedException ignore) {
+				}
+				handlerBatch(entry, params, sb, gameDTOs, provider, now);
+			}
 			return;
 		}
 		JSONArray games = result.data().getJSONObject("data").getJSONArray("data");
@@ -162,7 +184,7 @@ public class KyBetImpl extends BaseBetApiImpl {
 
 	private void parseOdds(JSONObject hl, OddsType oddsType, List<OddsInfo> odds) {
 		JSONArray ol = hl.getJSONArray("ol");
-		if (oddsType != null) {
+		if (oddsType != null && ol != null && !ol.isEmpty()) {
 			switch (oddsType) {
 				case R, HR -> odds.add(new OddsInfo(oddsType, ((JSONObject) ol.get(0)).getString("onb"),
 						parseOdds(ol, 0), parseOdds(ol, 1)));

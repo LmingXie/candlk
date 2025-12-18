@@ -13,12 +13,14 @@ import com.bojiu.webapp.user.bet.BetApi;
 import com.bojiu.webapp.user.dto.GameBetQueryDTO;
 import com.bojiu.webapp.user.dto.GameDTO;
 import com.bojiu.webapp.user.model.BetProvider;
-import com.bojiu.webapp.user.model.UserRedisKey;
 import lombok.extern.slf4j.Slf4j;
 import me.codeplayer.util.StringUtil;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.data.redis.core.HashOperations;
 import org.springframework.scheduling.annotation.Scheduled;
+
+import static com.bojiu.webapp.user.model.UserRedisKey.BET_SYNC_RELAY;
+import static com.bojiu.webapp.user.model.UserRedisKey.GAME_BETS_PERFIX;
 
 @Slf4j
 @Configuration
@@ -61,19 +63,20 @@ public class GameBetJob {
 		final BetProvider provider = gameApi.getProvider();
 		final String providerName = provider.name();
 
-		final String nextJson = RedisUtil.opsForHash().get(UserRedisKey.BET_SYNC_RELAY, providerName);
+		final String nextJson = RedisUtil.opsForHash().get(BET_SYNC_RELAY, providerName);
 		final GameBetQueryDTO begin = StringUtil.isEmpty(nextJson) ? new GameBetQueryDTO() : Jsons.parseObject(nextJson, GameBetQueryDTO.class);
 		if (begin.lastTime == null || begin.lastTime.getTime() + 1000 * 60 * 2 < System.currentTimeMillis()) {
-			RedisUtil.fastAttemptInLock((UserRedisKey.BET_SYNC_RELAY + "_" + providerName), 1000 * 60 * 10L, () -> {
+			RedisUtil.fastAttemptInLock((BET_SYNC_RELAY + "_" + providerName), 1000 * 60 * 10L, () -> {
+				long beginTime = System.currentTimeMillis();
 				List<GameDTO> gameBets = gameApi.getGameBets();
 				if (!gameBets.isEmpty()) {
 					begin.lastTime = new Date();
 					RedisUtil.doInTransaction(redisOps -> {
 						HashOperations<String, Object, Object> opsForHash = redisOps.opsForHash();
-						opsForHash.put(UserRedisKey.BET_SYNC_RELAY, providerName, Jsons.encode(begin));
-						opsForHash.put(UserRedisKey.GAME_BETS_PERFIX, providerName, Jsons.encode(gameBets));
+						opsForHash.put(BET_SYNC_RELAY, providerName, Jsons.encode(begin));
+						opsForHash.put(GAME_BETS_PERFIX, providerName, Jsons.encode(gameBets));
 					});
-					log.info("同步游戏赔率成功：厂商=" + providerName + "，数量=" + gameBets.size());
+					log.info("厂商【{}】同步游戏赔率成功，数量={}，耗时：{} ms", providerName, gameBets.size(), begin.lastTime.getTime() - beginTime);
 				}
 				return true;
 			});
