@@ -32,13 +32,13 @@ public class BetApiTest {
 
 	@Test
 	public void getGameBetsTest() {
-		BetProvider type = BetProvider.KY;
+		BetProvider type = BetProvider.HG;
 		BetApi api = BetApi.getInstance(type);
 		gameBetJob.doQueryAndSyncGameBetsForSingleVendor(api);
 	}
 
 	@Test
-	public void matchTest() {
+	public void matchTest() throws Exception {
 		int parlaysSize = 3; // 串关大小（3场比赛为一组）
 		BetProvider parlaysProvider = BetProvider.HG; // 组串子的厂家
 		BetProvider hedgingProvider = BetProvider.KY; // 组串子的厂家
@@ -55,16 +55,17 @@ public class BetApiTest {
 		Map<GameDTO, GameDTO> gameMapper = betMatchService.getGameMapper(gameBets, hedgingBets);
 		log.info("查询赛事映射完成，耗时：{}ms", System.currentTimeMillis() - startTime);
 
-		// Map<GameDTO, GameDTO> newGameMapper = new HashMap<>(10, 1F);
-		// int limit = 0;
-		// for (Map.Entry<GameDTO, GameDTO> entry : gameMapper.entrySet()) {
-		// 	if (++limit <= 100) {
-		// 		newGameMapper.put(entry.getKey(), entry.getValue());
-		// 	}
-		// }
-		betMatchService.match(gameMapper, parlaysSize);
+		Map<GameDTO, GameDTO> newGameMapper = new HashMap<>(10, 1F);
+		int limit = 0;
+		for (Map.Entry<GameDTO, GameDTO> entry : gameMapper.entrySet()) {
+			if (++limit <= 200) {
+				newGameMapper.put(entry.getKey(), entry.getValue());
+			}
+		}
+		startTime = System.currentTimeMillis();
+		betMatchService.match1(newGameMapper, parlaysSize);
+		log.info("方案1：计算组合耗时：{}ms", System.currentTimeMillis() - startTime);
 
-		log.info("计算组合耗时：{}ms", System.currentTimeMillis() - startTime);
 	}
 
 }

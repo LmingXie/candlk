@@ -18,8 +18,7 @@ import com.bojiu.common.util.SpringUtil;
 import com.bojiu.webapp.user.bet.BaseBetApiImpl;
 import com.bojiu.webapp.user.dto.GameDTO;
 import com.bojiu.webapp.user.dto.GameDTO.OddsInfo;
-import com.bojiu.webapp.user.model.BetProvider;
-import com.bojiu.webapp.user.model.OddsType;
+import com.bojiu.webapp.user.model.*;
 import lombok.extern.slf4j.Slf4j;
 import me.codeplayer.util.StringUtil;
 import org.springframework.http.HttpMethod;
@@ -68,7 +67,6 @@ public class KyBetImpl extends BaseBetApiImpl {
 		api.q7stajv.com
 		api.togav85.com
 	 */
-	// https://api.togav85.com/yewu11/v2/w/getAllMatchesOddsPB?t=1766047765942
 	@Override
 	public Set<GameDTO> getGameBets() {
 		final Map<String, Object> params = new TreeMap<>();
@@ -112,6 +110,7 @@ public class KyBetImpl extends BaseBetApiImpl {
 			}
 			params.clear();
 		}
+		// log.info("获取全部赛事名称完成，大小{}：{}", leagueSet.size(), Jsons.encode(leagueSet));
 		return gameDTOs;
 	}
 
@@ -130,7 +129,7 @@ public class KyBetImpl extends BaseBetApiImpl {
 			final String msg = result.data().getString("msg");
 			if (msg != null && msg.startsWith("当前访问人数过多")) {
 				try {
-					Thread.sleep(3100);
+					Thread.sleep(2100);
 				} catch (InterruptedException ignore) {
 				}
 				handlerBatch(entry, params, sb, gameDTOs, provider, now);
@@ -175,20 +174,18 @@ public class KyBetImpl extends BaseBetApiImpl {
 					}
 				}
 				if (!odds.isEmpty()) {
-					String league = game.getString("tn").replaceAll(" ", "");
-					if (!"梦幻对垒".equals(game.getString("tn"))) {  // 排除虚拟球赛
-						if (league.endsWith("级联赛") && !league.contains("超级联赛")) {
-							league = league.replace("级联赛", "组联赛");
-						} else if ("玻利维亚杯".equals(league)) {
-							league = "玻利维亚职业联赛杯";
-						}
-						gameDTOs.add(new GameDTO(game.getLong("mid"), provider, new Date(game.getLong("mgt")), league,
+					final String league = game.getString("tn").replaceAll(" ", "");
+					if (!"梦幻对垒".equals(league)) {  // 排除虚拟球赛
+						// leagueSet.add(league);
+						gameDTOs.add(new GameDTO(game.getLong("mid"), provider, new Date(game.getLong("mgt")), convertLeague(league),
 								game.getString("mhn"), game.getString("man"), odds, now));
 					}
 				}
 			}
 		}
 	}
+
+	// Set<String> leagueSet = new HashSet<>();
 
 	private void parseOdds(JSONObject hl, OddsType oddsType, List<OddsInfo> odds) {
 		JSONArray ol = hl.getJSONArray("ol");
@@ -286,6 +283,67 @@ public class KyBetImpl extends BaseBetApiImpl {
 			// 读取解压后的内容
 			return URLDecoder.decode(reader.lines().collect(Collectors.joining()), StandardCharsets.UTF_8);
 		}
+	}
+
+	@Override
+	public String convertLeague(String league) {
+		// 1. 优先处理完全不规则的、或需要特殊映射的 KY 联赛名称
+		return switch (league) {
+			// 英格兰系列
+			case "英格兰超级联赛" -> League.EnglishPremierLeague;
+			case "英格兰冠军联赛" -> League.EnglishLeagueChampionship;
+			case "英格兰甲级联赛", "英格兰甲组联赛" -> League.EnglishLeague1;
+			case "英格兰乙级联赛", "英格兰乙组联赛" -> League.EnglishLeague2;
+			case "英格兰足球协会全国联赛" -> League.EnglishNationalLeague;
+			case "英格兰足球协会北部全国联赛" -> League.EnglishNationalLeagueNorth;
+			case "英格兰足球协会南部全国联赛" -> League.EnglishNationalLeagueSouth;
+			case "超级联赛国际杯U21(在英格兰)" -> League.PremierLeagueCupU21;
+			case "英格兰北部超级联赛" -> League.EnglandNorthernPremierLeague;
+			case "英格兰北部东区甲级联赛" -> League.EnglandNorthernEastLeague1;
+			case "英格兰南部南区超级联赛" -> League.EnglandSouthernLeagueSouth;
+			case "英格兰南部中区超级联赛" -> League.EnglandSouthernLeagueCentral;
+			case "超级联赛国际杯(在英格兰)" -> League.PremierLeagueInternationalCupInEngland;
+
+			// 欧洲/国际系列
+			case "欧洲冠军联赛" -> League.UefaChampionsLeague;
+			case "欧洲联赛" -> League.UefaEuropaLeague;
+			case "世界杯2026欧洲资格赛-附加赛" -> League.WorldCup2026EuropeQualifiersPlayOff;
+			case "非洲国家杯2025(在摩洛哥)" -> League.AfricaCupOfNations2025InMorocco;
+
+			// 德西意法系列
+			case "德国甲级联赛" -> League.GermanyBundesliga1;
+			case "德国乙级联赛" -> League.GermanyBundesliga2;
+			case "西班牙甲级联赛" -> League.SpainPrimeraDivision;
+			case "西班牙乙级联赛" -> League.SpainSegundaDivision;
+			case "意大利甲级联赛" -> League.ItalySerieA;
+			case "意大利乙级联赛" -> League.ItalySerieB;
+			case "法国甲级联赛" -> League.FranceLigue1;
+			case "法国杯" -> League.FranceCup;
+
+			// 其他地区
+			case "阿曼职业联赛" -> League.OmanSuperLeague;
+			case "科威特超级联赛" -> League.KuwaitPremierLeague;
+			case "阿尔及利亚甲级联赛" -> League.AlgeriaLigue1;
+			case "阿尔及利亚乙级联赛" -> League.AlgeriaLigue2;
+			case "澳洲女子甲级联赛", "澳大利亚女子甲级联赛" -> League.AustraliaALeagueWomen;
+			case "保加利亚甲级联赛" -> League.BulgariaFirstProfessionalFootballLeague;
+			case "罗马尼亚甲级联赛" -> League.RomaniaLiga1;
+			case "克罗地亚足球联赛" -> League.CroatiaHNLLeague;
+			case "埃及联赛杯" -> League.EgyptLeagueCup;
+			case "荷兰乙级联赛" -> League.NetherlandsEersteDivisie;
+			case "比利时甲级联赛A" -> League.BelgiumFirstDivisionA;
+			case "希腊超级联赛甲级" -> League.GreeceSuperLeague1;
+			case "希腊超级联赛乙级" -> League.GreeceSuperLeague2;
+
+			// 默认处理：如果无法精准匹配，尝试通用的字符替换逻辑（注意：这依然返回字符串）
+			default -> {
+				String temp = league;
+				if (temp.endsWith("级联赛") && !temp.contains("超级联赛")) {
+					temp = temp.replace("级联赛", "组联赛");
+				}
+				yield temp;
+			}
+		};
 	}
 
 }

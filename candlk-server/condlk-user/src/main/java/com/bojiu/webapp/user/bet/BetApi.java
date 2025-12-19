@@ -42,4 +42,7 @@ public interface BetApi {
 	/** 检查当前API服务器状态是否正常 */
 	Messager<Void> ping();
 
+	/** 转换联赛名称 */
+	String convertLeague(String league);
+
 }
