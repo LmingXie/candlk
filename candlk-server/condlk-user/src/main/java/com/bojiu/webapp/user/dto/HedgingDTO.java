@@ -3,8 +3,8 @@ package com.bojiu.webapp.user.dto;
 import java.util.ArrayList;
 import java.util.List;
 
-import lombok.Getter;
-import lombok.NoArgsConstructor;
+import com.bojiu.webapp.user.dto.GameDTO.OddsInfo;
+import lombok.*;
 import lombok.extern.slf4j.Slf4j;
 
 /** 预估对冲算法类 */
@@ -34,6 +34,10 @@ public class HedgingDTO {
 		this.bRebate = bRebate;
 	}
 
+	public record GameRate(GameDTO game, Integer oddsIdx, Integer rateIdx) {
+
+	}
+
 	/** 赔率信息 */
 	@NoArgsConstructor
 	public static class Odds {
@@ -42,10 +46,39 @@ public class HedgingDTO {
 		public double aRate;
 		/** B平台 赔率 */
 		public double bRate;
+		/** A平台 游戏信息 */
+		public GameRate aGame;
+		/** B平台 游戏信息 */
+		public GameRate bGame;
+		@Setter
+		@Getter
+		public Long gameOpenTime;
 
 		public Odds(double aRate, double bRate) {
 			this.aRate = aRate;
 			this.bRate = bRate;
+		}
+
+		public Odds initGame(GameRate aGame, GameRate bGame) {
+			this.aGame = aGame;
+			this.bGame = bGame;
+			return this;
+		}
+
+		public String getInfo() {
+			if (aGame != null) {
+				final GameDTO game = this.aGame.game;
+				OddsInfo oddsInfo = game.odds.get(this.aGame.oddsIdx);
+				return "【" + game.league + "】" + game.teamHome + " VS " + game.teamClient
+						+ " 【" + oddsInfo.getType().getLabel() + "】（" + oddsInfo.ratioRate + "）";
+
+			}
+			return null;
+		}
+
+		public void clear() {
+			this.aGame = null;
+			this.bGame = null;
 		}
 
 		transient Double bWinFactor;
@@ -160,6 +193,11 @@ public class HedgingDTO {
 			outs = result;
 		}
 		return outs;
+	}
+
+	public double calcAvgProfit(double[] bHedgingCoins) {
+		// 初始成本和产出
+		return getLoss() + (bHedgingCoins[0] * parlays[0].bWinFactor(bRebate));
 	}
 
 }

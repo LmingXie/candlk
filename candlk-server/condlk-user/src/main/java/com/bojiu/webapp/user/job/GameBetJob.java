@@ -38,10 +38,11 @@ public class GameBetJob {
 			// 这里的队列容量（ 128 ） 一定不能小于 BetProvider.CACHE.length
 			, 128, "game-bet-sync-", new ThreadPoolExecutor.AbortPolicy());
 
-	@Scheduled(cron = "${service.cron.GameBetJob:0 0/1 * * * ?}")
+	@Scheduled(cron = "${service.cron.GameBetJob:0/30 * * * * ?}")
 	public void run() throws InterruptedException {
 		final EnumMap<BetProvider, BetApi> enumMap = BetApi.implMapRef.get();
 		final int size = enumMap.size();
+		long startTime = System.currentTimeMillis();
 		final CountDownLatch latch = new CountDownLatch(size);
 		for (Map.Entry<BetProvider, BetApi> entry : enumMap.entrySet()) {
 			smallTaskThreadPool.execute(() -> {
@@ -57,6 +58,7 @@ public class GameBetJob {
 			});
 		}
 		latch.await(); // 被阻塞，等待唤醒
+		log.info("【游戏赔率】同步完成，耗时：{} ms", System.currentTimeMillis() - startTime);
 	}
 
 	public void doQueryAndSyncGameBetsForSingleVendor(BetApi gameApi) {
@@ -65,8 +67,8 @@ public class GameBetJob {
 
 		final String nextJson = RedisUtil.opsForHash().get(BET_SYNC_RELAY, providerName);
 		final GameBetQueryDTO begin = StringUtil.isEmpty(nextJson) ? new GameBetQueryDTO() : Jsons.parseObject(nextJson, GameBetQueryDTO.class);
-		if (begin.lastTime == null || begin.lastTime.getTime() + 1000 * 60 * 2 < System.currentTimeMillis()) {
-			// RedisUtil.fastAttemptInLock((BET_SYNC_RELAY + "_" + providerName), 1000 * 60 * 10L, () -> {
+		if (begin.lastTime == null || begin.lastTime.getTime() + 1000 * 60 < System.currentTimeMillis()) {
+			RedisUtil.fastAttemptInLock((BET_SYNC_RELAY + "_" + providerName), 1000 * 60 * 5L, () -> {
 				long beginTime = System.currentTimeMillis();
 				Set<GameDTO> gameBets = gameApi.getGameBets();
 				if (!gameBets.isEmpty()) {
@@ -78,8 +80,8 @@ public class GameBetJob {
 					});
 					log.info("厂商【{}】同步游戏赔率成功，数量={}，耗时：{} ms", providerName, gameBets.size(), begin.lastTime.getTime() - beginTime);
 				}
-			// 	return true;
-			// });
+				return true;
+			});
 		}
 
 	}

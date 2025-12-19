@@ -14,17 +14,17 @@ public enum OddsType implements ValueProxyImpl<OddsType, Integer> {
 	/** 全场大小盘（Over/Under） */
 	OU("全场大小", PeriodType.FULL),
 	/** 全场独赢盘/胜负平（Moneyline） */
-	M("全场独赢", PeriodType.FULL),
+	M("全场独赢", PeriodType.FULL, false),
 	/** 上半场让球盘（Runline） */
 	HR("上半场让球", PeriodType.HALF),
 	/** 上半场大小盘（Over/Under） */
 	HOU("上半场大小", PeriodType.HALF),
 	/** 上半场独赢盘/胜负平（Moneyline） */
-	HM("上半场独赢", PeriodType.HALF),
+	HM("上半场独赢", PeriodType.HALF, false),
 	/** 双方球队进球（Both Teams To Score） */
-	TS("两队都进球", PeriodType.FULL),
+	TS("两队都进球", PeriodType.FULL, false),
 	/** 单双盘（预测比赛最终总进球数是单数 (Odd) 还是双数 (Even)） */
-	EO("全场单双", PeriodType.FULL),
+	EO("全场单双", PeriodType.FULL, false),
 	;
 
 	@EnumValue
@@ -35,10 +35,10 @@ public enum OddsType implements ValueProxyImpl<OddsType, Integer> {
 	final ValueProxy<OddsType, Integer> proxy;
 
 	OddsType(String label, PeriodType type) {
-		this(label, true, type);
+		this(label, type, true);
 	}
 
-	OddsType(String label, boolean open, PeriodType type) {
+	OddsType(String label, PeriodType type, boolean open) {
 		this.value = ordinal();
 		this.label = label;
 		this.proxy = new ValueProxy<>(this, value, label);

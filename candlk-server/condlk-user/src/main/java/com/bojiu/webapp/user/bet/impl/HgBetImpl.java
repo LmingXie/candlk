@@ -398,7 +398,8 @@ public class HgBetImpl extends BaseBetApiImpl {
 	private @NonNull GameDTO parseGameDTO(boolean isToday, JSONObject game, Date openTime, Date now) {
 		List<OddsInfo> odds = new ArrayList<>(OddsType.CACHE.length);
 		// 以第一只队伍为准（H表示强队与第一支队伍相同，此时 第一支队伍为 让球方 ）
-		final String strongPrefix = "H".equals(game.getString("STRONG")) ? "-" : "+", // 全场
+		boolean homeIsStrong = "H".equals(game.getString("STRONG")), homeIsHStrong = "H".equals(game.getString("HSTRONG"));
+		final String strongPrefix = homeIsStrong ? "-" : "+", // 全场
 				strongHPrefix = "H".equals(game.getString("HSTRONG")) ? "-" : "+"; // 上半场
 		for (OddsType oddsType : OddsType.CACHE) {
 			switch (oddsType) {
@@ -413,7 +414,7 @@ public class HgBetImpl extends BaseBetApiImpl {
 					Double iorOuh = game.getDouble("IOR_OUH");
 					if (iorOuh != null) {
 						double[] values = convertOddsRatio(iorOuh, game.getDouble("IOR_OUC"), 2, null);
-						odds.add(new OddsInfo(oddsType, parseRatioRate(null, game.getString("RATIO_OUO")), values[0] + 1, values[1] + 1));
+						odds.add(new OddsInfo(oddsType, parseRatioRate(null, game.getString("RATIO_OUO")), values[1] + 1,/*大小的结果取反*/ values[0] + 1));
 					}
 				}
 				case M -> {
@@ -433,7 +434,7 @@ public class HgBetImpl extends BaseBetApiImpl {
 					Double iorHouh = game.getDouble("IOR_HOUH");
 					if (iorHouh != null) {
 						double[] values = convertOddsRatio(iorHouh, game.getDouble("IOR_HOUC"), 2, null);
-						odds.add(new OddsInfo(oddsType, parseRatioRate(null, game.getString("RATIO_HOUO")), values[0] + 1, values[1] + 1));
+						odds.add(new OddsInfo(oddsType, parseRatioRate(null, game.getString("RATIO_HOUO")), values[1] + 1,/*大小的结果取反*/ values[0] + 1));
 					}
 				}
 				case HM -> {

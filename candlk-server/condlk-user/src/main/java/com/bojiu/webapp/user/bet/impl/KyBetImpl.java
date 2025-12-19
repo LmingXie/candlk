@@ -130,7 +130,7 @@ public class KyBetImpl extends BaseBetApiImpl {
 			final String msg = result.data().getString("msg");
 			if (msg != null && msg.startsWith("当前访问人数过多")) {
 				try {
-					Thread.sleep(2100);
+					Thread.sleep(3100);
 				} catch (InterruptedException ignore) {
 				}
 				handlerBatch(entry, params, sb, gameDTOs, provider, now);

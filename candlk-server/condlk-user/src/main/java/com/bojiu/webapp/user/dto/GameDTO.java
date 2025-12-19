@@ -41,23 +41,6 @@ public class GameDTO extends TimeBasedEntity {
 		this.initTime(now);
 	}
 
-	@Override
-	public int hashCode() {
-		return Objects.hash(id);
-	}
-
-	@Override
-	public boolean equals(Object o) { // 累计充值金额=阶梯，必须唯一
-		if (this == o) {
-			return true;
-		}
-		if (o == null || getClass() != o.getClass()) {
-			return false;
-		}
-		GameDTO tier = (GameDTO) o;
-		return tier.eqId(id);
-	}
-
 	/** 赔率信息 */
 	@Setter
 	@Getter
@@ -156,6 +139,16 @@ public class GameDTO extends TimeBasedEntity {
 		/** 平局赔率（包含本金） */
 		public Double nRate;
 
+		/** 赔率列表（包含本金）：[ 主队/是/单, 客队/否/双, 平局赔率 ] */
+		public transient Double[] rates;
+
+		public Double[] getRates() {
+			return rates == null ? (rates = switch (type) {
+				case R, HR, OU, HOU, TS, EO -> new Double[] { hRate, cRate };
+				case M, HM -> new Double[] { hRate, cRate, nRate };
+			}) : rates;
+		}
+
 		public OddsInfo(OddsType type, String ratioRate, Double hRate, Double cRate) {
 			this(type, ratioRate, hRate, cRate, null);
 		}
@@ -176,6 +169,38 @@ public class GameDTO extends TimeBasedEntity {
 			this.nRate = nRate;
 		}
 
+	}
+
+	transient Long openTimeMs;
+
+	public Long openTimeMs() {
+		return openTimeMs == null ? openTimeMs = openTime.getTime() : openTimeMs;
+	}
+
+	public OddsInfo findOdds(OddsInfo aOdd) {
+		for (OddsInfo odds : odds) {
+			if (odds.type == aOdd.type && odds.ratioRate.equals(aOdd.ratioRate)) {
+				return odds;
+			}
+		}
+		return null;
+	}
+
+	@Override
+	public int hashCode() {
+		return Objects.hash(id);
+	}
+
+	@Override
+	public boolean equals(Object o) { // 累计充值金额=阶梯，必须唯一
+		if (this == o) {
+			return true;
+		}
+		if (o == null || getClass() != o.getClass()) {
+			return false;
+		}
+		GameDTO tier = (GameDTO) o;
+		return tier.eqId(id);
 	}
 
 }
