@@ -1,8 +1,7 @@
 package com.bojiu.webapp.user.service;
 
 import java.util.*;
-import java.util.concurrent.Future;
-import java.util.concurrent.ThreadPoolExecutor;
+import java.util.concurrent.*;
 import java.util.function.Consumer;
 
 import com.bojiu.context.web.Jsons;
@@ -214,6 +213,9 @@ public class BetMatchService {
 		return diff < limitMin || diff > limitMax;
 	}
 
+	private static final ConcurrentMap<Thread, LocalTopNArray> THREAD_TOPN_REGISTRY =
+			new ConcurrentHashMap<>();
+
 	public void match2(Map<GameDTO, GameDTO> gameMapper, int parlaysSize) {
 
 		if (parlaysSize < 2 || parlaysSize > 3) {
@@ -223,36 +225,97 @@ public class BetMatchService {
 		final GameDTO[] aGames = gameMapper.keySet().toArray(new GameDTO[0]);
 
 		Arrays.sort(aGames, Comparator.comparingLong(GameDTO::openTimeMs));
+		log.info("开始并行匹配（仅第一层异步）：{}串1，共{}场比赛", parlaysSize, aGames.length);
 
-		List<Future<LocalTopNArray>> futures = new ArrayList<>();
+		final ThreadLocal<LocalTopNArray> THREAD_LOCAL_TOPN =
+				ThreadLocal.withInitial(() -> {
+					LocalTopNArray topN = new LocalTopNArray(1000);
+					THREAD_TOPN_REGISTRY.put(Thread.currentThread(), topN);
+					return topN;
+				});
+
+		List<Future<Boolean>> futures = new ArrayList<>();
 
 		for (int i = 0; i < aGames.length; i++) {
-			final int start = i;
-
+			final int idx = i;
 			futures.add(smallTaskThreadPool.submit(() -> {
-				final LocalTopNArray localTop = new LocalTopNArray(1000);
-				backtrackParallel(gameMapper, aGames, start,
-						new ArrayList<>(4), parlaysSize, localTop);
-				return localTop;
+				// 线程私有 TopN（同线程所有任务共享）
+				LocalTopNArray localTop = THREAD_LOCAL_TOPN.get();
+
+				// 第一层逻辑与 match 完全一致
+				final GameDTO aGame = aGames[idx];
+				final List<Odds> path = new ArrayList<>(4);
+
+				final List<OddsInfo> aOddsList = aGame.odds;
+				for (int oddsIdx = 0, len = aOddsList.size(); oddsIdx < len; oddsIdx++) {
+					final OddsInfo aOdd = aOddsList.get(oddsIdx);
+					if (aOdd == null || !aOdd.type.open) {
+						continue;
+					}
+
+					final Double[] rates = aOdd.getRates();
+					for (int parlaysIdx = 0; parlaysIdx < rates.length; parlaysIdx++) {
+
+						final GameDTO bGame = gameMapper.get(aGame);
+						final OddsInfo bOdds = bGame.findOdds(aOdd);
+						if (bOdds == null || bOdds.getRates() == null || !bOdds.type.open) {
+							continue;
+						}
+
+						final int hedgingIdx = parlaysIdx == 0 ? 1 : 0;
+
+						final Odds oddsNode = new Odds(
+								rates[parlaysIdx],
+								bOdds.getRates()[hedgingIdx]
+						).initGame(
+								new GameRate(aGame, oddsIdx, parlaysIdx),
+								new GameRate(bGame, oddsIdx, hedgingIdx)
+						);
+						oddsNode.setGameOpenTime(aGame.openTimeMs());
+
+						path.add(oddsNode);
+
+						// 深度回溯：线程内写 localTop，无锁
+						backtrackParallel(
+								gameMapper,
+								aGames,
+								idx + 1,
+								path,
+								parlaysSize,
+								localTop
+						);
+						path.remove(path.size() - 1);
+					}
+				}
+				return true;
 			}));
 		}
 
 		// ===== 聚合阶段（单线程，量很小）=====
-		final int[] totalSize = { 0 };
-		final ArrayList<HedgingDTO[]> result = CollectionUtil.toList(futures, f -> {
+		// 等待全部任务完成
+		for (Future<Boolean> f : futures) {
 			try {
-				HedgingDTO[] data = f.get().getResult();
-				totalSize[0] += data.length;
-				return data;
+				f.get();
 			} catch (Exception e) {
 				throw new RuntimeException(e);
 			}
-		});
+		}
+
+		List<HedgingDTO[]> allResults = new ArrayList<>();
+		int totalSize = 0;
+
+		for (LocalTopNArray topN : THREAD_TOPN_REGISTRY.values()) {
+			HedgingDTO[] arr = topN.getResult();
+			if (arr.length > 0) {
+				allResults.add(arr);
+				totalSize += arr.length;
+			}
+		}
 
 		// 合并到一个大数组
-		HedgingDTO[] merged = new HedgingDTO[totalSize[0]];
+		HedgingDTO[] merged = new HedgingDTO[totalSize];
 		int pos = 0;
-		for (HedgingDTO[] arr : result) {
+		for (HedgingDTO[] arr : allResults) {
 			System.arraycopy(arr, 0, merged, pos, arr.length);
 			pos += arr.length;
 		}
