@@ -63,7 +63,7 @@ public class BetApiTest {
 			}
 		}
 		startTime = System.currentTimeMillis();
-		betMatchService.match1(newGameMapper, parlaysSize);
+		betMatchService.match(newGameMapper, parlaysSize);
 		log.info("方案1：计算组合耗时：{}ms", System.currentTimeMillis() - startTime);
 
 	}

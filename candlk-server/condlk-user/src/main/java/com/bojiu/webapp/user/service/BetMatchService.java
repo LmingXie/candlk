@@ -1,6 +1,7 @@
 package com.bojiu.webapp.user.service;
 
 import java.util.*;
+import java.util.concurrent.Future;
 import java.util.concurrent.ThreadPoolExecutor;
 import java.util.function.Consumer;
 
@@ -151,7 +152,7 @@ public class BetMatchService {
 			if (!currentPath.isEmpty()) {
 				// 拿路径中最后一场比赛做时间比对
 				// 注意：由于 aGames 已排序，若当前 i 不满足时间，后续 i 可能满足，故用 continue
-				if (!isValidTimeGap(currentPath, aGame)) {
+				if (isValidTimeGap(currentPath, aGame)) {
 					continue;
 				}
 			}
@@ -163,7 +164,7 @@ public class BetMatchService {
 					continue;
 				}
 
-				// 遍历该盘口下的所有赔率（不再硬编码 0 和 1）
+				// 遍历该盘口下的所有赔率
 				for (int parlaysIdx = 0; parlaysIdx < aOdd.getRates().length; parlaysIdx++) {
 					final Double parlaysRate = aOdd.getRates()[parlaysIdx];
 
@@ -175,7 +176,7 @@ public class BetMatchService {
 					// 获取对冲平台的对应数据
 					final GameDTO bGame = gameMapper.get(aGame);
 
-					// 关键点：如果对冲平台找不到该盘口，或者该盘口已关闭，放弃这个组合
+					// 如果对冲平台找不到该盘口，或者该盘口已关闭，放弃这个组合
 					final OddsInfo bOdds = bGame.findOdds(aOdd);
 					if (bOdds == null || bOdds.getRates() == null || !bOdds.type.open) {
 						// log.debug("B平台缺失对应盘口，跳过：{}-{}-{}-{}", aGame.league, aGame.teamHome, aOdd.ratioRate, aOdd.type.getLabel());
@@ -204,11 +205,221 @@ public class BetMatchService {
 		}
 	}
 
+	static final long limitMin = 1000 * 60 * 60, limitMax = 1000 * 60 * 60 * 24 * 2;
+
 	private boolean isValidTimeGap(List<Odds> path, GameDTO nextGame) {
 		final long lastGameTime = path.get(path.size() - 1).getGameOpenTime();
 		final long diff = nextGame.openTimeMs() - lastGameTime;
-		// 1小时到5天之间
-		return diff >= 3600_000L && diff <= 432_000_000L;
+		// 1小时到2天之间
+		return diff < limitMin || diff > limitMax;
+	}
+
+	public void match2(Map<GameDTO, GameDTO> gameMapper, int parlaysSize) {
+
+		if (parlaysSize < 2 || parlaysSize > 3) {
+			throw new IllegalArgumentException("串子大小参数错误：" + parlaysSize);
+		}
+
+		final GameDTO[] aGames = gameMapper.keySet().toArray(new GameDTO[0]);
+
+		Arrays.sort(aGames, Comparator.comparingLong(GameDTO::openTimeMs));
+
+		List<Future<LocalTopNArray>> futures = new ArrayList<>();
+
+		for (int i = 0; i < aGames.length; i++) {
+			final int start = i;
+
+			futures.add(smallTaskThreadPool.submit(() -> {
+				final LocalTopNArray localTop = new LocalTopNArray(1000);
+				backtrackParallel(gameMapper, aGames, start,
+						new ArrayList<>(4), parlaysSize, localTop);
+				return localTop;
+			}));
+		}
+
+		// ===== 聚合阶段（单线程，量很小）=====
+		final int[] totalSize = { 0 };
+		final ArrayList<HedgingDTO[]> result = CollectionUtil.toList(futures, f -> {
+			try {
+				HedgingDTO[] data = f.get().getResult();
+				totalSize[0] += data.length;
+				return data;
+			} catch (Exception e) {
+				throw new RuntimeException(e);
+			}
+		});
+
+		// 合并到一个大数组
+		HedgingDTO[] merged = new HedgingDTO[totalSize[0]];
+		int pos = 0;
+		for (HedgingDTO[] arr : result) {
+			System.arraycopy(arr, 0, merged, pos, arr.length);
+			pos += arr.length;
+		}
+		// 排序（按 avgProfit 升序）
+		Arrays.sort(merged, Comparator.comparingDouble(o -> o.avgProfit));
+
+		// 截断保留 TopN
+		final int globalTopN = 1000;
+		HedgingDTO[] globalTop = merged.length > globalTopN ? Arrays.copyOfRange(merged, merged.length - globalTopN, merged.length) : merged;
+
+		log.info("最终 Top1000 计算完成：{}", Jsons.encode(globalTop));
+	}
+
+	private void backtrackParallel(Map<GameDTO, GameDTO> gameMapper, GameDTO[] aGames, int start,
+	                               List<Odds> currentPath, int parlaysSize, LocalTopNArray localTop) {
+
+		// 递归终止条件：已达到要求的串子大小
+		if (currentPath.size() == parlaysSize) {
+			localTop.tryAdd(new HedgingDTO(currentPath.toArray(new Odds[0])));
+			return;
+		}
+
+		for (int i = start; i < aGames.length; i++) {
+			GameDTO aGame = aGames[i];
+
+			// 时间约束剪枝
+			if (!currentPath.isEmpty() && isValidTimeGap(currentPath, aGame)) {
+				continue;
+			}
+
+			final List<OddsInfo> aOddsList = aGame.odds;
+			for (int oddsIdx = 0, len = aOddsList.size(); oddsIdx < len; oddsIdx++) {
+				final OddsInfo aOdd = aOddsList.get(oddsIdx);
+				if (aOdd == null || !aOdd.type.open) { // 跳过未开放的赔率盘口
+					continue;
+				}
+
+				final Double[] rates = aOdd.getRates();
+				// 遍历该盘口下的所有赔率
+				for (int parlaysIdx = 0; parlaysIdx < rates.length; parlaysIdx++) {
+
+					final GameDTO bGame = gameMapper.get(aGame); // 查找对冲平台对应游戏
+					final OddsInfo bOdds = bGame.findOdds(aOdd); // 查找对应赔率数据
+					// 如果对冲平台找不到该盘口，或者该盘口已关闭，放弃这个组合
+					if (bOdds == null || bOdds.getRates() == null || !bOdds.type.open) {
+						continue;
+					}
+
+					// 如果是对冲，通常取对方平台的相反侧索引，这里保留你的原逻辑映射
+					final int hedgingIdx = parlaysIdx == 0 ? 1 : 0;
+
+					final Odds oddsNode = new Odds(
+							rates[parlaysIdx],
+							bOdds.getRates()[hedgingIdx]
+					).initGame(
+							new GameRate(aGame, oddsIdx, parlaysIdx),
+							new GameRate(bGame, oddsIdx, hedgingIdx)
+					);
+					// 记录当前比赛的开赛时间，用于下层递归校验
+					oddsNode.setGameOpenTime(aGame.openTimeMs());
+					// 将赔率盘口记录到组合中
+					currentPath.add(oddsNode);
+
+					// --- 递归下一层：传递 i + 1 确保不选重复比赛 ---
+					backtrackParallel(gameMapper, aGames, i + 1,
+							currentPath, parlaysSize, localTop);
+
+					// --- 回溯：清理当前节点状态，供循环的下一个分支使用 ---
+					currentPath.removeLast();
+				}
+			}
+		}
+	}
+
+	public static final class LocalTopNArray {
+
+		/** TopN排名数组 */
+		private final HedgingDTO[] topN;
+		/** 超容量缓存区 */
+		private final HedgingDTO[] tempBuffer;
+		/** 超容量缓存区大小 */
+		private static final int TEMP_CAPACITY = 10000;
+		/** 容忍的初始最低分 */
+		private static final double minScoreLimit = -200;
+		/** TopN容量 */
+		private final int capacity;
+		/** 当前TopN容量 */
+		private int size = 0,
+		/** 当前临时缓存区容量 */
+		tempSize = 0;
+
+		/** 是否已进入超容量阶段 */
+		private boolean isSuperSize = false;
+
+		/** 当前 TopN 的最低分（仅在 isSuperSize=true 时有效） */
+		private double minScore = minScoreLimit;
+
+		public LocalTopNArray(int capacity) {
+			this.capacity = capacity;
+			this.topN = new HedgingDTO[capacity];
+			this.tempBuffer = new HedgingDTO[TEMP_CAPACITY];
+		}
+
+		public void tryAdd(HedgingDTO dto) {
+			final double score = dto.calcAvgProfitAndCache(dto.getHedgingCoins());
+			if (score < minScoreLimit) {
+				return;
+			}
+
+			// 未满容量阶段：直接追加，不排序
+			if (!isSuperSize) {
+				topN[size++] = dto;
+
+				if (size == capacity) {
+					// 首次满容量：排序并进入超容量模式
+					Arrays.sort(topN, Comparator.comparingDouble(o -> o.avgProfit));
+					minScore = topN[0].avgProfit;
+					isSuperSize = true;
+					log.info("达到额定容量，进入超容量模式：minScore={}", minScore);
+				}
+				return;
+			}
+
+			// 超容量阶段：只缓存可能进入 TopN 的
+			if (score <= minScore) {
+				return;
+			}
+
+			tempBuffer[tempSize++] = dto;
+
+			// tempBuffer 满：合并 + 重新计算 TopN
+			if (tempSize == TEMP_CAPACITY) {
+				mergeTemp();
+			}
+		}
+
+		/** 合并 tempBuffer 到 topN，并重算 TopN */
+		private void mergeTemp() {
+			// 合并到一个新数组
+			final HedgingDTO[] merged = new HedgingDTO[capacity + tempSize];
+			System.arraycopy(topN, 0, merged, 0, capacity);
+			System.arraycopy(tempBuffer, 0, merged, capacity, tempSize);
+
+			// 排序
+			Arrays.sort(merged, Comparator.comparingDouble(o -> o.avgProfit));
+
+			// 截取 TopN
+			System.arraycopy(merged, merged.length - capacity, topN, 0, capacity);
+
+			// 重置最低分和缓冲区容量
+			minScore = topN[0].avgProfit;
+			tempSize = 0;
+			log.info("合并 tempBuffer 到 topN：minScore={}", minScore);
+		}
+
+		/** 取最终 TopN 结果 */
+		public HedgingDTO[] getResult() {
+			if (!isSuperSize) {
+				return Arrays.copyOf(topN, size);
+			}
+
+			if (tempSize > 0) {
+				mergeTemp();
+			}
+			return Arrays.copyOf(topN, capacity);
+		}
+
 	}
 
 }

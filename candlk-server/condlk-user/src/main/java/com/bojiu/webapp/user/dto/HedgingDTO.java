@@ -195,6 +195,13 @@ public class HedgingDTO {
 		return outs;
 	}
 
+	public transient double avgProfit;
+
+	public double calcAvgProfitAndCache(double[] bHedgingCoins) {
+		// 初始成本和产出
+		return avgProfit = calcAvgProfit(bHedgingCoins);
+	}
+
 	public double calcAvgProfit(double[] bHedgingCoins) {
 		// 初始成本和产出
 		return getLoss() + (bHedgingCoins[0] * parlays[0].bWinFactor(bRebate));
