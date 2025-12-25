@@ -2,7 +2,6 @@ package com.bojiu.context.model;
 
 import java.util.Arrays;
 import java.util.List;
-import javax.annotation.Nullable;
 
 import com.baomidou.mybatisplus.annotation.EnumValue;
 import com.bojiu.common.model.ValueProxy;
@@ -10,6 +9,7 @@ import com.bojiu.common.util.Common;
 import com.bojiu.context.i18n.AdminI18nKey;
 import lombok.Getter;
 import me.codeplayer.util.CollectionUtil;
+import org.jspecify.annotations.Nullable;
 
 /**
  * 领取时间类型：0=实时领取；1=次日领取；2=每日；3=下周；4=每周；5=下月；6=每月；

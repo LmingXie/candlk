@@ -3,8 +3,6 @@ package com.bojiu.webapp.user.service;
 import java.util.*;
 import java.util.concurrent.TimeUnit;
 import java.util.function.Function;
-import javax.annotation.Nonnull;
-import javax.annotation.Nullable;
 
 import com.bojiu.common.model.Status;
 import com.bojiu.webapp.base.service.*;
@@ -17,6 +15,8 @@ import com.google.common.collect.ImmutableMap;
 import lombok.extern.slf4j.Slf4j;
 import me.codeplayer.util.NumberUtil;
 import me.codeplayer.util.X;
+import org.jspecify.annotations.NonNull;
+import org.jspecify.annotations.Nullable;
 import org.springframework.beans.factory.InitializingBean;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -52,8 +52,8 @@ public class MetaService extends BaseServiceImpl<Meta, MetaDao, Long> implements
 
 	static final Function<Long, EnumMap<MetaType, Map<String, Meta>>> merchantMapBuilder = k -> new EnumMap<>(MetaType.class);
 
-	@Nonnull
-	public Map<String, Meta> findCached(@Nonnull Long merchantId, @Nonnull MetaType type, boolean flush) {
+	@NonNull
+	public Map<String, Meta> findCached(@NonNull Long merchantId, @NonNull MetaType type, boolean flush) {
 		type.checkServiceRanges(); // 检查调用缓存的服务是否超出声明的服务范围
 		EnumMap<MetaType, Map<String, Meta>> keyValueMap = cache.get(merchantId, merchantMapBuilder);
 		Map<String, Meta> map = keyValueMap.get(type);
@@ -63,8 +63,8 @@ public class MetaService extends BaseServiceImpl<Meta, MetaDao, Long> implements
 		return map;
 	}
 
-	@Nonnull
-	public ImmutableMap<String, Meta> findBy(@Nonnull Long merchantId, @Nonnull MetaType type) {
+	@NonNull
+	public ImmutableMap<String, Meta> findBy(@NonNull Long merchantId, @NonNull MetaType type) {
 		final List<Meta> metas = find(merchantId, type);
 		ImmutableMap.Builder<String, Meta> builder = ImmutableMap.builder();
 		for (Meta meta : metas) {
@@ -73,13 +73,13 @@ public class MetaService extends BaseServiceImpl<Meta, MetaDao, Long> implements
 		return builder.build();
 	}
 
-	@Nonnull
-	public Map<String, Meta> findCached(@Nonnull Long merchantId, @Nonnull MetaType type) {
+	@NonNull
+	public Map<String, Meta> findCached(@NonNull Long merchantId, @NonNull MetaType type) {
 		return findCached(merchantId, type, false);
 	}
 
-	@Nonnull
-	public Map<Long, Meta> multiGetCached(@Nonnull MetaType type, Collection<Long> merchantIds) {
+	@NonNull
+	public Map<Long, Meta> multiGetCached(@NonNull MetaType type, Collection<Long> merchantIds) {
 		type.checkServiceRanges(); // 检查调用缓存的服务是否超出声明的服务范围
 		final Map<Long, Meta> map = new HashMap<>(merchantIds.size(), 1F);
 		final List<Long> missingIds = new ArrayList<>();
@@ -153,29 +153,29 @@ public class MetaService extends BaseServiceImpl<Meta, MetaDao, Long> implements
 		return find(merchantId, null, type);
 	}
 
-	public Meta getCached(@Nonnull Long merchantId, @Nonnull MetaType type, @Nonnull String name, boolean flush) {
+	public Meta getCached(@NonNull Long merchantId, @NonNull MetaType type, @NonNull String name, boolean flush) {
 		Map<String, Meta> cached = findCached(merchantId, type, flush);
 		return cached.get(name);
 	}
 
-	public Meta getCached(@Nonnull Long merchantId, @Nonnull MetaType type, @Nonnull String name) {
+	public Meta getCached(@NonNull Long merchantId, @NonNull MetaType type, @NonNull String name) {
 		return getCached(merchantId, type, name, false);
 	}
 
-	public Meta getCached(@Nonnull Long merchantId, @Nonnull MetaType type) {
+	public Meta getCached(@NonNull Long merchantId, @NonNull MetaType type) {
 		return getCached(merchantId, type, type.name(), false);
 	}
 
-	public <T> T getCachedParsedValue(@Nonnull Long merchantId, @Nonnull MetaType type, Class<T> clazz) {
+	public <T> T getCachedParsedValue(@NonNull Long merchantId, @NonNull MetaType type, Class<T> clazz) {
 		return getCachedParsedValue(merchantId, type, type.name(), clazz);
 	}
 
-	public <T> T getCachedParsedValue(@Nonnull Long merchantId, @Nonnull MetaType type, String name, Class<T> clazz) {
+	public <T> T getCachedParsedValue(@NonNull Long merchantId, @NonNull MetaType type, String name, Class<T> clazz) {
 		Meta meta = getCached(merchantId, type, name, false);
 		return meta != null ? meta.getParsedValue(clazz) : null;
 	}
 
-	public Meta getBy(@Nonnull Long merchantId, @Nonnull MetaType type, @Nonnull String name) {
+	public Meta getBy(@NonNull Long merchantId, @NonNull MetaType type, @NonNull String name) {
 		List<Meta> list = find(merchantId, type, name);
 		return list.isEmpty() ? null : list.get(0);
 	}
@@ -227,7 +227,7 @@ public class MetaService extends BaseServiceImpl<Meta, MetaDao, Long> implements
 	/**
 	 * 返回第一个有值的对象
 	 */
-	public Meta getCached(@Nonnull MetaType type, @Nonnull String name, @Nonnull Long... merchantIds) {
+	public Meta getCached(@NonNull MetaType type, @NonNull String name, @NonNull Long... merchantIds) {
 		Meta meta = null;
 		for (Long merchantId : merchantIds) {
 			meta = getCached(merchantId, type, name, false);

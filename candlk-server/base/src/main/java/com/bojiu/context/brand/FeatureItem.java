@@ -3,8 +3,6 @@ package com.bojiu.context.brand;
 import java.io.Serializable;
 import java.util.*;
 import java.util.function.Function;
-import javax.annotation.Nonnull;
-import javax.annotation.Nullable;
 
 import com.alibaba.fastjson2.JSONObject;
 import com.bojiu.common.util.Common;
@@ -13,6 +11,8 @@ import com.bojiu.context.web.EnhanceEnumConverterFactory;
 import lombok.Getter;
 import me.codeplayer.util.Assert;
 import me.codeplayer.util.CollectionUtil;
+import org.jspecify.annotations.NonNull;
+import org.jspecify.annotations.Nullable;
 import org.springframework.core.convert.converter.Converter;
 
 public interface FeatureItem<V extends Serializable> {
@@ -74,7 +74,7 @@ public interface FeatureItem<V extends Serializable> {
 		node.put("items", items);
 	}
 
-	private static Function<Object, Object> converter(@Nonnull Object from, @Nonnull Object to) {
+	private static Function<Object, Object> converter(@NonNull Object from, @NonNull Object to) {
 		if (to.getClass() == from.getClass()) {
 			return Function.identity();
 		}
@@ -173,15 +173,17 @@ public interface FeatureItem<V extends Serializable> {
 			};
 		}
 
-		/** 弹窗方式：0=弹窗；1=半屏；2=全屏 */
+		/** 弹窗方式：0=弹窗-弹窗；1=弹窗-半屏；2=全屏-样式1；2=全屏-样式2； */
 		@Getter
 		public enum PopUpOption implements FeatureItem<Integer> {
 			/** 弹窗方式 */
-			popUp("弹窗方式"),
+			popUp("弹窗-弹窗"),
 			/** 半屏 */
-			halfScreen("半屏"),
+			halfScreen("弹窗-半屏"),
 			/** 全屏 */
-			fullScreen("全屏"),
+			fullScreen_1("全屏-样式1"),
+			/** 全屏 */
+			fullScreen_2("全屏-样式2"),
 			;
 
 			final Integer value;

@@ -724,7 +724,7 @@ public interface RedisKey {
 	String DEALER_V_PREFIX = "dealer_v_";
 	/**
 	 * 临时服务器费用，到了结算日移到未结算服务器费用
-	 * ZSet < "tempServerFee", $merchantId-$serverAmount, settlementTime >
+	 * ZSet < "tempServerFee", $merchantId,$serverAmount, settlementTime >
 	 */
 	String TEMP_SERVER_FEE = "tempServerFee";
 	/**
@@ -865,8 +865,10 @@ public interface RedisKey {
 	String USER_GROUP_TASK_REWARD = "userGroupTaskReward";
 	/** 待处理的推广奖励 ZSet < merchantId+promotionId+agentId, 秒级时间戳 > */
 	String AGENT_PROMOTION_AWARD_KEY = "agentPromotionAward:";
-	/** 待处理的幸运转盘奖励 ZSet < merchantId+promotionId+agentId, 秒级时间戳 > */
+	/** 待处理的幸运转盘奖励 ZSet < merchantId+promotionId+userId, 秒级时间戳 > */
 	String TURNTABLE_PROMOTION_AWARD_KEY = "turntablePromotionAward:";
+	/** 待处理的首提返现奖励 Set< $merchantId, $userId > */
+	String FIRST_CASH_REPAY_PROMOTION_AWARD_KEY = "firstCashRepayPromotionAward:";
 
 	/**
 	 * 商户消息发送循环方式 Hash
@@ -887,11 +889,9 @@ public interface RedisKey {
 	String MERCHANT_OK_START_TIME = "merchant:okStartTime";
 
 	/**
-	 * 用户设置自动登录过期时间 ZSet < "userAutoLoginExpire", $merchantId-$userId, 时间戳 >
-	 * 用户自动登录过期时间判断 ZSet < "userAutoLoginExpire", $merchantId-$userId-expire, 时间戳+最后一次登录时间戳 >
-	 * 用户设置自动登录过期时间type Hash < "userAutoLoginExpire - $merchantId", $userId, $type >
+	 * 用户设置自动登录过期时间 "userAutoLoginExpire-$merchantId" = Hash < $userId, $type >
 	 */
-	String USER_AUTO_LOGIN_EXPIRE = "userAutoLoginExpire";
+	String USER_AUTO_LOGIN_EXPIRE_PREFIX = "userAutoLoginExpire-";
 	/**
 	 * 公积金再次参与
 	 * ZSet < "depositAgainParticipate"+$merchantId, $userId, $expireTime >
@@ -921,4 +921,21 @@ public interface RedisKey {
 	 */
 	String DOMAIN_MARKETING = "domainMarketing";
 
+	/**
+	 * 模块内容的状态变动时间
+	 * ZSet < "merchant:moduleContentStatusChange", $moduleContendId, $time(状态变动时间) >
+	 */
+	String MERCHANT_MODULE_CONTENT_STATUS_CHANGE = "merchant:moduleContentStatusChange";
+
+	/**
+	 * vip等级额度上限新信息提示
+	 * Hash < "ctrlPrompt", $merchantId, 1 >
+	 */
+	String VIP_BALANCE_CTRL_PROMPT = "ctrlPrompt";
+
+	/**
+	 * 参与神秘彩金的用户
+	 * Set< mysteryPrize:$merchantId, $userId >
+	 */
+	String MYSTERY_PRIZE_USER_PREFIX = "mysteryPrize";
 }

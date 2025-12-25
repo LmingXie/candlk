@@ -1,8 +1,6 @@
 package com.bojiu.context.model;
 
 import java.util.*;
-import javax.annotation.Nonnull;
-import javax.annotation.Nullable;
 
 import com.baomidou.mybatisplus.annotation.EnumValue;
 import com.bojiu.common.context.I18N;
@@ -14,6 +12,8 @@ import lombok.Getter;
 import me.codeplayer.util.*;
 import org.apache.commons.lang3.EnumUtils;
 import org.apache.commons.lang3.StringUtils;
+import org.jspecify.annotations.NonNull;
+import org.jspecify.annotations.Nullable;
 
 import static com.bojiu.context.model.BaseI18nKey.*;
 
@@ -62,9 +62,16 @@ public enum Language implements ValueProxyImpl<Language, Integer> {
 		this.proxy = new ValueProxy<>(this, value, label);
 	}
 
-	public static final Language[] CACHE = ArrayUtil.filter(Language.values(), Language::isOpen);
+	public static final Language[] CACHE;
 
-	static final Map<String, Language> mapping = CollectionUtil.toMap(LinkedHashMap::new, Arrays.asList(CACHE), Language::getAlias);
+	static final Map<String, Language> mapping;
+
+	static {
+		CACHE = ArrayUtil.filter(Language.values(), Language::isOpen);
+		List<Language> list = CollectionUtil.asArrayList(CACHE);
+		list.add(Language.vi);
+		mapping = CollectionUtil.toMap(LinkedHashMap::new, list, Language::getAlias);
+	}
 
 	public static Language of(Integer value) {
 		return X.expectNotNull(DEFAULT.getValueOf(value), DEFAULT);
@@ -115,7 +122,7 @@ public enum Language implements ValueProxyImpl<Language, Integer> {
 		return v;
 	}
 
-	@Nonnull
+	@NonNull
 	public static Language of(String language) {
 		return of(language, DEFAULT);
 	}

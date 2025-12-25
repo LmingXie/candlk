@@ -7,6 +7,7 @@ import com.bojiu.common.redis.RedisUtil;
 import com.bojiu.context.model.RedisKey;
 import me.codeplayer.util.*;
 import org.apache.commons.lang3.tuple.Pair;
+import org.jspecify.annotations.NullMarked;
 import org.springframework.data.redis.core.HashOperations;
 
 import static com.bojiu.context.model.RedisKey.USER_LEVEL;
@@ -62,6 +63,7 @@ public class UserLevelUtil {
 	/**
 	 * 批量获取用户等级，优先获取人工干预的，取不到再获取系统自动升级的
 	 */
+	@NullMarked
 	public static List<Integer> findUserLevel(Collection<String> userIds) {
 		final List<String> levels = RedisUtil.opsForHash().multiGet(RedisKey.USER_LEVEL, userIds);
 		final List<Integer> ls = new ArrayList<>();
@@ -71,6 +73,7 @@ public class UserLevelUtil {
 		return ls;
 	}
 
+	@NullMarked
 	public static Integer findUserLevel(String userId) {
 		String level = RedisUtil.opsForHash().get(USER_LEVEL, userId);
 		return resolveLevel(level);

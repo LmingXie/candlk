@@ -1,10 +1,9 @@
 package com.bojiu.context.model;
 
-import javax.annotation.Nullable;
-
 import com.bojiu.common.model.ValueProxy;
 import com.bojiu.common.util.Common;
 import lombok.Getter;
+import org.jspecify.annotations.Nullable;
 
 import static com.bojiu.context.model.BaseI18nKey.*;
 

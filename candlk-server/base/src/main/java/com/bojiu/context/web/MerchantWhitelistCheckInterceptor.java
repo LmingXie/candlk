@@ -4,14 +4,12 @@ import java.util.Collections;
 import java.util.List;
 import java.util.concurrent.TimeUnit;
 import java.util.function.Function;
-import javax.annotation.Nullable;
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
 
 import com.bojiu.common.context.Env;
 import com.bojiu.common.model.Messager;
 import com.bojiu.common.redis.RedisUtil;
-import com.bojiu.common.util.Common;
 import com.bojiu.context.ContextImpl;
 import com.bojiu.context.auth.PermissionInterceptor;
 import com.bojiu.context.auth.PermissionLocator;
@@ -23,6 +21,7 @@ import com.bojiu.webapp.base.service.RemoteSyncService;
 import com.github.benmanes.caffeine.cache.Cache;
 import com.github.benmanes.caffeine.cache.Caffeine;
 import me.codeplayer.util.StringUtil;
+import org.jspecify.annotations.Nullable;
 import org.springframework.stereotype.Component;
 import org.springframework.web.method.HandlerMethod;
 import org.springframework.web.servlet.HandlerInterceptor;
@@ -46,7 +45,7 @@ public class MerchantWhitelistCheckInterceptor implements HandlerInterceptor, Ca
 		if (StringUtil.isEmpty(ips)) {
 			return Collections.emptyList();
 		}
-		return Common.splitAsStringList(ips);
+		return StringUtil.splitAsStringList(ips);
 	};
 
 	@Override
@@ -56,7 +55,7 @@ public class MerchantWhitelistCheckInterceptor implements HandlerInterceptor, Ca
 			final Long merchantId = ContextImpl.currentMerchantId();
 			// 总台、代理商、经销商不检测
 			final String domain;
-			if (!Merchant.isPlatform(merchantId) && (handler instanceof HandlerMethod method)) {
+			if (!Merchant.isPlatform(merchantId) && handler instanceof HandlerMethod) {
 				final RequestContextImpl req = RequestContextImpl.get();
 				Member member;
 				if ((req != null && (member = req.sessionUser()) != null && member.asVisitor())

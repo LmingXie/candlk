@@ -1,6 +1,7 @@
 package com.bojiu.context.model;
 
-import java.util.*;
+import java.util.Arrays;
+import java.util.Comparator;
 
 import com.baomidou.mybatisplus.annotation.EnumValue;
 import com.bojiu.common.model.ValueProxy;
@@ -11,11 +12,12 @@ import me.codeplayer.util.ArrayUtil;
 import static com.bojiu.context.i18n.UserModelI18nKey.*;
 
 /**
- * 模板类型 1 = 灵动；2 = 经典风格；3 = WG新欧美；4 = 欧美简约风；6=panda
+ * 模板类型 1 = 灵动；2 = 经典风格；3 = WG新欧美；4 = 欧美简约风；6=panda；7=综合版1
  * 厂商图获取实现：see {@link com.bojiu.webapp.game.entity.MerchantVendor#querySloganImage }
  * 厂商热门图获取实现：see {@link com.bojiu.webapp.game.entity.MerchantVendor#queryHotImage }
  * 游戏图获取实现：see {@link com.bojiu.webapp.game.entity.MerchantGame#queryImage }
  */
+@SuppressWarnings("JavadocReference")
 @Getter
 public enum TemplateType implements LabelI18nProxy<TemplateType, Integer> {
 
@@ -33,7 +35,21 @@ public enum TemplateType implements LabelI18nProxy<TemplateType, Integer> {
 	PD(6, TEMPLATE_TYPE_PANDA, false, new int[] { 2, 1 }, 6),
 	/** 综合版1 */
 	COMPREHENSIVE_VERSION_1(7, COMPREHENSIVE_VERSION_ONE, new int[] { 3, 5 }, new int[] { 1, 1 }, new int[] { 0, 1 }, 7),
+	/** 综合版3 */
+	COMPREHENSIVE_VERSION_3(8, COMPREHENSIVE_VERSION_THIRD, new int[] { 3, 5 }, new int[] { 0, 1 }, new int[] { 0, 1 }, 8),
+	/** 定制版1 */
+	CUSTOMIZED_VERSION_1(9, TEMPLATE_TYPE_CUSTOMIZED_ONE, new int[] { 3, 5 }, new int[] { 1, 1 }, new int[] { 0, 1 }, 9),
+	/** 综合版4 */
+	COMPREHENSIVE_VERSION_4(10, COMPREHENSIVE_VERSION_FOUR, new int[] { 3, 5 }, new int[] { 1, 1 }, new int[] { 0, 1 }, 10),
+	/** 综合版5 */
+	COMPREHENSIVE_VERSION_5(11, COMPREHENSIVE_VERSION_FIVE, new int[] { 3, 5 }, new int[] { 0, 1 }, new int[] { 0, 1 }, 11),
 	;
+
+	/** ※是否WG模板【增加WG皮肤时需要增加】 */
+	public boolean forWG() {
+		return ArrayUtil.ins(this, WG_EUROPE, COMPREHENSIVE_VERSION_1, COMPREHENSIVE_VERSION_3, CUSTOMIZED_VERSION_1, COMPREHENSIVE_VERSION_4, COMPREHENSIVE_VERSION_5);
+	}
+
 	@EnumValue
 	public final Integer value;
 	final ValueProxy<TemplateType, Integer> proxy;
@@ -114,11 +130,6 @@ public enum TemplateType implements LabelI18nProxy<TemplateType, Integer> {
 		this.vendorImageIndex = vendorImageIndex;
 		this.vendorHotImageIndex = vendorHotImageIndex;
 		this.sort = sort;
-	}
-
-	/** 是否WG模板 */
-	public boolean forWG() {
-		return this == WG_EUROPE || this == COMPREHENSIVE_VERSION_1;
 	}
 
 	public static final TemplateType[] CACHE = values();

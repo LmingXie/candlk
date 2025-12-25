@@ -1,8 +1,6 @@
 package com.bojiu.context.model;
 
 import java.util.*;
-import javax.annotation.Nonnull;
-import javax.annotation.Nullable;
 
 import com.baomidou.mybatisplus.annotation.EnumValue;
 import com.bojiu.common.model.ValueProxy;
@@ -11,6 +9,8 @@ import com.bojiu.context.brand.Feature;
 import com.bojiu.context.brand.FeatureContext;
 import lombok.Getter;
 import me.codeplayer.util.CollectionUtil;
+import org.jspecify.annotations.NonNull;
+import org.jspecify.annotations.Nullable;
 
 import static com.bojiu.context.i18n.UserModelI18nKey.*;
 
@@ -28,7 +28,7 @@ public enum PromotionType implements LabelI18nProxy<PromotionType, Integer> {
 	/** 救援金 */
 	RELIEF(4, PROMOTION_TYPE_RELIEF, true, true, true, 4),
 	/** 幸运转盘 */
-	TURNTABLE(5, PROMOTION_TYPE_TURNTABLE, false, true, true, 5),
+	TURNTABLE(5, PROMOTION_TYPE_TURNTABLE, false, false, true, 5),
 	/** 红包 */
 	RED_ENVELOPE(6, PROMOTION_TYPE_RED_ENVELOPE, false, true, true, 6),
 	/** 推广 */
@@ -59,6 +59,10 @@ public enum PromotionType implements LabelI18nProxy<PromotionType, Integer> {
 	GOLD_TURNTABLE(19, PROMOTION_TYPE_GOLD_TURNTABLE, false, true, true, 15),
 	/** Jackpot */
 	JACKPOT(20, PROMOTION_TYPE_JACKPOT, false, true, true, 17),
+	/** 首提返现 */
+	FIRST_CASH_REPAY(21, PROMOTION_TYPE_FIRST_CASH_REPAY, true, true, true, 18),
+	/** 神秘彩金 */
+	MYSTERY_PRIZE(22, PROMOTION_TYPE_MYSTERY_PRIZE, true, true, true, 19),
 	;
 
 	@EnumValue
@@ -102,6 +106,9 @@ public enum PromotionType implements LabelI18nProxy<PromotionType, Integer> {
 	/** 代办列表中的活动 */
 	public static final List<PromotionType> TODO_CACHE = CollectionUtil.filter(Arrays.asList(values()), PromotionType::isTodoPromotion);
 
+	/** 允许重复创建的活动 */
+	public static final List<PromotionType> exclusionTypes = List.of(CUSTOM, GROUP, RED_ENVELOPE);
+
 	public static PromotionType of(@Nullable Integer value) {
 		return Common.getEnum(CACHE, value, 1);
 	}
@@ -139,7 +146,7 @@ public enum PromotionType implements LabelI18nProxy<PromotionType, Integer> {
 		return true;
 	}
 
-	@Nonnull
+	@NonNull
 	public static Set<PromotionType> loadFeatures(FeatureContext context) {
 		return context.toSet(Feature.Activity, Integer.class, PromotionType::of);
 	}

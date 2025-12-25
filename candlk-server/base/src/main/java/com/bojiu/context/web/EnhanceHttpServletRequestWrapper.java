@@ -1,6 +1,5 @@
 package com.bojiu.context.web;
 
-import javax.annotation.Nullable;
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletRequestWrapper;
 
@@ -13,6 +12,7 @@ import com.bojiu.context.model.MessagerStatus;
 import lombok.extern.slf4j.Slf4j;
 import me.codeplayer.util.StringUtil;
 import org.apache.commons.lang3.StringUtils;
+import org.jspecify.annotations.Nullable;
 
 /**
  * 增强的、支持 App-Id 解密的 HttpServletRequestWrapper 实现

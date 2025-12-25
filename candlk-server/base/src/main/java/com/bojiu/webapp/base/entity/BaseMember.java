@@ -1,7 +1,6 @@
 package com.bojiu.webapp.base.entity;
 
 import java.util.Date;
-import javax.annotation.Nullable;
 
 import com.alibaba.fastjson2.annotation.JSONField;
 import com.bojiu.common.model.BizFlag;
@@ -14,6 +13,7 @@ import lombok.Getter;
 import lombok.Setter;
 import me.codeplayer.util.*;
 import org.apache.commons.lang3.StringUtils;
+import org.jspecify.annotations.Nullable;
 
 @Setter
 @Getter
@@ -78,10 +78,6 @@ public abstract class BaseMember extends BizEntity implements Member {
 	@JSONField(deserialize = false)
 	public void setGenderValue(Integer value) {
 		this.gender = Gender.of(value);
-	}
-
-	public void setGender(Gender gender) {
-		this.gender = gender;
 	}
 
 	/** 模糊用户名 */

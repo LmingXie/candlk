@@ -60,6 +60,11 @@ public interface Member extends Bean<Long>, MemberRole, WithMerchant {
 		return false;
 	}
 
+	/** 是否可进入商户后台 */
+	default boolean intoMerchant() {
+		return false;
+	}
+
 	default void assertSame(Long memberId) {
 		if (!getId().equals(memberId)) {
 			throw new PermissionException();

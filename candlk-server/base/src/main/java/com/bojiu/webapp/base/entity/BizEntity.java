@@ -1,11 +1,10 @@
 package com.bojiu.webapp.base.entity;
 
-import javax.annotation.Nullable;
-
 import com.bojiu.common.model.*;
 import lombok.Getter;
 import lombok.Setter;
 import me.codeplayer.util.X;
+import org.jspecify.annotations.Nullable;
 
 @Setter
 @Getter

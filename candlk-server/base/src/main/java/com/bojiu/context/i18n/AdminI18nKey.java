@@ -395,10 +395,14 @@ public interface AdminI18nKey extends BaseI18nKey {
 
 	/** 请上传白名单信息 */
 	String WHITELIST_NOT_NULL = "whitelist.not.null";
+	/** 请上传信誉分信息 */
+	String USER_CREDIT_NOT_NULL = "user.credit.not.null";
 	/** 第{0}行，会员ID为空 */
 	String WHITELIST_IMPORT_UID_EMPTY = "whitelist.import.uid.empty";
 	/** 第{0}行，备注长度不能超过500 */
 	String WHITELIST_IMPORT_REMARK_LENGTH = "whitelist.import.remark.length";
+	/** 第{0}行，信誉分超出范围 */
+	String CREDIT_IMPORT_OUT_RANGE = "credit.import.out.range";
 	/** 会员{0}已存在白名单 */
 	String WHITELIST_MEMBER_EXIST = "whitelist.member.exist";
 	/** 层级ID不能为空 */
@@ -2385,6 +2389,8 @@ public interface AdminI18nKey extends BaseI18nKey {
 	String APP_LAYOUT_MENU_ACTIVITY_COUNTDOWN = "@app.layout.menu.activity.countdown";
 	/** 攒金大转盘 */
 	String APP_LAYOUT_MENU_GOLD_TURNTABLE = "@app.layout.menu.gold.turntable";
+	/** 推广链接是否去敏感信息 */
+	String APP_LAYOUT_MENU_HIDE_PRIVACY_INFO = "@app.layout.menu.hide.privacy.info";
 
 	// 代理角色
 	/** 高级代理（可出款） */
@@ -2489,6 +2495,10 @@ public interface AdminI18nKey extends BaseI18nKey {
 	String MERCHANT_PARAM_USDT_ADDR = "merchant.param.usdt.addr";
 	/** 二维码图片 */
 	String MERCHANT_PARAM_QR_CODE = "merchant.param.qr.code";
+	/** 收款账号 */
+	String MERCHANT_PARAM_PAY_ACCOUNT = "merchant.param.pay.account";
+	/** 收款人姓名 */
+	String MERCHANT_PARAM_PAY_USERNAME = "merchant.param.pay.username";
 	/** 签名秘钥 */
 	String MERCHANT_PARAM_SIGN_KEY = "merchant.param.sign.key";
 	/** 商户密钥 */
@@ -2511,6 +2521,10 @@ public interface AdminI18nKey extends BaseI18nKey {
 	String MERCHANT_PARAM_CHANNEL_ID = "merchant.param.channel.id";
 	/** 交易通道 */
 	String MERCHANT_PARAM_CHANNEL_TYPE = "merchant.param.channel.type";
+	/** 代收通道编号 */
+	String MERCHANT_PARAM_COLLECT_CHANNEL_NO = "merchant.param.collect.channel.no";
+	/** 代付通道编号 */
+	String MERCHANT_PARAM_PAY_CHANNEL_NO = "merchant.param.pay.channel.no";
 	/** 代收支付地址 */
 	String MERCHANT_PARAM_CREATE_ORDER_KEY = "merchant.param.create.order.key";
 	/** 代付支付地址 */
@@ -3386,5 +3400,98 @@ public interface AdminI18nKey extends BaseI18nKey {
 	String MODULE_MANAGE_NOT_ALLOW_DELETE_SHOWING = "module.manage.not.allow.delete.showing";
 	/** 首页 和 我的 模块不允许关闭！ */
 	String MODULE_MANAGE_NOT_ALLOW_CLOSE_HOME_ME = "module.manage.not.allow.close.home.me";
+	/** 已关闭 */
+	String STATUS_CLOSED = "status.closed";
+	/** 待展示 */
+	String STATUS_WAIT_SHOW = "status.wait.show";
+	/** 展示中 */
+	String STATUS_SHOWING = "status.showing";
+	/** 叠加轮播 */
+	String MODULE_SHOW_TYPE_OVERLAY_CAROUSEL = "module.show.type.overlay.carousel";
+	/** 分开展示 */
+	String MODULE_SHOW_TYPE_SPLIT_DISPLAY = "module.show.type.split.display";
+	/** 样式1（小图） */
+	String MODULE_SHOW_TYPE_STYLE_1 = "module.show.type.style.1";
+	/** 样式2（中图） */
+	String MODULE_SHOW_TYPE_STYLE_2 = "module.show.type.style.2";
+	/** 左右展示 */
+	String MODULE_SHOW_TYPE_LEFT_RIGHT_DISPLAY = "module.show.type.left.right.display";
+
+	/** 要导入的用户不属于该站点下 */
+	String CREDIT_IMPORT_USER_NOT_EXIST = "credit.import.user.not.exist";
+	/** 最小额度配置为 {0} */
+	String VIP_BALANCE_CTRL_LOWER_LIMIT = "vip.balance.ctrl.lower.limit";
+	/** 触发上限余额配置有误 */
+	String VIP_BALANCE_INVALID = "vip.balance.invalid";
+	/** 您没有权限进行此操作，请联系客服. */
+	String CANNOT_DO_THIS_OPERATION = "cannot.do.this.operation";
+	/** 厂商二选一 */
+	String EITHER_OR_VENDOR = "either.or.vendor";
+
+	/** 神秘彩金活动 */
+	/** 充值档位阈值，不可设置为0 */
+	String PROMOTION_TYPE_MYSTERY_RECHARGE_AMOUNT_ERROR = "promotion.type.mystery.recharge.amount.error";
+	/** 神秘彩金 显示奖励错误 */
+	String PROMOTION_TYPE_MYSTERY_SHOW_REWARD_ERROR = "promotion.type.mystery.show.reward.error";
+	/** 奖励档位最多可配置8个 */
+	String PROMOTION_TYPE_MYSTERY_GEAR_COUNT_ERROR = "promotion.type.mystery.gear.count.error";
+	/** 领取条件最多可配置6个 */
+	String PROMOTION_TYPE_MYSTERY_RECEIVING_CONDITION_COUNT_ERROR = "promotion.type.mystery.receiving.condition.count.error";
+	/** 验证打码倍数 打码倍数不可设置为0 */
+	String PROMOTION_TYPE_MYSTERY_REACH_PLAY_ERROR = "promotion.type.mystery.reach.play.error";
+	/** 神秘彩金 奖励金额错误 */
+	String PROMOTION_TYPE_MYSTERY_REWARD_AMOUNT_ERROR = "promotion.type.mystery.reward.amount.error";
+	/** 神秘彩金 充值金额阶梯配置错误 */
+	String PROMOTION_TYPE_MYSTERY_RECHARGE_AMOUNT_STEP_ERROR = "promotion.type.mystery.recharge.amount.step.error";
+	/** 神秘彩金 打码倍数阶梯配置错误 */
+	String PROMOTION_TYPE_MYSTERY_REACH_PLAY_STEP_ERROR = "promotion.type.mystery.reach.play.step.error";
+	/** 神秘彩金 奖励金额阶梯配置错误 */
+	String PROMOTION_TYPE_MYSTERY_REWARD_AMOUNT_STEP_ERROR = "promotion.type.mystery.reward.amount.step.error";
+	/** LOGO图片设置 */
+	String MENU_LOGOS_CONFIG = "menu.logos.config";
+	/** 注册登录配置 */
+	String MENU_REGISTER_LOGIN_CONFIG = "menu.registerLogin.config";
+	/** 安全中心 */
+	String MENU_ITEM_LIST_SAFE_CENTER = "menu.itemList.safeCenter";
+	/** 用户资料 */
+	String MENU_USER_PROFILE = "menu.user.profile";
+	/** 头像管理 */
+	String MENU_USER_AVATAR_LIST = "menu.userAvatar.list";
+	/** 用户条款 */
+	String MENU_SITE_USER_TERMS = "menu.site.userTerms";
+	/** 皮肤 */
+	String MENU_TEMPLATE_STORE = "menu.template.store";
+	/** 底部导航 */
+	String MENU_HOME_BOTTOM_NAVIGATION_CONFIG = "menu.home.bottom.navigation.config";
+	/** 客服FAQ设置 */
+	String MENU_SERVICE_CONFIG = "menu.service.config";
+	/** 图标 */
+	String MENU_PERSONALIZATION_ICON = "menu.personalization.icon";
+	/** 加载动画 */
+	String MENU_PERSONALIZATION_LOAD_ANIMATION = "menu.personalization.loadAnimation";
+	/** 运营活动中心 */
+	String MENU_PROMOTION_CENTER = "menu.promotion.center";
+	/** 幸运转盘 */
+	String MENU_PROMOTION_TURNTABLE = "menu.promotion.turntable";
+	/** VIP等级配置 */
+	String MENU_VIP_LEVEL_CONFIG = "menu.vipLevel.config";
+	/** 任务活动配置 */
+	String MENU_PROMOTION_TASK = "menu.promotion.task";
+	/** 返水活动配置 */
+	String MENU_MEMBER_REBATE = "menu.member.rebate";
+	/** Jackpot活动配置 */
+	String MENU_JACKPOT_LIST = "menu.jackpot.list";
+	/** 公积金活动配置 */
+	String MENU_DEPOSIT_POOL_LIST = "menu.depositPool.list";
+	/** 利息宝活动配置 */
+	String MENU_DEPOSIT = "menu.deposit";
+	/** 中奖记录轮播 */
+	String MENU_BRAND_JACKPOT = "menu.brandJackpot";
+	/** 代理模式列表 */
+	String MENU_AGENT_MODEL_LIST = "menu.agentModel.list";
+	/** 充值页面设置 */
+	String MENU_RECHARGE_RECHARGE_CONFIG = "menu.recharge.rechargeConfig";
+	/** 提现参数设置 */
+	String MENU_WITHDRAW_PARAM_SETTING = "menu.withdraw.paramSetting";
 
 }

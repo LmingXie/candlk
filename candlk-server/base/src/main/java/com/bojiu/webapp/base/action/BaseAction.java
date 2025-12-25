@@ -3,7 +3,6 @@ package com.bojiu.webapp.base.action;
 import java.util.*;
 import java.util.function.Function;
 import java.util.function.Supplier;
-import javax.annotation.Nullable;
 
 import com.bojiu.common.context.Env;
 import com.bojiu.common.model.*;
@@ -14,6 +13,7 @@ import com.bojiu.context.web.ProxyRequest;
 import me.codeplayer.util.LazyCacheLoader;
 import me.codeplayer.util.X;
 import org.apache.commons.lang3.StringUtils;
+import org.jspecify.annotations.Nullable;
 
 public abstract class BaseAction {
 

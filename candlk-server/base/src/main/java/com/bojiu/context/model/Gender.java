@@ -1,11 +1,10 @@
 package com.bojiu.context.model;
 
-import javax.annotation.Nonnull;
-import javax.annotation.Nullable;
-
 import com.bojiu.common.model.ValueProxy;
 import com.bojiu.common.util.Common;
 import lombok.Getter;
+import org.jspecify.annotations.NonNull;
+import org.jspecify.annotations.Nullable;
 
 import static com.bojiu.context.i18n.UserModelI18nKey.GENDER_FEMALE;
 import static com.bojiu.context.i18n.UserModelI18nKey.GENDER_MALE;
@@ -37,7 +36,7 @@ public enum Gender implements LabelI18nProxy<Gender, Integer> {
 		return this == MALE ? FEMALE : MALE;
 	}
 
-	@Nonnull
+	@NonNull
 	public static Gender getOrDefault(@Nullable Gender gender) {
 		return gender == null ? MALE : gender;
 	}

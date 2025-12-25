@@ -12,6 +12,8 @@ public interface BaseI18nKey {
 	String PERMISSION_DENIED = "@permission.denied";
 	/** 你无法进行此操作! */
 	String UNSUPPORTED_OPERATIONS = "unsupported.operations";
+	/** 系统在进行业务结算，请稍后再试! */
+	String SYSTEM_BUSINESS_SETTLEMENT = "system.business.settlement";
 	/** 网络异常，请稍后重试 */
 	String NETWORK_ABORT = "network.abort";
 	/** 您的操作过于频繁，请稍后再试！ */
@@ -87,6 +89,8 @@ public interface BaseI18nKey {
 	/** 已通过 */
 	String VERIFY_TRUE = "verify.true";
 
+	/** Google身份验证已成功启用 */
+	String GOOGLE_SET_SUCCESS = "google.set.success";
 	/** 请输入{0}的appid！ */
 	String REGISTER_GOOGLE_APPID_REQUIRED = "register.google.appid.required";
 	/** 请输入{0}的secret！ */
@@ -523,5 +527,15 @@ public interface BaseI18nKey {
 	String TURNTABLE_REMARK_TURNTABLE_DESC = "turntable.remark.turntable.desc";
 	/** ,同时需要已完成绑定{0}才可参与 */
 	String TURNTABLE_REMARK_BIND_LIMIT = "turntable.remark.bind.limit";
+	/** 样式一 */
+	String VIP_STYLE_ONE = "vip.style.one";
+	/** 样式二 */
+	String VIP_STYLE_TWO = "vip.style.two";
+	/** 样式三 */
+	String VIP_STYLE_THREE = "vip.style.three";
+	/** 样式四 */
+	String VIP_STYLE_FOUR = "vip.style.four";
+	/** 自定义 */
+	String VIP_STYLE_CUSTOM = "vip.style.custom";
 
 }

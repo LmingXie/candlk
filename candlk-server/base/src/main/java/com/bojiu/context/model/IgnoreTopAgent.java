@@ -1,9 +1,9 @@
 package com.bojiu.context.model;
 
 import java.util.List;
-import javax.annotation.Nullable;
 
 import me.codeplayer.util.StringUtil;
+import org.jspecify.annotations.Nullable;
 
 /**
  * 忽略 top_user_id 拼接

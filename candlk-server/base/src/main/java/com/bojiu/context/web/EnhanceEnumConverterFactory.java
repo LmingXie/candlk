@@ -3,10 +3,10 @@ package com.bojiu.context.web;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ConcurrentMap;
 import java.util.function.Function;
-import javax.annotation.Nullable;
 
 import com.bojiu.common.model.ValueEnum;
 import org.apache.commons.lang3.EnumUtils;
+import org.jspecify.annotations.Nullable;
 import org.springframework.core.GenericTypeResolver;
 import org.springframework.core.convert.converter.Converter;
 import org.springframework.core.convert.converter.ConverterFactory;

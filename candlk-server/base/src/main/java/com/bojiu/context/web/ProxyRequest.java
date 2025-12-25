@@ -3,8 +3,6 @@ package com.bojiu.context.web;
 import java.util.*;
 import java.util.concurrent.TimeUnit;
 import java.util.function.Consumer;
-import javax.annotation.Nonnull;
-import javax.annotation.Nullable;
 
 import com.bojiu.common.context.Context;
 import com.bojiu.common.context.RequestContext;
@@ -15,13 +13,15 @@ import com.bojiu.common.web.Page;
 import com.bojiu.common.web.mvc.BaseProxyRequest;
 import com.bojiu.context.auth.DefaultAutoLoginHandler;
 import com.bojiu.context.auth.ExportInterceptor;
-import com.bojiu.context.model.Currency;
 import com.bojiu.context.model.*;
+import com.bojiu.context.model.Currency;
 import com.bojiu.webapp.base.entity.Merchant;
 import com.bojiu.webapp.base.util.Export;
 import me.codeplayer.util.EasyDate;
 import me.codeplayer.util.StringUtil;
 import org.apache.commons.lang3.tuple.Pair;
+import org.jspecify.annotations.NonNull;
+import org.jspecify.annotations.Nullable;
 
 public class ProxyRequest extends BaseProxyRequest {
 
@@ -131,7 +131,7 @@ public class ProxyRequest extends BaseProxyRequest {
 	 * <br>（例如 <code>defaultAmount = 1，defaultCalendarUnit=Calendar.DATE</code>） 表示 昨天
 	 * @param defaultCalendarUnit 构造默认时间范围时的周期单位
 	 */
-	@Nonnull
+	@NonNull
 	public TimeInterval getInterval(boolean required, int max, int calendarUnit, int defaultAmount, int defaultCalendarUnit) {
 		TimeInterval t = getInterval();
 		if (required && (t == null || t.getBegin() == null || t.getEnd() == null)) {
@@ -159,17 +159,17 @@ public class ProxyRequest extends BaseProxyRequest {
 		return t;
 	}
 
-	@Nonnull
+	@NonNull
 	public TimeInterval getIntervalOrDefault(int max, int calendarField, int defaultAmount, int defaultCalendarField) {
 		return getInterval(isExport(), max, calendarField, defaultAmount, defaultCalendarField);
 	}
 
-	@Nonnull
+	@NonNull
 	public TimeInterval getIntervalOrDefault(int max, int calendarField) {
 		return getIntervalOrDefault(isExport(), max, calendarField);
 	}
 
-	@Nonnull
+	@NonNull
 	public TimeInterval getIntervalOrDefault(boolean required, int max, int calendarField) {
 		return getInterval(required, max, calendarField, max, calendarField);
 	}
@@ -304,7 +304,7 @@ public class ProxyRequest extends BaseProxyRequest {
 	 * 请注意该方法可能返回【不可变】的 Page 实例
 	 */
 	@Override
-	@Nonnull
+	@NonNull
 	public <T> Page<T> getPage() {
 		return getPage(false);
 	}
@@ -315,7 +315,7 @@ public class ProxyRequest extends BaseProxyRequest {
 	 * @param allowExport 是否允许导出。默认不允许导出，将会限制最大返回 100条 数据；如果为 true，则允许导出，将会返回所有数据
 	 * @param allowQueryTotal 是否允许查询总数（ COUNT(*) ）。默认允许查询总数，如果为 false，将不会查询总记录数
 	 */
-	@Nonnull
+	@NonNull
 	public <T> Page<T> getPage(final boolean allowExport, final boolean allowQueryTotal) {
 		if (page == null) {
 			page = doInitPage(null);
@@ -332,7 +332,7 @@ public class ProxyRequest extends BaseProxyRequest {
 	/**
 	 * 获取当前请求的数据分页参数对象
 	 */
-	@Nonnull
+	@NonNull
 	public <T> Page<T> getPageSkipTotal() {
 		return getPage(false, false);
 	}
@@ -340,7 +340,7 @@ public class ProxyRequest extends BaseProxyRequest {
 	/**
 	 * 获取当前请求的数据分页参数对象
 	 */
-	@Nonnull
+	@NonNull
 	public <T> Page<T> getPage(boolean allowExportAlready) {
 		return getPage(allowExportAlready, getClient() == Client.PC || MemberType.fromBackstage());
 	}
@@ -357,9 +357,11 @@ public class ProxyRequest extends BaseProxyRequest {
 		if (member != null) {
 			final Long memberId = member.getId();
 			RedisUtil.doInLock(DefaultAutoLoginHandler.concurrentLoginLockKey(memberId), 10_000, () -> {
-				final String redisKey = DefaultAutoLoginHandler.concurrentSessionUserKey(memberId);
-				// 避免退出登录时，还存在并发请求执行了自动登录，导致又自动登录成功
-				RedisUtil.opsForValue().set(redisKey, "", 10, TimeUnit.SECONDS);
+				RedisUtil.doInTransaction(redisOps -> {
+					final String redisKey = DefaultAutoLoginHandler.concurrentSessionUserKey(memberId);
+					// 避免退出登录时，还存在并发请求执行了自动登录，导致又自动登录成功
+					RedisUtil.opsForValue().set(redisKey, "", 10, TimeUnit.SECONDS);
+				});
 				removeSessionUser();
 			});
 		}

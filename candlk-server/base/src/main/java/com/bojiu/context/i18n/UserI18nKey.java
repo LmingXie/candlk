@@ -193,6 +193,14 @@ public interface UserI18nKey extends BaseI18nKey {
 	String PROMOTION_COND_DAILY_RECHARGE = "promotion.cond.daily.recharge";
 	/** 当日打码 */
 	String PROMOTION_COND_DAILY_PLAY = "promotion.cond.daily.play";
+	/** 充值次数 */
+	String PROMOTION_COND_RECHARGE_SUM = "promotion.cond.recharge.sum";
+	/** 昨日累计充值 */
+	String PROMOTION_COND_YESTERDAY_SUM_RECHARGE = "promotion.cond.yesterday.sum.recharge";
+	/** 昨日累计打码 */
+	String PROMOTION_COND_SUM_PLAY = "promotion.cond.sum.play";
+	/** 昨日累计亏损 */
+	String PROMOTION_COND_LOSS = "promotion.cond.loss";
 
 	// 代理规则
 	/** 仅限新用户下级 */
@@ -205,6 +213,8 @@ public interface UserI18nKey extends BaseI18nKey {
 	String RED_ENVELOPE_TYPE_GRAB = "red.envelope.type.grab";
 	/** 开红包 */
 	String RED_ENVELOPE_TYPE_OPEN = "red.envelope.type.open";
+	/** 送红包 */
+	String RED_ENVELOPE_TYPE_SEND = "red.envelope.type.send";
 	/** 按所有会员 */
 	String RED_ENVELOPE_MODE_ALL = "red.envelope.mode.all";
 	/** 按VIP大等级 */
@@ -513,7 +523,14 @@ public interface UserI18nKey extends BaseI18nKey {
 	String MAJOR_LEVEL_MASTER = "major.level.master";
 	/** VIP大等级-传说 */
 	String MAJOR_LEVEL_LEGEND = "major.level.legend";
-
+	/** 神启 */
+	String MAJOR_LEVEL_CELESTIAL = "major.level.celestial";
+	/** 圣境 */
+	String MAJOR_LEVEL_EMPYREAN = "major.level.empyrean";
+	/** 永恒 */
+	String MAJOR_LEVEL_AEON = "major.level.aeon";
+	/** 全知 */
+	String MAJOR_LEVEL_OMNISCIENT = "major.level.omniscient";
 	/** 钱包 充值奖金 */
 	String WALLET_RECHARGE_BONUS = "wallet.recharge.bonus";
 	/** 钱包 打码奖金 */
@@ -558,6 +575,8 @@ public interface UserI18nKey extends BaseI18nKey {
 	String REWARD_SOURCE_REBATE = "reward.source.rebate";
 	/** 公积金奖励 */
 	String REWARD_SOURCE_DEPOSIT_POOL = "reward.source.deposit.pool";
+	/** 幸运转盘 */
+	String REWARD_SOURCE_TURNTABLE = "reward.source.turntable";
 	/** 签到活动说明 1.每日充值、有效投注满足活动条件，才可进行签到，签到成功可领取对应奖金，最高{2}（最高金额）；<br/>2.签到投注不限制平台，奖励预计10分钟后更新，请等待奖励发放；<br/> */
 	String SIGN_REMARK_ONE_TWO = "sign.remark.one.two";
 	/** 签到活动说明 3.此活动属{0}{1} */
@@ -829,6 +848,40 @@ public interface UserI18nKey extends BaseI18nKey {
 	String RED_ENVELOPE_REMARK_2 = "redEnvelope.remark_2";
 	String RED_ENVELOPE_REMARK_3_1 = "redEnvelope.remark_3_1";
 	String RED_ENVELOPE_REMARK_3_2 = "redEnvelope.remark_3_2";
+	String RED_ENVELOPE_REMARK_4 = "redEnvelope.remark_4";
+	String RED_ENVELOPE_REMARK_4_1 = "redEnvelope.remark_4_1";
+	String RED_ENVELOPE_REMARK_4_2 = "redEnvelope.remark_4_2";
+	String RED_ENVELOPE_REMARK_4_3 = "redEnvelope.remark_4_3";
+	String RED_ENVELOPE_REMARK_4_3_1 = "redEnvelope.remark_4_3_1";
+	String RED_ENVELOPE_REMARK_4_3_2 = "redEnvelope.remark_4_3_2";
+	String RED_ENVELOPE_REMARK_4_3_3 = "redEnvelope.remark_4_3_3";
+	String RED_ENVELOPE_REMARK_4_4_1 = "redEnvelope.remark_4_4_1";
+	String RED_ENVELOPE_REMARK_4_4_2 = "redEnvelope.remark_4_4_2";
+	String RED_ENVELOPE_REMARK_4_5_1 = "redEnvelope.remark_4_5_1";
+	String RED_ENVELOPE_REMARK_4_5_2 = "redEnvelope.remark_4_5_2";
+	String RED_ENVELOPE_REMARK_4_6_1 = "redEnvelope.remark_4_6_1";
+	String RED_ENVELOPE_REMARK_4_6_2 = "redEnvelope.remark_4_6_2";
+	String RED_ENVELOPE_REMARK_4_7_1 = "redEnvelope.remark_4_7_1";
+	String RED_ENVELOPE_REMARK_4_7_2 = "redEnvelope.remark_4_7_2";
+	String RED_ENVELOPE_REMARK_4_8 = "redEnvelope.remark_4_8";
+	String RED_ENVELOPE_REMARK_4_9 = "redEnvelope.remark_4_9";
+	String RED_ENVELOPE_REMARK_5 = "redEnvelope.remark_5";
+	String RED_ENVELOPE_REMARK_5_1 = "redEnvelope.remark_5_1";
+	String RED_ENVELOPE_REMARK_5_2 = "redEnvelope.remark_5_2";
+	String RED_ENVELOPE_REMARK_5_3 = "redEnvelope.remark_5_3";
+	String RED_ENVELOPE_REMARK_6_1 = "redEnvelope.remark_6_1";
+	String RED_ENVELOPE_REMARK_6_2 = "redEnvelope.remark_6_2";
+	String RED_ENVELOPE_REMARK_7_1 = "redEnvelope.remark_7_1";
+	String RED_ENVELOPE_REMARK_7_2 = "redEnvelope.remark_7_2";
+	String RED_ENVELOPE_REMARK_8 = "redEnvelope.remark_8";
+	String RED_ENVELOPE_REMARK_9 = "redEnvelope.remark_9";
+	String RED_ENVELOPE_REMARK_10 = "redEnvelope.remark_10";
+	String RED_ENVELOPE_REMARK_11 = "redEnvelope.remark_11";
+	String RED_ENVELOPE_REMARK_12 = "redEnvelope.remark_12";
+	String RED_ENVELOPE_REMARK_13 = "redEnvelope.remark_13";
+	String RED_ENVELOPE_REMARK_14 = "redEnvelope.remark_14";
+	String RED_ENVELOPE_REMARK_15 = "redEnvelope.remark_15";
+
 	/** 1.发展好友,进入游戏投注,发展越多,奖励越高;2.此活动属平台额外赠送,同时享有其他代理奖励和佣金,即直接享受多倍快乐。 */
 	String CHALLENGE_INVITE_REMARK_FIRST = "challenge.invite.remark.first";
 
@@ -919,6 +972,10 @@ public interface UserI18nKey extends BaseI18nKey {
 	String TASK_REMARK_DAY_7 = "task.remark_day_7";
 	/** 任务中心 */
 	String SYS_INTERNAL_MODULE_TASK = "sys.internal.module.task";
+	/** 找到我们 */
+	String SYS_INTERNAL_MODULE_FIND_US = "sys.internal.module.find.us";
+	/** 复制推广链接 */
+	String SYS_INTERNAL_MODULE_COPY_AGENT_LINK = "sys.internal.module.copy.agent.link";
 	/** 用户修改 */
 	String USER_EDIT_WITHOUT_ANY_MODIFICATION = "user.edit.without.any.modification";
 	String USER_EDIT_SUCCESSFUL = "user.edit.success";
@@ -930,5 +987,21 @@ public interface UserI18nKey extends BaseI18nKey {
 	String REDEEM_CODE_REMARK_3 = "redeem.code.remark.3";
 	/** 4.本活动所赠送的奖金（稽核奖金）需{0}倍有效投注才能提现， */
 	String REDEEM_CODE_REMARK_4 = "redeem.code.remark.4";
+	/** 1.首提成功立返，提现更划算，最高返现比例{0}% */
+	String FIRST_CASH_REPAY_REMARK_1 = "first.cash.repay.remark.1";
+	/** 2.提现后再次充值获得加倍奖励，充值越多加倍越多 */
+	String FIRST_CASH_REPAY_REMARK_2 = "first.cash.repay.remark.2";
+
+	/** 神秘彩金活动 国际化 */
+	String MYSTERY_REMARK_1 = "mystery.remark_1";
+	String MYSTERY_REMARK_1_1 = "mystery.remark_1_1";
+	String MYSTERY_REMARK_1_2 = "mystery.remark_1_2";
+	String MYSTERY_REMARK_2 = "mystery.remark_2";
+	String MYSTERY_REMARK_2_1 = "mystery.remark_2_1";
+	String MYSTERY_REMARK_2_2 = "mystery.remark_2_2";
+	String MYSTERY_REMARK_3 = "mystery.remark_3";
+	String MYSTERY_REMARK_4 = "mystery.remark_4";
+	String MYSTERY_REMARK_5 = "mystery.remark_5";
+	String MYSTERY_REMARK_6 = "mystery.remark_6";
 
 }

@@ -1,13 +1,13 @@
 package com.bojiu.context;
 
 import java.util.concurrent.atomic.AtomicBoolean;
-import javax.annotation.Nullable;
 import javax.servlet.*;
 import javax.servlet.http.HttpServletRequest;
 
 import com.bojiu.common.context.Context;
 import com.bojiu.common.context.RequestContext;
 import com.bojiu.context.web.SessionCookieUtil;
+import org.jspecify.annotations.Nullable;
 import org.springframework.boot.web.servlet.ServletContextInitializer;
 import org.springframework.stereotype.Component;
 

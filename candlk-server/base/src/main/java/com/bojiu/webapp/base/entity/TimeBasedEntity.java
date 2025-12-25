@@ -3,11 +3,11 @@ package com.bojiu.webapp.base.entity;
 import java.util.Date;
 import java.util.Map;
 import java.util.function.Function;
-import javax.annotation.Nullable;
 
 import lombok.Getter;
 import lombok.Setter;
 import me.codeplayer.util.X;
+import org.jspecify.annotations.Nullable;
 
 @Setter
 @Getter

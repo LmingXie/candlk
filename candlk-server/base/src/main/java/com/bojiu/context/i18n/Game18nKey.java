@@ -60,4 +60,9 @@ public interface Game18nKey extends BaseI18nKey {
 	/** 领取成功 */
 	String REWARD_RECEIVED_SUCCESS = "game.reward.received.success";
 
+	/** 踢下线并限制进入游戏的默认提示 */
+	String PGC_GAME_LIMIT = "pgc.game.limit";
+	/** 为了获得最佳游戏体验，您需要先完成首次充值 */
+	String GAME_FIRST_RECHARGE = "game.first.recharge";
+
 }

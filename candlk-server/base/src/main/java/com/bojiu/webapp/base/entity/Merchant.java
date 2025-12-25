@@ -1,7 +1,6 @@
 package com.bojiu.webapp.base.entity;
 
 import java.util.*;
-import javax.annotation.Nullable;
 
 import com.bojiu.common.model.BizFlag;
 import com.bojiu.context.model.Currency;
@@ -10,6 +9,7 @@ import lombok.Getter;
 import lombok.Setter;
 import me.codeplayer.util.CollectionUtil;
 import me.codeplayer.util.StringUtil;
+import org.jspecify.annotations.Nullable;
 
 /**
  * 商户表
@@ -27,6 +27,9 @@ public class Merchant extends BizEntity implements BizFlag.WritableBizFlag {
 	public static boolean isPlatform(Long merchantId) {
 		return merchantId != null && merchantId == (long) PLATFORM_ID;
 	}
+
+	/** 商户数据已被清理（归档+删除） */
+	public static final long BIZ_FLAG_DELETED = 1L << 10;
 
 	/**
 	 * 站点名称 <br/>

@@ -1,14 +1,14 @@
 package com.bojiu.context.model;
 
 import java.util.Set;
-import javax.annotation.Nonnull;
-import javax.annotation.Nullable;
 
 import com.bojiu.common.model.ValueProxy;
 import com.bojiu.common.util.Common;
 import com.bojiu.context.brand.Feature;
 import com.bojiu.context.brand.FeatureContext;
 import lombok.Getter;
+import org.jspecify.annotations.NonNull;
+import org.jspecify.annotations.Nullable;
 
 import static com.bojiu.context.i18n.UserModelI18nKey.*;
 
@@ -43,7 +43,7 @@ public enum TaskType implements LabelI18nProxy<TaskType, Integer> {
 		return Common.getEnum(CACHE_SHOW, TaskType::getValue, value);
 	}
 
-	@Nonnull
+	@NonNull
 	public static Set<TaskType> loadFeatures(FeatureContext context) {
 		return context.toSet(Feature.Task, Integer.class, TaskType::of);
 	}

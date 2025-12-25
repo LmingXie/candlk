@@ -1,7 +1,6 @@
 package com.bojiu.context.model;
 
 import java.util.*;
-import javax.annotation.Nullable;
 
 import com.alibaba.fastjson2.JSONObject;
 import com.bojiu.common.context.I18N;
@@ -12,6 +11,7 @@ import com.bojiu.context.i18n.UserModelI18nKey;
 import lombok.Getter;
 import me.codeplayer.util.ArrayUtil;
 import me.codeplayer.util.EasyDate;
+import org.jspecify.annotations.Nullable;
 
 import static com.bojiu.context.i18n.UserModelI18nKey.*;
 
@@ -92,11 +92,11 @@ public enum PrivilegeType implements LabelI18nProxy<PrivilegeType, Integer> {
 
 	public JSONObject convertTitle() {
 		return switch (this) {
-			case DAILY_CASH_NUM -> JSONObject.of("title", I18N.msg(UserModelI18nKey.PRIVILEGE_TYPE_DAILY_CASH_TITLE), "limit", I18N.msg(UserModelI18nKey.PRIVILEGE_TYPE_LIMIT));
-			case DAILY_CASH_LIMIT -> JSONObject.of("title", I18N.msg(UserModelI18nKey.PRIVILEGE_TYPE_CASH_TITLE), "limit", I18N.msg(UserModelI18nKey.PRIVILEGE_TYPE_LIMIT));
-			case TOTAL_CASH_NUM -> JSONObject.of("title", I18N.msg(UserModelI18nKey.PRIVILEGE_TYPE_TOTAL_CASH_NUM_TITLE), "limit", I18N.msg(UserModelI18nKey.PRIVILEGE_TYPE_LIMIT));
-			case TOTAL_CASH_LIMIT -> JSONObject.of("title", I18N.msg(UserModelI18nKey.PRIVILEGE_TYPE_TOTAL_CASH_TITLE), "limit", I18N.msg(UserModelI18nKey.PRIVILEGE_TYPE_LIMIT));
-			case DAILY_FEE_NUM -> JSONObject.of("title", I18N.msg(UserModelI18nKey.PRIVILEGE_TYPE_DAILY_FEE_NUM_TITLE), "limit", I18N.msg(UserModelI18nKey.PRIVILEGE_TYPE_NUM));
+			case DAILY_CASH_NUM -> JSONObject.of("type", value, "title", I18N.msg(UserModelI18nKey.PRIVILEGE_TYPE_DAILY_CASH_TITLE), "limit", I18N.msg(UserModelI18nKey.PRIVILEGE_TYPE_LIMIT));
+			case DAILY_CASH_LIMIT -> JSONObject.of("type", value, "title", I18N.msg(UserModelI18nKey.PRIVILEGE_TYPE_CASH_TITLE), "limit", I18N.msg(UserModelI18nKey.PRIVILEGE_TYPE_LIMIT));
+			case TOTAL_CASH_NUM -> JSONObject.of("type", value, "title", I18N.msg(UserModelI18nKey.PRIVILEGE_TYPE_TOTAL_CASH_NUM_TITLE), "limit", I18N.msg(UserModelI18nKey.PRIVILEGE_TYPE_LIMIT));
+			case TOTAL_CASH_LIMIT -> JSONObject.of("type", value, "title", I18N.msg(UserModelI18nKey.PRIVILEGE_TYPE_TOTAL_CASH_TITLE), "limit", I18N.msg(UserModelI18nKey.PRIVILEGE_TYPE_LIMIT));
+			case DAILY_FEE_NUM -> JSONObject.of("type", value, "title", I18N.msg(UserModelI18nKey.PRIVILEGE_TYPE_DAILY_FEE_NUM_TITLE), "limit", I18N.msg(UserModelI18nKey.PRIVILEGE_TYPE_NUM));
 			default -> null;
 		};
 	}

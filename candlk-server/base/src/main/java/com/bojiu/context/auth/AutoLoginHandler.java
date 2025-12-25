@@ -1,10 +1,10 @@
 package com.bojiu.context.auth;
 
-import javax.annotation.Nullable;
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
 
 import com.bojiu.context.model.Member;
+import org.jspecify.annotations.Nullable;
 
 /**
  * 自动登录处理器

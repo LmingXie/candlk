@@ -2,8 +2,6 @@ package com.bojiu.context.web;
 
 import java.io.IOException;
 import java.security.GeneralSecurityException;
-import javax.annotation.Nonnull;
-import javax.annotation.Nullable;
 import javax.servlet.*;
 import javax.servlet.http.HttpServletRequest;
 
@@ -14,6 +12,8 @@ import com.bojiu.common.util.SpringUtil;
 import me.codeplayer.util.*;
 import org.apache.logging.log4j.Level;
 import org.apache.logging.log4j.ThreadContext;
+import org.jspecify.annotations.NonNull;
+import org.jspecify.annotations.Nullable;
 
 /**
  * 自定义调整本次请求的 日志级别 的过滤器
@@ -60,7 +60,7 @@ public class CustomLogLevelFilter implements Filter {
 	}
 
 	@Nullable
-	public static String safeParseLogLevel(@Nonnull String debug, @Nonnull String requestURI) {
+	public static String safeParseLogLevel(@NonNull String debug, @NonNull String requestURI) {
 		try {
 			return decrypt(getAes(), debug, requestURI);
 		} catch (Throwable ignored) {
@@ -68,7 +68,7 @@ public class CustomLogLevelFilter implements Filter {
 		}
 	}
 
-	@Nonnull
+	@NonNull
 	private static AES getAes() {
 		AES aes = EnhanceHttpServletRequestWrapper.aes;
 		if (aes == null) {

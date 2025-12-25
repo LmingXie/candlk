@@ -1,7 +1,8 @@
 package com.bojiu.context.model;
 
 import java.util.Map;
-import javax.annotation.Nullable;
+
+import org.jspecify.annotations.Nullable;
 
 public interface EmbedObj {
 

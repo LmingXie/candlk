@@ -1,7 +1,6 @@
 package com.bojiu.webapp.user.model;
 
 import java.util.*;
-import javax.annotation.Nullable;
 
 import com.baomidou.mybatisplus.annotation.EnumValue;
 import com.bojiu.common.context.Context;
@@ -14,6 +13,7 @@ import lombok.Getter;
 import me.codeplayer.util.Assert;
 import me.codeplayer.util.StringUtil;
 import org.apache.commons.lang3.*;
+import org.jspecify.annotations.Nullable;
 
 import static com.bojiu.webapp.base.service.RemoteSyncService.*;
 

@@ -4,8 +4,6 @@ import java.nio.charset.Charset;
 import java.time.Instant;
 import java.util.*;
 import java.util.function.Function;
-import javax.annotation.Nonnull;
-import javax.annotation.Nullable;
 import javax.servlet.http.*;
 
 import com.bojiu.common.context.*;
@@ -19,6 +17,8 @@ import com.bojiu.context.auth.DefaultAutoLoginHandler;
 import com.bojiu.context.model.*;
 import lombok.Setter;
 import me.codeplayer.util.*;
+import org.jspecify.annotations.NonNull;
+import org.jspecify.annotations.Nullable;
 import org.springframework.http.HttpHeaders;
 import org.springframework.session.Session;
 import org.springframework.session.SessionRepository;
@@ -92,7 +92,7 @@ public class RequestContextImpl extends RequestContext {
 		}
 	}
 
-	public static void flushSession(@Nonnull Session session) {
+	public static void flushSession(@NonNull Session session) {
 		getSessionRepository().save(session);
 	}
 
@@ -141,7 +141,7 @@ public class RequestContextImpl extends RequestContext {
 		return Bean.idOf(sessionUser());
 	}
 
-	@Nonnull
+	@NonNull
 	public ClientInfo getClientInfo() {
 		if (clientInfo == null) {
 			clientInfo = ClientInfo.of(super.getAppId());
@@ -154,12 +154,12 @@ public class RequestContextImpl extends RequestContext {
 		return getClientInfo().header();
 	}
 
-	@Nonnull
+	@NonNull
 	public SessionContext sessionContext() {
 		return getSessionContext(getRequest());
 	}
 
-	@Nonnull
+	@NonNull
 	public SessionContext getSessionContext(@Nullable HttpServletRequest request) {
 		SessionContext sessionContext = (SessionContext) getSessionAttr(request, SESSION_CONTEXT);
 		if (sessionContext == null) {
@@ -172,13 +172,13 @@ public class RequestContextImpl extends RequestContext {
 		return sessionContext;
 	}
 
-	@Nonnull
+	@NonNull
 	@Override
 	public Client sessionClient() {
 		return sessionContext().getClient();
 	}
 
-	@Nonnull
+	@NonNull
 	public Language getLanguage() {
 		HttpServletRequest request = getRequest();
 		if (request != null) {
@@ -193,7 +193,7 @@ public class RequestContextImpl extends RequestContext {
 		return Language.DEFAULT;
 	}
 
-	@Nonnull
+	@NonNull
 	public static Language doGetLanguage(@Nullable HttpServletRequest request) {
 		if (request == null) {
 			return Language.DEFAULT;
@@ -202,7 +202,7 @@ public class RequestContextImpl extends RequestContext {
 		return lang == null ? doGetAndAttrLanguage(request, Language.DEFAULT) : lang;
 	}
 
-	protected static Language doGetAndAttrLanguage(@Nonnull HttpServletRequest request, Language def) {
+	protected static Language doGetAndAttrLanguage(@NonNull HttpServletRequest request, Language def) {
 		String header = request.getHeader(HttpHeaders.ACCEPT_LANGUAGE);
 		if (StringUtil.notEmpty(header)) {
 			Language lang = Language.of(header);
@@ -306,7 +306,7 @@ public class RequestContextImpl extends RequestContext {
 		return request == null ? ContextImpl.currentMerchantId() : getMerchantId(request);
 	}
 
-	@Nonnull
+	@NonNull
 	public TimeZone getTimeZone() {
 		HttpServletRequest request = getRequest();
 		Object timeZone = request.getAttribute(ATTR_TIME_ZONE);
@@ -322,7 +322,7 @@ public class RequestContextImpl extends RequestContext {
 		return (TimeZone) timeZone;
 	}
 
-	@Nonnull
+	@NonNull
 	@Override
 	public String clientIP() {
 		return sessionContext().getIp();

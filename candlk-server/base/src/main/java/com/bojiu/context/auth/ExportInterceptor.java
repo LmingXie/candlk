@@ -2,8 +2,6 @@ package com.bojiu.context.auth;
 
 import java.lang.reflect.Method;
 import java.util.*;
-import javax.annotation.Nonnull;
-import javax.annotation.Nullable;
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
 
@@ -19,10 +17,13 @@ import com.bojiu.context.ContextImpl;
 import com.bojiu.context.model.RiskStatus;
 import com.bojiu.context.web.RequestContextImpl;
 import com.bojiu.webapp.base.util.*;
+import com.bojiu.webapp.base.util.Export.Config;
 import me.codeplayer.util.StringUtil;
 import me.codeplayer.util.X;
 import org.apache.commons.lang3.StringUtils;
 import org.apache.commons.lang3.time.FastDateFormat;
+import org.jspecify.annotations.NonNull;
+import org.jspecify.annotations.Nullable;
 import org.springframework.web.method.HandlerMethod;
 import org.springframework.web.servlet.HandlerInterceptor;
 import org.springframework.web.servlet.ModelAndView;
@@ -66,12 +67,12 @@ public class ExportInterceptor implements HandlerInterceptor {
 		if (size >= 10_0000) { // 导出数据量超过 10W 时，记录一下日志，避免后面可能因为 OOM，导致请求日志中看不到 exportCount
 			SpringUtil.log.warn("【数据导出】本次导出的数据量={}，用户ID={}，请求路径={}", size, Bean.idOf(RequestContextImpl.getSessionUser(request)), request.getRequestURL());
 		}
-		request.setAttribute(Logs.RESPONSE, "{\"exportCount\":" + size + "}");
+		Logs.setResponse("{\"exportCount\":" + size + "}", request);
 		// 获取表格标题，优先从请求中获取，如果没有则从注解中获取
 		// final String fileExt = "csv"; // 如果是从文件名称中获取，一定要先转为小写
 		final ExportProvider provider = ExportUtil.PROVIDER; // ExportManager.getProvider(fileExt);
 
-		final Export.Config cfg = loadExportConfig(request, export, allowCustom, provider);
+		final Config cfg = loadExportConfig(request, export, allowCustom, provider);
 
 		FastDateFormat dateFormat = timeZone
 				? Formats.getDateFormat(export.dateFormat(), RequestContextImpl.get().getTimeZone())
@@ -108,8 +109,8 @@ public class ExportInterceptor implements HandlerInterceptor {
 		return fileName;
 	}
 
-	@Nonnull
-	public static Export.Config loadExportConfig(HttpServletRequest request, Export export, boolean allowCustom, ExportProvider provider) {
+	@NonNull
+	public static Config loadExportConfig(HttpServletRequest request, Export export, boolean allowCustom, ExportProvider provider) {
 		String value = "";
 		// 先从 request 上下文中获取动态设置，获取不到时，再从注解中获取静态设置
 		String[] values = (String[]) request.getAttribute(Export.attrValues);
@@ -129,9 +130,9 @@ public class ExportInterceptor implements HandlerInterceptor {
 		final boolean disableCache = Export.NO_CACHE.equals(export.key()) || X.size(pairsStr) != value.length();
 		final String i18nKeyPrefix = request.getAttribute(Export.attrI18nPrefix) instanceof String str ? str : export.i18nPrefix();
 		// 获取请求语言
-		final Locale locale = i18n ? RequestContextImpl.doGetLanguage(request).locale : null;
+		final Locale locale = i18n && !"!".equals(i18nKeyPrefix) ? RequestContextImpl.doGetLanguage(request).locale : null;
 
-		final Export.Config cfg;
+		final Config cfg;
 		if (StringUtil.notEmpty(pairsStr)) {
 			cfg = provider.getCached(request, export.key(), locale, i18nKeyPrefix, pairsStr, disableCache, null);
 		} else {
@@ -145,8 +146,8 @@ public class ExportInterceptor implements HandlerInterceptor {
 		return cfg;
 	}
 
-	@Nonnull
-	public static Export.Config loadExportConfig(HttpServletRequest request, Export export, boolean allowCustom) {
+	@NonNull
+	public static Config loadExportConfig(HttpServletRequest request, Export export, boolean allowCustom) {
 		return loadExportConfig(request, export, allowCustom, ExportUtil.PROVIDER);
 	}
 
@@ -155,7 +156,7 @@ public class ExportInterceptor implements HandlerInterceptor {
 		return labelOnly != null ? (Boolean) labelOnly : export.labelOnly();
 	}
 
-	@Nonnull
+	@NonNull
 	static List<Object> tryLoadData(HttpServletRequest request, @Nullable ModelAndView modelAndView) {
 		List<Object> listToExport = (List<Object>) request.getAttribute(Export.attrData);
 		if (listToExport == null && modelAndView != null) {

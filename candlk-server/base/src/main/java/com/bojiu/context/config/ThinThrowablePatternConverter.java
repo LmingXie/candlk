@@ -2,8 +2,6 @@ package com.bojiu.context.config;
 
 import java.io.PrintWriter;
 import java.util.List;
-import javax.annotation.Nonnull;
-import javax.annotation.Nullable;
 
 import com.bojiu.common.context.Env;
 import com.bojiu.common.util.Common;
@@ -15,6 +13,8 @@ import org.apache.logging.log4j.core.config.Configuration;
 import org.apache.logging.log4j.core.config.plugins.Plugin;
 import org.apache.logging.log4j.core.pattern.*;
 import org.apache.logging.log4j.core.util.StringBuilderWriter;
+import org.jspecify.annotations.NonNull;
+import org.jspecify.annotations.Nullable;
 
 /**
  * 精简堆栈的异常日志输出转换器
@@ -162,7 +162,7 @@ public class ThinThrowablePatternConverter extends LogEventPatternConverter {
 
 	}
 
-	private static boolean matchPrefix(@Nonnull String[] packages, String className, int length) {
+	private static boolean matchPrefix(@NonNull String[] packages, String className, int length) {
 		for (String pkg : packages) {
 			int prefixSize = pkg.length();
 			if (prefixSize >= length || className.charAt(prefixSize) != '.') {

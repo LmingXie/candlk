@@ -4,13 +4,13 @@ import java.io.Serializable;
 import java.util.*;
 import java.util.function.Function;
 import java.util.function.Predicate;
-import javax.annotation.Nonnull;
-import javax.annotation.Nullable;
 
 import com.bojiu.common.model.ValueEnum;
 import com.bojiu.common.model.ValueProxyImpl;
 import com.bojiu.common.util.Common;
 import lombok.Getter;
+import org.jspecify.annotations.NonNull;
+import org.jspecify.annotations.Nullable;
 
 @Getter
 public class Option<V> implements Serializable {
@@ -86,7 +86,7 @@ public class Option<V> implements Serializable {
 		return new Option<>(asString(t.getValue()), t.getLabel());
 	}
 
-	public static <T extends ValueProxyImpl<?, ?>> List<Option<String>> toMetas(T[] values, @Nonnull Predicate<? super T> filter, @Nullable Language language) {
+	public static <T extends ValueProxyImpl<?, ?>> List<Option<String>> toMetas(T[] values, @NonNull Predicate<? super T> filter, @Nullable Language language) {
 		return Common.toList(Arrays.asList(values), t -> filter.test(t) ? toOption(t, language) : null, false);
 	}
 

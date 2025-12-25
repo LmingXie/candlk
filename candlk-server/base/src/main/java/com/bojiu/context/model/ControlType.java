@@ -3,7 +3,6 @@ package com.bojiu.context.model;
 import java.math.BigDecimal;
 import java.util.*;
 import java.util.stream.Stream;
-import javax.annotation.Nullable;
 
 import com.baomidou.mybatisplus.annotation.EnumValue;
 import com.bojiu.common.model.ValueProxy;
@@ -11,7 +10,9 @@ import com.bojiu.common.model.ValueProxyImpl;
 import com.bojiu.common.redis.RedisUtil;
 import com.bojiu.common.util.Common;
 import lombok.Getter;
-import me.codeplayer.util.*;
+import me.codeplayer.util.ArrayUtil;
+import me.codeplayer.util.Assert;
+import org.jspecify.annotations.Nullable;
 
 /**
  * 玩家产出/玩家投入=实际RTP
@@ -103,7 +104,7 @@ public enum ControlType implements ValueProxyImpl<ControlType, Integer> {
 
 	static { // 进行排序
 		// ！！不可随意增加删除RTP！需同步调整VIP池配置！
-		final ControlType[] pgcTypes = new ControlType[] { L5, L7, L8, L9, L10, NONE, W2, W5, W8 };
+		final ControlType[] pgcTypes = { L5, L7, L8, L9, L10, NONE, W2, W5, W8 };
 		Arrays.sort(pgcTypes, Comparator.comparing(ControlType::pgcSort));
 		PGC_CACHE = pgcTypes;
 		pgcDefaultTiers = parseInitTiers(PGC_CACHE, true);

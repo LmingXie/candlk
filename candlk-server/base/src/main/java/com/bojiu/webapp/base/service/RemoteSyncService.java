@@ -2,10 +2,10 @@ package com.bojiu.webapp.base.service;
 
 import java.util.Arrays;
 import java.util.List;
-import javax.annotation.Nonnull;
 
 import com.github.benmanes.caffeine.cache.Cache;
-import me.codeplayer.util.X;
+import me.codeplayer.util.*;
+import org.jspecify.annotations.NonNull;
 import org.springframework.context.ApplicationEvent;
 
 /**
@@ -57,6 +57,8 @@ public interface RemoteSyncService {
 	String AppDownloadService = "AppDownloadService";
 	String BrandJackpotService = "BrandJackpotService";
 	String UserMerchantVendorService = "UserMerchantVendorService";
+	String SiteContentService = "SiteContentService";
+	String UserAvatarService = "UserAvatarService";
 
 	/* ======= trade ====== */
 	String SnsItemService = "SnsItemService";
@@ -90,12 +92,12 @@ public interface RemoteSyncService {
 	/**
 	 * 刷新缓存
 	 */
-	void flushCache(@Nonnull String cacheId, Object... args);
+	void flushCache(@NonNull String cacheId, Object... args);
 
 	/**
 	 * 刷新同参数的多个缓存
 	 */
-	void flushCaches(@Nonnull String[] cacheIds, Object... args);
+	void flushCaches(@NonNull String[] cacheIds, Object... args);
 
 	/**
 	 * 刷新【元数据】缓存
@@ -116,6 +118,17 @@ public interface RemoteSyncService {
 			case 1 -> cache.invalidate((T) args[0]);
 			default -> {
 				List<T> keys = X.castType(Arrays.asList(args));
+				cache.invalidateAll(keys);
+			}
+		}
+	}
+
+	static void clearCacheByIds(final Cache<Long, ?> cache, Object... ids) {
+		switch (X.size(ids)) {
+			case 0 -> cache.invalidateAll();
+			case 1 -> cache.invalidate(NumberUtil.getLong(ids[0]));
+			default -> {
+				List<Long> keys = ArrayUtil.toList(NumberUtil::getLong, ids);
 				cache.invalidateAll(keys);
 			}
 		}

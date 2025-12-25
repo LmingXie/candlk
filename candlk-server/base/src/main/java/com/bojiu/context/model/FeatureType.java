@@ -7,9 +7,9 @@ import com.google.common.base.CaseFormat;
 import lombok.Getter;
 import org.apache.commons.lang3.EnumUtils;
 
-/**
- * 侧边栏功能类型
- */
+/// 功能类型 <br/>
+/// - 1 用户端来获取开关：[com.bojiu.webapp.user.service.MsgService#getAllFeatureBoolean(com.bojiu.context.web.ProxyRequest)]
+@SuppressWarnings("JavadocReference")
 @Getter
 public enum FeatureType implements ValueProxyImpl<FeatureType, String> {
 
@@ -28,6 +28,7 @@ public enum FeatureType implements ValueProxyImpl<FeatureType, String> {
 	OFFICIAL_MEDIA("官网媒体"),
 	FEEDBACK("有奖反馈"),
 	REBATE("返水"),
+	GOLD_TURNTABLE("攒金大转盘"),
 	;
 
 	@EnumValue
@@ -35,6 +36,8 @@ public enum FeatureType implements ValueProxyImpl<FeatureType, String> {
 	public final String label;
 	private transient String camelCaseName;
 	final ValueProxy<FeatureType, String> proxy;
+
+	public static final FeatureType[] CACHE = values();
 
 	FeatureType(String label) {
 		this.value = name();

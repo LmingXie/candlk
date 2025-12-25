@@ -1,9 +1,8 @@
 package com.bojiu.context.web;
 
-import javax.annotation.Nullable;
-
 import com.bojiu.common.security.AES;
 import lombok.*;
+import org.jspecify.annotations.Nullable;
 import org.springframework.beans.factory.InitializingBean;
 import org.springframework.boot.context.properties.ConfigurationProperties;
 

@@ -1,8 +1,6 @@
 package com.bojiu.webapp.base.form;
 
 import java.util.*;
-import javax.annotation.Nonnull;
-import javax.annotation.Nullable;
 
 import com.bojiu.common.context.I18N;
 import com.bojiu.common.model.TimeInterval;
@@ -13,6 +11,8 @@ import com.bojiu.webapp.base.entity.Merchant;
 import lombok.*;
 import me.codeplayer.util.CollectionUtil;
 import me.codeplayer.util.X;
+import org.jspecify.annotations.NonNull;
+import org.jspecify.annotations.Nullable;
 
 @Getter
 @Setter
@@ -94,20 +94,20 @@ public class MerchantForm<E> extends BaseForm<E> {
 		merchantId = null;
 	}
 
-	public void applyMerchants(Member sessionUser, @Nonnull Collection<Long> merchantIdList) {
+	public void applyMerchants(Member sessionUser, @NonNull Collection<Long> merchantIdList) {
 		if (sessionUser.asEmp()) {
 			if (merchantId != null) {
 				initMerchantIds(merchantId);
 			} else if (X.isValid(merchantIds)) {
 				setMerchantIds(CollectionUtil.filter(merchantIds, merchantIdList::contains));
 				I18N.assertTrue(X.isValid(merchantIds), AdminI18nKey.UNSUPPORTED_OPERATIONS);
-			} else if (!sessionUser.asAdmin()) {
+			} else if (sessionUser.intoMerchant()) {
 				initMerchantIds(merchantIdList);
 			}
 		}
 	}
 
-	public void applyMerchantIds(Long siteId, @Nonnull Collection<Long> merchantIdList) {
+	public void applyMerchantIds(Long siteId, @NonNull Collection<Long> merchantIdList) {
 		if (siteId == null) {
 			initMerchantIds(merchantIdList);
 		} else {
