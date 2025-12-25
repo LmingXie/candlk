@@ -24,6 +24,7 @@ import org.springframework.scheduling.annotation.Scheduled;
 import static com.bojiu.webapp.user.model.BetProvider.*;
 import static com.bojiu.webapp.user.model.UserRedisKey.*;
 
+/** 刷新推荐串子组合 */
 @Slf4j
 @Configuration
 public class BetMatchJob {
@@ -44,12 +45,8 @@ public class BetMatchJob {
 		final int parlaysSize = 3; // 串关大小（3场比赛为一组）
 		for (Pair<BetProvider, BetProvider> pair : matchPair) {
 			final String parlaysProvider = pair.getKey().name(), hedgingProvider = pair.getValue().name();
-			// 查询平台上的全部赛事和赔率信息
-			final List<String> values = RedisUtil.opsForHash().multiGet(GAME_BETS_PERFIX, Arrays.asList(parlaysProvider, hedgingProvider));
-			final List<GameDTO> gameBets = Jsons.parseArray(values.get(0), GameDTO.class),
-					hedgingBets = Jsons.parseArray(values.get(1), GameDTO.class);
 			// 获取A平台到B平台赛事的映射
-			final Map<GameDTO, GameDTO> gameMapper = betMatchService.getGameMapper(gameBets, hedgingBets);
+			final Map<GameDTO, GameDTO> gameMapper = betMatchService.getGameMapper(pair);
 			log.info("查询赛事映射完成，耗时：{}ms", System.currentTimeMillis() - startTime);
 
 			startTime = System.currentTimeMillis();

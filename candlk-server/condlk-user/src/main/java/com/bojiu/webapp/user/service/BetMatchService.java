@@ -3,70 +3,79 @@ package com.bojiu.webapp.user.service;
 import java.util.*;
 import java.util.concurrent.*;
 
+import com.bojiu.common.redis.RedisUtil;
+import com.bojiu.context.model.TaskType;
 import com.bojiu.context.web.Jsons;
 import com.bojiu.context.web.TaskUtils;
 import com.bojiu.webapp.user.dto.*;
 import com.bojiu.webapp.user.dto.GameDTO.OddsInfo;
 import com.bojiu.webapp.user.dto.HedgingDTO.Odds;
+import com.bojiu.webapp.user.model.BetProvider;
+import com.github.benmanes.caffeine.cache.Cache;
+import com.github.benmanes.caffeine.cache.Caffeine;
 import lombok.extern.slf4j.Slf4j;
 import me.codeplayer.util.ArrayUtil;
 import me.codeplayer.util.CollectionUtil;
+import org.apache.commons.lang3.tuple.Pair;
 import org.jspecify.annotations.Nullable;
 import org.springframework.stereotype.Service;
+
+import static com.bojiu.webapp.user.model.UserRedisKey.GAME_BETS_PERFIX;
 
 @Slf4j
 @Service
 public class BetMatchService {
 
-	transient Map<GameDTO, GameDTO> gameMapperCache;
+	/** 获取A平台到B平台赛事的映射 */
+	public final Map<GameDTO, GameDTO> getGameMapper(Pair<BetProvider, BetProvider> pair) {
+		// 查询平台上的全部赛事和赔率信息
+		final List<String> values = RedisUtil.opsForHash().multiGet(GAME_BETS_PERFIX, Arrays.asList(pair.getKey().name(), pair.getValue().name()));
+		final List<GameDTO> gameBets = Jsons.parseArray(values.get(0), GameDTO.class),
+				hedgingBets = Jsons.parseArray(values.get(1), GameDTO.class);
 
-	public final Map<GameDTO, GameDTO> getGameMapper(List<GameDTO> gameBets, List<GameDTO> hedgingBets) {
-		if (gameMapperCache == null) {
-			// A平台赛事 与 B平台赛事 的映射
-			final Map<GameDTO, GameDTO> gameMapper = new HashMap<>(Math.max(gameBets.size(), hedgingBets.size()), 1F);
-			// 根据开赛时间分组（由于时间是更大的尺度，因此先匹配时间，再匹配队伍名称）
-			final Map<Date, List<GameDTO>> hedgingMap = CollectionUtil.groupBy(hedgingBets, GameDTO::getOpenTime);
+		// A平台赛事 与 B平台赛事 的映射
+		final Map<GameDTO, GameDTO> gameMapper = new HashMap<>(Math.max(gameBets.size(), hedgingBets.size()), 1F);
+		// 根据开赛时间分组（由于时间是更大的尺度，因此先匹配时间，再匹配队伍名称）
+		final Map<Date, List<GameDTO>> hedgingMap = CollectionUtil.groupBy(hedgingBets, GameDTO::getOpenTime);
 
-			// 从 hedgingBets 过滤能在 hedgingBets 匹配的赛事
-			for (GameDTO aGame : gameBets) {
-				List<GameDTO> bGames = hedgingMap.get(aGame.getOpenTime());
-				if (bGames != null) {
-					// 匹配队伍名（假设同一时间，同一只队伍不能同时存在两场比赛）
-					final String teamHome = aGame.teamHome, teamClient = aGame.teamClient;
-					GameDTO bGame = CollectionUtil.findFirst(bGames, b ->
-							teamHome.contains(b.teamHome) || b.teamHome.contains(teamHome)
-									|| teamClient.contains(b.teamHome) || b.teamClient.contains(teamClient)
-					);
-					if (bGame != null) {
-						log.debug("队伍名匹配成功：{}-{}\t{}-{}", teamHome, teamClient, bGame.teamHome, bGame.teamClient);
-						gameMapper.put(aGame, bGame);
-					} else {
-						// 匹配联赛名称（仅一场时则认为是正确的）
-						final List<GameDTO> games_ = CollectionUtil.filter(bGames, b -> aGame.league.equals(b.league));
-						// 尝试匹配前后 2,3 个字符
-						GameDTO bGameDTO = matchPrefixOrSuffix(games_, teamHome), bGameDTO2 = matchPrefixOrSuffix(games_, teamClient);
-						if (bGameDTO != null && bGameDTO2 != null) {
-							gameMapper.put(aGame, games_.get(0));
-							log.debug("前缀匹配成功：{}-{}\t{}-{}\t{}-{}", teamHome, teamClient, bGameDTO.teamHome, bGameDTO.teamClient,
-									bGameDTO2.teamHome, bGameDTO2.teamClient);
-							continue;
-						}
-
-						// 查找别名库
-						final GameDTO matchedGame = TeamMatcher.findMatchedGame(aGame, games_);
-						if (matchedGame != null) {
-							gameMapper.put(aGame, matchedGame);
-							log.debug("查找别名库匹配成功：{}-{}\t{}-{}", teamHome, teamClient, matchedGame.teamHome, matchedGame.teamClient);
-							continue;
-						}
-
-						log.warn("无法匹配赛事：aGame={}\n，bGames={}", Jsons.encodeRaw(aGame), Jsons.encode(bGames));
+		// 从 hedgingBets 过滤能在 hedgingBets 匹配的赛事
+		for (GameDTO aGame : gameBets) {
+			List<GameDTO> bGames = hedgingMap.get(aGame.getOpenTime());
+			if (bGames != null) {
+				// 匹配队伍名（假设同一时间，同一只队伍不能同时存在两场比赛）
+				final String teamHome = aGame.teamHome, teamClient = aGame.teamClient;
+				GameDTO bGame = CollectionUtil.findFirst(bGames, b ->
+						teamHome.contains(b.teamHome) || b.teamHome.contains(teamHome)
+								|| teamClient.contains(b.teamHome) || b.teamClient.contains(teamClient)
+				);
+				if (bGame != null) {
+					log.debug("队伍名匹配成功：{}-{}\t{}-{}", teamHome, teamClient, bGame.teamHome, bGame.teamClient);
+					gameMapper.put(aGame, bGame);
+				} else {
+					// 匹配联赛名称（仅一场时则认为是正确的）
+					final List<GameDTO> games_ = CollectionUtil.filter(bGames, b -> aGame.league.equals(b.league));
+					// 尝试匹配前后 2,3 个字符
+					GameDTO bGameDTO = matchPrefixOrSuffix(games_, teamHome), bGameDTO2 = matchPrefixOrSuffix(games_, teamClient);
+					if (bGameDTO != null && bGameDTO2 != null) {
+						gameMapper.put(aGame, games_.get(0));
+						log.debug("前缀匹配成功：{}-{}\t{}-{}\t{}-{}", teamHome, teamClient, bGameDTO.teamHome, bGameDTO.teamClient,
+								bGameDTO2.teamHome, bGameDTO2.teamClient);
+						continue;
 					}
+
+					// 查找别名库
+					final GameDTO matchedGame = TeamMatcher.findMatchedGame(aGame, games_);
+					if (matchedGame != null) {
+						gameMapper.put(aGame, matchedGame);
+						log.debug("查找别名库匹配成功：{}-{}\t{}-{}", teamHome, teamClient, matchedGame.teamHome, matchedGame.teamClient);
+						continue;
+					}
+
+					log.warn("无法匹配赛事：aGame={}\n，bGames={}", Jsons.encodeRaw(aGame), Jsons.encode(bGames));
 				}
 			}
-			gameMapperCache = gameMapper;
 		}
-		return gameMapperCache;
+		return gameMapper;
 	}
 
 	public GameDTO matchPrefixOrSuffix(List<GameDTO> games_, String league) {

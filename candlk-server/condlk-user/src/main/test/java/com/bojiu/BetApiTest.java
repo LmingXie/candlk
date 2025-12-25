@@ -13,6 +13,7 @@ import com.bojiu.webapp.user.job.GameBetJob;
 import com.bojiu.webapp.user.model.BetProvider;
 import com.bojiu.webapp.user.service.BetMatchService;
 import lombok.extern.slf4j.Slf4j;
+import org.apache.commons.lang3.tuple.Pair;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.junit.jupiter.MockitoExtension;
@@ -53,7 +54,7 @@ public class BetApiTest {
 				hedgingBets = Jsons.parseArray(values.get(1), GameDTO.class);
 
 		// 获取A平台到B平台赛事的映射
-		Map<GameDTO, GameDTO> gameMapper = betMatchService.getGameMapper(gameBets, hedgingBets);
+		Map<GameDTO, GameDTO> gameMapper = betMatchService.getGameMapper(Pair.of(parlaysProvider, hedgingProvider));
 		log.info("查询赛事映射完成，耗时：{}ms", System.currentTimeMillis() - startTime);
 
 		startTime = System.currentTimeMillis();

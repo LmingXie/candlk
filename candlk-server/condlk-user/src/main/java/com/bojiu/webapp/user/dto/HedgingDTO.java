@@ -84,11 +84,6 @@ public class HedgingDTO {
 			return null;
 		}
 
-		public void clear() {
-			this.aGame = null;
-			this.bGame = null;
-		}
-
 		transient Double bWinFactor;
 
 		/** B平台 赢的净收益系数 */
