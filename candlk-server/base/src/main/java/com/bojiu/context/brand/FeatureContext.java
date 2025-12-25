@@ -5,8 +5,6 @@ import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ConcurrentMap;
 import java.util.function.BiPredicate;
 import java.util.function.Function;
-import javax.annotation.Nonnull;
-import javax.annotation.Nullable;
 
 import com.alibaba.fastjson2.JSONObject;
 import com.alibaba.fastjson2.TypeReference;
@@ -17,6 +15,8 @@ import com.google.common.collect.ImmutableSet;
 import lombok.Getter;
 import me.codeplayer.util.CollectionUtil;
 import me.codeplayer.util.StringUtil;
+import org.jspecify.annotations.NonNull;
+import org.jspecify.annotations.Nullable;
 
 import static com.bojiu.context.brand.FeatureItem.RiskOption;
 import static com.bojiu.context.brand.FeatureItem.VipOption;
@@ -31,7 +31,6 @@ public class FeatureContext {
 	public FeatureContext(EnumMap<Feature, FeatureConfig> features) {
 		this.features = features;
 	}
-
 
 	public boolean enabled(Feature feature) {
 		return features.get(feature) != null;
@@ -214,7 +213,7 @@ public class FeatureContext {
 	/**
 	 * 获取指定功能的配置，如果未启用该功能，则抛出异常
 	 */
-	@Nonnull
+	@NonNull
 	public FeatureConfig getRequiredConfig(Feature feature) {
 		FeatureConfig config = getConfig(feature);
 		assertEnabled(config != null);
@@ -229,8 +228,8 @@ public class FeatureContext {
 		assertEnabled(config != null);
 	}
 
-	@Nonnull
-	public static <T, R> ImmutableSet<R> toSet(@Nullable List<T> values, @Nonnull Function<? super T, R> converter) {
+	@NonNull
+	public static <T, R> ImmutableSet<R> toSet(@Nullable List<T> values, @NonNull Function<? super T, R> converter) {
 		if (values == null || values.isEmpty()) {
 			return ImmutableSet.of();
 		}
@@ -241,13 +240,13 @@ public class FeatureContext {
 		return builder.build();
 	}
 
-	@Nonnull
-	public <T, R> ImmutableSet<R> toSet(Feature feature, Class<T> valueType, @Nonnull Function<? super T, R> converter) {
+	@NonNull
+	public <T, R> ImmutableSet<R> toSet(Feature feature, Class<T> valueType, @NonNull Function<? super T, R> converter) {
 		return toSet(getConfig(feature), valueType, converter);
 	}
 
-	@Nonnull
-	public static <T, R> ImmutableSet<R> toSet(@Nullable FeatureConfig config, Class<T> sourceType, @Nonnull Function<? super T, R> converter) {
+	@NonNull
+	public static <T, R> ImmutableSet<R> toSet(@Nullable FeatureConfig config, Class<T> sourceType, @NonNull Function<? super T, R> converter) {
 		return config == null ? ImmutableSet.of() : toSet(config.getParsedValues(sourceType), converter);
 	}
 
@@ -352,7 +351,8 @@ public class FeatureContext {
 		return this.featuresJson = Jsons.encodeRaw(featuresJson);
 	}
 
-	public static Set<Integer> getGameType(FeatureContext context) {
+	@SuppressWarnings("DataFlowIssue")
+	public static @NonNull Set<Integer> getGameType(FeatureContext context) {
 		FeatureConfig config = context.getConfig(Feature.Game);
 		LinkedHashMap<String, Map<Long, JSONObject>> currencyVendorMap = config.getParsedValue(new TypeReference<>() {
 		}, false);
@@ -364,6 +364,5 @@ public class FeatureContext {
 		}
 		return types;
 	}
-
 
 }

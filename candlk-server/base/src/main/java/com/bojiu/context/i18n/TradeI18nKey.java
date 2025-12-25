@@ -10,6 +10,8 @@ public interface TradeI18nKey extends BaseI18nKey {
 	String PAYMENT_FORCE_PROFILE = "payment.force.profile";
 	/** 该支付渠道暂不支持兑换，请更换其他渠道！ */
 	String PAYMENT_CLOSE = "payment.close";
+	/** 支付通道不可用，请联系客服 */
+	String PAYMENT_SUSPEND = "payment.suspend";
 	/** 当前支付通道暂不支持该货币类型！ */
 	String PAYMENT_CURRENCY_CLOSE = "payment.currency.close";
 	/** 请输入有效的转出地址！ */
@@ -54,6 +56,8 @@ public interface TradeI18nKey extends BaseI18nKey {
 	String CREATE_ORDER_FAIL = "create.order.fail";
 	/** 该支付通道最多只能绑定{0}个收款账号！！ */
 	String CASH_ACCOUNT_MAX_BIND = "cash.account.max.bind";
+	/** 您当前累积提现金额已超盈利上限！ */
+	String CASH_AMOUNT_GT_PROFIT = "cash.amount.gt.profit";
 
 	/*
 	 * Model放置
@@ -248,6 +252,8 @@ public interface TradeI18nKey extends BaseI18nKey {
 	String COIN_TRADE_TYPE_AGENT_PLAY_REWARD = "coin.trade.type.agent.play.reward";
 	/** 代理充值奖励 */
 	String COIN_TRADE_TYPE_AGENT_RECHARGE_REWARD = "coin.trade.type.agent.recharge.reward";
+	/** 资金调整 */
+	String COIN_TRADE_TYPE_AMOUNT_ADJUST = "coin.trade.type.amount.adjust";
 	/** 每日转盘奖励 */
 	String COIN_TRADE_TYPE_DAILY_TURNTABLE_REWARD = "coin.trade.type.daily.turntable.reward";
 	/** 拼团奖励 */

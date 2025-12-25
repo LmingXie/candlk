@@ -143,8 +143,8 @@ public class WebMvcConfig extends DelegatingWebMvcConfiguration {
 	@Override
 	public void addInterceptors(InterceptorRegistry registry) {
 		final ApplicationContext context = getApplicationContext();
-		// registry.addInterceptor(context.getBean(SiteStatusCheckInterceptor.class));
 		registry.addInterceptor(new PermissionInterceptor(autoLoginHandler()));
+		// registry.addInterceptor(context.getBean(SiteStatusCheckInterceptor.class));
 		if (MemberType.fromBackstage()) {
 			registry.addInterceptor(new AsyncExportInterceptor());
 			registry.addInterceptor(new MerchantWhitelistCheckInterceptor());

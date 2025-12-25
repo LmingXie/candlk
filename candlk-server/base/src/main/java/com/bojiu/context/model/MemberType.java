@@ -1,14 +1,14 @@
 package com.bojiu.context.model;
 
-import javax.annotation.Nonnull;
-import javax.annotation.Nullable;
 import javax.servlet.http.HttpServletRequest;
 
 import com.bojiu.common.context.Context;
 import com.bojiu.common.context.RequestContext;
 import com.bojiu.common.util.Common;
 import com.bojiu.context.auth.Permission;
-import org.apache.commons.lang3.StringUtils;
+import com.bojiu.context.web.ClientInfo;
+import org.jspecify.annotations.NonNull;
+import org.jspecify.annotations.Nullable;
 
 /**
  * 系统成员类型
@@ -40,17 +40,19 @@ public enum MemberType {
 	public static MemberType CURRENT;
 
 	public static MemberType parse(String appName) {
-		if (StringUtils.endsWith(appName, Permission.MERCHANT)) {
-			return MERCHANT;
-		}
-		if (StringUtils.endsWith(appName, Permission.AGENT)) {
-			return AGENT;
-		}
-		if (StringUtils.endsWith(appName, Permission.DEALER)) {
-			return DEALER;
-		}
-		if (StringUtils.endsWith(appName, Permission.ADMIN)) {
-			return ADMIN;
+		if (appName != null) {
+			if (appName.endsWith(Permission.MERCHANT)) {
+				return MERCHANT;
+			}
+			if (appName.endsWith(Permission.AGENT)) {
+				return AGENT;
+			}
+			if (appName.endsWith(Permission.DEALER)) {
+				return DEALER;
+			}
+			if (appName.endsWith(Permission.ADMIN)) {
+				return ADMIN;
+			}
 		}
 		return USER;
 	}
@@ -70,14 +72,25 @@ public enum MemberType {
 		return CURRENT.asEmp();
 	}
 
-	@Nonnull
+	@NonNull
 	public static MemberType parseFrom(HttpServletRequest request) {
 		if (CURRENT == null) {
 			CURRENT = parse(Context.applicationName());
 		}
 		if (CURRENT == ADMIN) {
-			String appId = RequestContext.getAppId(request);
-			return StringUtils.contains(appId, Permission.ADMIN) ? ADMIN : StringUtils.contains(appId, Permission.AGENT) ? AGENT : StringUtils.contains(appId, Permission.DEALER) ? DEALER : MERCHANT;
+			String name = ClientInfo.of(RequestContext.getAppId(request)).name();
+			if (name != null) {
+				if (name.lastIndexOf(Permission.MERCHANT) != -1) {
+					return MERCHANT;
+				} else if (name.lastIndexOf(Permission.ADMIN) != -1) {
+					return ADMIN;
+				} else if (name.lastIndexOf(Permission.AGENT) != -1) {
+					return AGENT;
+				} else if (name.lastIndexOf(Permission.DEALER) != -1) {
+					return DEALER;
+				}
+			}
+			return MERCHANT;
 		}
 		return USER;
 	}

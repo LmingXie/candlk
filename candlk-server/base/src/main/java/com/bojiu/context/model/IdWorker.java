@@ -1,11 +1,11 @@
 package com.bojiu.context.model;
 
 import java.util.*;
-import javax.annotation.Nullable;
 
 import com.bojiu.common.context.Env;
 import com.bojiu.common.util.Formats;
 import me.codeplayer.util.*;
+import org.jspecify.annotations.Nullable;
 
 public abstract class IdWorker {
 

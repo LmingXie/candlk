@@ -2,8 +2,6 @@ package com.bojiu.context.model;
 
 import java.util.Calendar;
 import java.util.Date;
-import javax.annotation.Nonnull;
-import javax.annotation.Nullable;
 
 import com.baomidou.mybatisplus.annotation.EnumValue;
 import com.bojiu.common.context.Env;
@@ -13,6 +11,8 @@ import com.bojiu.common.util.Common;
 import com.bojiu.context.i18n.AdminI18nKey;
 import lombok.Getter;
 import me.codeplayer.util.EasyDate;
+import org.jspecify.annotations.NonNull;
+import org.jspecify.annotations.Nullable;
 
 /**
  * 循环方式
@@ -111,33 +111,24 @@ public enum CycleMode implements LabelI18nProxy<CycleMode, Integer> {
 	@Nullable
 	public static Integer castCalendar(CycleMode cycleMode) {
 		return switch (cycleMode) {
-			case DAILY_CYCLE:
-				yield Calendar.DATE;
-			case WEEKLY_CYCLE:
-				yield Calendar.DAY_OF_WEEK;
-			case MONTHLY_CYCLE:
-				yield Calendar.MONTH;
-			case HOUR_CYCLE:
-				yield Calendar.HOUR_OF_DAY; // 每小时循环
-			case YEARLY_CYCLE:
-				yield Calendar.YEAR;
-			default:
-				yield null;
+			case DAILY_CYCLE -> Calendar.DATE;
+			case WEEKLY_CYCLE -> Calendar.DAY_OF_WEEK;
+			case MONTHLY_CYCLE -> Calendar.MONTH;
+			case HOUR_CYCLE -> Calendar.HOUR_OF_DAY; // 每小时循环
+			case YEARLY_CYCLE -> Calendar.YEAR;
+			default -> null;
 		};
 	}
 
 	/**
 	 * 根据排行榜时长(0=天；1=周；2=月)获取 Calendar模式
 	 */
-	@Nonnull
+	@NonNull
 	public static Integer castCalendar(Integer duration) {
 		return switch (duration) {
-			case 1:
-				yield Calendar.DAY_OF_WEEK;
-			case 2:
-				yield Calendar.MONTH;
-			default:
-				yield Calendar.DATE;
+			case 1 -> Calendar.DAY_OF_WEEK;
+			case 2 -> Calendar.MONTH;
+			default -> Calendar.DATE;
 		};
 	}
 }

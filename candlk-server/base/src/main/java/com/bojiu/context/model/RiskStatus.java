@@ -1,6 +1,5 @@
 package com.bojiu.context.model;
 
-import javax.annotation.Nullable;
 import javax.servlet.http.HttpServletRequest;
 
 import com.baomidou.mybatisplus.annotation.EnumValue;
@@ -11,6 +10,7 @@ import com.bojiu.context.web.RequestContextImpl;
 import com.bojiu.webapp.base.dto.MerchantContext;
 import com.bojiu.webapp.base.entity.Merchant;
 import lombok.Getter;
+import org.jspecify.annotations.Nullable;
 
 /**
  * 风控状态：-2=禁止游戏；-1=后台限制；0=预警状态；1=正常

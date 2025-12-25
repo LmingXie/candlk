@@ -1,10 +1,9 @@
 package com.bojiu.context.model;
 
-import javax.annotation.Nullable;
-
 import com.bojiu.common.context.I18N;
 import com.bojiu.common.model.ValueProxy;
 import lombok.Getter;
+import org.jspecify.annotations.Nullable;
 
 @Getter
 public enum RiskType implements LabelI18nProxy<RiskType, Integer> {

@@ -4,7 +4,6 @@ import java.io.Serializable;
 import java.util.Date;
 import java.util.Map;
 import java.util.function.Supplier;
-import javax.annotation.Nullable;
 
 import com.bojiu.common.context.I18N;
 import com.bojiu.common.model.Status;
@@ -15,6 +14,7 @@ import com.bojiu.context.web.RequestContextImpl;
 import com.bojiu.webapp.base.dto.MerchantContext;
 import lombok.Getter;
 import lombok.Setter;
+import org.jspecify.annotations.Nullable;
 import org.springframework.beans.BeanUtils;
 
 @Getter
@@ -66,6 +66,10 @@ public abstract class AbstractVO<T> implements Serializable {
 
 	protected String getStatus_(Integer status) {
 		return status == null ? null : Status.of(status).getToggleLabel();
+	}
+
+	protected String getStatusOpen_(Integer status) {
+		return status == null ? null : I18N.msg("status." + Status.of(status).name().toLowerCase());
 	}
 
 	protected String getStatusStr(Integer status) {

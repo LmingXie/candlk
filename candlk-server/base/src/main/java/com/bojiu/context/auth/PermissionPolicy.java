@@ -1,8 +1,9 @@
 package com.bojiu.context.auth;
 
 import java.lang.reflect.Method;
-import javax.annotation.Nullable;
 import javax.servlet.http.HttpServletRequest;
+
+import org.jspecify.annotations.Nullable;
 
 /**
  * 权限码生成策略接口

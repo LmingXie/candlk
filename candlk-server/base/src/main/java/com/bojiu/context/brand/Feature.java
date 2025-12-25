@@ -1,6 +1,8 @@
 package com.bojiu.context.brand;
 
-import javax.annotation.Nullable;
+import java.util.function.BiPredicate;
+
+import org.jspecify.annotations.Nullable;
 
 import static com.bojiu.context.brand.FeatureConfigHandler.*;
 
@@ -266,7 +268,7 @@ public enum Feature {
 	@Nullable
 	public transient FeatureConfigHandler<?> handler;
 	@Nullable
-	public transient java.util.function.BiPredicate<FeatureConfig, String> customHasMenu;
+	public transient BiPredicate<FeatureConfig, String> customHasMenu;
 
 	Feature(String label, Module module, int min, int max, @Nullable FeatureConfigHandler<?> handler) {
 		this.label = label;

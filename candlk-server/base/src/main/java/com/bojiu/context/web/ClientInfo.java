@@ -4,7 +4,6 @@ import java.io.Serializable;
 import java.util.TimeZone;
 import java.util.concurrent.TimeUnit;
 import java.util.function.Function;
-import javax.annotation.Nullable;
 
 import com.bojiu.common.web.Client;
 import com.github.benmanes.caffeine.cache.Cache;
@@ -13,6 +12,8 @@ import lombok.Getter;
 import lombok.Setter;
 import me.codeplayer.util.StringUtil;
 import org.apache.commons.lang3.StringUtils;
+import org.jspecify.annotations.NonNull;
+import org.jspecify.annotations.Nullable;
 
 public class ClientInfo implements Serializable {
 
@@ -219,6 +220,7 @@ public class ClientInfo implements Serializable {
 	}
 	*/
 
+	@NonNull
 	public static ClientInfo of(@Nullable String source) {
 		// 如果没有该请求头，或者超过 100 个字符，则直接视为空字符串
 		if (source == null || source.length() > 100) {

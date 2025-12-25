@@ -1,7 +1,5 @@
 package com.bojiu.context;
 
-import javax.annotation.Nullable;
-
 import com.baomidou.mybatisplus.annotation.EnumValue;
 import com.bojiu.common.model.ValueProxy;
 import com.bojiu.context.i18n.AdminI18nKey;
@@ -10,6 +8,7 @@ import lombok.Getter;
 import me.codeplayer.util.Assert;
 import me.codeplayer.util.StringUtil;
 import org.apache.commons.lang3.EnumUtils;
+import org.jspecify.annotations.Nullable;
 
 /** 应用运营地域 */
 @Getter

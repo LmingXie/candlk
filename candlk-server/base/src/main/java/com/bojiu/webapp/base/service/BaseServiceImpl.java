@@ -5,8 +5,6 @@ import java.util.*;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ConcurrentMap;
 import java.util.function.Function;
-import javax.annotation.Nonnull;
-import javax.annotation.Nullable;
 
 import com.baomidou.mybatisplus.core.conditions.AbstractWrapper;
 import com.baomidou.mybatisplus.core.conditions.Wrapper;
@@ -36,6 +34,8 @@ import org.apache.ibatis.binding.MapperMethod;
 import org.apache.ibatis.logging.Log;
 import org.apache.ibatis.logging.LogFactory;
 import org.apache.ibatis.session.SqlSessionFactory;
+import org.jspecify.annotations.NonNull;
+import org.jspecify.annotations.Nullable;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -58,7 +58,7 @@ public abstract class BaseServiceImpl<T extends Bean<K>, D extends BaseDao<T>, K
 	}
 
 	@Autowired
-	public void setBaseDao(@SuppressWarnings("SpringJavaInjectionPointsAutowiringInspection") D baseDao) {
+	public void setBaseDao(D baseDao) {
 		this.baseDao = baseDao;
 	}
 
@@ -226,7 +226,7 @@ public abstract class BaseServiceImpl<T extends Bean<K>, D extends BaseDao<T>, K
 	/**
 	 * 根据 用户ID 查询关联的实体对象
 	 */
-	protected T getByUserId(@Nonnull Long userId) {
+	protected T getByUserId(@NonNull Long userId) {
 		Assert.notNull(userId);
 		QueryWrapper<T> wrapper = new QueryWrapper<T>()
 				.eq("user_id", userId);
@@ -511,7 +511,7 @@ public abstract class BaseServiceImpl<T extends Bean<K>, D extends BaseDao<T>, K
 	private static final ConcurrentMap<String, String> incrExprMap = new ConcurrentHashMap<>();
 	private static final Function<String, String> exprFunction = f -> f + "=" + f + "+ {0}";
 
-	protected static <T> void incrSetIfHasValue(UpdateWrapper<T> wrapper, @Nonnull String column, @Nullable Number delta) {
+	protected static <T> void incrSetIfHasValue(UpdateWrapper<T> wrapper, @NonNull String column, @Nullable Number delta) {
 		if (delta == null) {
 			return;
 		}
@@ -519,7 +519,7 @@ public abstract class BaseServiceImpl<T extends Bean<K>, D extends BaseDao<T>, K
 		wrapper.setSql(true, incrExprMap.computeIfAbsent(column, exprFunction), delta);
 	}
 
-	protected static <T> void incrSetValue(UpdateWrapper<T> wrapper, @Nonnull String column, @Nonnull Number delta) {
+	protected static <T> void incrSetValue(UpdateWrapper<T> wrapper, @NonNull String column, @NonNull Number delta) {
 		// a = a + {0} 使 MySQL 缓存最近最常用的SQL
 		wrapper.setSql(true, incrExprMap.computeIfAbsent(column, exprFunction), delta);
 	}
@@ -529,7 +529,7 @@ public abstract class BaseServiceImpl<T extends Bean<K>, D extends BaseDao<T>, K
 	/**
 	 * 根据传入的参数列表进行分批查询，避免参数列表过多单次查询超时，一般用于导出全量数据的情况
 	 */
-	protected <E, R> List<R> batchFind(@Nonnull Collection<E> all, @Nonnull Function<List<E>, List<R>> queryHandler) {
+	protected <E, R> List<R> batchFind(@NonNull Collection<E> all, @NonNull Function<List<E>, List<R>> queryHandler) {
 		final int totalSize = X.size(all);
 		if (totalSize == 0) {
 			return Collections.emptyList();
@@ -553,7 +553,7 @@ public abstract class BaseServiceImpl<T extends Bean<K>, D extends BaseDao<T>, K
 	/**
 	 * 根据传入的参数列表进行分批查询，适用于参数拼接的方式
 	 */
-	protected <R> List<R> batchAppendFind(@Nonnull Collection<Long> ids, @Nonnull Function<String, List<R>> findFunc) {
+	protected <R> List<R> batchAppendFind(@NonNull Collection<Long> ids, @NonNull Function<String, List<R>> findFunc) {
 		final int totalSize = X.size(ids);
 		if (totalSize == 0) {
 			return Collections.emptyList();

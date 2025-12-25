@@ -1,8 +1,7 @@
 package com.bojiu.context.web;
 
 import java.io.IOException;
-import java.util.Enumeration;
-import java.util.Map;
+import java.util.*;
 import javax.servlet.*;
 import javax.servlet.http.HttpServletRequest;
 
@@ -13,6 +12,7 @@ import com.bojiu.common.web.Logs;
 import com.bojiu.common.web.ServletUtil;
 import com.bojiu.context.auth.PermissionInterceptor;
 import com.bojiu.context.model.Member;
+import me.codeplayer.util.JavaUtil;
 import me.codeplayer.util.StringUtil;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Component;
@@ -35,6 +35,9 @@ public class GlobalLogFilter implements Filter {
 		final boolean logout = uri.endsWith("/logout"); // 退出登录时，要提取获取 userId
 		Member user = logout ? RequestContext.getSessionUser(request) : null;
 
+		final Logs.LogContext context = Logs.getContext(request);
+		context.init(request); // 初始化
+
 		try {
 			chain.doFilter(req, resp);
 		} finally {
@@ -46,39 +49,44 @@ public class GlobalLogFilter implements Filter {
 			}
 
 			// 请求参数
-			String paramStr = "";
-			final Object body = request.getAttribute(Logs.REQUEST_BODY);
-			if (body != null) {
-				paramStr = (String) body;
-				// 如果 JSON 请求也附带了 queryString，则将 queryString 也添加到 paramStr 中
+			String requestBody = context.requestBody;
+			if (requestBody != null) {
+				// 如果 JSON 请求也附带了 queryString，则将 queryString 也添加到 requestBody 中
 				String queryString = request.getQueryString();
 				if (StringUtil.notEmpty(queryString)) {
-					paramStr = queryString + "\n" + paramStr;
+					requestBody = queryString + "\n" + requestBody;
 				}
 			}
-			if (StringUtil.isEmpty(paramStr)) {
-				Logs.ParamAppender appender = (Logs.ParamAppender) request.getAttribute(Logs.PARAM_APPENDER);
-				if (appender == null) {
-					appender = Logs.ParamAppender.DEFAULT;
-				}
-				final int paramLength = (request.getContentLength() + 32) / 2;
-				boolean notFirst = false;
-
-				final StringBuilder params = new StringBuilder(Math.max(paramLength, 64));
-				for (Map.Entry<String, String[]> entry : request.getParameterMap().entrySet()) {
-					String name = entry.getKey();
-					if (FormValidator.shouldSkip(name)) {
-						continue;
+			if (StringUtil.isEmpty(requestBody)) {
+				final Map<String, String[]> map = request.getParameterMap();
+				if (map.isEmpty()) {
+					requestBody = "";
+				} else {
+					Logs.ParamAppender appender = context.paramAppender;
+					if (appender == null) {
+						appender = Logs.ParamAppender.DEFAULT;
 					}
-					String[] values = entry.getValue();
-					if (notFirst) {
-						params.append('\n');
-					} else {
-						notFirst = true;
+					boolean notFirst = false;
+					final StringBuilder params = context.sb;
+					for (Map.Entry<String, String[]> entry : map.entrySet()) {
+						String name = entry.getKey();
+						if (FormValidator.shouldSkip(name)) {
+							continue;
+						}
+						String[] values = entry.getValue();
+						if (notFirst) {
+							params.append('\n');
+						} else {
+							notFirst = true;
+						}
+						appender.append(name, values, params, request);
 					}
-					appender.append(name, values, params, request);
+					requestBody = params.toString();
+					// 如果检测到 非 Latin1 字符，就丢弃该 StringBuilder
+					if (JavaUtil.STRING_CODER.applyAsInt(requestBody) != JavaUtil.LATIN1) {
+						context.sb = new StringBuilder(Logs.getInitCapacity());
+					}
 				}
-				paramStr = params.toString();
 			}
 
 			// 请求头
@@ -112,14 +120,22 @@ public class GlobalLogFilter implements Filter {
 			}
 
 			if (PermissionInterceptor.tryDenyCsrf(request)) {
-				headersJson.put("CSRF", "1"); // 记录疑似 CSRF 的攻击
+				context.addExtItem("csrf"); // 记录疑似 CSRF 的攻击
 			}
-			final Object retVal = request.getAttribute(Logs.RESPONSE);
-			final Throwable e = (Throwable) request.getAttribute(Logs.EXCEPTION);
-
+			Object ext = context.ext;
+			if (ext != null) {
+				if (ext instanceof String[] array) {
+					ext = String.join(",", array);
+				} else if (ext instanceof Object[] array) {
+					ext = Arrays.toString(array);
+				} else {
+					ext = ext.toString();
+				}
+			}
 			final long useTimeMs = endTime - startTime;
 			Logs.logJSON(user == null ? null : user.getMerchantId(), user == null ? null : user.getId(), appName, request.getMethod(),
-					uri, headersJson, paramStr, ServletUtil.getClientIP(request), startTime, useTimeMs, retVal, e);
+					uri, headersJson, requestBody, ServletUtil.getClientIP(request), startTime, useTimeMs, context.response, context.exception, ext);
+			context.cleanUp(); // 尽早清理，避免请求线程空闲时持有对象，妨碍垃圾回收
 		}
 	}
 

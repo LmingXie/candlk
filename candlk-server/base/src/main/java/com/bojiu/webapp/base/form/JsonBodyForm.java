@@ -5,7 +5,6 @@ import java.lang.reflect.Type;
 import java.nio.charset.StandardCharsets;
 import java.security.GeneralSecurityException;
 import java.util.Base64;
-import javax.annotation.Nullable;
 import javax.servlet.http.HttpServletRequest;
 
 import com.alibaba.fastjson2.JSON;
@@ -17,6 +16,7 @@ import com.bojiu.context.web.CryptoSuiteContext;
 import lombok.*;
 import me.codeplayer.util.JavaUtil;
 import me.codeplayer.util.StringUtil;
+import org.jspecify.annotations.Nullable;
 import org.springframework.web.context.request.RequestContextHolder;
 import org.springframework.web.context.request.ServletRequestAttributes;
 

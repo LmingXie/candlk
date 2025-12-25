@@ -18,9 +18,9 @@ import org.apache.ibatis.annotations.*;
 public interface MerchantContextDao extends BaseDao<Merchant> {
 
 	@Select("""
-			SELECT m.id, m.name, m.currency, m.languages, m.country_codes, m.level, m.status, m.risk_status, g.status as group_status
+			SELECT m.id, m.name, m.currency, m.languages, m.country_codes, m.level, m.status, m.risk_status, g.status AS group_status
 			, s.server_vendor, GROUP_CONCAT(d.name SEPARATOR ',') AS webDomains, m.group_id, m.commission_mode
-			, g.name as groupName, g.brand_id, m.ip_config_id
+			, g.name AS groupName, g.brand_id, m.ip_config_id
 			FROM gs_merchant m
 			LEFT JOIN gs_site s ON m.group_id = s.id
 			LEFT JOIN gs_group g ON m.group_id = g.id
@@ -31,8 +31,8 @@ public interface MerchantContextDao extends BaseDao<Merchant> {
 	MerchantContext getContext(@Param("merchantId") Long merchantId);
 
 	@Select("""
-			SELECT m.id, m.name, m.currency, m.languages, m.country_codes, m.level, m.status, m.risk_status, g.status as group_status
-			, s.server_vendor, m.group_id, m.commission_mode, g.name as groupName, g.brand_id, m.ip_config_id
+			SELECT m.id, m.name, m.currency, m.languages, m.country_codes, m.level, m.status, m.risk_status, g.status AS group_status
+			, s.server_vendor, m.group_id, m.commission_mode, g.name AS groupName, g.brand_id, m.ip_config_id
 			FROM gs_merchant m
 			LEFT JOIN gs_group g ON m.group_id = g.id
 			LEFT JOIN gs_site s ON m.id = s.id

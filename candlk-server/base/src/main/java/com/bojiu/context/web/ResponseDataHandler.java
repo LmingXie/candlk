@@ -3,7 +3,6 @@ package com.bojiu.context.web;
 import java.util.Map;
 import java.util.TreeMap;
 import java.util.concurrent.*;
-import javax.annotation.Nullable;
 import javax.servlet.http.HttpServletRequest;
 
 import com.baomidou.mybatisplus.core.metadata.IPage;
@@ -20,6 +19,7 @@ import com.bojiu.context.model.MemberType;
 import com.github.benmanes.caffeine.cache.Cache;
 import com.github.benmanes.caffeine.cache.Caffeine;
 import org.apache.commons.lang3.tuple.Pair;
+import org.jspecify.annotations.Nullable;
 
 /**
  * 响应数据处理器，主要用于全局 缓存分页 COUNT(*) 总数、限制单次导出的数据量
@@ -43,7 +43,7 @@ public class ResponseDataHandler {
 
 	public static void handleResultIfNeeded(HttpServletRequest request, Object result) {
 		// 如果是后台 数据量 较多的分页列表，则可以酌情缓存总记录数
-		if ((result instanceof Messager<?> msger && msger.data() instanceof Page<?> page) && page.getTotal() >= totalCacheThreshold && page.searchCount()) {
+		if ((result instanceof Messager<?> msger && msger.data() instanceof Page<?> page) && page.getTotal() >= totalCacheThreshold) {
 			Member emp = RequestContextImpl.getSessionUser(request);
 			if (emp == null) {
 				return;
@@ -68,13 +68,13 @@ public class ResponseDataHandler {
 	}
 
 	/**
-	 * @param stage <pre>
+	 * @param stage 阶段性标识
+	 * <pre>
 	 * 场景 1（导出）： 0（根据缓存信息判断是否超限） -> 99（ 根据 COUNT(*) 判断是否超限 ）
 	 * 场景 2（正常查询 + 懒加载）： 1（ 判断是否懒加载 COUNT(*) ） -> 初始化懒加载器
 	 * 场景 3（正常查询 + 非懒加载）： 1（ 判断是否懒加载 COUNT(*) ） -> 2（ 根据 COUNT(*) 判断是否超限 ）
 	 * </pre>
 	 */
-
 	public static int handlePage(IPage<?> page, int stage) {
 		if (stage == 0) { // 无需 COUNT(*) 的分页查询（一般是数据导出）
 			HttpServletRequest request = RequestContextImpl.get().getRequest();

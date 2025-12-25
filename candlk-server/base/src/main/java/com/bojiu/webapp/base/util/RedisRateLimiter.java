@@ -3,7 +3,6 @@ package com.bojiu.webapp.base.util;
 import java.util.concurrent.TimeUnit;
 import java.util.function.Predicate;
 import java.util.function.Supplier;
-import javax.annotation.Nullable;
 
 import com.bojiu.common.context.I18N;
 import com.bojiu.common.model.ErrorMessageException;
@@ -14,6 +13,7 @@ import com.bojiu.context.model.MessagerStatus;
 import lombok.Getter;
 import me.codeplayer.util.EasyDate;
 import me.codeplayer.util.NumberUtil;
+import org.jspecify.annotations.Nullable;
 import org.springframework.data.redis.core.HashOperations;
 
 /**

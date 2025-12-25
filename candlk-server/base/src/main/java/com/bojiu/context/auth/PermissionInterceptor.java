@@ -1,7 +1,6 @@
 package com.bojiu.context.auth;
 
 import java.io.IOException;
-import javax.annotation.Nullable;
 import javax.servlet.http.*;
 
 import com.bojiu.common.context.*;
@@ -21,6 +20,7 @@ import lombok.extern.slf4j.Slf4j;
 import me.codeplayer.util.NumberUtil;
 import me.codeplayer.util.X;
 import org.apache.commons.lang3.BooleanUtils;
+import org.jspecify.annotations.Nullable;
 import org.springframework.http.MediaType;
 import org.springframework.web.method.HandlerMethod;
 import org.springframework.web.servlet.HandlerInterceptor;
@@ -119,7 +119,7 @@ public class PermissionInterceptor implements HandlerInterceptor {
 				request.setAttribute(PERMISSION_LOCATOR_KEY, locator);
 
 				// 检查后台是否必传 merchantId 参数
-				if (MemberType.fromBackstage() && (member.asVisitor() || !member.asAdmin()) && (ready == null || ready.merchantIdRequired())) {
+				if (MemberType.fromBackstage() && member.intoMerchant() && (ready == null || ready.merchantIdRequired())) {
 					merchantId = RequestContextImpl.getSelectedMerchantId(request);
 					if (merchantId == null) {
 						throw new ErrorMessageException("检测到关键参数缺失，建议您刷新页面或重新登录再试！", false);
@@ -214,7 +214,7 @@ public class PermissionInterceptor implements HandlerInterceptor {
 
 	/** 是否直接拒绝访问 */
 	protected boolean directDenyAccess(HttpServletRequest request, HttpServletResponse response) throws IOException {
-		if (PermissionInterceptor.tryDenyCsrf(request) && !_csrfToken.equals(request.getParameter("_csrf"))) {
+		if (PermissionInterceptor.tryDenyCsrf(request) && isExternalAccess(request)) {
 			final String json = """
 					{"status":"403","msg":"Access denied"}
 					""";
@@ -222,6 +222,10 @@ public class PermissionInterceptor implements HandlerInterceptor {
 			return true;
 		}
 		return false;
+	}
+
+	public static boolean isExternalAccess(HttpServletRequest request) {
+		return !_csrfToken.equals(request.getParameter("_csrf"));
 	}
 
 	@Nullable

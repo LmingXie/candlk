@@ -1,7 +1,6 @@
 package com.bojiu.webapp.user.entity;
 
 import java.util.Date;
-import javax.annotation.Nullable;
 
 import com.bojiu.common.model.State;
 import com.bojiu.common.model.Status;
@@ -13,6 +12,7 @@ import com.bojiu.webapp.base.entity.TimeBasedEntity;
 import com.bojiu.webapp.user.model.MetaType;
 import lombok.*;
 import me.codeplayer.util.*;
+import org.jspecify.annotations.Nullable;
 
 /**
  * 商户站点元数据配置表

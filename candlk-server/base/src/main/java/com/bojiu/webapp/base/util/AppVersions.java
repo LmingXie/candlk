@@ -1,7 +1,6 @@
 package com.bojiu.webapp.base.util;
 
 import java.util.*;
-import javax.annotation.Nullable;
 
 import com.bojiu.common.redis.RedisUtil;
 import com.bojiu.common.util.Common;
@@ -11,6 +10,7 @@ import com.bojiu.context.web.ProxyRequest;
 import com.bojiu.context.web.RequestContextImpl;
 import me.codeplayer.util.*;
 import org.apache.commons.lang3.ArrayUtils;
+import org.jspecify.annotations.Nullable;
 
 /**
  * APP版本兼容 辅助工具类
@@ -111,14 +111,14 @@ public abstract class AppVersions {
 				RedisKey.APP_VERSION_PREFIX + Client.APP_IOS.value,
 				RedisKey.APP_VERSION_PREFIX + Client.APP_ANDROID.value
 		));
-		var map = Map.of(
-				Client.APP_IOS, StringUtil.toString(list.get(0)),
-				Client.APP_ANDROID, StringUtil.toString(list.get(1))
-		);
-		if (CollectionUtil.findFirst(map.values(), StringUtil::notEmpty) == null) {
+		final String iOS = list.get(0), android = list.get(1);
+		if (StringUtil.isEmpty(iOS) && StringUtil.isEmpty(android)) {
 			return Collections.emptyMap();
 		}
-		return map;
+		return Map.of(
+				Client.APP_IOS, StringUtil.toString(iOS),
+				Client.APP_ANDROID, StringUtil.toString(android)
+		);
 	}
 
 	static final Map<String, Integer[]> versionMap = Map.of(

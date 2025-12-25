@@ -12,8 +12,6 @@ import me.codeplayer.util.JavaUtil;
 import org.springframework.http.*;
 import org.springframework.http.converter.HttpMessageNotReadableException;
 import org.springframework.http.converter.HttpMessageNotWritableException;
-import org.springframework.web.context.request.RequestAttributes;
-import org.springframework.web.context.request.RequestContextHolder;
 
 /**
  * 为了方便 iOS 上架过审，所以要对 iOS 端的 JSON 输出数据做统一替换处理，将既定的敏感词属性名 A 自动替换为 对应的 B
@@ -24,13 +22,6 @@ public class EnhanceFastJsonHttpMessageConverter extends FastJsonHttpMessageConv
 		setDefaultCharset(StandardCharsets.UTF_8);
 	}
 
-	static void logIfNeeded(String attrName, Object val) {
-		RequestAttributes attributes = RequestContextHolder.getRequestAttributes();
-		if (attributes != null) {
-			attributes.setAttribute(attrName, val, RequestAttributes.SCOPE_REQUEST);
-		}
-	}
-
 	static void logRequestIfNeeded(Object val) {
 		if (val instanceof byte[] bytes) {
 			try {
@@ -39,11 +30,11 @@ public class EnhanceFastJsonHttpMessageConverter extends FastJsonHttpMessageConv
 				val = "Failed to obtain request body: " + e;
 			}
 		}
-		logIfNeeded(Logs.REQUEST_BODY, val);
+		Logs.setRequestBody((String) val, Logs.getRequest());
 	}
 
 	static void logResponseIfNeeded(Object val) {
-		logIfNeeded(Logs.RESPONSE, val);
+		Logs.setResponse(val, Logs.getRequest());
 	}
 
 	@Override

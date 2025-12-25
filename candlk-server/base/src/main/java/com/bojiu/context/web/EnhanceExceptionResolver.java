@@ -5,8 +5,6 @@ import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.function.Function;
 import java.util.stream.Stream;
-import javax.annotation.Nonnull;
-import javax.annotation.Nullable;
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
 import javax.validation.ValidationException;
@@ -28,6 +26,8 @@ import lombok.Setter;
 import lombok.extern.slf4j.Slf4j;
 import me.codeplayer.util.*;
 import org.apache.commons.lang3.StringUtils;
+import org.jspecify.annotations.NonNull;
+import org.jspecify.annotations.Nullable;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.validation.BindException;
 import org.springframework.validation.ObjectError;
@@ -57,12 +57,12 @@ public class EnhanceExceptionResolver extends AbstractHandlerMethodExceptionReso
 	}
 
 	@Setter
-	@Nonnull
+	@NonNull
 	protected ExceptionMessagerResolver messagerResolver = new DefaultExceptionCauseResolver();
 	/** 当 {@link Messager#getExt()} 中返回的字符串具有该前缀时，则表示视图名称，否则仅用于备注信息 */
 	@Getter
 	@Setter
-	@Nonnull
+	@NonNull
 	protected String viewNamePrefix = "@";
 
 	@Nullable
@@ -80,7 +80,7 @@ public class EnhanceExceptionResolver extends AbstractHandlerMethodExceptionReso
 
 	@Override
 	protected ModelAndView doResolveHandlerMethodException(HttpServletRequest request, HttpServletResponse response, HandlerMethod handlerMethod, Exception ex) {
-		request.setAttribute(Logs.EXCEPTION, ex);
+		Logs.setException(ex, request);
 		if (ex instanceof BindException be) {
 			return handleValidateError(request, response, be);
 		}
@@ -166,7 +166,7 @@ public class EnhanceExceptionResolver extends AbstractHandlerMethodExceptionReso
 		return errorCounterCache.get(identity, ErrorCounter.FACTORY).shouldReport();
 	}
 
-	@Nonnull
+	@NonNull
 	static ExceptionIdentity getExceptionIdentity(Throwable e, String requestURI) {
 		final StackTraceElement[] traceElements = e.getStackTrace();
 		StackTraceElement ste = null;
@@ -215,15 +215,15 @@ public class EnhanceExceptionResolver extends AbstractHandlerMethodExceptionReso
 	}
 
 	/** 此处必须返回 NOT NULL，否则会被忽略 */
-	@Nonnull
-	protected ModelAndView response(HttpServletRequest request, HttpServletResponse response, int statusCode, @Nonnull Messager<?> msger) {
+	@NonNull
+	protected ModelAndView response(HttpServletRequest request, HttpServletResponse response, int statusCode, @NonNull Messager<?> msger) {
 		if (statusCode > 0 && RequestContext.getAppId(request) != null) {
 			response.setStatus(statusCode);
 		}
 		if (StringUtil.startsWith(msger.getMsg(), '@')) {
 			msger.setMsg(RequestContextImpl.doGetLanguage(request).msg(msger.getMsg()));
 		}
-		request.setAttribute(Logs.RESPONSE, msger);
+		Logs.setResponse(msger, request);
 		if (shouldOutputJSON(request)) { // 如果是AJAX请求，将错误信息以JSON格式响应回去
 			return new ModelAndView(FastJsonView.INSTANCE, FastJsonView.JSON_KEY, msger);
 		}
@@ -265,7 +265,7 @@ public class EnhanceExceptionResolver extends AbstractHandlerMethodExceptionReso
 
 	public interface ExceptionMessagerResolver {
 
-		@Nonnull
+		@NonNull
 		Messager<?> resolve(HttpServletRequest request, HttpServletResponse response, Exception e);
 
 	}
@@ -287,7 +287,7 @@ public class EnhanceExceptionResolver extends AbstractHandlerMethodExceptionReso
 
 	public static class DefaultExceptionCauseResolver implements ExceptionMessagerResolver {
 
-		@Nonnull
+		@NonNull
 		@Override
 		public Messager<?> resolve(HttpServletRequest request, HttpServletResponse response, Exception e) {
 			ErrorMessageException em = null;

@@ -2,12 +2,12 @@ package com.bojiu.context.web;
 
 import java.util.Collections;
 import java.util.List;
-import javax.annotation.Nullable;
 
 import com.alibaba.fastjson2.*;
 import com.alibaba.fastjson2.filter.*;
 import com.bojiu.common.model.ValueEnum;
 import me.codeplayer.util.X;
+import org.jspecify.annotations.Nullable;
 
 /**
  * JSON字符串序列化转换工具类

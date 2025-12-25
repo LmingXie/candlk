@@ -5,8 +5,6 @@ import java.util.TimeZone;
 import java.util.concurrent.TimeUnit;
 import java.util.function.Function;
 import java.util.function.Supplier;
-import javax.annotation.Nonnull;
-import javax.annotation.Nullable;
 import javax.servlet.ServletContext;
 import javax.servlet.http.HttpServletRequest;
 
@@ -25,6 +23,8 @@ import com.github.benmanes.caffeine.cache.Caffeine;
 import me.codeplayer.util.NumberUtil;
 import org.apache.commons.lang3.StringUtils;
 import org.apache.commons.lang3.time.FastDateFormat;
+import org.jspecify.annotations.NonNull;
+import org.jspecify.annotations.Nullable;
 import org.springframework.boot.context.properties.ConfigurationProperties;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.core.env.Environment;
@@ -206,7 +206,7 @@ public class ContextImpl extends Context implements ServletContextAware, CacheSy
 	}
 
 	@Override
-	public void setServletContext(@Nonnull ServletContext sc) {
+	public void setServletContext(@NonNull ServletContext sc) {
 		setGlobalServletContext(sc);
 	}
 

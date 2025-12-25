@@ -2,7 +2,6 @@ package com.bojiu.webapp.base.service;
 
 import java.util.*;
 import java.util.concurrent.TimeUnit;
-import javax.annotation.Nonnull;
 
 import com.baomidou.mybatisplus.core.conditions.query.QueryWrapper;
 import com.bojiu.context.ContextImpl;
@@ -16,6 +15,7 @@ import com.github.benmanes.caffeine.cache.Cache;
 import com.github.benmanes.caffeine.cache.Caffeine;
 import me.codeplayer.util.CollectionUtil;
 import me.codeplayer.util.EasyDate;
+import org.jspecify.annotations.NonNull;
 import org.springframework.beans.factory.InitializingBean;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -37,7 +37,7 @@ public class MerchantContextService extends BaseServiceImpl<Merchant, MerchantCo
 
 	private static MerchantContextService instance;
 
-	public static MerchantContext getCached(@Nonnull Long merchantId, boolean flush) {
+	public static MerchantContext getCached(@NonNull Long merchantId, boolean flush) {
 		if (flush) {
 			MerchantContext context = instance.getContext(merchantId);
 			cache.put(merchantId, context);
@@ -46,7 +46,7 @@ public class MerchantContextService extends BaseServiceImpl<Merchant, MerchantCo
 		return cache.get(merchantId, k -> instance.getContext(k));
 	}
 
-	public static MerchantContext getCached(@Nonnull Long merchantId) {
+	public static MerchantContext getCached(@NonNull Long merchantId) {
 		return getCached(merchantId, false);
 	}
 

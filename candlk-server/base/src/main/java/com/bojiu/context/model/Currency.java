@@ -2,7 +2,6 @@ package com.bojiu.context.model;
 
 import java.math.BigDecimal;
 import java.math.RoundingMode;
-import javax.annotation.Nullable;
 
 import com.baomidou.mybatisplus.annotation.EnumValue;
 import com.bojiu.common.model.ValueProxy;
@@ -11,6 +10,7 @@ import com.bojiu.context.AppRegion;
 import lombok.Getter;
 import me.codeplayer.util.ArrayUtil;
 import org.apache.commons.lang3.EnumUtils;
+import org.jspecify.annotations.Nullable;
 
 /**
  * 货币

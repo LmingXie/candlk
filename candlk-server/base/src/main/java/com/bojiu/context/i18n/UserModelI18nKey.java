@@ -122,6 +122,10 @@ public interface UserModelI18nKey extends BaseI18nKey {
 	String PROMOTION_TYPE_GROUP = "promotion.type.group";
 	/** 奖池 */
 	String PROMOTION_TYPE_JACKPOT = "promotion.type.jackpot";
+	/** 首提返现 */
+	String PROMOTION_TYPE_FIRST_CASH_REPAY = "promotion.type.first.cash.repay";
+	/** 神秘彩金 */
+	String PROMOTION_TYPE_MYSTERY_PRIZE = "promotion.type.mystery.prize";
 	// PrivilegeType
 	/** 每日转盘 */
 	String PRIVILEGE_TYPE_TURNTABLE = "privilege.type.turntable";
@@ -355,6 +359,8 @@ public interface UserModelI18nKey extends BaseI18nKey {
 	String TASK_REWARD_BIND_PHONE = "task.reward.bind.phone";
 	/** 首次下载安装并登录APP任务 */
 	String TASK_REWARD_LOGIN_APP = "task.reward.login.app";
+	/** 绑定Google身份验证器 */
+	String TASK_REWARD_BIND_GOOGLE_AUTH = "task.reward.bind.google_auth";
 	// Country
 	/** 巴西 */
 	String COUNTRY_BR = "country.br";
@@ -408,6 +414,8 @@ public interface UserModelI18nKey extends BaseI18nKey {
 	String COMPLETED = "completed";
 	/** 手动解除 */
 	String MANUAL_RELEASE = "manual.release";
+	/** 系统解除 */
+	String SYSTEM_RELEASE = "system.release";
 	/** 未知 */
 	String UNKNOWN = "unknown";
 
@@ -448,6 +456,14 @@ public interface UserModelI18nKey extends BaseI18nKey {
 	String TEMPLATE_TYPE_PANDA = "template.type.panda";
 	/** 综合版1 */
 	String COMPREHENSIVE_VERSION_ONE = "comprehensive.version.one";
+	/** 综合版3 */
+	String COMPREHENSIVE_VERSION_THIRD = "comprehensive.version.third";
+	/** 定制版1 */
+	String TEMPLATE_TYPE_CUSTOMIZED_ONE = "template.type.customized.one";
+	/** 综合版4 */
+	String COMPREHENSIVE_VERSION_FOUR = "comprehensive.version.four";
+	/** 综合版5 */
+	String COMPREHENSIVE_VERSION_FIVE = "comprehensive.version.five";
 
 	/** 皮肤蓝紫色 */
 	String COLOR_TYPE_BLUE_PURPLE = "color.type.blue.purple";
@@ -527,6 +543,8 @@ public interface UserModelI18nKey extends BaseI18nKey {
 	String MODULE_POSITION_HOME_BOTTOM_TOP = "module.position.home.bottom.top";
 	/** 首页最底部 */
 	String MODULE_POSITION_HOME_BOTTOM = "module.position.home.bottom";
+	/** 定制模块1 */
+	String MODULE_POSITION_HOME_CUSTOMIZED_MODULE_1 = "module.position.home.customized.module.1";
 	/** 用户消息状态 */
 	String USER_MSG_READ = "user.msg.read";
 	String USER_MSG_UN_READ = "user.msg.unRead";

@@ -2,13 +2,13 @@ package com.bojiu.context.model;
 
 import java.util.Calendar;
 import java.util.Date;
-import javax.annotation.Nullable;
 
 import com.bojiu.common.model.TimeInterval;
 import com.bojiu.common.model.ValueProxy;
 import com.bojiu.common.util.Common;
 import lombok.Getter;
 import me.codeplayer.util.EasyDate;
+import org.jspecify.annotations.Nullable;
 
 import static com.bojiu.context.i18n.UserModelI18nKey.*;
 
@@ -45,8 +45,8 @@ public enum TimeType implements LabelI18nProxy<TimeType, Integer> {
 		this.offsetDays = offsetDays;
 	}
 
-	public static final TimeType[] CACHE = new TimeType[] { TODAY, YESTERDAY, DAYS_7, DAYS_15, DAYS_30 };
-	public static final TimeType[] WG_CACHE = new TimeType[] { TODAY, YESTERDAY, THIS_WEEK, LAST_WEEK, THIS_MONTH, LAST_MONTH };
+	public static final TimeType[] CACHE = { TODAY, YESTERDAY, DAYS_7, DAYS_15, DAYS_30 };
+	public static final TimeType[] WG_CACHE = { TODAY, YESTERDAY, THIS_WEEK, LAST_WEEK, THIS_MONTH, LAST_MONTH };
 
 	public static TimeType of(@Nullable Integer value) {
 		return Common.getEnum(CACHE, value, +1);

@@ -3,13 +3,13 @@ package com.bojiu.context.model;
 import java.math.BigDecimal;
 import java.util.*;
 import java.util.function.*;
-import javax.annotation.Nonnull;
-import javax.annotation.Nullable;
 
 import com.alibaba.fastjson2.TypeReference;
 import com.bojiu.context.web.Jsons;
 import me.codeplayer.util.StringUtil;
 import me.codeplayer.util.X;
+import org.jspecify.annotations.NonNull;
+import org.jspecify.annotations.Nullable;
 
 public interface SerializedConfig {
 
@@ -26,7 +26,7 @@ public interface SerializedConfig {
 	default void clearIfFront(boolean canClear) {
 	}
 
-	@Nonnull
+	@NonNull
 	static String serializeValue(Object value) {
 		if (value == null) {
 			return "";

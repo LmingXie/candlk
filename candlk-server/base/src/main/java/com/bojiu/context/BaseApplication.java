@@ -32,6 +32,8 @@ public abstract class BaseApplication {
 		com.alibaba.fastjson2.JSON.config(com.alibaba.fastjson2.JSONWriter.Feature.BrowserCompatible);
 		// 指定 Nacos 的日志配置，否则会输出 "No Root logger was configured, creating default ERROR-level Root logger with Console appender"
 		System.setProperty("nacos.logging.config", "classpath:log4j2-spring.xml");
+		// 禁用 Nacos 的自动刷新，否则会产生大量的堆内存分配
+		System.setProperty("nacos.logging.reload.interval.seconds", "31536000"); // # 1 年（实际上相当于禁用）
 		// 可参见：com.alibaba.nacos.client.logging.NacosLogging、AbstractNacosLogging
 		// 全局启用 Log4j2 异步日志，可参见 https://logging.apache.org/log4j/2.x/manual/async.html
 		System.setProperty("log4j2.contextSelector", "org.apache.logging.log4j.core.async.BasicAsyncLoggerContextSelector");
@@ -50,12 +52,10 @@ public abstract class BaseApplication {
 			final Locale locale = ContextImpl.localeThreadLocal.get();
 			return locale != null ? locale : Language.DEFAULT.locale;
 		});
-		// 自定义 用户名验证 的正则表达式
-		Matcher.DefaultMatcher.INSTANCE.regexUsername = Pattern.compile("^(?=.*[a-zA-Z])[a-zA-Z0-9_]{4,16}$", Pattern.CASE_INSENSITIVE);
 		ValidateHelper.PHONE_MATCHER = phone -> Context.get().matchPhone(phone);
 		ValidateHelper.REAL_NAME_MATCHER = StringUtil::notBlank;
 		ServletUtil.JSON_CONVERTER = Jsons::encode;
-		/* 校验用户名的正则表达式：4~16个字符,只允许字母、数字、下划线 */
+		/* 校验用户名的正则表达式：4~16个字符，只允许字母、数字、下划线 */
 		Matcher.DefaultMatcher.INSTANCE.regexUsername = Pattern.compile("^[a-zA-Z0-9_]{4,16}$", Pattern.CASE_INSENSITIVE);
 		// 表单验证 国际化 初始化设置
 		ValidateError.setErrorResolver(I18N::msg);

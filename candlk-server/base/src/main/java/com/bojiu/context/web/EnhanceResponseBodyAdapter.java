@@ -120,7 +120,7 @@ public class EnhanceResponseBodyAdapter implements ResponseBodyAdvice<Object> {
 			boolean shouldEncrypt = aes != null && "1".equals(request.getParameter("encrypt")); // TODO 需要确认要加密的具体接口列表
 			if (shouldEncrypt) {
 				String jsonStr = Jsons.encode(body);
-				request.setAttribute(Logs.RESPONSE, jsonStr);
+				Logs.setResponse(jsonStr, request);
 				final String sign = RandomStringUtils.insecure().nextAlphanumeric(24);
 				final byte[] ivBytes = JavaUtil.getUtf8Bytes(CryptoSuiteContext.getIvParams(sign));
 				try {

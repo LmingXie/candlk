@@ -4,11 +4,11 @@ import java.time.Duration;
 import java.time.Instant;
 import java.util.*;
 import java.util.function.Function;
-import javax.annotation.Nonnull;
-import javax.annotation.Nullable;
 
 import lombok.Getter;
 import me.codeplayer.util.X;
+import org.jspecify.annotations.NonNull;
+import org.jspecify.annotations.Nullable;
 import org.springframework.dao.DataAccessException;
 import org.springframework.data.redis.core.RedisOperations;
 import org.springframework.data.redis.core.SessionCallback;
@@ -368,7 +368,7 @@ public class EnhanceRedisSessionRepository implements SessionRepository<EnhanceR
 			}
 			String key = getSessionKey(getId());
 			sessionRedisOperations.executePipelined(new SessionCallback<>() {
-				public <K, V> Object execute(@Nonnull RedisOperations<K, V> operations) throws DataAccessException {
+				public <K, V> Object execute(@NonNull RedisOperations<K, V> operations) throws DataAccessException {
 					RedisOperations<String, Object> redisOps = X.castType(operations);
 					redisOps.opsForHash().putAll(key, delta);
 					redisOps.expire(key, getMaxInactiveInterval());

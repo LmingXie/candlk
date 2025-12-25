@@ -5,7 +5,7 @@ import java.security.GeneralSecurityException;
 import java.time.Duration;
 import java.time.temporal.ChronoUnit;
 import java.util.concurrent.TimeUnit;
-import javax.annotation.*;
+import javax.annotation.Resource;
 import javax.servlet.http.*;
 
 import com.bojiu.common.context.Context;
@@ -16,7 +16,8 @@ import com.bojiu.common.util.Common;
 import com.bojiu.common.web.CookieUtil;
 import com.bojiu.common.web.ServletUtil;
 import com.bojiu.context.config.WebMvcConfig;
-import com.bojiu.context.model.*;
+import com.bojiu.context.model.Member;
+import com.bojiu.context.model.MemberType;
 import com.bojiu.context.web.*;
 import com.bojiu.webapp.base.entity.BaseEntity;
 import com.github.benmanes.caffeine.cache.Cache;
@@ -25,6 +26,8 @@ import lombok.extern.slf4j.Slf4j;
 import me.codeplayer.util.*;
 import org.apache.commons.lang3.StringUtils;
 import org.apache.dubbo.config.annotation.DubboReference;
+import org.jspecify.annotations.NonNull;
+import org.jspecify.annotations.Nullable;
 import org.springframework.beans.factory.InitializingBean;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Qualifier;
@@ -42,15 +45,6 @@ public class DefaultAutoLoginHandler implements AutoLoginHandler, InitializingBe
 	public static long expireOffsetMs = 15 * EasyDate.MILLIS_OF_DAY;
 	/** Token 即将过期前3天内会自动续期 */
 	public static final long renewTokenCountDownMs = 3 * EasyDate.MILLIS_OF_DAY;
-
-	/** 用户设置 Token有效期 */
-	public static long expireOffsetMonth = 30 * EasyDate.MILLIS_OF_DAY;
-	/** 用户设置 Token有效期 */
-	public static long expireOffsetThreeMonth = 3 * 30 * EasyDate.MILLIS_OF_DAY;
-	/** 用户设置 Token有效期 */
-	public static long expireOffsetSixMonth = 6 * 30 * EasyDate.MILLIS_OF_DAY;
-	/** 用户设置 Token有效期 */
-	public static long expireOffsetYear = 12 * 30 * EasyDate.MILLIS_OF_DAY;
 
 	static Duration TIMEOUT = Duration.of(10, ChronoUnit.SECONDS);
 
@@ -132,12 +126,12 @@ public class DefaultAutoLoginHandler implements AutoLoginHandler, InitializingBe
 		return CookieUtil.getCookieValue(request, SessionCookieUtil.CLIENT_ID_COOKIE_NAME);
 	}
 
-	@Nonnull
+	@NonNull
 	public static String buildToken(String encodeUserId, String password, long expireTimestamp, String key, String clientId) {
 		return Encrypter.md5(encodeUserId + '@' + StringUtil.toString(password) + ':' + expireTimestamp + ':' + key + '#' + clientId);
 	}
 
-	@Nonnull
+	@NonNull
 	String buildToken(String encodeUserId, Member member, long expireTimestamp, String clientId) {
 		return buildToken(encodeUserId, member.getPassword(), expireTimestamp, key, clientId);
 	}
@@ -189,6 +183,7 @@ public class DefaultAutoLoginHandler implements AutoLoginHandler, InitializingBe
 						redisValue.set(redisKey, jsonStr, TIMEOUT);
 						// 如果走了自动登录，需要将数据源再切换回 默认读库
 						DataSourceSelector.reset();
+						// 配置自动退出登录
 						if (info.expireTime - System.currentTimeMillis() < renewTokenCountDownMs) {
 							renewToken(request, response, m, info, clientId);
 						}
@@ -207,7 +202,7 @@ public class DefaultAutoLoginHandler implements AutoLoginHandler, InitializingBe
 	}
 
 	@Nullable
-	public TokenInfo parseToken(@Nonnull String originToken, @Nullable String[] sessionIdRef) {
+	public TokenInfo parseToken(@NonNull String originToken, @Nullable String[] sessionIdRef) {
 		final int pos = originToken.indexOf(sessionIdSep, 18); // sessionId 不低于18位，减少遍历范围
 		final String token = pos == -1 ? originToken : originToken.substring(pos + 1);
 
@@ -234,7 +229,7 @@ public class DefaultAutoLoginHandler implements AutoLoginHandler, InitializingBe
 	}
 
 	@Nullable
-	public TokenInfo parseToken(@Nonnull String originToken) {
+	public TokenInfo parseToken(@NonNull String originToken) {
 		return parseToken(originToken, null);
 	}
 

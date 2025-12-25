@@ -2,8 +2,6 @@ package com.bojiu.context.auth;
 
 import java.lang.reflect.Method;
 import java.util.Set;
-import javax.annotation.Nonnull;
-import javax.annotation.Nullable;
 import javax.servlet.http.HttpServletRequest;
 
 import com.bojiu.common.context.Context;
@@ -11,6 +9,8 @@ import com.bojiu.common.web.PackageResolveUtil;
 import com.bojiu.context.model.MemberType;
 import me.codeplayer.util.StringUtil;
 import org.apache.commons.lang3.StringUtils;
+import org.jspecify.annotations.NonNull;
+import org.jspecify.annotations.Nullable;
 
 /**
  * 默认的权限策略（用于配置权限码的生成策略等）
@@ -46,7 +46,7 @@ public class DefaultPermissionPolicy implements PermissionPolicy {
 		return locator;
 	}
 
-	protected static String mergeCode(String baseCode, int index, @Nonnull String suffix) {
+	protected static String mergeCode(String baseCode, int index, @NonNull String suffix) {
 		return switch (suffix) {
 			case Menu.DEFAULT_SUFFIX -> index > 0 ? baseCode + suffixSep + index : baseCode;
 			case "" -> baseCode;
@@ -54,7 +54,7 @@ public class DefaultPermissionPolicy implements PermissionPolicy {
 		};
 	}
 
-	public static String buildCodeForMenu(String permissionCode, int index, @Nonnull Menu menu) {
+	public static String buildCodeForMenu(String permissionCode, int index, @NonNull Menu menu) {
 		String code = menu.value();
 		if (StringUtil.isEmpty(code)) {
 			code = mergeCode(permissionCode, index, menu.suffix());
@@ -68,7 +68,7 @@ public class DefaultPermissionPolicy implements PermissionPolicy {
 		return code; // 历史数据已全部替换，直接返回原参数即可
 	}
 
-	protected PermissionLocator parseFromMethod(Class<?> clazz, Method method, HttpServletRequest request, @Nonnull String value, MemberType type, @Nullable Menu[] menus) {
+	protected PermissionLocator parseFromMethod(Class<?> clazz, Method method, HttpServletRequest request, @NonNull String value, MemberType type, @Nullable Menu[] menus) {
 		final PermissionLocator locator = new PermissionLocator(method, -1, null, type);
 		if (menus != null && menus.length > 1) {
 			/*
@@ -104,10 +104,10 @@ public class DefaultPermissionPolicy implements PermissionPolicy {
 			case Permission.NONE -> true;
 			case Permission.USER -> checkScope(false);
 			case Permission.ADMIN,
-					Permission.MERCHANT,
-					Permission.EMP,
-					Permission.SYSTEM,
-					Permission.AGENT -> checkScope(true);
+			     Permission.MERCHANT,
+			     Permission.EMP,
+			     Permission.SYSTEM,
+			     Permission.AGENT -> checkScope(true);
 			default -> false;
 		};
 	}
@@ -143,7 +143,7 @@ public class DefaultPermissionPolicy implements PermissionPolicy {
 		return menuValue.isEmpty() ? PackageResolveUtil.getMethodCode(clazz, method, basePackage, deletePackageNodeName) : menuValue;
 	}
 
-	@Nonnull
+	@NonNull
 	private static PermissionLocator parseFromClass(Class<?> clazz, Method method, Permission p) {
 		final MemberType type = p.type();
 		String code = p.value();

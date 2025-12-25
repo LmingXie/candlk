@@ -4,8 +4,6 @@ import java.io.Serializable;
 import java.util.*;
 import java.util.function.Function;
 import java.util.function.ToIntFunction;
-import javax.annotation.Nonnull;
-import javax.annotation.Nullable;
 
 import com.alibaba.fastjson2.*;
 import com.bojiu.common.model.ValueEnum;
@@ -16,6 +14,8 @@ import com.bojiu.context.web.Jsons;
 import com.google.common.collect.ImmutableSet;
 import me.codeplayer.util.*;
 import org.apache.commons.lang3.math.NumberUtils;
+import org.jspecify.annotations.NonNull;
+import org.jspecify.annotations.Nullable;
 
 /**
  * 每个功能特性配置数据 FeatureConfig 对应的数据描述元信息
@@ -29,7 +29,7 @@ public interface FeatureConfigHandler<R> {
 	 * @param superContext 限制当前可选择的功能选项的全集，目前用不到该参数，为 null 表示无需限制
 	 */
 	@Nullable
-	String handleInput(Feature feature, @Nonnull Object input, FeatureContext context, @Nullable FeatureContext superContext);
+	String handleInput(Feature feature, @NonNull Object input, FeatureContext context, @Nullable FeatureContext superContext);
 
 	/**
 	 * 处理从数据库读取的配置数据，返回用于输出配置页面所需的展示数据
@@ -173,7 +173,7 @@ public interface FeatureConfigHandler<R> {
 
 		@Nullable
 		@Override
-		public String handleInput(Feature feature, @Nonnull Object input, FeatureContext context, @Nullable FeatureContext superContext) {
+		public String handleInput(Feature feature, @NonNull Object input, FeatureContext context, @Nullable FeatureContext superContext) {
 			String value;
 			if (input instanceof JSONArray selected) {  // [ "1" ]
 				Assert.isTrue(selected.size() == 1);
@@ -214,7 +214,7 @@ public interface FeatureConfigHandler<R> {
 
 		@Nullable
 		@Override
-		public String handleInput(Feature feature, @Nonnull Object input, FeatureContext context, @Nullable FeatureContext superContext) {
+		public String handleInput(Feature feature, @NonNull Object input, FeatureContext context, @Nullable FeatureContext superContext) {
 			int value;
 			if (input instanceof JSONArray selected) {  // [ "1" ]
 				Assert.isTrue(selected.size() == 1);
@@ -258,7 +258,7 @@ public interface FeatureConfigHandler<R> {
 
 		@Nullable
 		@Override
-		public String handleInput(Feature feature, @Nonnull Object input, FeatureContext context, @Nullable FeatureContext superContext) {
+		public String handleInput(Feature feature, @NonNull Object input, FeatureContext context, @Nullable FeatureContext superContext) {
 			Assert.isTrue(feature.delegateToFront()); // 皮肤 等 已经和前端约定好，由前端自行处理，后端直接保存或输出
 			return input.toString();
 		}
@@ -343,7 +343,7 @@ public interface FeatureConfigHandler<R> {
 
 		@Nullable
 		@Override
-		public String handleInput(Feature feature, @Nonnull Object input, FeatureContext context, @Nullable FeatureContext superContext) {
+		public String handleInput(Feature feature, @NonNull Object input, FeatureContext context, @Nullable FeatureContext superContext) {
 			JSONArray selected = (JSONArray) input; // [ "1", "2", "3" ]
 			final int size = selected.size();
 			final TreeSet<Object> valueSet = new TreeSet<>();
@@ -423,7 +423,7 @@ public interface FeatureConfigHandler<R> {
 
 		@Nullable
 		@Override
-		public String handleInput(Feature feature, @Nonnull Object input, FeatureContext context, @Nullable FeatureContext superContext) {
+		public String handleInput(Feature feature, @NonNull Object input, FeatureContext context, @Nullable FeatureContext superContext) {
 			/*
 			{
 		        "styleA": [

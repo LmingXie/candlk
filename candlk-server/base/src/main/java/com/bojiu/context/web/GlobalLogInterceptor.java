@@ -29,7 +29,7 @@ public class GlobalLogInterceptor {
 		try {
 			result = pjp.proceed();
 			if (result != null) {
-				request.setAttribute(Logs.RESPONSE, result);
+				Logs.setResponse(result, request);
 				// 如果是后台 数据量 较多的分页列表，则可以酌情缓存总记录数
 				if (MemberType.fromBackstage()) {
 					ResponseDataHandler.handleResultIfNeeded(request, result);
@@ -37,7 +37,7 @@ public class GlobalLogInterceptor {
 			}
 			return result;
 		} catch (Throwable e) {
-			request.setAttribute(Logs.EXCEPTION, err = e);
+			Logs.setException(err = e, request);
 			throw e;
 		} finally {
 			DeferTask.executeDeferTasks(request, result, err);

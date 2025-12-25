@@ -2,7 +2,6 @@ package com.bojiu.webapp.base.util;
 
 import java.lang.annotation.*;
 import java.util.Locale;
-import javax.annotation.Nullable;
 
 import com.bojiu.common.context.I18N;
 import com.bojiu.common.util.Common;
@@ -10,6 +9,7 @@ import com.bojiu.common.util.Formats;
 import me.codeplayer.util.*;
 import org.apache.commons.lang3.StringUtils;
 import org.apache.commons.lang3.time.FastDateFormat;
+import org.jspecify.annotations.Nullable;
 
 @Target({ ElementType.METHOD })
 @Retention(RetentionPolicy.RUNTIME)
@@ -104,6 +104,8 @@ public @interface Export {
 
 	/**
 	 * 对字段名称进行国际化资源配置的前缀，一般以 "." 结尾
+	 * <p>
+	 * 如果为 "!"，则表示禁用国际化
 	 */
 	String i18nPrefix() default "";
 

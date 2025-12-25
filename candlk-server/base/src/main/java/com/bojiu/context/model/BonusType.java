@@ -4,18 +4,22 @@ import java.math.BigDecimal;
 import java.math.RoundingMode;
 import java.util.List;
 import java.util.concurrent.ThreadLocalRandom;
-import javax.annotation.Nullable;
 
 import com.baomidou.mybatisplus.annotation.EnumValue;
 import com.bojiu.common.context.I18N;
 import com.bojiu.common.model.ValueProxy;
+import com.bojiu.common.util.BeanUtil;
 import com.bojiu.common.util.Common;
 import com.bojiu.context.i18n.AdminI18nKey;
 import lombok.*;
 import me.codeplayer.util.Arith;
 import me.codeplayer.util.RandomUtil;
+import org.jspecify.annotations.NonNull;
+import org.jspecify.annotations.Nullable;
 
-/* 奖金方式  */
+/**
+ * 奖金方式
+ */
 @Getter
 public enum BonusType implements LabelI18nProxy<BonusType, Integer> {
 	/** 固定 */
@@ -44,7 +48,9 @@ public enum BonusType implements LabelI18nProxy<BonusType, Integer> {
 	public static BigDecimal calcReward(BonusType type, BigDecimal amount, BigDecimal reward, BigDecimal ratio, BigDecimal min, BigDecimal max, @Nullable List<LimitOddsVO> limitOdds) {
 		return switch (type) {
 			case FIXED -> reward;
-			case RATIO -> amount.multiply(ratio).movePointLeft(2).setScale(2, RoundingMode.FLOOR);
+			case RATIO -> amount.multiply( // 兼容随机百分比与固定百分比
+					ratio == null ? random(min.doubleValue(), max.doubleValue()) : ratio
+			).movePointLeft(2).setScale(2, RoundingMode.FLOOR);
 			case RANDOM -> calcRandomReward(min, max, limitOdds);
 		};
 	}
@@ -69,7 +75,12 @@ public enum BonusType implements LabelI18nProxy<BonusType, Integer> {
 				}
 			}
 		}
-		return Common.floor(ThreadLocalRandom.current().nextDouble(confirmMin, confirmMax), 2);
+		return random(confirmMin, confirmMax);
+	}
+
+	@NonNull
+	private static BigDecimal random(double min, double max) {
+		return Common.floor(ThreadLocalRandom.current().nextDouble(min, max), 2);
 	}
 
 	@Getter
@@ -119,10 +130,10 @@ public enum BonusType implements LabelI18nProxy<BonusType, Integer> {
 			BigDecimal result;
 			if (rand < minFactor) {
 				// 触发 min ~ avg 随机
-				result = Common.floor(ThreadLocalRandom.current().nextDouble(minValue, avgValue), 2);
+				result = random(minValue, avgValue);
 			} else if (rand < minFactor + maxFactor) {
 				// 触发 avg ~ max 随机
-				result = Common.floor(ThreadLocalRandom.current().nextDouble(avgValue, maxValue), 2);
+				result = random(avgValue, maxValue);
 			} else {
 				// 默认在 avg ± avgFactor% 区间内，但限定在 [min, max] 范围
 				double rawLow = avgValue * (1 - avgFactor);
@@ -136,10 +147,28 @@ public enum BonusType implements LabelI18nProxy<BonusType, Integer> {
 					finalLow = finalHigh;
 				}
 
-				result = Common.floor(ThreadLocalRandom.current().nextDouble(finalLow, finalHigh), 2);
+				result = random(finalLow, finalHigh);
 			}
 
 			return result;
+		}
+
+		public BigDecimal outMax() {
+			return showMax == null ? max : showMax;
+		}
+
+		public BigDecimal outMin() {
+			return showMin == null ? min : showMin;
+		}
+
+		public Config toVo() {
+			Config copy = BeanUtil.copy(this, Config::new);
+			copy.min = showMin == null ? min : showMin;
+			copy.max = showMax == null ? max : showMax;
+			copy.avg = null;
+			copy.showMin = null;
+			copy.showMax = null;
+			return copy;
 		}
 
 		public void checkAvg() {

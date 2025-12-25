@@ -1,13 +1,13 @@
 package com.bojiu.webapp.base.service;
 
 import java.util.*;
-import javax.annotation.Nonnull;
-import javax.annotation.Nullable;
 
 import com.bojiu.common.util.SpringUtil;
 import lombok.extern.slf4j.Slf4j;
 import me.codeplayer.util.CollectionUtil;
 import me.codeplayer.util.X;
+import org.jspecify.annotations.NonNull;
+import org.jspecify.annotations.Nullable;
 
 @Slf4j
 public class RemoteSyncServiceImpl implements RemoteSyncService {
@@ -19,7 +19,7 @@ public class RemoteSyncServiceImpl implements RemoteSyncService {
 	}
 
 	@Override
-	public void flushCache(@Nonnull String cacheId, Object... args) {
+	public void flushCache(@NonNull String cacheId, Object... args) {
 		// 为了保证代码的严谨性，后台操作时，此处直接报错会好一些
 		final CacheSyncService service = cacheSyncServiceMap.get(cacheId);
 		if (service != null) {
@@ -34,7 +34,7 @@ public class RemoteSyncServiceImpl implements RemoteSyncService {
 	}
 
 	@Override
-	public void flushCaches(@Nonnull String[] cacheIds, Object... args) {
+	public void flushCaches(@NonNull String[] cacheIds, Object... args) {
 		for (String cacheId : cacheIds) {
 			flushCache(cacheId, args);
 		}

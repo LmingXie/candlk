@@ -2,12 +2,12 @@ package com.bojiu.context.model;
 
 import java.util.Arrays;
 import java.util.List;
-import javax.annotation.Nullable;
 
 import com.baomidou.mybatisplus.annotation.EnumValue;
 import com.bojiu.common.model.ValueProxy;
 import com.bojiu.common.util.Common;
 import lombok.Getter;
+import org.jspecify.annotations.Nullable;
 
 /**
  * 活动状态

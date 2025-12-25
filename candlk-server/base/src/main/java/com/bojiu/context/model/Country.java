@@ -2,7 +2,6 @@ package com.bojiu.context.model;
 
 import java.util.*;
 import java.util.stream.Collectors;
-import javax.annotation.Nullable;
 
 import com.bojiu.common.context.I18N;
 import com.bojiu.common.model.ValueProxy;
@@ -14,6 +13,7 @@ import com.bojiu.webapp.base.dto.MerchantContext;
 import lombok.Getter;
 import me.codeplayer.util.*;
 import org.apache.commons.lang3.StringUtils;
+import org.jspecify.annotations.Nullable;
 
 import static com.bojiu.context.i18n.UserModelI18nKey.*;
 
@@ -34,7 +34,7 @@ public enum Country implements LabelI18nProxy<Country, String> {
 	/** 印度 */
 	IN(COUNTRY_IN, AppRegion.inAsia(), "91", 10, 10, "GMT+5:30", Language.hi, AppRegion.inAsia(), Currency.INR),
 	/** 越南 */
-	VN(COUNTRY_VN, false, "84", 9, 10, "GMT+7:00", Language.en, Currency.VND),
+	VN(COUNTRY_VN, false, "84", 9, 10, "GMT+7:00", Language.vi, Currency.VND),
 	//
 	;
 	/** 该 国家/地区 手机号码前置的区号 */

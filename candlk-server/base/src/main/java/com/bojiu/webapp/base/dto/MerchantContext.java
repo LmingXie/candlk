@@ -1,18 +1,18 @@
 package com.bojiu.webapp.base.dto;
 
 import java.util.*;
-import javax.annotation.Nonnull;
 
 import com.bojiu.common.context.I18N;
 import com.bojiu.common.model.ErrorMessageException;
 import com.bojiu.common.util.Common;
 import com.bojiu.context.i18n.UserI18nKey;
-import com.bojiu.context.model.Currency;
 import com.bojiu.context.model.*;
+import com.bojiu.context.model.Currency;
 import com.bojiu.webapp.base.service.MerchantContextService;
 import lombok.Getter;
 import lombok.Setter;
 import me.codeplayer.util.EasyDate;
+import org.jspecify.annotations.NonNull;
 
 /**
  * 商户
@@ -84,7 +84,7 @@ public class MerchantContext {
 		return id.equals(groupId);
 	}
 
-	public static MerchantContext get(@Nonnull Long merchantId) {
+	public static MerchantContext get(@NonNull Long merchantId) {
 		return MerchantContextService.getCached(merchantId);
 	}
 
@@ -93,7 +93,7 @@ public class MerchantContext {
 	 *
 	 * @param forAuth 是否是认证(非注册)
 	 */
-	public static MerchantContext checkStatus(@Nonnull Long merchantId, boolean forAuth) throws ErrorMessageException {
+	public static MerchantContext checkStatus(@NonNull Long merchantId, boolean forAuth) throws ErrorMessageException {
 		MerchantContext context = MerchantContextService.getCached(merchantId);
 		if (context == null || context.groupStatus.value.compareTo(SiteStatus.INIT.value) < 0 || context.status.value.compareTo(SiteStatus.INIT.value) < 0) {
 			throw new ErrorMessageException(I18N.msg(UserI18nKey.SITE_ABNORMAL), MessagerStatus.ABNORMAL, false);
@@ -108,7 +108,7 @@ public class MerchantContext {
 	/**
 	 * 检查商户状态(默认非注册)
 	 */
-	public static MerchantContext checkStatus(@Nonnull Long merchantId) throws ErrorMessageException {
+	public static MerchantContext checkStatus(@NonNull Long merchantId) throws ErrorMessageException {
 		return checkStatus(merchantId, true);
 	}
 

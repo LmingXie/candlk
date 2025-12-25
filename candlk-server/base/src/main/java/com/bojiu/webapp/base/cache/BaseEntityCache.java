@@ -3,8 +3,6 @@ package com.bojiu.webapp.base.cache;
 import java.util.*;
 import java.util.function.Consumer;
 import java.util.function.Function;
-import javax.annotation.Nonnull;
-import javax.annotation.Nullable;
 
 import com.baomidou.mybatisplus.core.metadata.TableInfoHelper;
 import com.baomidou.mybatisplus.extension.conditions.query.QueryChainWrapper;
@@ -18,11 +16,12 @@ import com.bojiu.context.web.*;
 import com.bojiu.webapp.base.entity.BaseEntity;
 import com.bojiu.webapp.base.service.RemoteBaseService;
 import me.codeplayer.util.*;
+import org.jspecify.annotations.NonNull;
+import org.jspecify.annotations.Nullable;
 import org.springframework.beans.factory.InitializingBean;
 import org.springframework.data.redis.core.HashOperations;
 import org.springframework.data.redis.core.StringRedisTemplate;
 import org.springframework.session.SessionRepository;
-import org.springframework.transaction.support.TransactionSynchronizationManager;
 
 /**
  * 实体缓存的基础设施抽象基类
@@ -158,7 +157,7 @@ public abstract class BaseEntityCache<S extends BaseEntity, T extends Bean<Long>
 
 	static final Function<Long, String> idToString = Object::toString;
 
-	@Nonnull
+	@NonNull
 	public Map<Long, T> find(Collection<Long> ids) {
 		if (!X.isValid(ids)) {
 			return Collections.emptyMap();
@@ -170,12 +169,12 @@ public abstract class BaseEntityCache<S extends BaseEntity, T extends Bean<Long>
 		return doFind(map);
 	}
 
-	@Nonnull
+	@NonNull
 	public Map<Long, T> find(Long... ids) {
 		return find(Arrays.asList(ids));
 	}
 
-	@Nonnull
+	@NonNull
 	public Map<Long, T> doFind(HashMap<Long, String> idPairMap) {
 		final List<String> list = redisHash.multiGet(redisKey, idPairMap.values());
 		final int size = list.size();
@@ -221,11 +220,7 @@ public abstract class BaseEntityCache<S extends BaseEntity, T extends Bean<Long>
 	}
 
 	public void remove(Long id) {
-		if (TransactionSynchronizationManager.isActualTransactionActive()) {
-			SpringUtil.runAfterCommit(() -> redisHash.delete(redisKey, id.toString()));
-		} else {
-			redisHash.delete(redisKey, id.toString());
-		}
+		SpringUtil.runAfterCommitSmart(() -> redisHash.delete(redisKey, id.toString()), false);
 	}
 
 	public void clear() {
@@ -233,19 +228,19 @@ public abstract class BaseEntityCache<S extends BaseEntity, T extends Bean<Long>
 	}
 
 	public void remove(Collection<Long> ids) {
-		SpringUtil.runAfterCommit(() -> redisHash.delete(redisKey, (Object[]) Common.toStrArray(ids)));
+		SpringUtil.runAfterCommitSmart(() -> redisHash.delete(redisKey, (Object[]) Common.toStrArray(ids)), false);
 	}
 
 	public Long cacheKey(T bean) {
 		return bean.getId();
 	}
 
-	@Nonnull
+	@NonNull
 	public <E> Map<Long, T> find(@Nullable Collection<E> c, Function<? super E, Long> idGetter) {
 		return find(c, idGetter, null);
 	}
 
-	@Nonnull
+	@NonNull
 	public <E> Map<Long, T> find(@Nullable Collection<E> c, Function<? super E, Long> idGetter, @Nullable Function<? super E, Long> nextIdGetter) {
 		if (!X.isValid(c)) {
 			return Collections.emptyMap();
@@ -275,7 +270,7 @@ public abstract class BaseEntityCache<S extends BaseEntity, T extends Bean<Long>
 	 */
 	public void setAndFlushSession(@Nullable S member) {
 		if (member != null) {
-			SpringUtil.runAfterCommit(() -> {
+			SpringUtil.runAfterCommitSmart(() -> {
 				put(of(member));
 				String sessionId = ((Member) member).getSessionId();
 				if (StringUtil.isEmpty(sessionId)) {
@@ -288,7 +283,7 @@ public abstract class BaseEntityCache<S extends BaseEntity, T extends Bean<Long>
 					session.setAttribute(RequestContextImpl.SESSION_USER, member);
 					req.flushSession(true);
 				}
-			});
+			}, false);
 		}
 	}
 
@@ -298,7 +293,7 @@ public abstract class BaseEntityCache<S extends BaseEntity, T extends Bean<Long>
 	public void clearCacheAndSession(List<S> members) {
 		final int size = X.size(members);
 		if (size > 0) {
-			SpringUtil.runAfterCommit(() -> {
+			SpringUtil.runAfterCommitSmart(() -> {
 				if (size == 1) {
 					Member m = (Member) members.get(0);
 					redisHash.delete(redisKey, m.getId().toString());
@@ -317,7 +312,7 @@ public abstract class BaseEntityCache<S extends BaseEntity, T extends Bean<Long>
 						RequestContextImpl.removeSession(m.getSessionId());
 					}
 				}
-			});
+			}, false);
 		}
 	}
 
