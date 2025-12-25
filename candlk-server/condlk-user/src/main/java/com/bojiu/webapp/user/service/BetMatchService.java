@@ -253,25 +253,28 @@ public class BetMatchService {
 			}
 		}
 
-		List<HedgingDTO[]> allResults = new ArrayList<>();
 		int totalSize = 0;
-
-		// 聚合全部结果
+		long counter = 0;
+		// 只统计大小
 		for (LocalTopNArray topN : THREAD_TOP_N_REGISTRY.values()) {
-			HedgingDTO[] arr = topN.getResult();
-			if (arr.length > 0) {
-				allResults.add(arr);
-				totalSize += arr.length;
-			}
+			totalSize += topN.getResult().length;
 		}
 
 		// 合并到一个大数组
-		HedgingDTO[] merged = new HedgingDTO[totalSize];
+		final HedgingDTO[] merged = new HedgingDTO[totalSize];
+
+		// 获取全部计算结果
 		int pos = 0;
-		for (HedgingDTO[] arr : allResults) {
-			System.arraycopy(arr, 0, merged, pos, arr.length);
-			pos += arr.length;
+		for (LocalTopNArray topN : THREAD_TOP_N_REGISTRY.values()) {
+			counter += topN.getCounter();
+			HedgingDTO[] arr = topN.getResult();
+			if (arr.length > 0) {
+				System.arraycopy(arr, 0, merged, pos, arr.length);
+				pos += arr.length;
+			}
 		}
+
+		log.info("共计进行了{}个组合的计算", counter);
 
 		// 按 avgProfit 倒序（最高分在最前）
 		Arrays.sort(merged, Comparator.comparingDouble((HedgingDTO o) -> o.avgProfit).reversed());
@@ -294,7 +297,7 @@ public class BetMatchService {
 	                               List<Odds> currentPath, int parlaysSize, LocalTopNArray localTop) {
 		// 递归终止条件：已达到要求的串子大小
 		if (currentPath.size() == parlaysSize) {
-			localTop.tryAdd(new HedgingDTO(currentPath.toArray(new Odds[0])));
+			localTop.add(new HedgingDTO(currentPath.toArray(new Odds[0])));
 			return;
 		}
 
@@ -349,101 +352,6 @@ public class BetMatchService {
 				currentPath.remove(currentPath.size() - 1);
 			}
 		}
-	}
-
-	public static final class LocalTopNArray {
-
-		/** TopN排名数组 */
-		private final HedgingDTO[] topN;
-		/** 超容量缓存区 */
-		private final HedgingDTO[] tempBuffer;
-		/** 超容量缓存区大小 */
-		private static final int TEMP_CAPACITY = 10000;
-		/** 容忍的初始最低分 */
-		private static final double minScoreLimit = -200;
-		/** TopN容量 */
-		private final int capacity;
-		/** 当前TopN容量 */
-		private int size = 0,
-		/** 当前临时缓存区容量 */
-		tempSize = 0;
-
-		/** 是否已进入超容量阶段 */
-		private boolean isSuperSize = false;
-
-		/** 当前 TopN 的最低分（仅在 isSuperSize=true 时有效） */
-		private double minScore = minScoreLimit;
-
-		public LocalTopNArray(int capacity) {
-			this.capacity = capacity;
-			this.topN = new HedgingDTO[capacity];
-			this.tempBuffer = new HedgingDTO[TEMP_CAPACITY];
-		}
-
-		public void tryAdd(HedgingDTO dto) {
-			final double score = dto.calcAvgProfitAndCache(dto.getHedgingCoins());
-			if (score < minScoreLimit) {
-				return;
-			}
-
-			// 未满容量阶段：直接追加，不排序
-			if (!isSuperSize) {
-				topN[size++] = dto;
-
-				if (size == capacity) {
-					// 首次满容量：排序并进入超容量模式
-					Arrays.sort(topN, Comparator.comparingDouble(o -> o.avgProfit));
-					minScore = topN[0].avgProfit;
-					isSuperSize = true;
-					log.info("达到额定容量，进入超容量模式：minScore={}", minScore);
-				}
-				return;
-			}
-
-			// 超容量阶段：只缓存可能进入 TopN 的
-			if (score <= minScore) {
-				return;
-			}
-
-			tempBuffer[tempSize++] = dto;
-
-			// tempBuffer 满：合并 + 重新计算 TopN
-			if (tempSize == TEMP_CAPACITY) {
-				mergeTemp();
-			}
-		}
-
-		/** 合并 tempBuffer 到 topN，并重算 TopN */
-		private void mergeTemp() {
-			// 合并到一个新数组
-			final HedgingDTO[] merged = new HedgingDTO[capacity + tempSize];
-			System.arraycopy(topN, 0, merged, 0, capacity);
-			System.arraycopy(tempBuffer, 0, merged, capacity, tempSize);
-
-			// 排序
-			Arrays.sort(merged, Comparator.comparingDouble(o -> o.avgProfit));
-
-			// 截取 TopN
-			System.arraycopy(merged, merged.length - capacity, topN, 0, capacity);
-
-			// 重置最低分和缓冲区容量
-			minScore = topN[0].avgProfit;
-			tempSize = 0;
-			log.info("合并 tempBuffer 到 topN：minScore={}", minScore);
-		}
-
-		/** 取最终 TopN 结果 */
-		public HedgingDTO[] getResult() {
-			if (!isSuperSize) {
-				return Arrays.copyOf(topN, size);
-			}
-
-			if (tempSize > 0) {
-				mergeTemp();
-			}
-			return Arrays.copyOf(topN, capacity);
-		}
-
 	}
 
 	static final long limitMin = 1000 * 60 * 60, limitMax = 1000 * 60 * 60 * 24 * 2;
