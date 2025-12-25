@@ -58,7 +58,6 @@ public class BetApiTest {
 
 		startTime = System.currentTimeMillis();
 		final HedgingDTO[] globalTop = betMatchService.match(gameMapper, parlaysSize, 1000);
-		// final List<HedgingDTO> globalTop = betMatchService.match(newGameMapper, parlaysSize);
 
 		for (HedgingDTO hedgingDTO : globalTop) {
 			double avgProfit = hedgingDTO.avgProfit;
