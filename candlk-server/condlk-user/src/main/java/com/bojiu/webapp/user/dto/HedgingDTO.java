@@ -3,12 +3,15 @@ package com.bojiu.webapp.user.dto;
 import java.util.ArrayList;
 import java.util.List;
 
+import com.bojiu.context.web.Jsons;
 import com.bojiu.webapp.user.dto.GameDTO.OddsInfo;
 import lombok.*;
 import lombok.extern.slf4j.Slf4j;
 
 /** 预估对冲算法类 */
 @Slf4j
+@Setter
+@Getter
 public class HedgingDTO {
 
 	/** 串子/串关 */
@@ -34,10 +37,6 @@ public class HedgingDTO {
 		this.bRebate = bRebate;
 	}
 
-	public record GameRate(GameDTO game, Integer oddsIdx, Integer rateIdx) {
-
-	}
-
 	/** 赔率信息 */
 	@NoArgsConstructor
 	public static class Odds {
@@ -47,9 +46,15 @@ public class HedgingDTO {
 		/** B平台 赔率 */
 		public double bRate;
 		/** A平台 游戏信息 */
-		public GameRate aGame;
+		public GameDTO aGame;
 		/** B平台 游戏信息 */
-		public GameRate bGame;
+		public GameDTO bGame;
+		/** A平台 盘口指针 */
+		public Integer oddsIdx;
+		/** A平台 赔率指针 */
+		public Integer aIdx;
+		/** A平台 赔率指针 */
+		public Integer bIdx;
 		@Setter
 		@Getter
 		public Long gameOpenTime;
@@ -59,16 +64,19 @@ public class HedgingDTO {
 			this.bRate = bRate;
 		}
 
-		public Odds initGame(GameRate aGame, GameRate bGame) {
+		public Odds initGame(GameDTO aGame, GameDTO bGame, Integer oddsIdx, Integer aIdx, Integer bIdx) {
 			this.aGame = aGame;
 			this.bGame = bGame;
+			this.oddsIdx = oddsIdx;
+			this.aIdx = aIdx;
+			this.bIdx = bIdx;
 			return this;
 		}
 
-		public String getInfo() {
+		public String outInfo() {
 			if (aGame != null) {
-				final GameDTO game = this.aGame.game;
-				OddsInfo oddsInfo = game.odds.get(this.aGame.oddsIdx);
+				final GameDTO game = this.aGame;
+				OddsInfo oddsInfo = game.odds.get(this.oddsIdx);
 				return "【" + game.league + "】" + game.teamHome + " VS " + game.teamClient
 						+ " 【" + oddsInfo.getType().getLabel() + "】（" + oddsInfo.ratioRate + "）";
 
@@ -195,7 +203,8 @@ public class HedgingDTO {
 		return outs;
 	}
 
-	public transient double avgProfit;
+	@Getter
+	public double avgProfit;
 
 	public double calcAvgProfitAndCache(double[] bHedgingCoins) {
 		// 初始成本和产出

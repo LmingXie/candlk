@@ -8,7 +8,6 @@ import com.bojiu.context.web.Jsons;
 import com.bojiu.context.web.TaskUtils;
 import com.bojiu.webapp.user.dto.*;
 import com.bojiu.webapp.user.dto.GameDTO.OddsInfo;
-import com.bojiu.webapp.user.dto.HedgingDTO.GameRate;
 import com.bojiu.webapp.user.dto.HedgingDTO.Odds;
 import lombok.extern.slf4j.Slf4j;
 import me.codeplayer.util.ArrayUtil;
@@ -187,8 +186,8 @@ public class BetMatchService {
 					final Double hedgingRate = bOdds.getRates()[hedgingIdx];
 
 					// --- 选择当前节点 ---
-					final Odds oddsNode = new Odds(parlaysRate, hedgingRate).initGame(
-							new GameRate(aGame, oddsIdx, parlaysIdx), new GameRate(bGame, oddsIdx, hedgingIdx));
+					final Odds oddsNode = new Odds(parlaysRate, hedgingRate)
+							.initGame(aGame, bGame, oddsIdx, hedgingIdx, parlaysIdx);
 					// 记录当前比赛的开赛时间，用于下层递归校验
 					oddsNode.setGameOpenTime(aGame.openTimeMs());
 
@@ -297,7 +296,7 @@ public class BetMatchService {
 	                               List<Odds> currentPath, int parlaysSize, LocalTopNArray localTop) {
 		// 递归终止条件：已达到要求的串子大小
 		if (currentPath.size() == parlaysSize) {
-			localTop.add(new HedgingDTO(currentPath.toArray(new Odds[0])));
+			localTop.tryAddAndCounter(new HedgingDTO(currentPath.toArray(new Odds[0])));
 			return;
 		}
 
@@ -333,13 +332,8 @@ public class BetMatchService {
 				// 如果是对冲，通常取对方平台的相反侧索引，这里保留你的原逻辑映射
 				final int hedgingIdx = parlaysIdx == 0 ? 1 : 0;
 
-				final Odds oddsNode = new Odds(
-						rates[parlaysIdx],
-						bOdds.getRates()[hedgingIdx]
-				).initGame(
-						new GameRate(aGame, oddsIdx, parlaysIdx),
-						new GameRate(bGame, oddsIdx, hedgingIdx)
-				);
+				final Odds oddsNode = new Odds(rates[parlaysIdx], bOdds.getRates()[hedgingIdx])
+						.initGame(aGame, bGame, oddsIdx, hedgingIdx, parlaysIdx);
 				// 记录当前比赛的开赛时间，用于下层递归校验
 				oddsNode.setGameOpenTime(aGame.openTimeMs());
 				// 将赔率盘口记录到组合中
@@ -348,7 +342,7 @@ public class BetMatchService {
 				// --- 递归下一层：传递 i + 1 确保不选重复比赛 ---
 				backtrackParallel(gameMapper, aGames, idx + 1, currentPath, parlaysSize, localTop);
 
-				// --- 回溯：清理当前节点状态，供循环的下一个分支使用 ---
+				// DFS回溯算法：清理当前节点状态，供循环的下一个分支使用（每层只清理当前层级的节点状态）
 				currentPath.remove(currentPath.size() - 1);
 			}
 		}

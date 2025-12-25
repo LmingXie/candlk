@@ -39,15 +39,15 @@ public final class LocalTopNArray {
 		this.tempBuffer = new HedgingDTO[TEMP_CAPACITY];
 	}
 
-	public void addAndCounter(HedgingDTO dto) {
+	public void tryAddAndCounter(HedgingDTO dto) {
 		try {
-			add(dto);
+			tryAdd(dto);
 		} finally {
 			counter++;
 		}
 	}
 
-	public void add(HedgingDTO dto) {
+	public void tryAdd(HedgingDTO dto) {
 		final double score = dto.calcAvgProfitAndCache(dto.getHedgingCoins());
 		if (score < minScoreLimit) {
 			return;

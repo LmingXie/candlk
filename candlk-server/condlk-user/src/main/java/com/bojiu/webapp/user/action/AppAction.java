@@ -18,4 +18,5 @@ public class AppAction {
 		return Messager.exposeData(JSONObject.of("layout", "layout"));
 	}
 
+	// 查询全部推荐方案
 }

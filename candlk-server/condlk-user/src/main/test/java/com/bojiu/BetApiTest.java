@@ -56,13 +56,6 @@ public class BetApiTest {
 		Map<GameDTO, GameDTO> gameMapper = betMatchService.getGameMapper(gameBets, hedgingBets);
 		log.info("查询赛事映射完成，耗时：{}ms", System.currentTimeMillis() - startTime);
 
-		// Map<GameDTO, GameDTO> newGameMapper = new HashMap<>(10, 1F);
-		// int limit = 0;
-		// for (Map.Entry<GameDTO, GameDTO> entry : gameMapper.entrySet()) {
-		// 	if (++limit <= 200) {
-		// 		newGameMapper.put(entry.getKey(), entry.getValue());
-		// 	}
-		// }
 		startTime = System.currentTimeMillis();
 		final HedgingDTO[] globalTop = betMatchService.match(gameMapper, parlaysSize, 1000);
 		// final List<HedgingDTO> globalTop = betMatchService.match(newGameMapper, parlaysSize);
