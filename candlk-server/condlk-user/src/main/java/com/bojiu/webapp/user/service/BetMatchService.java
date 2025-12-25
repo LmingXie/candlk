@@ -213,8 +213,7 @@ public class BetMatchService {
 		return diff < limitMin || diff > limitMax;
 	}
 
-	private static final ConcurrentMap<Thread, LocalTopNArray> THREAD_TOPN_REGISTRY =
-			new ConcurrentHashMap<>();
+	private static final ConcurrentMap<Thread, LocalTopNArray> THREAD_TOPN_REGISTRY = new ConcurrentHashMap<>();
 
 	public void match2(Map<GameDTO, GameDTO> gameMapper, int parlaysSize) {
 
@@ -227,12 +226,11 @@ public class BetMatchService {
 		Arrays.sort(aGames, Comparator.comparingLong(GameDTO::openTimeMs));
 		log.info("开始并行匹配（仅第一层异步）：{}串1，共{}场比赛", parlaysSize, aGames.length);
 
-		final ThreadLocal<LocalTopNArray> THREAD_LOCAL_TOPN =
-				ThreadLocal.withInitial(() -> {
-					LocalTopNArray topN = new LocalTopNArray(1000);
-					THREAD_TOPN_REGISTRY.put(Thread.currentThread(), topN);
-					return topN;
-				});
+		final ThreadLocal<LocalTopNArray> THREAD_LOCAL_TOPN = ThreadLocal.withInitial(() -> {
+			LocalTopNArray topN = new LocalTopNArray(1000);
+			THREAD_TOPN_REGISTRY.put(Thread.currentThread(), topN);
+			return topN;
+		});
 
 		List<Future<Boolean>> futures = new ArrayList<>();
 
