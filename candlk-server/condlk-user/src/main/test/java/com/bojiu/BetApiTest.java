@@ -40,18 +40,13 @@ public class BetApiTest {
 	}
 
 	@Test
-	public void matchTest() throws Exception {
+	public void matchTest() {
 		int parlaysSize = 3; // 串关大小（3场比赛为一组）
 		BetProvider parlaysProvider = BetProvider.HG; // 组串子的厂家
 		BetProvider hedgingProvider = BetProvider.KY; // 组串子的厂家
 
 		// 以下将串关平台称为“A”，对冲平台称为“B”
 		long startTime = System.currentTimeMillis();
-
-		// 查询平台上的全部赛事和赔率信息
-		List<String> values = RedisUtil.opsForHash().multiGet(GAME_BETS_PERFIX, Arrays.asList(parlaysProvider.name(), hedgingProvider.name()));
-		List<GameDTO> gameBets = Jsons.parseArray(values.get(0), GameDTO.class),
-				hedgingBets = Jsons.parseArray(values.get(1), GameDTO.class);
 
 		// 获取A平台到B平台赛事的映射
 		Map<GameDTO, GameDTO> gameMapper = betMatchService.getGameMapper(Pair.of(parlaysProvider, hedgingProvider));
@@ -62,7 +57,7 @@ public class BetApiTest {
 
 		for (HedgingDTO hedgingDTO : globalTop) {
 			double avgProfit = hedgingDTO.avgProfit;
-			if (avgProfit > 0) {
+			if (avgProfit > 50) {
 				log.info("估算串关投注方案：{}，平均利润：{}，详细信息：{}", Jsons.encode(hedgingDTO.getHedgingCoins()),
 						avgProfit, Jsons.encode(hedgingDTO));
 			}

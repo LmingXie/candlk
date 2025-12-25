@@ -4,15 +4,12 @@ import java.util.*;
 import java.util.concurrent.*;
 
 import com.bojiu.common.redis.RedisUtil;
-import com.bojiu.context.model.TaskType;
 import com.bojiu.context.web.Jsons;
 import com.bojiu.context.web.TaskUtils;
 import com.bojiu.webapp.user.dto.*;
 import com.bojiu.webapp.user.dto.GameDTO.OddsInfo;
 import com.bojiu.webapp.user.dto.HedgingDTO.Odds;
 import com.bojiu.webapp.user.model.BetProvider;
-import com.github.benmanes.caffeine.cache.Cache;
-import com.github.benmanes.caffeine.cache.Caffeine;
 import lombok.extern.slf4j.Slf4j;
 import me.codeplayer.util.ArrayUtil;
 import me.codeplayer.util.CollectionUtil;
@@ -45,19 +42,23 @@ public class BetMatchService {
 				// 匹配队伍名（假设同一时间，同一只队伍不能同时存在两场比赛）
 				final String teamHome = aGame.teamHome, teamClient = aGame.teamClient;
 				GameDTO bGame = CollectionUtil.findFirst(bGames, b ->
-						teamHome.contains(b.teamHome) || b.teamHome.contains(teamHome)
-								|| teamClient.contains(b.teamHome) || b.teamClient.contains(teamClient)
+						(teamHome.contains(b.teamHome) || b.teamHome.contains(teamHome)
+								|| teamClient.contains(b.teamHome) || b.teamClient.contains(teamClient))
+								&& aGame.league.equals(b.league) // 要求联赛名称一致
 				);
 				if (bGame != null) {
 					log.debug("队伍名匹配成功：{}-{}\t{}-{}", teamHome, teamClient, bGame.teamHome, bGame.teamClient);
 					gameMapper.put(aGame, bGame);
 				} else {
+					// if (aGame.teamHome.equals("阿尔菲斯") && aGame.teamClient.equals("阿尔艾利吉达")) {
+					// 	System.out.println("teamHome: " + teamHome + " teamClient: " + teamClient);
+					// }
 					// 匹配联赛名称（仅一场时则认为是正确的）
 					final List<GameDTO> games_ = CollectionUtil.filter(bGames, b -> aGame.league.equals(b.league));
 					// 尝试匹配前后 2,3 个字符
-					GameDTO bGameDTO = matchPrefixOrSuffix(games_, teamHome), bGameDTO2 = matchPrefixOrSuffix(games_, teamClient);
-					if (bGameDTO != null && bGameDTO2 != null) {
-						gameMapper.put(aGame, games_.get(0));
+					final GameDTO bGameDTO = matchPrefixOrSuffix(games_, teamHome), bGameDTO2 = matchPrefixOrSuffix(games_, teamClient);
+					if (bGameDTO != null && bGameDTO.equals(bGameDTO2)) {
+						gameMapper.put(aGame, bGameDTO);
 						log.debug("前缀匹配成功：{}-{}\t{}-{}\t{}-{}", teamHome, teamClient, bGameDTO.teamHome, bGameDTO.teamClient,
 								bGameDTO2.teamHome, bGameDTO2.teamClient);
 						continue;
@@ -71,19 +72,29 @@ public class BetMatchService {
 						continue;
 					}
 
-					log.warn("无法匹配赛事：aGame={}\n，bGames={}", Jsons.encodeRaw(aGame), Jsons.encode(bGames));
+					log.warn("无法匹配赛事：aGame={}\n{}", Jsons.encodeRaw(aGame), Jsons.encode(bGames));
 				}
 			}
 		}
 		return gameMapper;
 	}
 
-	public GameDTO matchPrefixOrSuffix(List<GameDTO> games_, String league) {
-		final String[] fix = parseLeaguePerfixAndSuffix(league);
+	public GameDTO matchPrefixOrSuffix(List<GameDTO> games_, String team) {
+		final String[] fix = parseLeaguePerfixAndSuffix(team);
 		if (fix != null) {
-			List<GameDTO> gameDTOS = CollectionUtil.filter(games_, b ->
-					ArrayUtil.matchAny(f -> b.teamHome.contains(f), fix) // 前后2,3 个字符匹配也算命中
-							|| ArrayUtil.matchAny(f -> b.teamClient.contains(f), fix)
+			boolean is3 = team.length() == 3;
+			List<GameDTO> gameDTOS = CollectionUtil.filter(games_, b -> {
+						if (is3) { // 三个字，且首尾相同
+							final String word1 = team.substring(0, 1), word2 = team.substring(2, 3);
+							if (b.teamHome.startsWith(word1) && b.teamClient.endsWith(word2)
+									|| (b.teamClient.startsWith(word1) && b.teamClient.endsWith(word2))) {
+								return true;
+							}
+						}
+						// 前后 2,3 个字符匹配
+						return ArrayUtil.matchAny(f -> b.teamHome.contains(f), fix)
+								|| ArrayUtil.matchAny(f -> b.teamClient.contains(f), fix);
+					}
 			);
 			return gameDTOS.size() == 1 ? gameDTOS.get(0) : null;
 		}
@@ -91,18 +102,18 @@ public class BetMatchService {
 	}
 
 	@Nullable
-	public String[] parseLeaguePerfixAndSuffix(String league) {
-		final int len = league.length();
+	public String[] parseLeaguePerfixAndSuffix(String team) {
+		final int len = team.length();
 		if (len <= 2) {
-			return len == 2 ? new String[] { league } : null;
+			return len == 2 ? new String[] { team } : null;
 		}
 		final String[] fix = new String[2];
 		if (len > 3) {
-			fix[0] = league.substring(0, 3);
-			fix[1] = league.substring(len - 3);
+			fix[0] = team.substring(0, 3);
+			fix[1] = team.substring(len - 3);
 		} else {
-			fix[0] = league.substring(0, 2);
-			fix[1] = league.substring(len - 2);
+			fix[0] = team.substring(0, 2);
+			fix[1] = team.substring(len - 2);
 		}
 		return fix;
 	}

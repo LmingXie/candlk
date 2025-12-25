@@ -340,6 +340,10 @@ public class KyBetImpl extends BaseBetApiImpl {
 				String temp = league;
 				if (temp.endsWith("级联赛") && !temp.contains("超级联赛")) {
 					temp = temp.replace("级联赛", "组联赛");
+				} else if (temp.contains("级联赛-附加赛")) {
+					temp = temp.replace("级联赛-附加赛", "组联赛-附加赛");
+				} else if (temp.contains("级冠军赛")) {
+					temp = temp.replace("级冠军赛", "组冠军赛");
 				}
 				yield temp;
 			}
