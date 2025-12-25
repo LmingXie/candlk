@@ -100,11 +100,8 @@ public class BetMatchService {
 		return fix;
 	}
 
-	static final ThreadPoolExecutor smallTaskThreadPool = TaskUtils.newThreadPool(4, 4
-			, 2048, "game-bet-calc-", new ThreadPoolExecutor.AbortPolicy());
-
-	public void match(Map<GameDTO, GameDTO> gameMapper, int parlaysSize/*串子大小*/) {
-		if (parlaysSize < 2 || parlaysSize > 3) { // 目前仅支持二串一，三串一，4个以上串子所需算力过大
+	public List<HedgingDTO> match(Map<GameDTO, GameDTO> gameMapper, int parlaysSize) {
+		if (parlaysSize < 2 || parlaysSize > 3) {
 			throw new IllegalArgumentException("串子大小参数错误：" + parlaysSize);
 		}
 
@@ -116,17 +113,20 @@ public class BetMatchService {
 
 		// 使用回调处理结果，避免 OOM
 		final int[] count = { 0 };
-		final Consumer<HedgingDTO> hedgingBuilder = result -> {
+		final List<HedgingDTO> result = new ArrayList<>();
+		final Consumer<HedgingDTO> hedgingBuilder = hedgingDTO -> {
 			count[0]++;
-			final double[] hedgingCoins = result.getHedgingCoins();
-			final double avgProfit = result.calcAvgProfit(hedgingCoins);
+			final double[] hedgingCoins = hedgingDTO.getHedgingCoins();
+			final double avgProfit = hedgingDTO.calcAvgProfitAndCache(hedgingCoins);
 			if (avgProfit > 0) {
-				log.info("估算串关投注方案：{}，平均利润：{}，详细信息：{}", Jsons.encode(hedgingCoins),
-						avgProfit, Jsons.encode(result));
+				result.add(hedgingDTO);
 			}
 		};
 		backtrack(gameMapper, aGames, 0, new ArrayList<>(), parlaysSize, hedgingBuilder);
+		// 倒序排列
+		result.sort(Comparator.comparingDouble((HedgingDTO o) -> o.avgProfit).reversed());
 		log.info("匹配完成，共找到{}个结果", count[0]);
+		return result;
 	}
 
 	/**
@@ -204,19 +204,11 @@ public class BetMatchService {
 		}
 	}
 
-	static final long limitMin = 1000 * 60 * 60, limitMax = 1000 * 60 * 60 * 24 * 2;
+	static final ThreadPoolExecutor subTaskThreadPool = TaskUtils.newThreadPool(4, 4
+			, 2048, "game-bet-match-", new ThreadPoolExecutor.AbortPolicy());
 
-	private boolean isValidTimeGap(List<Odds> path, GameDTO nextGame) {
-		final long lastGameTime = path.get(path.size() - 1).getGameOpenTime();
-		final long diff = nextGame.openTimeMs() - lastGameTime;
-		// 1小时到2天之间
-		return diff < limitMin || diff > limitMax;
-	}
-
-	private static final ConcurrentMap<Thread, LocalTopNArray> THREAD_TOPN_REGISTRY = new ConcurrentHashMap<>();
-
-	public void match2(Map<GameDTO, GameDTO> gameMapper, int parlaysSize) {
-
+	public HedgingDTO[] match(Map<GameDTO, GameDTO> gameMapper, int parlaysSize, int topSize) {
+		// 目前仅支持二串一，三串一，4个以上串子所需算力过大
 		if (parlaysSize < 2 || parlaysSize > 3) {
 			throw new IllegalArgumentException("串子大小参数错误：" + parlaysSize);
 		}
@@ -226,83 +218,46 @@ public class BetMatchService {
 		Arrays.sort(aGames, Comparator.comparingLong(GameDTO::openTimeMs));
 		log.info("开始并行匹配（仅第一层异步）：{}串1，共{}场比赛", parlaysSize, aGames.length);
 
-		final ThreadLocal<LocalTopNArray> THREAD_LOCAL_TOPN = ThreadLocal.withInitial(() -> {
-			LocalTopNArray topN = new LocalTopNArray(1000);
-			THREAD_TOPN_REGISTRY.put(Thread.currentThread(), topN);
+		// 线程级别的TopN注册表（将ThreadLocal暴露出来）
+		final ConcurrentMap<Thread, LocalTopNArray> THREAD_TOP_N_REGISTRY = new ConcurrentHashMap<>();
+
+		// 每个线程初始化时创建
+		final ThreadLocal<LocalTopNArray> THREAD_LOCAL_TOP = ThreadLocal.withInitial(() -> {
+			final LocalTopNArray topN = new LocalTopNArray(topSize);
+			THREAD_TOP_N_REGISTRY.put(Thread.currentThread(), topN);
 			return topN;
 		});
 
-		List<Future<Boolean>> futures = new ArrayList<>();
-
+		final List<Future<Boolean>> futures = new ArrayList<>();
 		for (int i = 0; i < aGames.length; i++) {
 			final int idx = i;
-			futures.add(smallTaskThreadPool.submit(() -> {
+			futures.add(subTaskThreadPool.submit(() -> {
 				// 线程私有 TopN（同线程所有任务共享）
-				LocalTopNArray localTop = THREAD_LOCAL_TOPN.get();
+				final LocalTopNArray localTop = THREAD_LOCAL_TOP.get();
 
 				// 第一层逻辑与 match 完全一致
 				final GameDTO aGame = aGames[idx];
 				final List<Odds> path = new ArrayList<>(4);
 
-				final List<OddsInfo> aOddsList = aGame.odds;
-				for (int oddsIdx = 0, len = aOddsList.size(); oddsIdx < len; oddsIdx++) {
-					final OddsInfo aOdd = aOddsList.get(oddsIdx);
-					if (aOdd == null || !aOdd.type.open) {
-						continue;
-					}
-
-					final Double[] rates = aOdd.getRates();
-					for (int parlaysIdx = 0; parlaysIdx < rates.length; parlaysIdx++) {
-
-						final GameDTO bGame = gameMapper.get(aGame);
-						final OddsInfo bOdds = bGame.findOdds(aOdd);
-						if (bOdds == null || bOdds.getRates() == null || !bOdds.type.open) {
-							continue;
-						}
-
-						final int hedgingIdx = parlaysIdx == 0 ? 1 : 0;
-
-						final Odds oddsNode = new Odds(
-								rates[parlaysIdx],
-								bOdds.getRates()[hedgingIdx]
-						).initGame(
-								new GameRate(aGame, oddsIdx, parlaysIdx),
-								new GameRate(bGame, oddsIdx, hedgingIdx)
-						);
-						oddsNode.setGameOpenTime(aGame.openTimeMs());
-
-						path.add(oddsNode);
-
-						// 深度回溯：线程内写 localTop，无锁
-						backtrackParallel(
-								gameMapper,
-								aGames,
-								idx + 1,
-								path,
-								parlaysSize,
-								localTop
-						);
-						path.remove(path.size() - 1);
-					}
-				}
+				calcHedgingPath(gameMapper, aGames, path, parlaysSize, localTop, aGame, idx);
 				return true;
 			}));
 		}
 
-		// ===== 聚合阶段（单线程，量很小）=====
 		// 等待全部任务完成
 		for (Future<Boolean> f : futures) {
 			try {
 				f.get();
 			} catch (Exception e) {
-				throw new RuntimeException(e);
+				log.error("匹配串子路径异常：", e);
 			}
 		}
 
 		List<HedgingDTO[]> allResults = new ArrayList<>();
 		int totalSize = 0;
 
-		for (LocalTopNArray topN : THREAD_TOPN_REGISTRY.values()) {
+		// 聚合全部结果
+		for (LocalTopNArray topN : THREAD_TOP_N_REGISTRY.values()) {
 			HedgingDTO[] arr = topN.getResult();
 			if (arr.length > 0) {
 				allResults.add(arr);
@@ -317,19 +272,26 @@ public class BetMatchService {
 			System.arraycopy(arr, 0, merged, pos, arr.length);
 			pos += arr.length;
 		}
-		// 排序（按 avgProfit 升序）
-		Arrays.sort(merged, Comparator.comparingDouble(o -> o.avgProfit));
+
+		// 按 avgProfit 倒序（最高分在最前）
+		Arrays.sort(merged, Comparator.comparingDouble((HedgingDTO o) -> o.avgProfit).reversed());
 
 		// 截断保留 TopN
-		final int globalTopN = 1000;
-		HedgingDTO[] globalTop = merged.length > globalTopN ? Arrays.copyOfRange(merged, merged.length - globalTopN, merged.length) : merged;
-
-		log.info("最终 Top1000 计算完成：{}", Jsons.encode(globalTop));
+		return merged.length > topSize ? Arrays.copyOfRange(merged, 0, topSize) : merged;
 	}
 
+	/**
+	 * 回溯核心算法
+	 *
+	 * @param gameMapper A、B平台游戏映射
+	 * @param aGames A平台 第一层游戏列表
+	 * @param start 当前遍历赛事的起始索引
+	 * @param currentPath 已选中的赔率路径
+	 * @param parlaysSize 串子大小
+	 * @param localTop TopN 缓存
+	 */
 	private void backtrackParallel(Map<GameDTO, GameDTO> gameMapper, GameDTO[] aGames, int start,
 	                               List<Odds> currentPath, int parlaysSize, LocalTopNArray localTop) {
-
 		// 递归终止条件：已达到要求的串子大小
 		if (currentPath.size() == parlaysSize) {
 			localTop.tryAdd(new HedgingDTO(currentPath.toArray(new Odds[0])));
@@ -337,53 +299,54 @@ public class BetMatchService {
 		}
 
 		for (int i = start; i < aGames.length; i++) {
-			GameDTO aGame = aGames[i];
-
+			final GameDTO aGame = aGames[i];
 			// 时间约束剪枝
 			if (!currentPath.isEmpty() && isValidTimeGap(currentPath, aGame)) {
 				continue;
 			}
+			// 计算对冲路径
+			calcHedgingPath(gameMapper, aGames, currentPath, parlaysSize, localTop, aGame, i);
+		}
+	}
 
-			final List<OddsInfo> aOddsList = aGame.odds;
-			for (int oddsIdx = 0, len = aOddsList.size(); oddsIdx < len; oddsIdx++) {
-				final OddsInfo aOdd = aOddsList.get(oddsIdx);
-				if (aOdd == null || !aOdd.type.open) { // 跳过未开放的赔率盘口
+	private void calcHedgingPath(Map<GameDTO, GameDTO> gameMapper, GameDTO[] aGames, List<Odds> currentPath, int parlaysSize, LocalTopNArray localTop, GameDTO aGame, int idx) {
+		final List<OddsInfo> aOddsList = aGame.odds;
+		for (int oddsIdx = 0, len = aOddsList.size(); oddsIdx < len; oddsIdx++) {
+			final OddsInfo aOdd = aOddsList.get(oddsIdx);
+			if (aOdd == null || !aOdd.type.open) { // 跳过未开放的赔率盘口
+				continue;
+			}
+
+			final Double[] rates = aOdd.getRates();
+			// 遍历该盘口下的所有赔率
+			for (int parlaysIdx = 0; parlaysIdx < rates.length; parlaysIdx++) {
+				final GameDTO bGame = gameMapper.get(aGame); // 查找对冲平台对应游戏
+				final OddsInfo bOdds = bGame.findOdds(aOdd); // 查找对应赔率数据
+				// 如果对冲平台找不到该盘口，或者该盘口已关闭，放弃这个组合
+				if (bOdds == null || bOdds.getRates() == null || !bOdds.type.open) {
 					continue;
 				}
 
-				final Double[] rates = aOdd.getRates();
-				// 遍历该盘口下的所有赔率
-				for (int parlaysIdx = 0; parlaysIdx < rates.length; parlaysIdx++) {
+				// 如果是对冲，通常取对方平台的相反侧索引，这里保留你的原逻辑映射
+				final int hedgingIdx = parlaysIdx == 0 ? 1 : 0;
 
-					final GameDTO bGame = gameMapper.get(aGame); // 查找对冲平台对应游戏
-					final OddsInfo bOdds = bGame.findOdds(aOdd); // 查找对应赔率数据
-					// 如果对冲平台找不到该盘口，或者该盘口已关闭，放弃这个组合
-					if (bOdds == null || bOdds.getRates() == null || !bOdds.type.open) {
-						continue;
-					}
+				final Odds oddsNode = new Odds(
+						rates[parlaysIdx],
+						bOdds.getRates()[hedgingIdx]
+				).initGame(
+						new GameRate(aGame, oddsIdx, parlaysIdx),
+						new GameRate(bGame, oddsIdx, hedgingIdx)
+				);
+				// 记录当前比赛的开赛时间，用于下层递归校验
+				oddsNode.setGameOpenTime(aGame.openTimeMs());
+				// 将赔率盘口记录到组合中
+				currentPath.add(oddsNode);
 
-					// 如果是对冲，通常取对方平台的相反侧索引，这里保留你的原逻辑映射
-					final int hedgingIdx = parlaysIdx == 0 ? 1 : 0;
+				// --- 递归下一层：传递 i + 1 确保不选重复比赛 ---
+				backtrackParallel(gameMapper, aGames, idx + 1, currentPath, parlaysSize, localTop);
 
-					final Odds oddsNode = new Odds(
-							rates[parlaysIdx],
-							bOdds.getRates()[hedgingIdx]
-					).initGame(
-							new GameRate(aGame, oddsIdx, parlaysIdx),
-							new GameRate(bGame, oddsIdx, hedgingIdx)
-					);
-					// 记录当前比赛的开赛时间，用于下层递归校验
-					oddsNode.setGameOpenTime(aGame.openTimeMs());
-					// 将赔率盘口记录到组合中
-					currentPath.add(oddsNode);
-
-					// --- 递归下一层：传递 i + 1 确保不选重复比赛 ---
-					backtrackParallel(gameMapper, aGames, i + 1,
-							currentPath, parlaysSize, localTop);
-
-					// --- 回溯：清理当前节点状态，供循环的下一个分支使用 ---
-					currentPath.removeLast();
-				}
+				// --- 回溯：清理当前节点状态，供循环的下一个分支使用 ---
+				currentPath.remove(currentPath.size() - 1);
 			}
 		}
 	}
@@ -481,6 +444,15 @@ public class BetMatchService {
 			return Arrays.copyOf(topN, capacity);
 		}
 
+	}
+
+	static final long limitMin = 1000 * 60 * 60, limitMax = 1000 * 60 * 60 * 24 * 2;
+
+	private boolean isValidTimeGap(List<Odds> path, GameDTO nextGame) {
+		final long lastGameTime = path.get(path.size() - 1).getGameOpenTime();
+		final long diff = nextGame.openTimeMs() - lastGameTime;
+		// 1小时到2天之间
+		return diff < limitMin || diff > limitMax;
 	}
 
 }

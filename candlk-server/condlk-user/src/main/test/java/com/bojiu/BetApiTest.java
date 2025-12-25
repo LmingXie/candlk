@@ -8,6 +8,7 @@ import com.bojiu.context.web.Jsons;
 import com.bojiu.webapp.UserApplication;
 import com.bojiu.webapp.user.bet.BetApi;
 import com.bojiu.webapp.user.dto.GameDTO;
+import com.bojiu.webapp.user.dto.HedgingDTO;
 import com.bojiu.webapp.user.job.GameBetJob;
 import com.bojiu.webapp.user.model.BetProvider;
 import com.bojiu.webapp.user.service.BetMatchService;
@@ -63,7 +64,16 @@ public class BetApiTest {
 			}
 		}
 		startTime = System.currentTimeMillis();
-		betMatchService.match2(newGameMapper, parlaysSize);
+		final HedgingDTO[] globalTop = betMatchService.match(newGameMapper, parlaysSize, 1000);
+		// final List<HedgingDTO> globalTop = betMatchService.match(newGameMapper, parlaysSize);
+
+		for (HedgingDTO hedgingDTO : globalTop) {
+			double avgProfit = hedgingDTO.avgProfit;
+			if (avgProfit > 0) {
+				log.info("估算串关投注方案：{}，平均利润：{}，详细信息：{}", Jsons.encode(hedgingDTO.getHedgingCoins()),
+						avgProfit, Jsons.encode(hedgingDTO));
+			}
+		}
 		log.info("方案1：计算组合耗时：{}ms", System.currentTimeMillis() - startTime);
 
 	}
