@@ -33,6 +33,8 @@ import me.codeplayer.util.*;
 import org.apache.commons.lang3.ArrayUtils;
 import org.apache.commons.lang3.StringUtils;
 import org.apache.commons.lang3.time.FastDateFormat;
+import org.jspecify.annotations.NonNull;
+import org.jspecify.annotations.Nullable;
 import org.springframework.http.HttpMethod;
 
 public abstract class BaseBetApiImpl extends BaseHttpUtil implements BetApi {
@@ -166,7 +168,7 @@ public abstract class BaseBetApiImpl extends BaseHttpUtil implements BetApi {
 	 * @param uri 请求地址
 	 * @param params 请求参数
 	 */
-	@Nonnull
+	@NonNull
 	protected final Messager<JSONObject> sendRequest(HttpMethod method, URI uri, Map<String, Object> params, int flags) {
 
 		params = preInit(params);
@@ -231,12 +233,12 @@ public abstract class BaseBetApiImpl extends BaseHttpUtil implements BetApi {
 	 * @param uri 请求地址
 	 * @param params 请求参数
 	 */
-	@Nonnull
+	@NonNull
 	protected final Messager<JSONObject> sendRequest(HttpMethod method, URI uri, @Nullable Map<String, Object> params) {
 		return sendRequest(method, uri, params, 0);
 	}
 
-	@Nonnull
+	@NonNull
 	protected static String mergeGetUri(String apiRoot, @Nullable Map<String, ?> requiredParams) {
 		if (X.isValid(requiredParams)) {
 			StringBuilder sb = clipGetUri(apiRoot);
@@ -245,7 +247,7 @@ public abstract class BaseBetApiImpl extends BaseHttpUtil implements BetApi {
 		return apiRoot;
 	}
 
-	@Nonnull
+	@NonNull
 	protected static StringBuilder clipGetUri(String apiRoot) {
 		return new StringBuilder(128).append(apiRoot);
 	}
@@ -307,7 +309,7 @@ public abstract class BaseBetApiImpl extends BaseHttpUtil implements BetApi {
 	 * @throws UncheckedIOException 网络IO异常（请求连接超时、响应超时等）
 	 * @throws ErrorMessageException 线程中断异常（服务被打断，对外提示网络异常）
 	 */
-	@Nonnull
+	@NonNull
 	protected Messager<JSONObject> doRequest(HttpRequest request, String body, final int flags) throws UncheckedIOException, ErrorMessageException {
 		String responseBody = null;
 		Exception ex = null;
@@ -498,7 +500,7 @@ public abstract class BaseBetApiImpl extends BaseHttpUtil implements BetApi {
 	 *
 	 * @param proxyConfig 形如 <code> "proxy://username:password@host:port" </code>
 	 */
-	public static HttpClient.Builder prepareProxyClient(@Nonnull String proxyConfig) {
+	public static HttpClient.Builder prepareProxyClient(@NonNull String proxyConfig) {
 		// "proxy://username:password@host:port"
 		final URI uri = URI.create(proxyConfig);
 		String username = null, password = null;

@@ -1,10 +1,10 @@
 package com.bojiu.webapp.user.dto;
 
 import java.util.Date;
-import javax.annotation.Nullable;
 
 import com.alibaba.fastjson2.annotation.JSONField;
 import lombok.*;
+import org.jspecify.annotations.Nullable;
 
 @Getter
 @Setter

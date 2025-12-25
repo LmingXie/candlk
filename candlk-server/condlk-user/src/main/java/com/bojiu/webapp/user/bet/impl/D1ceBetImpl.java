@@ -6,8 +6,6 @@ import java.net.http.HttpResponse;
 import java.util.Map;
 import java.util.TreeMap;
 
-import javax.annotation.Nullable;
-
 import com.alibaba.fastjson2.JSONObject;
 import com.alibaba.fastjson2.JSONPath;
 import com.bojiu.common.model.ErrorMessageException;
@@ -17,6 +15,7 @@ import com.bojiu.webapp.user.model.BetProvider;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.lang3.tuple.Pair;
 import org.jspecify.annotations.NonNull;
+import org.jspecify.annotations.Nullable;
 import org.springframework.http.HttpMethod;
 import org.springframework.stereotype.Service;
 
