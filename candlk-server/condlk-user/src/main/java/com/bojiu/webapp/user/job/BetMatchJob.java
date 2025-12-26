@@ -21,6 +21,7 @@ import me.codeplayer.util.StringUtil;
 import org.apache.commons.lang3.tuple.Pair;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.data.redis.core.HashOperations;
+import org.springframework.data.redis.core.ZSetOperations;
 import org.springframework.scheduling.annotation.Scheduled;
 
 import static com.bojiu.webapp.user.model.BetProvider.*;
@@ -56,7 +57,12 @@ public class BetMatchJob {
 			final Pair<HedgingDTO[], Long> topNPair = betMatchService.match(gameMapper, parlaysSize, 1000);
 			// 缓存匹配结果
 			final HedgingDTO[] topN = topNPair.getKey();
-			RedisUtil.opsForHash().put(BET_MATCH_DATA_KEY, parlaysProvider + "-" + hedgingProvider, Jsons.encode(topN));
+			RedisUtil.doInTransaction(redisOps -> {
+				final ZSetOperations<String, String> opsForZSet = redisOps.opsForZSet();
+				for (HedgingDTO dto : topN) {
+					opsForZSet.add(BET_MATCH_DATA_KEY + parlaysProvider + "-" + hedgingProvider, Jsons.encode(dto), dto.avgProfit);
+				}
+			});
 
 			log.info("【{}】->【{}】匹配结束，共【{}】种组合，计算最佳结果：{}，耗时：{} ms", parlaysProvider, hedgingProvider,
 					format.format(topNPair.getValue()), topN.length, System.currentTimeMillis() - beginTime);

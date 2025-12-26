@@ -9,6 +9,6 @@ public interface UserRedisKey extends RedisKey {
 	/** 从厂商拉取的游戏赔率列表 < (String) BetProvider, List<GameDTO> > */
 	String GAME_BETS_PERFIX = "gameBets";
 	/** 推荐匹配列表 */
-	String BET_MATCH_DATA_KEY = "betMatchData";
+	String BET_MATCH_DATA_KEY = "betMatchData:";
 
 }
