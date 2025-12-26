@@ -3,7 +3,6 @@ package com.bojiu.webapp.user.dto;
 import java.util.ArrayList;
 import java.util.List;
 
-import com.bojiu.context.web.Jsons;
 import com.bojiu.webapp.user.dto.GameDTO.OddsInfo;
 import lombok.*;
 import lombok.extern.slf4j.Slf4j;
@@ -12,30 +11,19 @@ import lombok.extern.slf4j.Slf4j;
 @Slf4j
 @Setter
 @Getter
+@NoArgsConstructor
 public class HedgingDTO {
 
 	/** 串子/串关 */
 	public Odds[] parlays;
 
-	public HedgingDTO(Odds[] parlays) {
+	public HedgingDTO(Odds[] parlays, BaseRateConifg baseRateConifg) {
 		this.parlays = parlays;
+		this.baseRate = baseRateConifg;
 	}
 
-	/** A平台 本金 */
-	public double aPrincipal = 1000,
-	/** A平台充值返奖（%） */
-	aRechargeRate = 0,
-	/** 投注返水比例（%） */
-	aRebate = 0.015,
-	/** B平台投注返水比例（%） */
-	bRebate = 0.025;
-
-	public void initRebate(double aPrincipal, double aRechargeRate, double aRebate, double bRebate) {
-		this.aPrincipal = aPrincipal;
-		this.aRechargeRate = aRechargeRate;
-		this.aRebate = aRebate;
-		this.bRebate = bRebate;
-	}
+	/** 基础返水配置 */
+	public BaseRateConifg baseRate;
 
 	/** 赔率信息 */
 	@NoArgsConstructor
@@ -97,7 +85,7 @@ public class HedgingDTO {
 
 	/** B平台 输的净收益系数 */
 	public double bLossFactor() {
-		return bLossFactor == null ? bLossFactor = bRebate - 1 : bLossFactor;
+		return bLossFactor == null ? bLossFactor = baseRate.bRebate - 1 : bLossFactor;
 	}
 
 	transient Double overallOdds;
@@ -118,21 +106,21 @@ public class HedgingDTO {
 
 	/** A平台 串子投注金额 */
 	public double getAInCoin() {
-		return aInCoin == null ? aInCoin = aPrincipal * (1 + aRechargeRate) : aInCoin;
+		return aInCoin == null ? aInCoin = baseRate.aPrincipal * (1 + baseRate.aRechargeRate) : aInCoin;
 	}
 
 	transient Double aRebateCoin;
 
 	/** A平台 返水金额（串子全输时） */
 	public double getARebateCoin() {
-		return aRebateCoin == null ? aRebateCoin = getAInCoin() * aRebate : aRebateCoin;
+		return aRebateCoin == null ? aRebateCoin = getAInCoin() * baseRate.aRebate : aRebateCoin;
 	}
 
 	transient Double loss;
 
 	/** A平台 串关全输时的固定收益 */
 	public double getLoss() {
-		return loss == null ? loss = getARebateCoin() - aPrincipal : loss;
+		return loss == null ? loss = getARebateCoin() - baseRate.aPrincipal : loss;
 	}
 
 	transient Double win;
@@ -140,7 +128,7 @@ public class HedgingDTO {
 	/** A平台 串关全赢时的固定收益（按输赢金额计算返水） */
 	public double getWin() {
 		final double odds = overallOdds();
-		return win == null ? win = (getAInCoin() * odds) + (getARebateCoin() * Math.abs(odds - 1)) - aPrincipal : win;
+		return win == null ? win = (getAInCoin() * odds) + (getARebateCoin() * Math.abs(odds - 1)) - baseRate.aPrincipal : win;
 	}
 
 	transient double[] hedgingCoins;
@@ -153,10 +141,10 @@ public class HedgingDTO {
 			int lastIdx = size - 1;
 			double bLossFactor = bLossFactor();
 			// 计算最后一场的对冲金额
-			hedgingCoins[lastIdx] = (getWin() - getLoss()) / (parlays[lastIdx].bWinFactor(bRebate) - bLossFactor);
+			hedgingCoins[lastIdx] = (getWin() - getLoss()) / (parlays[lastIdx].bWinFactor(baseRate.bRebate) - bLossFactor);
 			// 往前推算每场需要对冲的金额
 			for (int i = lastIdx - 1; i >= 0; i--) {
-				hedgingCoins[i] = (parlays[i + 1].bWinFactor(bRebate) * hedgingCoins[i + 1]) / (parlays[i].bWinFactor(bRebate) - bLossFactor);
+				hedgingCoins[i] = (parlays[i + 1].bWinFactor(baseRate.bRebate) * hedgingCoins[i + 1]) / (parlays[i].bWinFactor(baseRate.bRebate) - bLossFactor);
 			}
 		}
 		return hedgingCoins;
@@ -188,7 +176,7 @@ public class HedgingDTO {
 			for (int i = 0; i < N; i++) {
 				double bHedgingCoin = bHedgingCoins[i];
 
-				result.add(new Out("串子第" + (i + 1) + "场输", loss_ + (bLossFactor_ * sumBInCoin) + (bHedgingCoin * parlays[i].bWinFactor(bRebate))));
+				result.add(new Out("串子第" + (i + 1) + "场输", loss_ + (bLossFactor_ * sumBInCoin) + (bHedgingCoin * parlays[i].bWinFactor(baseRate.bRebate))));
 				sumBInCoin += bHedgingCoin;
 			}
 			// 计算 A平台 串子赢的情况
@@ -208,7 +196,19 @@ public class HedgingDTO {
 
 	public double calcAvgProfit(double[] bHedgingCoins) {
 		// 初始成本和产出
-		return getLoss() + (bHedgingCoins[0] * parlays[0].bWinFactor(bRebate));
+		return getLoss() + (bHedgingCoins[0] * parlays[0].bWinFactor(baseRate.bRebate));
+	}
+
+	/** 根据当前返水配置刷新方案 */
+	public HedgingDTO flush(BaseRateConifg baseRate) {
+		this.aInCoin = null;
+		this.aRebateCoin = null;
+		this.baseRate = baseRate;
+		this.loss = null;
+		this.win = null;
+		this.hedgingCoins = null;
+		calcAvgProfitAndCache(getHedgingCoins());
+		return this;
 	}
 
 }

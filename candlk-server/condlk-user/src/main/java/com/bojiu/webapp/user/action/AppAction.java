@@ -2,6 +2,8 @@ package com.bojiu.webapp.user.action;
 
 import java.util.*;
 
+import javax.annotation.Resource;
+
 import com.alibaba.fastjson2.JSONObject;
 import com.bojiu.common.context.I18N;
 import com.bojiu.common.model.Messager;
@@ -11,19 +13,26 @@ import com.bojiu.common.web.Ready;
 import com.bojiu.context.auth.Permission;
 import com.bojiu.context.web.Jsons;
 import com.bojiu.context.web.ProxyRequest;
+import com.bojiu.webapp.user.dto.BaseRateConifg;
 import com.bojiu.webapp.user.dto.HedgingDTO;
 import com.bojiu.webapp.user.form.query.HedgingQuery;
+import com.bojiu.webapp.user.service.MetaService;
 import lombok.extern.slf4j.Slf4j;
 import me.codeplayer.util.CollectionUtil;
 import org.springframework.data.redis.core.ZSetOperations;
 import org.springframework.web.bind.annotation.*;
 
+import static com.bojiu.webapp.base.entity.Merchant.PLATFORM_ID;
+import static com.bojiu.webapp.user.model.MetaType.base_rate_config;
 import static com.bojiu.webapp.user.model.UserRedisKey.BET_MATCH_DATA_KEY;
 
 @Slf4j
 @RestController
 @RequestMapping("/app")
 public class AppAction {
+
+	@Resource
+	MetaService metaService;
 
 	@GetMapping("/layout")
 	@Permission(Permission.NONE)
@@ -47,12 +56,11 @@ public class AppAction {
 			opsForZSet.count(key, DEFAULT_MIN_SCORE, DEFAULT_MAX_SCORE);
 		});
 		final Set<String> values = (Set<String>) scores.get(0);
-		page.setList(CollectionUtil.toList(values, o -> Jsons.parseObject(o, HedgingDTO.class)));
+		final BaseRateConifg baseRateConifg = metaService.getCachedParsedValue(PLATFORM_ID, base_rate_config, BaseRateConifg.class);
+		page.setList(CollectionUtil.toList(values, o -> Jsons.parseObject(o, HedgingDTO.class).flush(baseRateConifg)));
 		page.setTotal((Long) scores.get(1));
 		return Messager.exposeData(page);
 	}
-
-	// TODO: 2025/12/25 更新默认配置接口（更新后需要刷新全部Redis中的推荐方案利润）
 
 	// TODO: 2025/12/25 修改/保存方案到Redis
 

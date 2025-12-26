@@ -3,13 +3,17 @@ package com.bojiu.webapp.user.service;
 import java.util.*;
 import java.util.concurrent.*;
 
+import javax.annotation.Resource;
+
 import com.bojiu.common.redis.RedisUtil;
 import com.bojiu.context.web.Jsons;
 import com.bojiu.context.web.TaskUtils;
+import com.bojiu.webapp.base.entity.Merchant;
 import com.bojiu.webapp.user.dto.*;
 import com.bojiu.webapp.user.dto.GameDTO.OddsInfo;
 import com.bojiu.webapp.user.dto.HedgingDTO.Odds;
 import com.bojiu.webapp.user.model.BetProvider;
+import com.bojiu.webapp.user.model.MetaType;
 import lombok.extern.slf4j.Slf4j;
 import me.codeplayer.util.ArrayUtil;
 import me.codeplayer.util.CollectionUtil;
@@ -17,11 +21,16 @@ import org.apache.commons.lang3.tuple.Pair;
 import org.jspecify.annotations.Nullable;
 import org.springframework.stereotype.Service;
 
+import static com.bojiu.webapp.base.entity.Merchant.PLATFORM_ID;
+import static com.bojiu.webapp.user.model.MetaType.base_rate_config;
 import static com.bojiu.webapp.user.model.UserRedisKey.GAME_BETS_PERFIX;
 
 @Slf4j
 @Service
 public class BetMatchService {
+
+	@Resource
+	MetaService metaService;
 
 	/** 获取A平台到B平台赛事的映射 */
 	public final Map<GameDTO, GameDTO> getGameMapper(Pair<BetProvider, BetProvider> pair) {
@@ -143,6 +152,7 @@ public class BetMatchService {
 		});
 
 		final List<Future<Boolean>> futures = new ArrayList<>();
+		final BaseRateConifg baseRateConifg = metaService.getCachedParsedValue(PLATFORM_ID, base_rate_config, BaseRateConifg.class);
 		for (int i = 0; i < aGames.length; i++) {
 			final int idx = i;
 			futures.add(subTaskThreadPool.submit(() -> {
@@ -152,7 +162,7 @@ public class BetMatchService {
 				// 第一层逻辑与 match 完全一致
 				final GameDTO aGame = aGames[idx];
 
-				calcPathHedgingOdds(gameMapper, aGames, new Odds[parlaysSize], 0, parlaysSize, localTop, aGame, idx);
+				calcPathHedgingOdds(gameMapper, aGames, new Odds[parlaysSize], 0, parlaysSize, localTop, aGame, idx, baseRateConifg);
 				return true;
 			}));
 		}
@@ -206,12 +216,12 @@ public class BetMatchService {
 	 * @param localTop TopN 缓存
 	 */
 	private void backtrackParallel(Map<GameDTO, GameDTO> gameMapper, GameDTO[] aGames, int start,
-	                               Odds[] path, int depth, int parlaysSize, LocalTopNArray localTop) {
+	                               Odds[] path, int depth, int parlaysSize, LocalTopNArray localTop, BaseRateConifg baseRateConifg) {
 		// 递归终止条件：已达到要求的串子大小
 		if (depth == parlaysSize) {
 			// 由于 currPath 会继续进行回溯，这里进行精准拷贝（长度固定，非常快）
 			final Odds[] snapshot = Arrays.copyOf(path, parlaysSize);
-			localTop.tryAddAndCounter(new HedgingDTO(snapshot));
+			localTop.tryAddAndCounter(new HedgingDTO(snapshot, baseRateConifg));
 			return;
 		}
 
@@ -222,7 +232,7 @@ public class BetMatchService {
 				continue;
 			}
 			// 计算对冲路径
-			calcPathHedgingOdds(gameMapper, aGames, path, depth, parlaysSize, localTop, aGame, i);
+			calcPathHedgingOdds(gameMapper, aGames, path, depth, parlaysSize, localTop, aGame, i, baseRateConifg);
 		}
 	}
 
@@ -238,7 +248,8 @@ public class BetMatchService {
 	 * @param aGame 当前层A平台游戏
 	 * @param idx 当前层指针
 	 */
-	private void calcPathHedgingOdds(Map<GameDTO, GameDTO> gameMapper, GameDTO[] aGames, Odds[] path, int depth, int parlaysSize, LocalTopNArray localTop, GameDTO aGame, int idx) {
+	private void calcPathHedgingOdds(Map<GameDTO, GameDTO> gameMapper, GameDTO[] aGames, Odds[] path, int depth,
+	                                 int parlaysSize, LocalTopNArray localTop, GameDTO aGame, int idx, BaseRateConifg baseRateConifg) {
 		final List<OddsInfo> aOddsList = aGame.odds;
 		for (int oddsIdx = 0, len = aOddsList.size(); oddsIdx < len; oddsIdx++) {
 			final OddsInfo aOdd = aOddsList.get(oddsIdx);
@@ -268,7 +279,7 @@ public class BetMatchService {
 				path[depth] = oddsNode;
 
 				// --- 递归下一层：传递 i + 1 确保不选重复比赛 ---
-				backtrackParallel(gameMapper, aGames, idx + 1, path, depth + 1, parlaysSize, localTop);
+				backtrackParallel(gameMapper, aGames, idx + 1, path, depth + 1, parlaysSize, localTop, baseRateConifg);
 
 				// DFS回溯算法：清理当前节点状态，供循环的下一个分支使用（每层只清理当前层级的节点状态）
 				// currentPath.remove(currentPath.size() - 1);

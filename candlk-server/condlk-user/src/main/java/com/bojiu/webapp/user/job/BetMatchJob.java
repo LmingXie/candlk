@@ -52,15 +52,17 @@ public class BetMatchJob {
 			final String parlaysProvider = pair.getKey().name(), hedgingProvider = pair.getValue().name();
 			// 获取A平台到B平台赛事的映射
 			final Map<GameDTO, GameDTO> gameMapper = betMatchService.getGameMapper(pair);
-			log.info("【{}】->【{}】进行赛事映射完成，总：{}", parlaysProvider, hedgingProvider, gameMapper.size());
+			log.info("【{}】->【{}】进行赛事映射完成，总【{}】场。", parlaysProvider, hedgingProvider, gameMapper.size());
 
 			final Pair<HedgingDTO[], Long> topNPair = betMatchService.match(gameMapper, parlaysSize, 1000);
 			// 缓存匹配结果
 			final HedgingDTO[] topN = topNPair.getKey();
 			RedisUtil.doInTransaction(redisOps -> {
 				final ZSetOperations<String, String> opsForZSet = redisOps.opsForZSet();
+				final String key = BET_MATCH_DATA_KEY + parlaysProvider + "-" + hedgingProvider;
+				redisOps.delete(key);
 				for (HedgingDTO dto : topN) {
-					opsForZSet.add(BET_MATCH_DATA_KEY + parlaysProvider + "-" + hedgingProvider, Jsons.encode(dto), dto.avgProfit);
+					opsForZSet.add(key, Jsons.encode(dto), dto.avgProfit);
 				}
 			});
 

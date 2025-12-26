@@ -24,6 +24,12 @@ public enum MetaType implements ValueProxyImpl<MetaType, Integer>, Visible {
 	game(0, "游戏配置", State.INTERNAL, false, true, GAME),
 	/** 游戏供应商配置 */
 	bet_config(1, "游戏供应商配置", State.PROTECTED, false, false, USER),
+	/**
+	 * 基础返点配置
+	 *
+	 * @see com.bojiu.webapp.user.dto.BaseRateConifg
+	 */
+	base_rate_config(2, "基础返点配置", State.PROTECTED, true, false, USER),
 	/** 数据库升级标记 */
 	db_upgrade(3, "全局账号配置", State.PROTECTED, true, false, USER),
 	;

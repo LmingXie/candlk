@@ -44,6 +44,8 @@ public interface AdminI18nKey extends BaseI18nKey {
 	String UID_VALID = "uid.valid";
 	/** 正在刷新中，请稍后重试。 */
 	String REFRESHING = "refreshing";
+	/** {0}不能大于{1}！ */
+	String VALIDATE_LE = "@validate.range.le.invalid";
 	/** 审核意见不能为空！ */
 	String REVIEW_REMARK_NOT_NULL = "review.remark.not.null";
 	/** 跨地域发放商户推广佣金失败 */
