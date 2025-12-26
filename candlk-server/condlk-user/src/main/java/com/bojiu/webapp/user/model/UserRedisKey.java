@@ -8,7 +8,11 @@ public interface UserRedisKey extends RedisKey {
 	String BET_SYNC_RELAY = "betSyncRelay";
 	/** 从厂商拉取的游戏赔率列表 < (String) BetProvider, List<GameDTO> > */
 	String GAME_BETS_PERFIX = "gameBets";
-	/** 推荐匹配列表 */
+	/** 推荐匹配列表 ZSet < $info, $score > */
 	String BET_MATCH_DATA_KEY = "betMatchData:";
+	/** 对冲方案自增ID（String） */
+	String HEDGING_ID_INCR_KEY = "hedgingIncr";
+	/** 存档的对冲方案 ZSet < $info, $id > */
+	String HEDGING_LIST_KEY = "hedgingIncr";
 
 }

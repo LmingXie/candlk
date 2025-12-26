@@ -3,7 +3,11 @@ package com.bojiu.webapp.user.dto;
 import java.util.ArrayList;
 import java.util.List;
 
+import com.bojiu.common.redis.RedisUtil;
+import com.bojiu.context.model.RedisKey;
+import com.bojiu.webapp.base.entity.BaseEntity;
 import com.bojiu.webapp.user.dto.GameDTO.OddsInfo;
+import com.bojiu.webapp.user.model.UserRedisKey;
 import lombok.*;
 import lombok.extern.slf4j.Slf4j;
 
@@ -12,7 +16,7 @@ import lombok.extern.slf4j.Slf4j;
 @Setter
 @Getter
 @NoArgsConstructor
-public class HedgingDTO {
+public class HedgingDTO extends BaseEntity {
 
 	/** 串子/串关 */
 	public Odds[] parlays;
@@ -20,6 +24,14 @@ public class HedgingDTO {
 	public HedgingDTO(Odds[] parlays, BaseRateConifg baseRateConifg) {
 		this.parlays = parlays;
 		this.baseRate = baseRateConifg;
+	}
+
+	@Override
+	public Long getId() {
+		if (id == null) { // 全局自增ID
+			this.id = RedisUtil.opsForValue().increment(UserRedisKey.HEDGING_ID_INCR_KEY, 1);
+		}
+		return id;
 	}
 
 	/** 基础返水配置 */

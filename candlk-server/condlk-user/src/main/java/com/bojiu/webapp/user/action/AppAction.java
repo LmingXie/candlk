@@ -11,20 +11,28 @@ import com.bojiu.common.redis.RedisUtil;
 import com.bojiu.common.web.Page;
 import com.bojiu.common.web.Ready;
 import com.bojiu.context.auth.Permission;
+import com.bojiu.context.i18n.AdminI18nKey;
 import com.bojiu.context.web.Jsons;
 import com.bojiu.context.web.ProxyRequest;
 import com.bojiu.webapp.user.dto.BaseRateConifg;
 import com.bojiu.webapp.user.dto.HedgingDTO;
+import com.bojiu.webapp.user.entity.Emp;
+import com.bojiu.webapp.user.entity.Meta;
+import com.bojiu.webapp.user.form.MetaForm;
 import com.bojiu.webapp.user.form.query.HedgingQuery;
+import com.bojiu.webapp.user.service.GlobalCacheSyncService;
 import com.bojiu.webapp.user.service.MetaService;
 import lombok.extern.slf4j.Slf4j;
 import me.codeplayer.util.CollectionUtil;
+import me.codeplayer.util.X;
 import org.springframework.data.redis.core.ZSetOperations;
+import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.annotation.*;
 
 import static com.bojiu.webapp.base.entity.Merchant.PLATFORM_ID;
 import static com.bojiu.webapp.user.model.MetaType.base_rate_config;
 import static com.bojiu.webapp.user.model.UserRedisKey.BET_MATCH_DATA_KEY;
+import static com.bojiu.webapp.user.model.UserRedisKey.HEDGING_LIST_KEY;
 
 @Slf4j
 @RestController
@@ -42,16 +50,16 @@ public class AppAction {
 
 	static final Double DEFAULT_MIN_SCORE = -Double.MAX_VALUE, DEFAULT_MAX_SCORE = Double.MAX_VALUE;
 
-	@Ready(value = "推荐方案列表", merchantIdRequired = false)
+	@Ready(value = "推荐/存档方案列表", merchantIdRequired = false)
 	@GetMapping("/list")
 	@Permission(Permission.NONE)
 	public Messager<Page<HedgingDTO>> list(ProxyRequest q, HedgingQuery query) {
 		I18N.assertNotNull(query.a);
 		I18N.assertNotNull(query.b);
 		final Page<HedgingDTO> page = q.getPage();
-		final String key = BET_MATCH_DATA_KEY + query.a.name() + "-" + query.b.name();
+		final String key = Objects.equals(query.type, 1) ? HEDGING_LIST_KEY : BET_MATCH_DATA_KEY + query.a.name() + "-" + query.b.name();
 		final List<Object> scores = RedisUtil.execInPipeline(redisOps -> {
-			ZSetOperations<String, String> opsForZSet = redisOps.opsForZSet();
+			final ZSetOperations<String, String> opsForZSet = redisOps.opsForZSet();
 			opsForZSet.rangeByScore(key, DEFAULT_MIN_SCORE, DEFAULT_MAX_SCORE, page.offset(), page.getSize());
 			opsForZSet.count(key, DEFAULT_MIN_SCORE, DEFAULT_MAX_SCORE);
 		});
@@ -62,7 +70,15 @@ public class AppAction {
 		return Messager.exposeData(page);
 	}
 
-	// TODO: 2025/12/25 修改/保存方案到Redis
+	@Ready("保存推荐方案")
+	@PostMapping("/save")
+	@Permission(Permission.NONE)
+	public Messager<Meta> save(ProxyRequest q, String value) {
+		final BaseRateConifg baseRateConifg = metaService.getCachedParsedValue(PLATFORM_ID, base_rate_config, BaseRateConifg.class);
+		final HedgingDTO dto = Jsons.parseObject(value, HedgingDTO.class).flush(baseRateConifg);
+		RedisUtil.opsForZSet().incrementScore(HEDGING_LIST_KEY, value, dto.getId());
+		return Messager.OK();
+	}
 
 	// TODO: 2025/12/25 定时刷新保存的方案（可结合变化的赔率刷新）
 

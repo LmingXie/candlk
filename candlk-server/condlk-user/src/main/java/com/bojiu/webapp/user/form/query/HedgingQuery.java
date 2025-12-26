@@ -13,4 +13,7 @@ public class HedgingQuery {
 	/** 对冲平台 */
 	public BetProvider b;
 
+	/** 方案类型（0=推荐方案；1=存档方案） */
+	public Integer type;
+
 }
