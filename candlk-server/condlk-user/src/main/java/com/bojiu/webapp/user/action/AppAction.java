@@ -12,6 +12,7 @@ import com.bojiu.common.web.Page;
 import com.bojiu.common.web.Ready;
 import com.bojiu.context.auth.Permission;
 import com.bojiu.context.i18n.AdminI18nKey;
+import com.bojiu.context.model.RedisKey;
 import com.bojiu.context.web.Jsons;
 import com.bojiu.context.web.ProxyRequest;
 import com.bojiu.webapp.user.dto.BaseRateConifg;
@@ -20,6 +21,7 @@ import com.bojiu.webapp.user.entity.Emp;
 import com.bojiu.webapp.user.entity.Meta;
 import com.bojiu.webapp.user.form.MetaForm;
 import com.bojiu.webapp.user.form.query.HedgingQuery;
+import com.bojiu.webapp.user.model.UserRedisKey;
 import com.bojiu.webapp.user.service.GlobalCacheSyncService;
 import com.bojiu.webapp.user.service.MetaService;
 import lombok.extern.slf4j.Slf4j;
@@ -73,16 +75,33 @@ public class AppAction {
 	@Ready("保存推荐方案")
 	@PostMapping("/save")
 	@Permission(Permission.NONE)
-	public Messager<Meta> save(ProxyRequest q, String value) {
+	public Messager<Void> save(ProxyRequest q, String value) {
+		return RedisUtil.fastAttemptInLock(RedisKey.USER_OP_LOCK_PREFIX, () -> {
+			final BaseRateConifg baseRateConifg = metaService.getCachedParsedValue(PLATFORM_ID, base_rate_config, BaseRateConifg.class);
+			final HedgingDTO dto = Jsons.parseObject(value, HedgingDTO.class).flush(baseRateConifg);
+			if (dto.hasValidId()) {
+				RedisUtil.doInTransaction(redisOps -> {
+					ZSetOperations<String, String> opsForZSet = redisOps.opsForZSet();
+					final Long id = dto.getId();
+					opsForZSet.removeRange(HEDGING_LIST_KEY, id, id); // 删除旧数据
+					opsForZSet.incrementScore(HEDGING_LIST_KEY, value, id); // 添加新数据
+				});
+			} else {
+				RedisUtil.opsForZSet().incrementScore(HEDGING_LIST_KEY, value, dto.getId());
+			}
+			return Messager.OK();
+		});
+	}
+
+	@Ready("计算利润")
+	@PostMapping("/calc")
+	@Permission(Permission.NONE)
+	public Messager<HedgingDTO> calc(ProxyRequest q, String value) {
 		final BaseRateConifg baseRateConifg = metaService.getCachedParsedValue(PLATFORM_ID, base_rate_config, BaseRateConifg.class);
-		final HedgingDTO dto = Jsons.parseObject(value, HedgingDTO.class).flush(baseRateConifg);
-		RedisUtil.opsForZSet().incrementScore(HEDGING_LIST_KEY, value, dto.getId());
-		return Messager.OK();
+		return Messager.exposeData(Jsons.parseObject(value, HedgingDTO.class).flush(baseRateConifg));
 	}
 
 	// TODO: 2025/12/25 定时刷新保存的方案（可结合变化的赔率刷新）
-
-	// TODO: 2025/12/25 提供赔率计算接口（前端修改后通过此接口重新计算利润以及下一场所需投注）
 
 	// TODO: 2025/12/25 跟踪赛事结果并结算后续场次的奖金
 

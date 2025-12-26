@@ -11,6 +11,9 @@ public interface RedisKey {
 	@Permanent
 	String APP_VERSION_PREFIX = "appVersion:";
 
+
+	/** 用户操作分布式锁前缀 */
+	String USER_OP_LOCK_PREFIX = "user:lock:";
 	/**
 	 * 商户站点域名 Hash
 	 * <p> < "域名", 商户ID >

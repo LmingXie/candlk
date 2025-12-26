@@ -213,13 +213,17 @@ public class HedgingDTO extends BaseEntity {
 
 	/** 根据当前返水配置刷新方案 */
 	public HedgingDTO flush(BaseRateConifg baseRate) {
+		return flush(baseRate, null);
+	}
+
+	public HedgingDTO flush(BaseRateConifg baseRate, double[] hedgingCoins) {
 		this.aInCoin = null;
 		this.aRebateCoin = null;
 		this.baseRate = baseRate;
 		this.loss = null;
 		this.win = null;
 		this.hedgingCoins = null;
-		calcAvgProfitAndCache(getHedgingCoins());
+		calcAvgProfitAndCache(hedgingCoins == null ? getHedgingCoins() : hedgingCoins);
 		return this;
 	}
 
