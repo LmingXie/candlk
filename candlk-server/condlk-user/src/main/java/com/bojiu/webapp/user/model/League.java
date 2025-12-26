@@ -123,4 +123,6 @@ public interface League {
 	String EnglandSouthernLeagueSouth = "英格兰南部超级联赛(南部)";
 	String EnglandSouthernLeagueCentral = "英格兰南部超级联赛(中部)";
 
+	String JapanWomenSUniversityFootballChampionship = "日本女子大学足球锦标赛";
+
 }

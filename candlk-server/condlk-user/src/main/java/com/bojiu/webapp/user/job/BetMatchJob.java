@@ -1,5 +1,6 @@
 package com.bojiu.webapp.user.job;
 
+import java.text.NumberFormat;
 import java.util.*;
 import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.ThreadPoolExecutor;
@@ -15,6 +16,7 @@ import com.bojiu.webapp.user.dto.*;
 import com.bojiu.webapp.user.model.BetProvider;
 import com.bojiu.webapp.user.service.BetMatchService;
 import lombok.extern.slf4j.Slf4j;
+import me.codeplayer.util.NumberUtil;
 import me.codeplayer.util.StringUtil;
 import org.apache.commons.lang3.tuple.Pair;
 import org.springframework.context.annotation.Configuration;
@@ -43,16 +45,21 @@ public class BetMatchJob {
 	public void run() {
 		long startTime = System.currentTimeMillis();
 		final int parlaysSize = 3; // 串关大小（3场比赛为一组）
+		final NumberFormat format = NumberFormat.getInstance();
 		for (Pair<BetProvider, BetProvider> pair : matchPair) {
+			long beginTime = System.currentTimeMillis();
 			final String parlaysProvider = pair.getKey().name(), hedgingProvider = pair.getValue().name();
 			// 获取A平台到B平台赛事的映射
 			final Map<GameDTO, GameDTO> gameMapper = betMatchService.getGameMapper(pair);
-			log.info("查询赛事映射完成，耗时：{}ms", System.currentTimeMillis() - startTime);
+			log.info("【{}】->【{}】进行赛事映射完成，总：{}", parlaysProvider, hedgingProvider, gameMapper.size());
 
-			startTime = System.currentTimeMillis();
-			final HedgingDTO[] globalTop = betMatchService.match(gameMapper, parlaysSize, 1000);
+			final Pair<HedgingDTO[], Long> topNPair = betMatchService.match(gameMapper, parlaysSize, 1000);
 			// 缓存匹配结果
-			RedisUtil.opsForHash().put(BET_MATCH_DATA_KEY, parlaysProvider + "-" + hedgingProvider, Jsons.encode(globalTop));
+			final HedgingDTO[] topN = topNPair.getKey();
+			RedisUtil.opsForHash().put(BET_MATCH_DATA_KEY, parlaysProvider + "-" + hedgingProvider, Jsons.encode(topN));
+
+			log.info("【{}】->【{}】匹配结束，共【{}】种组合，计算最佳结果：{}，耗时：{} ms", parlaysProvider, hedgingProvider,
+					format.format(topNPair.getValue()), topN.length, System.currentTimeMillis() - beginTime);
 		}
 
 		log.info("【刷新推荐串子】完成，耗时：{} ms", System.currentTimeMillis() - startTime);

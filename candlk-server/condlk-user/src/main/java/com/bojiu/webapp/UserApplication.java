@@ -11,7 +11,7 @@ import org.springframework.scheduling.annotation.EnableScheduling;
  * @see com.bojiu.context.config.WebMvcConfig
  */
 @Slf4j
-// @EnableScheduling TODO 开启定时任务
+// @EnableScheduling // TODO 开启定时任务
 @SpringBootApplication(scanBasePackages = Context.BASE_PACKAGE, nameGenerator = ExtendAnnotationBeanNameGenerator.class)
 public class UserApplication extends BaseApplication {
 

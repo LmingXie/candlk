@@ -62,7 +62,7 @@ public final class LocalTopNArray {
 				Arrays.sort(topN, Comparator.comparingDouble(o -> o.avgProfit));
 				minScore = topN[0].avgProfit;
 				isSuperSize = true;
-				log.info("达到额定容量，进入超容量模式：minScore={}", minScore);
+				// log.info("达到额定容量，进入超容量模式：minScore={}", minScore);
 			}
 			return;
 		}
@@ -96,7 +96,7 @@ public final class LocalTopNArray {
 		// 重置最低分和缓冲区容量
 		minScore = topN[0].avgProfit;
 		tempSize = 0;
-		log.info("合并 tempBuffer 到 topN：minScore={}", minScore);
+		// log.info("合并 tempBuffer 到 topN：minScore={}", minScore);
 	}
 
 	transient HedgingDTO[] resultCache;

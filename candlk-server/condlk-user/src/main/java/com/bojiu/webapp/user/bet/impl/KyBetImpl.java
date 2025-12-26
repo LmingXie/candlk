@@ -334,6 +334,7 @@ public class KyBetImpl extends BaseBetApiImpl {
 			case "比利时甲级联赛A" -> League.BelgiumFirstDivisionA;
 			case "希腊超级联赛甲级" -> League.GreeceSuperLeague1;
 			case "希腊超级联赛乙级" -> League.GreeceSuperLeague2;
+			case "日本大学女子锦标赛" -> League.JapanWomenSUniversityFootballChampionship;
 
 			// 默认处理：如果无法精准匹配，尝试通用的字符替换逻辑（注意：这依然返回字符串）
 			default -> {

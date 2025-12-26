@@ -47,7 +47,7 @@ public class BetMatchService {
 								&& aGame.league.equals(b.league) // 要求联赛名称一致
 				);
 				if (bGame != null) {
-					log.debug("队伍名匹配成功：{}-{}\t{}-{}", teamHome, teamClient, bGame.teamHome, bGame.teamClient);
+					// log.debug("队伍名匹配成功：{}-{}\t{}-{}", teamHome, teamClient, bGame.teamHome, bGame.teamClient);
 					gameMapper.put(aGame, bGame);
 				} else {
 					// if (aGame.teamHome.equals("阿尔菲斯") && aGame.teamClient.equals("阿尔艾利吉达")) {
@@ -59,8 +59,8 @@ public class BetMatchService {
 					final GameDTO bGameDTO = matchPrefixOrSuffix(games_, teamHome), bGameDTO2 = matchPrefixOrSuffix(games_, teamClient);
 					if (bGameDTO != null && bGameDTO.equals(bGameDTO2)) {
 						gameMapper.put(aGame, bGameDTO);
-						log.debug("前缀匹配成功：{}-{}\t{}-{}\t{}-{}", teamHome, teamClient, bGameDTO.teamHome, bGameDTO.teamClient,
-								bGameDTO2.teamHome, bGameDTO2.teamClient);
+						// log.debug("前缀匹配成功：{}-{}\t{}-{}\t{}-{}", teamHome, teamClient, bGameDTO.teamHome, bGameDTO.teamClient,
+						// 		bGameDTO2.teamHome, bGameDTO2.teamClient);
 						continue;
 					}
 
@@ -68,7 +68,7 @@ public class BetMatchService {
 					final GameDTO matchedGame = TeamMatcher.findMatchedGame(aGame, games_);
 					if (matchedGame != null) {
 						gameMapper.put(aGame, matchedGame);
-						log.debug("查找别名库匹配成功：{}-{}\t{}-{}", teamHome, teamClient, matchedGame.teamHome, matchedGame.teamClient);
+						// log.debug("查找别名库匹配成功：{}-{}\t{}-{}", teamHome, teamClient, matchedGame.teamHome, matchedGame.teamClient);
 						continue;
 					}
 
@@ -121,7 +121,7 @@ public class BetMatchService {
 	static final ThreadPoolExecutor subTaskThreadPool = TaskUtils.newThreadPool(4, 4
 			, 2048, "game-bet-match-", new ThreadPoolExecutor.AbortPolicy());
 
-	public HedgingDTO[] match(Map<GameDTO, GameDTO> gameMapper, int parlaysSize, int topSize) {
+	public Pair<HedgingDTO[], Long> match(Map<GameDTO, GameDTO> gameMapper, int parlaysSize, int topSize) {
 		// 目前仅支持二串一，三串一，4个以上串子所需算力过大
 		if (parlaysSize < 2 || parlaysSize > 3) {
 			throw new IllegalArgumentException("串子大小参数错误：" + parlaysSize);
@@ -187,13 +187,11 @@ public class BetMatchService {
 			}
 		}
 
-		log.info("共计进行了{}个组合的计算", counter);
-
 		// 按 avgProfit 倒序（最高分在最前）
 		Arrays.sort(merged, Comparator.comparingDouble((HedgingDTO o) -> o.avgProfit).reversed());
 
 		// 截断保留 TopN
-		return merged.length > topSize ? Arrays.copyOfRange(merged, 0, topSize) : merged;
+		return Pair.of(merged.length > topSize ? Arrays.copyOfRange(merged, 0, topSize) : merged, counter);
 	}
 
 	/**

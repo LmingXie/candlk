@@ -42,11 +42,11 @@ public class GameBetJob {
 	public void run() throws InterruptedException {
 		final EnumMap<BetProvider, BetApi> enumMap = BetApi.implMapRef.get();
 		final int size = enumMap.size();
-		long startTime = System.currentTimeMillis();
+		final long startTime = System.currentTimeMillis();
 		final CountDownLatch latch = new CountDownLatch(size);
 		for (Map.Entry<BetProvider, BetApi> entry : enumMap.entrySet()) {
+			final BetApi betApi = entry.getValue();
 			smallTaskThreadPool.execute(() -> {
-				BetApi betApi = entry.getValue();
 				try {
 					doQueryAndSyncGameBetsForSingleVendor(betApi);
 				} catch (Throwable e) {
