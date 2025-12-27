@@ -300,8 +300,8 @@ public class KyBetImpl extends BaseBetApiImpl {
 			case "超级联赛国际杯U21(在英格兰)" -> League.PremierLeagueCupU21;
 			case "英格兰北部超级联赛" -> League.EnglandNorthernPremierLeague;
 			case "英格兰北部东区甲级联赛" -> League.EnglandNorthernEastLeague1;
-			case "英格兰南部南区超级联赛" -> League.EnglandSouthernLeagueSouth;
-			case "英格兰南部中区超级联赛" -> League.EnglandSouthernLeagueCentral;
+			case "英格兰南部南区超级联赛", "英格兰南部超级联赛(南部)" -> League.EnglandSouthernLeagueSouth;
+			case "英格兰南部超级联赛(中部)" -> League.EnglandSouthernLeagueCentral;
 			case "超级联赛国际杯(在英格兰)" -> League.PremierLeagueInternationalCupInEngland;
 
 			// 欧洲/国际系列

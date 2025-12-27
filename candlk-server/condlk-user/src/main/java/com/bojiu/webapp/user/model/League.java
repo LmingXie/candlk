@@ -121,7 +121,7 @@ public interface League {
 	String SaudiArabiaLeague1 = "沙特甲组联赛";
 	String AlbaniaLeague1 = "阿尔巴尼亚甲组联赛";
 	String EnglandSouthernLeagueSouth = "英格兰南部超级联赛(南部)";
-	String EnglandSouthernLeagueCentral = "英格兰南部超级联赛(中部)";
+	String EnglandSouthernLeagueCentral = "英格兰南部中区超级联赛";
 
 	String JapanWomenSUniversityFootballChampionship = "日本女子大学足球锦标赛";
 

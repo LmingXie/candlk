@@ -131,6 +131,15 @@ public class TeamMatcher {
 			"奥德阿库,奥林匹克阿克布",
 			"艾积尔奈恩斯,艾尔德里联",
 			"亚布岳夫,阿布洛斯",
+			"富力特城,弗利特伍德",
+			"莎尔福德城,索尔福德城",
+			"卡巴阿斯玛利,卡赫拉巴伊斯梅利亚",
+			"塔拉雅,陆军先锋",
+			"柯尔恩,夸恩",
+			"Harborough Town,哈伯勒镇",
+			"胡森伊尔比德,阿尔胡森",
+			"蓝慕沙,拉姆塔",
+			"史蒂愛文斯城,史蒂爱文斯城",
 	};
 
 	// 2. 预处理后的倒排索引 Map
@@ -162,14 +171,14 @@ public class TeamMatcher {
 	 */
 	public static GameDTO findMatchedGame(GameDTO aGame, List<GameDTO> bGames) {
 		// 预先计算出 A 平台的主客队标准标识
-		final String aHomeId = getStandardName(aGame.teamHome), aClientId = getStandardName(aGame.teamClient);
+		final String aHome = getStandardName(aGame.teamHome), aClient = getStandardName(aGame.teamClient);
 
 		for (GameDTO bGame : bGames) {
-			final String bHomeId = getStandardName(bGame.teamHome), bClientId = getStandardName(bGame.teamClient);
+			final String bHome = getStandardName(bGame.teamHome), bClient = getStandardName(bGame.teamClient);
 
 			// 只需要简单的字符串相等判断 (ID 化比对)
-			final boolean isMatch = (aHomeId.equals(bHomeId) && aClientId.equals(bClientId))
-					|| (aHomeId.equals(bClientId) && aClientId.equals(bHomeId));
+			final boolean isMatch = (aHome.equals(bHome) && aClient.equals(bClient))
+					|| (aHome.equals(bClient) && aClient.equals(bHome));
 
 			if (isMatch) {
 				return bGame;
