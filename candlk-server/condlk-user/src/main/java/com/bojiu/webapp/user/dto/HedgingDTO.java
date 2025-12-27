@@ -143,7 +143,7 @@ public class HedgingDTO extends BaseEntity {
 		return win == null ? win = (getAInCoin() * odds) + (getARebateCoin() * Math.abs(odds - 1)) - baseRate.aPrincipal : win;
 	}
 
-	transient double[] hedgingCoins;
+	protected transient double[] hedgingCoins;
 
 	/** 根据当前的赔率估算在 B平台 对冲的每场投注金额 */
 	public double[] getHedgingCoins() {
@@ -198,6 +198,7 @@ public class HedgingDTO extends BaseEntity {
 		return outs;
 	}
 
+	/**平均利润*/
 	@Getter
 	public double avgProfit;
 

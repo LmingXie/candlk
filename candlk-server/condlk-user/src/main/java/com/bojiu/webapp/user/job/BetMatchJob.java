@@ -2,30 +2,22 @@ package com.bojiu.webapp.user.job;
 
 import java.text.NumberFormat;
 import java.util.*;
-import java.util.concurrent.CountDownLatch;
-import java.util.concurrent.ThreadPoolExecutor;
-import javax.annotation.PostConstruct;
 import javax.annotation.Resource;
 
 import com.bojiu.common.redis.RedisUtil;
-import com.bojiu.common.util.SpringUtil;
 import com.bojiu.context.web.Jsons;
-import com.bojiu.context.web.TaskUtils;
-import com.bojiu.webapp.user.bet.BetApi;
-import com.bojiu.webapp.user.dto.*;
+import com.bojiu.webapp.user.dto.GameDTO;
+import com.bojiu.webapp.user.dto.HedgingDTO;
 import com.bojiu.webapp.user.model.BetProvider;
 import com.bojiu.webapp.user.service.BetMatchService;
 import lombok.extern.slf4j.Slf4j;
-import me.codeplayer.util.NumberUtil;
-import me.codeplayer.util.StringUtil;
 import org.apache.commons.lang3.tuple.Pair;
 import org.springframework.context.annotation.Configuration;
-import org.springframework.data.redis.core.HashOperations;
 import org.springframework.data.redis.core.ZSetOperations;
 import org.springframework.scheduling.annotation.Scheduled;
 
 import static com.bojiu.webapp.user.model.BetProvider.*;
-import static com.bojiu.webapp.user.model.UserRedisKey.*;
+import static com.bojiu.webapp.user.model.UserRedisKey.BET_MATCH_DATA_KEY;
 
 /** 刷新推荐串子组合 */
 @Slf4j
@@ -41,6 +33,14 @@ public class BetMatchJob {
 			Pair.of(HG, D1CE),
 			Pair.of(D1CE, KY)
 	);
+	public static final Map<String, String> ALL_PAIR = new HashMap<>(matchPair.size(), 1F);
+
+	static {
+		for (Pair<BetProvider, BetProvider> pair : matchPair) {
+			final BetProvider key = pair.getKey(), value = pair.getValue();
+			ALL_PAIR.put(key.name() + "-" + value.name(), key.getLabel() + "->" + value.getLabel());
+		}
+	}
 
 	@Scheduled(cron = "${service.cron.BetMatchJob:0 0/3 * * * ?}")
 	public void run() {
