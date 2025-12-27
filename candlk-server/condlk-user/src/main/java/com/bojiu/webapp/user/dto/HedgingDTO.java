@@ -4,7 +4,7 @@ import java.util.ArrayList;
 import java.util.List;
 
 import com.bojiu.common.redis.RedisUtil;
-import com.bojiu.context.model.RedisKey;
+import com.bojiu.context.web.Jsons;
 import com.bojiu.webapp.base.entity.BaseEntity;
 import com.bojiu.webapp.user.dto.GameDTO.OddsInfo;
 import com.bojiu.webapp.user.model.UserRedisKey;
@@ -198,7 +198,7 @@ public class HedgingDTO extends BaseEntity {
 		return outs;
 	}
 
-	/**平均利润*/
+	/** 平均利润 */
 	@Getter
 	public double avgProfit;
 
@@ -226,6 +226,13 @@ public class HedgingDTO extends BaseEntity {
 		this.hedgingCoins = null;
 		calcAvgProfitAndCache(hedgingCoins == null ? getHedgingCoins() : hedgingCoins);
 		return this;
+	}
+
+	public transient String json;
+
+	public void toJson() {
+		this.getId(); // 初始化ID
+		json = Jsons.encode(this);
 	}
 
 }

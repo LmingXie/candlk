@@ -5,7 +5,6 @@ import java.util.*;
 import javax.annotation.Resource;
 
 import com.bojiu.common.redis.RedisUtil;
-import com.bojiu.context.web.Jsons;
 import com.bojiu.webapp.user.dto.GameDTO;
 import com.bojiu.webapp.user.dto.HedgingDTO;
 import com.bojiu.webapp.user.model.BetProvider;
@@ -55,14 +54,17 @@ public class BetMatchJob {
 			log.info("【{}】->【{}】进行赛事映射完成，总【{}】场。", parlaysProvider, hedgingProvider, gameMapper.size());
 
 			final Pair<HedgingDTO[], Long> topNPair = betMatchService.match(gameMapper, parlaysSize, 1000);
-			// 缓存匹配结果
 			final HedgingDTO[] topN = topNPair.getKey();
+			for (HedgingDTO dto : topN) {
+				dto.toJson();
+			}
+			// 缓存匹配结果
 			RedisUtil.doInTransaction(redisOps -> {
 				final ZSetOperations<String, String> opsForZSet = redisOps.opsForZSet();
 				final String key = BET_MATCH_DATA_KEY + parlaysProvider + "-" + hedgingProvider;
-				redisOps.delete(key);
+				redisOps.delete(key); // 删除历史数据
 				for (HedgingDTO dto : topN) {
-					opsForZSet.add(key, Jsons.encode(dto), dto.avgProfit);
+					opsForZSet.add(key, dto.json, dto.avgProfit);
 				}
 			});
 

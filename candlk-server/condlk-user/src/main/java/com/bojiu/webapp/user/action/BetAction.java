@@ -41,9 +41,10 @@ public class BetAction {
 	@GetMapping("/list")
 	@Permission(Permission.NONE)
 	public Messager<Page<HedgingDTO>> list(ProxyRequest q, HedgingQuery query) {
-		I18N.assertNotNull(query.pair);
+		boolean searchAll = Objects.equals(query.type, 1);
+		I18N.assertTrue(searchAll || query.pair != null);
 		final Page<HedgingDTO> page = q.getPage();
-		final String key = Objects.equals(query.type, 1) ? HEDGING_LIST_KEY : BET_MATCH_DATA_KEY + query.pair;
+		final String key = searchAll ? HEDGING_LIST_KEY : BET_MATCH_DATA_KEY + query.pair;
 		final List<Object> scores = RedisUtil.execInPipeline(redisOps -> {
 			final ZSetOperations<String, String> opsForZSet = redisOps.opsForZSet();
 			opsForZSet.rangeByScore(key, DEFAULT_MIN_SCORE, DEFAULT_MAX_SCORE, page.offset(), page.getSize());
