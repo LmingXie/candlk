@@ -25,8 +25,7 @@ import org.springframework.web.bind.annotation.*;
 
 import static com.bojiu.webapp.base.entity.Merchant.PLATFORM_ID;
 import static com.bojiu.webapp.user.model.MetaType.base_rate_config;
-import static com.bojiu.webapp.user.model.UserRedisKey.BET_MATCH_DATA_KEY;
-import static com.bojiu.webapp.user.model.UserRedisKey.HEDGING_LIST_KEY;
+import static com.bojiu.webapp.user.model.UserRedisKey.*;
 
 @Slf4j
 @RestController
@@ -35,8 +34,6 @@ public class BetAction {
 
 	@Resource
 	MetaService metaService;
-
-	static final Double DEFAULT_MIN_SCORE = -Double.MAX_VALUE, DEFAULT_MAX_SCORE = Double.MAX_VALUE;
 
 	@Ready(value = "推荐/存档方案列表", merchantIdRequired = false)
 	@GetMapping("/list")
@@ -53,7 +50,7 @@ public class BetAction {
 		});
 		final Set<String> values = (Set<String>) scores.get(0);
 		final BaseRateConifg baseRateConifg = searchAll ? null : metaService.getCachedParsedValue(PLATFORM_ID, base_rate_config, BaseRateConifg.class);
-		page.setList(CollectionUtil.toList(values, o -> toVO(o, baseRateConifg)));
+		page.setList(CollectionUtil.toList(values, o -> HedgingVO.of(o, baseRateConifg)));
 		page.setTotal((Long) scores.get(1));
 		return Messager.exposeData(page);
 	}
@@ -64,7 +61,7 @@ public class BetAction {
 	public Messager<Void> save(ProxyRequest q, String value) {
 		return RedisUtil.fastAttemptInLock(RedisKey.USER_OP_LOCK_PREFIX, () -> {
 			final BaseRateConifg baseRateConifg = metaService.getCachedParsedValue(PLATFORM_ID, base_rate_config, BaseRateConifg.class);
-			final HedgingDTO dto = toVO(value, baseRateConifg);
+			final HedgingDTO dto = HedgingVO.of(value, baseRateConifg);
 			if (dto.hasValidId()) {
 				final Long id = dto.getId();
 				if (!RedisUtil.opsForZSet().rangeByScore(HEDGING_LIST_KEY, id, id).isEmpty()) {
@@ -103,14 +100,14 @@ public class BetAction {
 	@PostMapping("/calc")
 	@Permission(Permission.NONE)
 	public Messager<HedgingVO> calc(ProxyRequest q, String value) {
-		return Messager.exposeData(toVO(value, null));
+		return Messager.exposeData(HedgingVO.of(value));
 	}
 
 	@Ready("计算利润并保存")
 	@PostMapping("/calcSave")
 	@Permission(Permission.NONE)
 	public Messager<HedgingVO> calcSave(ProxyRequest q, String value) {
-		HedgingVO vo = toVO(value, null);
+		HedgingVO vo = HedgingVO.of(value, null);
 		final Long id = vo.getId();
 		final String newValue = Jsons.encode(vo);
 		RedisUtil.doInTransaction(redisOps -> {
@@ -121,16 +118,9 @@ public class BetAction {
 		return Messager.exposeData(vo);
 	}
 
-	private static HedgingVO toVO(String value, BaseRateConifg baseRateConifg) {
-		HedgingVO vo = Jsons.parseObject(value, HedgingVO.class);
-		vo.flush(baseRateConifg);
-		return vo;
-	}
-
-	// TODO: 2025/12/25 定时刷新保存的方案（可结合变化的赔率刷新）
-
 	// TODO: 2025/12/25 跟踪赛事结果并结算后续场次的奖金
 
 	// TODO: 2025/12/26 赔率需按ID拆分缓存，避免删除无法同步到的赔率数据
 
+	// TODO: 2025/12/29 同步赛事结果，若串子输则直接标记为结束
 }

@@ -60,6 +60,9 @@ public class HedgingDTO extends BaseEntity {
 		@Getter
 		public Long gameOpenTime;
 
+		/** 是否已锁定赔率（锁定后将不再自动更新赔率） */
+		public Boolean lock;
+
 		public Odds(double aRate, double bRate) {
 			this.aRate = aRate;
 			this.bRate = bRate;
@@ -71,6 +74,7 @@ public class HedgingDTO extends BaseEntity {
 			this.oddsIdx = oddsIdx;
 			this.aIdx = aIdx;
 			this.bIdx = bIdx;
+			this.lock = false;
 			return this;
 		}
 
