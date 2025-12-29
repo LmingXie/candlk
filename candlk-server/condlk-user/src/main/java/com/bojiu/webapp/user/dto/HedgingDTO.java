@@ -10,6 +10,7 @@ import com.bojiu.webapp.user.dto.GameDTO.OddsInfo;
 import com.bojiu.webapp.user.model.UserRedisKey;
 import lombok.*;
 import lombok.extern.slf4j.Slf4j;
+import org.jspecify.annotations.Nullable;
 
 /** 预估对冲算法类 */
 @Slf4j
@@ -217,10 +218,12 @@ public class HedgingDTO extends BaseEntity {
 		return flush(baseRate, null);
 	}
 
-	public HedgingDTO flush(BaseRateConifg baseRate, double[] hedgingCoins) {
+	public HedgingDTO flush(@Nullable BaseRateConifg baseRate, double[] hedgingCoins) {
 		this.aInCoin = null;
 		this.aRebateCoin = null;
-		this.baseRate = baseRate;
+		if (baseRate != null) {
+			this.baseRate = baseRate;
+		}
 		this.loss = null;
 		this.win = null;
 		this.hedgingCoins = null;
