@@ -86,7 +86,7 @@ public class GameBetJob {
 					if (!hedgingList.isEmpty()) {
 						try {
 							final Map<Long, ScoreResult> scoreResult = gameApi.getScoreResult();
-							flushHedgingBet(provider, gameBets, hedgingList, scoreResult); // 刷新正在进行中的串子赔率
+							this.flushHedgingBet(provider, gameBets, hedgingList, scoreResult);
 						} catch (Throwable e) {
 							log.error("厂商【{}】刷新正在进行中的串子赔率异常", providerName, e);
 						}
@@ -98,6 +98,7 @@ public class GameBetJob {
 		}
 	}
 
+	/** 刷新正在进行中的串子赔率/结算赛果 */
 	public void flushHedgingBet(BetProvider provider, Set<GameDTO> gameBets, LinkedHashSet<String> hedgingList, Map<Long, ScoreResult> scoreResult) {
 		Date now = new Date();
 		final Map<Long, String> updates = new HashMap<>(hedgingList.size(), 1F);
@@ -143,9 +144,8 @@ public class GameBetJob {
 					vo.update = true;
 				}
 			}
-			// 针对开赛时间晚于当前时间的赛事，重新计算投注金额（一结束的赛事投注金额确定，只能手动修改）
-			// TODO: 2025/12/29 需结合Excel实现第二步和第三步的数据更新
-			// vo.calcHedgingCoinsLock(now);
+			// 针对开赛时间晚于当前时间的赛事，重新计算投注金额（已结束的赛事投注金额确定，只能手动修改）
+			vo.flushHedgingCoinsLock(now);
 			if (vo.update != null && vo.update) {
 				updates.put(vo.getId(), Jsons.encode(vo));
 			}
