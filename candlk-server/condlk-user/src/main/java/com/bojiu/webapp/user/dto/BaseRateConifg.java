@@ -2,11 +2,9 @@ package com.bojiu.webapp.user.dto;
 
 import com.bojiu.common.context.I18N;
 import com.bojiu.context.i18n.AdminI18nKey;
-import com.bojiu.context.i18n.UserI18nKey;
 import com.bojiu.webapp.base.entity.MetaValue;
 import lombok.Getter;
 import lombok.Setter;
-import me.codeplayer.util.Arith;
 
 /** 基础返点配置 */
 @Setter

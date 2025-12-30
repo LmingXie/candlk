@@ -142,6 +142,7 @@ public class GameDTO extends TimeBasedEntity {
 		/** 赔率列表（包含本金）：[ 主队/是/单, 客队/否/双, 平局赔率 ] */
 		public transient Double[] rates;
 
+		/** 获取赔率对子 */
 		public Double[] getRates() {
 			return rates == null ? (rates = switch (type) {
 				case R, HR, OU, HOU, TS, EO -> new Double[] { hRate, cRate };

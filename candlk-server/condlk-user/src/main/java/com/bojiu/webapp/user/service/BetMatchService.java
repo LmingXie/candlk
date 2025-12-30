@@ -2,18 +2,15 @@ package com.bojiu.webapp.user.service;
 
 import java.util.*;
 import java.util.concurrent.*;
-
 import javax.annotation.Resource;
 
 import com.bojiu.common.redis.RedisUtil;
 import com.bojiu.context.web.Jsons;
 import com.bojiu.context.web.TaskUtils;
-import com.bojiu.webapp.base.entity.Merchant;
 import com.bojiu.webapp.user.dto.*;
 import com.bojiu.webapp.user.dto.GameDTO.OddsInfo;
 import com.bojiu.webapp.user.dto.HedgingDTO.Odds;
 import com.bojiu.webapp.user.model.BetProvider;
-import com.bojiu.webapp.user.model.MetaType;
 import lombok.extern.slf4j.Slf4j;
 import me.codeplayer.util.ArrayUtil;
 import me.codeplayer.util.CollectionUtil;
@@ -52,7 +49,7 @@ public class BetMatchService {
 				final String teamHome = aGame.teamHome, teamClient = aGame.teamClient;
 				GameDTO bGame = CollectionUtil.findFirst(bGames, b ->
 						(teamHome.contains(b.teamHome) || b.teamHome.contains(teamHome)
-								|| teamClient.contains(b.teamHome) || b.teamClient.contains(teamClient))
+								|| teamClient.contains(b.teamClient) || b.teamClient.contains(teamClient))
 								&& aGame.league.equals(b.league) // 要求联赛名称一致
 				);
 				if (bGame != null) {

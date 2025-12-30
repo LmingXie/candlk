@@ -84,7 +84,12 @@ public class GameBetJob {
 					});
 					final LinkedHashSet<String> hedgingList = X.castType(objects.get(2));
 					if (!hedgingList.isEmpty()) {
-						flushHedgingBet(provider, gameBets, hedgingList); // 刷新正在进行中的串子赔率
+						try {
+							final Map<Long, ScoreResult> scoreResult = gameApi.getScoreResult();
+							flushHedgingBet(provider, gameBets, hedgingList, scoreResult); // 刷新正在进行中的串子赔率
+						} catch (Throwable e) {
+							log.error("厂商【{}】刷新正在进行中的串子赔率异常", providerName, e);
+						}
 					}
 					log.info("厂商【{}】同步游戏赔率成功，数量={}，耗时：{} ms", providerName, gameBets.size(), begin.lastTime.getTime() - beginTime);
 				}
@@ -93,7 +98,7 @@ public class GameBetJob {
 		}
 	}
 
-	public void flushHedgingBet(BetProvider provider, Set<GameDTO> gameBets, LinkedHashSet<String> hedgingList) {
+	public void flushHedgingBet(BetProvider provider, Set<GameDTO> gameBets, LinkedHashSet<String> hedgingList, Map<Long, ScoreResult> scoreResult) {
 		Date now = new Date();
 		final Map<Long, String> updates = new HashMap<>(hedgingList.size(), 1F);
 		// 查询全部正在进行的串子
@@ -101,7 +106,14 @@ public class GameBetJob {
 			final HedgingVO vo = HedgingVO.of(json);
 			for (HedgingDTO.Odds parlay : vo.parlays) {
 				final GameDTO bGame = parlay.bGame;
-				if (bGame.betProvider != provider/*匹配厂家*/ || X.isValid(parlay.lock)/*锁定*/ || bGame.openTime.after(now) /*未开赛*/) {
+				final boolean isA = parlay.aGame.betProvider == provider, isB = bGame.betProvider == provider;
+				if (isB || isA) {
+					final ScoreResult result = scoreResult.get((isA ? parlay.aGame : bGame).getId()); // 查找赛果
+					if (result != null) {
+						vo.update = parlay.settle(result, isA); // 结算赛果
+					}
+				}
+				if (!isB/*匹配厂家*/ || X.isValid(parlay.lock)/*锁定*/ || bGame.openTime.after(now) /*未开赛*/) {
 					continue;
 				}
 				// 根据id匹配并更新bGame中的赔率（aGame为串子赔率，创建后将不再更新）

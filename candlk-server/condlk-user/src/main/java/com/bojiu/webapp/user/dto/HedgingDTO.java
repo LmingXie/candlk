@@ -6,7 +6,7 @@ import com.bojiu.common.redis.RedisUtil;
 import com.bojiu.context.web.Jsons;
 import com.bojiu.webapp.base.entity.BaseEntity;
 import com.bojiu.webapp.user.dto.GameDTO.OddsInfo;
-import com.bojiu.webapp.user.model.UserRedisKey;
+import com.bojiu.webapp.user.model.*;
 import lombok.*;
 import lombok.extern.slf4j.Slf4j;
 import org.jspecify.annotations.Nullable;
@@ -60,8 +60,144 @@ public class HedgingDTO extends BaseEntity {
 		@Getter
 		public Long gameOpenTime;
 
-		/** 串子平台已结束赛事的赛果（0=全赢；1=赢半；2=输半；3=全输）对冲平台的盈亏基于此计算 */
-		public int[] hedgingResult;
+		/** 串子平台赛果定义：0=全赢；1=全输；2=赢半；3=输半；4=走水(平) [建议增加4处理走水] */
+		public Integer result;
+		/** 全赢 */
+		// static final int ALL_WIN = 0,;
+
+		/**
+		 * 结算赛果
+		 *
+		 * @param scoreResult 赛果
+		 * @param isAResult 是否为A平台的赛果
+		 */
+		public boolean settle(ScoreResult scoreResult, boolean isAResult) {
+			final OddsInfo oddsInfo = isAResult? aGame.getOdds().get(aIdx):aGame.getOdds().get(aIdx);
+			final OddsType type = oddsInfo.getType();
+			// 1. 获取对应进球数（全场或上半场）
+			Integer[] currentScore = (type.type == PeriodType.FULL) ? scoreResult.getScore() : scoreResult.getScoreH();
+
+			if (currentScore == null || currentScore.length < 2) {
+				return false;
+			}
+
+			int homeGoal = currentScore[0];
+			int clientGoal = currentScore[1];
+
+			switch (type) {
+				case R, HR -> {
+					// 解析让球值，例如 "-0.5/1" -> -0.75
+					final double r = parseRatio(oddsInfo.getRatioRate());
+					// 计算净胜球 D = 主队 - 客队
+					final double diff = (double) homeGoal - clientGoal;
+
+					// 如果是投注客队，需要反转差异值（相当于客队-主队）
+					// 假设 isAResult 代表当前处理的是“让球方/左侧球队”
+					double finalDiff = isAResult ? diff : -diff;
+					// 注意：ratioRate 的正负号通常是以主队为基准的，如果投注客队，r也要取反
+					double finalRatio = isAResult ? r : -r;
+
+					this.result = calculateHandicapResult(finalDiff, finalRatio);
+					return true;
+				}
+				case OU, HOU -> {
+					double r = parseRatio(oddsInfo.getRatioRate());
+					double total = (double) homeGoal + clientGoal;
+
+					// isAResult: true为大球(Over)，false为小球(Under)
+					this.result = calculateOverUnderResult(total, r, isAResult);
+					return true;
+				}
+				case M, HM -> {
+					// 独赢盘逻辑
+					if (homeGoal > clientGoal) {
+						this.result = isAResult ? 0 : 1;
+					} else if (homeGoal < clientGoal) {
+						this.result = isAResult ? 1 : 0;
+					} else {
+						this.result = 4; // 走水/平
+					}
+					return true;
+				}
+				default -> {
+					return false;
+				}
+			}
+		}
+
+		/**
+		 * 将多种格式的 ratioRate 转换为 double
+		 * e.g., "0.5/1" -> 0.75, "-1/1.5" -> -1.25, "0.75" -> 0.75
+		 */
+		private double parseRatio(String ratioRate) {
+			if (ratioRate == null || ratioRate.isEmpty()) {
+				return 0;
+			}
+
+			// 处理带 "/" 的情况，如 "0.5/1"
+			if (ratioRate.contains("/")) {
+				String[] parts = ratioRate.split("/");
+				double r1 = Double.parseDouble(parts[0]);
+				double r2 = Double.parseDouble(parts[1]);
+				return (r1 + r2) / 2.0;
+			}
+			// 处理直接数值情况，如 "0.75" 或 "1.5"
+			return Double.parseDouble(ratioRate);
+		}
+
+		/** 让球盘判定 */
+		private int calculateHandicapResult(double diff, double ratio) {
+			double score = diff - ratio; // 净胜球减去让球数
+
+			if (score >= 0.5) {
+				return 0;    // 全赢
+			}
+			if (score == 0.25) {
+				return 2;   // 赢半
+			}
+			if (score == 0) {
+				return 4;      // 走水
+			}
+			if (score == -0.25) {
+				return 3;  // 输半
+			}
+			if (score <= -0.5) {
+				return 1;   // 全输
+			}
+			return 1;
+		}
+
+		/** 大小盘判定 */
+		private int calculateOverUnderResult(double total, double ratio, boolean isOver) {
+			double score = total - ratio;
+			int res;
+
+			if (score >= 0.5) {
+				res = 0;      // 全赢
+			} else if (score == 0.25) {
+				res = 2; // 赢半
+			} else if (score == 0) {
+				res = 4;    // 走水
+			} else if (score == -0.25) {
+				res = 3;// 输半
+			} else {
+				res = 1;                   // 全输
+			}
+
+			// 如果投的是小球(Under)，结果完全反转
+			if (!isOver) {
+				if (res == 0) {
+					res = 1;
+				} else if (res == 1) {
+					res = 0;
+				} else if (res == 2) {
+					res = 3;
+				} else if (res == 3) {
+					res = 2;
+				}
+			}
+			return res;
+		}
 
 		/** 是否已锁定赔率（锁定后将不再自动更新赔率） */
 		public Boolean lock;
