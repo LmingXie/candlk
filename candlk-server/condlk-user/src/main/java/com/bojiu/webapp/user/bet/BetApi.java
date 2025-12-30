@@ -5,6 +5,7 @@ import java.util.*;
 import com.bojiu.common.model.Messager;
 import com.bojiu.common.util.SpringUtil;
 import com.bojiu.webapp.user.dto.GameDTO;
+import com.bojiu.webapp.user.dto.ScoreResult;
 import com.bojiu.webapp.user.model.BetProvider;
 import me.codeplayer.util.LazyCacheLoader;
 import org.slf4j.Logger;
@@ -44,5 +45,8 @@ public interface BetApi {
 
 	/** 转换联赛名称 */
 	String convertLeague(String league);
+
+	/** 获取赛果 */
+	List<ScoreResult> getScoreResult();
 
 }

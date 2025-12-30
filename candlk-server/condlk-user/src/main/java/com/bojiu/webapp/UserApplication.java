@@ -16,6 +16,8 @@ import org.springframework.scheduling.annotation.EnableScheduling;
 public class UserApplication extends BaseApplication {
 
 	public static void main(String[] args) {
+		// 绕过主机名验证：HttpClient 忽略主机名与证书不匹配的问题（必须在VM参数中添加设置）
+		System.setProperty("jdk.internal.httpclient.disableHostnameVerification", "true");
 		startup(UserApplication.class, args);
 	}
 

@@ -1,14 +1,13 @@
 package com.bojiu;
 
-import java.util.*;
+import java.util.List;
+import java.util.Map;
 import javax.annotation.Resource;
 
-import com.bojiu.common.redis.RedisUtil;
 import com.bojiu.context.web.Jsons;
 import com.bojiu.webapp.UserApplication;
 import com.bojiu.webapp.user.bet.BetApi;
-import com.bojiu.webapp.user.dto.GameDTO;
-import com.bojiu.webapp.user.dto.HedgingDTO;
+import com.bojiu.webapp.user.dto.*;
 import com.bojiu.webapp.user.job.BetMatchJob;
 import com.bojiu.webapp.user.job.GameBetJob;
 import com.bojiu.webapp.user.model.BetProvider;
@@ -20,8 +19,6 @@ import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.junit.jupiter.MockitoExtension;
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.test.context.junit.jupiter.SpringExtension;
-
-import static com.bojiu.webapp.user.model.UserRedisKey.GAME_BETS_PERFIX;
 
 @Slf4j
 @SpringBootTest(classes = UserApplication.class)
@@ -37,9 +34,11 @@ public class BetApiTest {
 
 	@Test
 	public void getGameBetsTest() {
-		BetProvider type = BetProvider.KY;
+		BetProvider type = BetProvider.HG;
 		BetApi api = BetApi.getInstance(type);
-		gameBetJob.doQueryAndSyncGameBetsForSingleVendor(api);
+		List<ScoreResult> scoreResult = api.getScoreResult();
+		log.info("赛果数据：{}", Jsons.encode(scoreResult));
+		// gameBetJob.doQueryAndSyncGameBetsForSingleVendor(api);
 	}
 
 	@Test

@@ -20,13 +20,14 @@ import com.bojiu.context.web.Jsons;
 import com.bojiu.webapp.user.bet.BaseBetApiImpl;
 import com.bojiu.webapp.user.dto.GameDTO;
 import com.bojiu.webapp.user.dto.GameDTO.OddsInfo;
+import com.bojiu.webapp.user.dto.ScoreResult;
 import com.bojiu.webapp.user.model.BetProvider;
 import com.bojiu.webapp.user.model.OddsType;
-import lombok.extern.slf4j.Slf4j;
-import me.codeplayer.util.CollectionUtil;
-import me.codeplayer.util.StringUtil;
+import me.codeplayer.util.*;
 import org.apache.commons.lang3.time.FastDateFormat;
 import org.apache.commons.lang3.tuple.Pair;
+import org.jsoup.Jsoup;
+import org.jsoup.select.Elements;
 import org.jspecify.annotations.NonNull;
 import org.springframework.data.redis.core.ValueOperations;
 import org.springframework.http.HttpMethod;
@@ -37,7 +38,6 @@ import org.xml.sax.SAXException;
 
 import static com.bojiu.webapp.user.utils.HGOddsConverter.convertOddsRatio;
 
-@Slf4j
 @Service
 public class HgBetImpl extends BaseBetApiImpl {
 
@@ -86,7 +86,7 @@ public class HgBetImpl extends BaseBetApiImpl {
 				version = Jsons.parseObject(versionJson, new TypeReference<>() {
 				});
 			} else {
-				String html = doVersion().getCallback();
+				final String html = doVersion().getCallback();
 				// 该接口返回的是 HTML
 				if (StringUtil.notEmpty(html)) {
 					version = doGetVersion(html);
@@ -279,11 +279,11 @@ public class HgBetImpl extends BaseBetApiImpl {
 		if (!result.isOK()) {
 			final String callback = result.getCallback();
 			if (callback != null && callback.startsWith("无可执行的采集UID")) {
-				log.warn("获取赔率数据失败，厂商【{}】维护，返回数据：{}", getProvider(), callback);
+				LOGGER.warn("获取赔率数据失败，厂商【{}】维护，返回数据：{}", getProvider(), callback);
 				return gameDTOs;
 			}
 			clearLoginToken();
-			log.warn("获取赛事统计数据失败：{}", Jsons.encodeRaw(result));
+			LOGGER.warn("获取赛事统计数据失败：{}", Jsons.encodeRaw(result));
 			return gameDTOs;
 		}
 		JSONObject data = result.data();
@@ -572,6 +572,85 @@ public class HgBetImpl extends BaseBetApiImpl {
 	@Override
 	public String convertLeague(String league) {
 		return league;
+	}
+
+	@Override
+	public List<ScoreResult> getScoreResult() {
+		JSONObject login = doLogin();
+		final String uid = login.getString("uid");
+		EasyDate d = new EasyDate();
+		final List<ScoreResult> results = new ArrayList<>();
+		for (int i = 0; i < 2; i++) { // 只查询近两天的数据
+			d.addDay(-i);
+			final Messager<JSONObject> result = sendRequest(HttpMethod.GET, URI.create(this.getConfig().scoreResultUrl + "/app/member/account/result/result.php?game_type=FT"
+					+ "&list_date=" + d + "&uid=" + uid + "&langx=zh-cn"), null, FLAG);
+			final String html = result.getCallback();
+			var root = Jsoup.parse(html);
+			Elements homeTrs = root.getElementsByClass("acc_result_tr_top");
+			if (!homeTrs.isEmpty()) {
+				Elements clientTrs = root.getElementsByClass("acc_result_tr_other");
+				final HashMap<String, org.jsoup.nodes.Element> homeTrMap = CollectionUtil.toHashMap(homeTrs, h -> h.attr("id")),
+						clientTrMap = CollectionUtil.toHashMap(clientTrs, h -> h.attr("id"));
+				int size = homeTrs.size();
+				if (size != clientTrs.size()) {
+					LOGGER.warn("【{}】游戏 查询赛果失败，结果数量不一致！", getProvider());
+					results.addAll(parseScore(homeTrMap, clientTrMap, size));
+					continue;
+				}
+				results.addAll(parseScore(homeTrs, clientTrs));
+			}
+
+		}
+		return results;
+	}
+
+	private static List<ScoreResult> parseScore(HashMap<String, org.jsoup.nodes.Element> homeTrMap, HashMap<String, org.jsoup.nodes.Element> clientTrMap, int size) {
+		final List<ScoreResult> results = new ArrayList<>(size);
+		for (Map.Entry<String, org.jsoup.nodes.Element> entry : homeTrMap.entrySet()) {
+			var homeTr = entry.getValue();
+			final String id = entry.getKey(); // 格式：TR_100710_8407017
+			org.jsoup.nodes.Element clientEmt = clientTrMap.get(id);
+			if (clientEmt == null) {
+				continue;
+			}
+			builderScoreResult(clientEmt, id, homeTr, results);
+		}
+		return results;
+	}
+
+	private static List<ScoreResult> parseScore(Elements homeTrs, Elements clientTrs) {
+		final int size = clientTrs.size();
+		final List<ScoreResult> results = new ArrayList<>(size);
+		for (int j = 0; j < size; j++) {
+			var homeTr = homeTrs.get(j);
+			var client = clientTrs.get(j).getElementsByTag("td");
+			final String id = homeTr.attr("id"); // 格式：TR_100710_8407017
+			builderScoreResult(clientTrs.get(j), id, homeTr, results);
+		}
+		return results;
+	}
+
+	private static void builderScoreResult(org.jsoup.nodes.Element clientEmt, String id, org.jsoup.nodes.Element homeTr, List<ScoreResult> results) {
+		final ScoreResult scoreResult = new ScoreResult();
+		var client = clientEmt.getElementsByTag("td");
+		scoreResult.setId(Long.parseLong(id.substring(id.lastIndexOf("_") + 1)));
+		var home = homeTr.getElementsByTag("td");
+		// 主队名：<td class="acc_result_team">墨尔本胜利 &nbsp;&nbsp;</td>
+		scoreResult.setTeamHome(home.get(1).text());
+		scoreResult.setTeamClient(client.get(0).text()); // 客队名
+
+		// 全场进球数：<td class="acc_result_full"><span class="acc_cont_bold">5</span></td>
+		final String text = home.get(2).getElementsByTag("span").get(0).text();
+		if (!NumberUtil.isNumber(text)) {
+			LOGGER.warn("解析进球数异常：{}", text);
+			return;
+		}
+		scoreResult.setScore(new Integer[] { Integer.parseInt(text),
+				Integer.parseInt(client.get(1).getElementsByTag("span").get(0).text()) });
+		// 上半场进球数：<td class="acc_result_bg"><span class="acc_cont_bold">2</span></td>
+		scoreResult.setScoreH(new Integer[] { Integer.parseInt(home.get(3).getElementsByTag("span").get(0).text()),
+				Integer.parseInt(client.get(2).getElementsByTag("span").get(0).text()) });
+		results.add(scoreResult);
 	}
 
 }

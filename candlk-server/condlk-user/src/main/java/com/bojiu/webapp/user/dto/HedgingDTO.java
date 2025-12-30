@@ -1,7 +1,6 @@
 package com.bojiu.webapp.user.dto;
 
-import java.util.ArrayList;
-import java.util.List;
+import java.util.*;
 
 import com.bojiu.common.redis.RedisUtil;
 import com.bojiu.context.web.Jsons;
@@ -56,9 +55,13 @@ public class HedgingDTO extends BaseEntity {
 		public Integer aIdx;
 		/** A平台 赔率指针 */
 		public Integer bIdx;
+		/** 开赛时间 */
 		@Setter
 		@Getter
 		public Long gameOpenTime;
+
+		/** 串子平台已结束赛事的赛果（0=全赢；1=赢半；2=输半；3=全输）对冲平台的盈亏基于此计算 */
+		public int[] hedgingResult;
 
 		/** 是否已锁定赔率（锁定后将不再自动更新赔率） */
 		public Boolean lock;
@@ -162,6 +165,36 @@ public class HedgingDTO extends BaseEntity {
 			// 往前推算每场需要对冲的金额
 			for (int i = lastIdx - 1; i >= 0; i--) {
 				hedgingCoins[i] = (parlays[i + 1].bWinFactor(baseRate.bRebate) * hedgingCoins[i + 1]) / (parlays[i].bWinFactor(baseRate.bRebate) - bLossFactor);
+			}
+		}
+		return hedgingCoins;
+	}
+
+	/** 计算剩余场次的对冲金额 */
+	public double[] calcHedgingCoinsLock(Date now) {
+		if (hedgingCoins != null) {
+			boolean flag = false; // 全部锁住时不更新对冲金额
+			for (Odds parlay : parlays) {
+				if (!parlay.lock) {
+					flag = true;
+					break;
+				}
+			}
+			if (flag) {
+				final long timeNow = now.getTime();
+				final boolean firstEnd = parlays[0].lock || timeNow > parlays[0].gameOpenTime, // 第一场是否结束
+						twoEnd = parlays[1].lock || timeNow > parlays[1].gameOpenTime, // 第二场是否结束
+						existsThree = parlays.length == 3, // 是否存在第三场比赛
+						threeEnd = existsThree && (parlays[2].lock || timeNow > parlays[2].gameOpenTime); // 第三场是否结束
+				// 第一场比赛结束，第二场比赛将开始：计算第二场下注，若存在第三场则继续推导第三场下注额
+				if (firstEnd && !twoEnd) {
+					// hedgingCoins[1] = TODO
+				}
+
+				// 第一二场比赛结束，第三场比赛将开始：结合一二场投注，计算第三场投注
+				if (existsThree) {
+					// TODO: 2025/12/30 继续投注
+				}
 			}
 		}
 		return hedgingCoins;

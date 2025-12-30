@@ -18,6 +18,7 @@ import com.bojiu.common.util.SpringUtil;
 import com.bojiu.webapp.user.bet.BaseBetApiImpl;
 import com.bojiu.webapp.user.dto.GameDTO;
 import com.bojiu.webapp.user.dto.GameDTO.OddsInfo;
+import com.bojiu.webapp.user.dto.ScoreResult;
 import com.bojiu.webapp.user.model.*;
 import lombok.extern.slf4j.Slf4j;
 import me.codeplayer.util.StringUtil;
@@ -349,6 +350,12 @@ public class KyBetImpl extends BaseBetApiImpl {
 				yield temp;
 			}
 		};
+	}
+
+	@Override
+	public List<ScoreResult> getScoreResult() {
+		// TODO: 2025/12/30  
+		return List.of();
 	}
 
 }

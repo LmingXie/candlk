@@ -129,6 +129,7 @@ public class GameBetJob {
 			}
 			// 针对开赛时间晚于当前时间的赛事，重新计算投注金额（一结束的赛事投注金额确定，只能手动修改）
 			// TODO: 2025/12/29 需结合Excel实现第二步和第三步的数据更新
+			// vo.calcHedgingCoinsLock(now);
 			if (vo.update != null && vo.update) {
 				updates.put(vo.getId(), Jsons.encode(vo));
 			}

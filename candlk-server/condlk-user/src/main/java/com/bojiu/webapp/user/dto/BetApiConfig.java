@@ -16,9 +16,12 @@ public class BetApiConfig {
 	public String password;
 	/** 代理配置（格式：proxy://username:password@host:port） */
 	public String proxy;
-	/** API接口地址 */
+	/** API接口地址（根据域名自动生成） */
 	public String endPoint;
 	/** 登录Token */
 	public String token;
+
+	/** 获取赛果的URL */
+	public String scoreResultUrl;
 
 }
