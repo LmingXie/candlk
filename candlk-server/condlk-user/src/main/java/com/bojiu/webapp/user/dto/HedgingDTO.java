@@ -126,28 +126,26 @@ public class HedgingDTO extends BaseEntity {
 			final OddsInfo oddsInfo = isAResult ? aOdds : bOdds;
 			final OddsType type = oddsInfo.getType();
 			// 获取对应时段进球数
-			Integer[] currentScore = (type.type == PeriodType.FULL) ? scoreResult.getScore() : scoreResult.getScoreH();
+			final Integer[] currentScore = (type.type == PeriodType.FULL) ? scoreResult.getScore() : scoreResult.getScoreH();
 			final int homeGoal = currentScore[0], clientGoal = currentScore[1];
 
 			// 核心逻辑：所有计算最终需转化为“A平台投注方向”的胜平负
 			return switch (type) {
 				case R, HR -> {
-					// 1. 解析原始盘口（例如 -1.25 代表主让，1.25 代表客让）
-					final double r = parseRatio(oddsInfo.getRatioRate());
+					// 解析原始盘口（例如 -1.25 代表主让，1.25 代表客让）
+					final double r = convertRatioRate(oddsInfo.getRatioRate());
 
 					// 计算主队的赢盘表现分数
-					double homePerformance = (double) homeGoal + r - clientGoal;
-					;
-
-					// 3. 计算主队的赛果
+					final double homePerformance = (double) homeGoal + r - clientGoal;
+					// 计算主队的赛果
 					int homeResult = calcHandicapResult(homePerformance);
 
-					// 4. 根据 A 平台投注方向输出结果
+					// 根据 A 平台投注方向输出结果
 					this.result = parlaysIdx == 0/*投主队*/ ? homeResult : reversedResult(homeResult);
 					yield true;
 				}
 				case OU, HOU -> {
-					final double r = parseRatio(oddsInfo.getRatioRate());
+					final double r = convertRatioRate(oddsInfo.getRatioRate());
 					final double total = (double) homeGoal + clientGoal;
 
 					// 大小盘：parlaysIdx 0=大球(Over), 1=小球(Under)
@@ -172,31 +170,26 @@ public class HedgingDTO extends BaseEntity {
 		}
 
 		/**
-		 * 将多种格式的 ratioRate 转换为 double
+		 * 将 交易盘口值 转换为 等效盘口值
 		 * <p>e.g., "0.5/1" -> 0.75, "-1/1.5" -> -1.25, "0.75" -> 0.75
 		 */
-		private double parseRatio(String ratioRate) {
+		private double convertRatioRate(String ratioRate) {
 			if (ratioRate == null || ratioRate.isEmpty() || "0".equals(ratioRate)) {
 				return 0.0;
 			}
 
-			// 1. 判定整体正负号 (只要包含 "-" 就判定为负盘)
-			double sign = ratioRate.contains("-") ? -1.0 : 1.0;
-
-			// 2. 移除所有非数字和非分隔符的字符 (去掉 + -)
-			String cleanRate = ratioRate.replaceAll("[\\-+]", "");
-
-			// 3. 处理复合盘口 (0/0.5, 0.5/1, 1/1.5)
-			if (cleanRate.contains("/")) {
-				String[] parts = cleanRate.split("/");
-				// 使用绝对值计算，避免 -0 干扰
-				double r1 = Math.abs(Double.parseDouble(parts[0]));
-				double r2 = Math.abs(Double.parseDouble(parts[1]));
+			// 处理复合盘口 (0/0.5, 0.5/1, 1/1.5)
+			final int pos = ratioRate.indexOf("/");
+			if (pos > 0) {
+				// 整体正负号 e.g：-1/1.5 => 一半投让 -1 球，一半投让 -1.5 球，实际让球值为 (1 + 1.5) / 2 = 1.25
+				final double sign = ratioRate.startsWith("-") ? -1.0 : 1.0;
+				final double r1 = Math.abs(Double.parseDouble(ratioRate.substring(0, pos)));
+				final double r2 = Math.abs(Double.parseDouble(ratioRate.substring(pos + 1)));
 				return sign * ((r1 + r2) / 2.0);
 			}
 
-			// 4. 处理单盘口 (1, -1, 0.5)
-			return sign * Double.parseDouble(cleanRate);
+			// 处理单盘口 (1, -1, 0.5)
+			return Double.parseDouble(ratioRate);
 		}
 
 		/**

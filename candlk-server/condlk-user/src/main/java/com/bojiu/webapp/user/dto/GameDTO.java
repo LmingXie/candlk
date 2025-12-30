@@ -51,7 +51,7 @@ public class GameDTO extends TimeBasedEntity {
 		/** 盘口类型 */
 		public OddsType type;
 		/**
-		 * <h3>赔率盘口值/比率（Ratio Rate）</h3>
+		 * <h3>赔率盘口值/交易盘口值（Ratio Rate）</h3>
 		 * <p>
 		 * 该字段用于表示让球盘（让分盘）或大小盘（总进球数盘）的具体盘口数值。
 		 * 盘口值的结算结果取决于比赛结果与盘口值的差异，结果可能包括全赢、全输、赢一半、输一半或走水。

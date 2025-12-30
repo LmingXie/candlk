@@ -14,8 +14,6 @@ import lombok.extern.slf4j.Slf4j;
 import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.Test;
 
-import static com.bojiu.webapp.user.dto.HedgingDTO.Odds.toResult;
-
 @Slf4j
 public class JavaTest {
 
@@ -56,88 +54,6 @@ public class JavaTest {
 			// 接下来你可以使用 Jackson 的 ObjectMapper().readTree(result) 解析成对象
 		} catch (Exception e) {
 			System.err.println("解密失败: " + e.getMessage());
-		}
-	}
-
-	@Test
-	public void settleTest2() {
-		// 1. 定义测试矩阵：{盘口, 投注方向(0主1客), 比分[主,客], 预期结果常量}
-		Object[][] testCases = {
-				// --- 0盘 (平手) ---
-				{ "0", 0, new Integer[] { 1, 0 }, Odds.ALL_WIN },
-				{ "0", 0, new Integer[] { 0, 1 }, Odds.ALL_LOSE },
-				{ "0", 0, new Integer[] { 1, 1 }, Odds.DRAW },
-
-				// --- 0/0.5 或 -0/0.5 (主让平半) ---
-				{ "-0/0.5", 0, new Integer[] { 1, 0 }, Odds.ALL_WIN },
-				{ "0/0.5", 1, new Integer[] { 1, 0 }, Odds.ALL_LOSE },
-				{ "-0/0.5", 0, new Integer[] { 0, 0 }, Odds.LOSE_HALF },
-
-				// --- 0.5/1 (主受让半一) ---
-				{ "0.5/1", 0, new Integer[] { 0, 1 }, Odds.LOSE_HALF }, // 主受让0.75，输一球输一半
-				{ "0.5/1", 1, new Integer[] { 0, 1 }, Odds.WIN_HALF },  // 客让0.75，赢一球赢一半
-
-				// --- -0.5/1 (主让半一) ---
-				{ "-0.5/1", 0, new Integer[] { 1, 0 }, Odds.WIN_HALF }, // 让0.75，赢一球赢一半
-				{ "-0.5/1", 1, new Integer[] { 1, 0 }, Odds.LOSE_HALF },
-
-				// --- 1/1.5 (主受让球半) ---
-				{ "1/1.5", 0, new Integer[] { 0, 1 }, Odds.WIN_HALF }, // 受让1.25，输一球赢一半
-				{ "-1/1.5", 1, new Integer[] { 1, 0 }, Odds.WIN_HALF }, // 你的核心 case: 主让1.25，比分1:0，客队赢一半
-
-				// --- 整数盘 (1, -1, 2, -2) ---
-				{ "-1", 0, new Integer[] { 1, 0 }, Odds.DRAW },
-				{ "-2", 0, new Integer[] { 2, 0 }, Odds.DRAW },
-				{ "1", 1, new Integer[] { 1, 0 }, Odds.ALL_LOSE },
-
-				// --- 半球盘 (0.5, -0.5) ---
-				{ "-0.5", 0, new Integer[] { 1, 0 }, Odds.ALL_WIN },
-				{ "-0.5", 0, new Integer[] { 0, 0 }, Odds.ALL_LOSE },
-
-				// --- 大盘口/极端盘口 (3.5/4) ---
-				{ "-3.5/4", 0, new Integer[] { 4, 0 }, Odds.WIN_HALF },  // 让3.75，赢4球赢一半
-				{ "-3.5/4", 0, new Integer[] { 3, 0 }, Odds.ALL_LOSE },
-				{ "3.5/4", 1, new Integer[] { 4, 0 }, Odds.ALL_LOSE }  // 客受让3.75，输4球输一半
-		};
-
-		log.info("开始自动化盘口结算测试...");
-
-		for (Object[] tc : testCases) {
-			String ratio = (String) tc[0];
-			int parlaysIdx = (int) tc[1];
-			Integer[] score = (Integer[]) tc[2];
-			int expected = (int) tc[3];
-
-			// 构造简易 Odds 对象进行测试
-			Odds parlay = new Odds();
-			parlay.parlaysIdx = parlaysIdx;
-
-			// 构造 OddsInfo
-			OddsInfo aOdds = new OddsInfo();
-			aOdds.ratioRate = ratio;
-			aOdds.type = OddsType.R; // 让球盘
-			parlay.aOdds = aOdds;
-			parlay.bOdds = aOdds; // 测试解析，指向同一个即可
-
-			ScoreResult sr = new ScoreResult();
-			sr.score = score;
-
-			// 执行结算 (假设 provider 匹配，强制传 true 测 A)
-			boolean success = parlay.settle(sr, true);
-
-			if (!success) {
-				log.error("FAIL: 盘口 [{}] 解析失败", ratio);
-				continue;
-			}
-
-			if (parlay.result == expected) {
-				log.info("PASS: 盘口[{}], 投[{}], 比分[{}:{}], 结果[{}], 符合预期",
-						ratio, (parlaysIdx == 0 ? "主" : "客"), score[0], score[1], parlay.getResult_());
-			} else {
-				log.error("ERROR!!: 盘口[{}], 投[{}], 比分[{}:{}], 结果[{}], 预期应该是[{}]",
-						ratio, (parlaysIdx == 0 ? "主" : "客"), score[0], score[1],
-						parlay.getResult_(), toResult(expected));
-			}
 		}
 	}
 
@@ -231,7 +147,6 @@ public class JavaTest {
 	public void settleOverUnderTest() {
 
 		Object[][] testCases = {
-
 				// ======================
 				// 整数盘
 				// ======================
