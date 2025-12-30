@@ -105,7 +105,7 @@ public class GameBetJob {
 					continue;
 				}
 				// 根据id匹配并更新bGame中的赔率（aGame为串子赔率，创建后将不再更新）
-				GameDTO dto = CollectionUtil.findFirst(gameBets, game -> game.getId().equals(bGame.getId()));
+				GameDTO dto = CollectionUtil.findFirst(gameBets, game -> game.getId() != null && game.getId().equals(bGame.getId()));
 				if (dto != null) {
 					final OddsInfo oldOdds = bGame.odds.get(parlay.bIdx);
 					OddsInfo newOdds = dto.odds.get(parlay.bIdx);

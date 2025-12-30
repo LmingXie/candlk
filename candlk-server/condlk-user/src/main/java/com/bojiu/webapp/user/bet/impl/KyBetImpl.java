@@ -339,7 +339,7 @@ public class KyBetImpl extends BaseBetApiImpl {
 			// 默认处理：如果无法精准匹配，尝试通用的字符替换逻辑（注意：这依然返回字符串）
 			default -> {
 				String temp = league;
-				if (temp.endsWith("级联赛") && !temp.contains("超级联赛")) {
+				if (temp.contains("级联赛") && !temp.contains("超级联赛")) {
 					temp = temp.replace("级联赛", "组联赛");
 				} else if (temp.contains("级联赛-附加赛")) {
 					temp = temp.replace("级联赛-附加赛", "组联赛-附加赛");

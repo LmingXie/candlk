@@ -41,7 +41,7 @@ public class BetMatchJob {
 		}
 	}
 
-	@Scheduled(cron = "${service.cron.BetMatchJob:0 0/3 * * * ?}")
+	@Scheduled(cron = "${service.cron.BetMatchJob:0 0/1 * * * ?}")
 	public void run() {
 		long startTime = System.currentTimeMillis();
 		final int parlaysSize = 3; // 串关大小（3场比赛为一组）
