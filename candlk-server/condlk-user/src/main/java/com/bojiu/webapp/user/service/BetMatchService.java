@@ -248,8 +248,7 @@ public class BetMatchService {
 	private void calcPathHedgingOdds(Map<GameDTO, GameDTO> gameMapper, GameDTO[] aGames, Odds[] path, int depth,
 	                                 int parlaysSize, LocalTopNArray localTop, GameDTO aGame, int idx, BaseRateConifg baseRateConifg) {
 		final List<OddsInfo> aOddsList = aGame.odds;
-		for (int oddsIdx = 0, len = aOddsList.size(); oddsIdx < len; oddsIdx++) {
-			final OddsInfo aOdd = aOddsList.get(oddsIdx);
+		for (final OddsInfo aOdd : aOddsList) {
 			if (aOdd == null || !aOdd.type.open) { // 跳过未开放的赔率盘口
 				continue;
 			}
@@ -267,8 +266,8 @@ public class BetMatchService {
 				// 如果是对冲，通常取对方平台的相反侧索引，这里保留你的原逻辑映射
 				final int hedgingIdx = parlaysIdx == 0 ? 1 : 0;
 
-				final Odds oddsNode = new Odds(rates[parlaysIdx], bOdds.getRates()[hedgingIdx])
-						.initGame(aGame, bGame, oddsIdx, hedgingIdx, parlaysIdx);
+				final Odds oddsNode = new Odds(rates[parlaysIdx], bOdds.getRates()[hedgingIdx], parlaysIdx)
+						.initGame(aGame, bGame, aOdd, bOdds);
 				// 记录当前比赛的开赛时间，用于下层递归校验
 				oddsNode.setGameOpenTime(aGame.openTimeMs());
 

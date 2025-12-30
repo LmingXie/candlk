@@ -4,13 +4,19 @@ import java.util.List;
 
 import com.bojiu.context.web.Jsons;
 import com.bojiu.webapp.user.bet.impl.KyBetImpl;
-import com.bojiu.webapp.user.dto.BaseRateConifg;
-import com.bojiu.webapp.user.dto.HedgingDTO;
+import com.bojiu.webapp.user.dto.*;
+import com.bojiu.webapp.user.dto.GameDTO.OddsInfo;
 import com.bojiu.webapp.user.dto.HedgingDTO.Odds;
 import com.bojiu.webapp.user.dto.HedgingDTO.Out;
+import com.bojiu.webapp.user.model.OddsType;
 import com.bojiu.webapp.user.utils.HGOddsConverter;
+import lombok.extern.slf4j.Slf4j;
+import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.Test;
 
+import static com.bojiu.webapp.user.dto.HedgingDTO.Odds.toResult;
+
+@Slf4j
 public class JavaTest {
 
 	@Test
@@ -22,9 +28,9 @@ public class JavaTest {
 	@Test
 	public void hedgingTest() {
 		HedgingDTO dto = new HedgingDTO(new Odds[] {
-				new Odds(2.06, 1.85),
-				new Odds(2.08, 1.9),
-				new Odds(2, 1.82)
+				new Odds(2.06, 1.85, 0),
+				new Odds(2.08, 1.9, 0),
+				new Odds(2, 1.82, 0)
 		}, BaseRateConifg.defaultCfg());
 		System.out.println("综合赔率：" + dto.overallOdds());
 		System.out.println("A平台 串子投注金额：" + dto.getAInCoin());
@@ -50,6 +56,256 @@ public class JavaTest {
 			// 接下来你可以使用 Jackson 的 ObjectMapper().readTree(result) 解析成对象
 		} catch (Exception e) {
 			System.err.println("解密失败: " + e.getMessage());
+		}
+	}
+
+	@Test
+	public void settleTest2() {
+		// 1. 定义测试矩阵：{盘口, 投注方向(0主1客), 比分[主,客], 预期结果常量}
+		Object[][] testCases = {
+				// --- 0盘 (平手) ---
+				{ "0", 0, new Integer[] { 1, 0 }, Odds.ALL_WIN },
+				{ "0", 0, new Integer[] { 0, 1 }, Odds.ALL_LOSE },
+				{ "0", 0, new Integer[] { 1, 1 }, Odds.DRAW },
+
+				// --- 0/0.5 或 -0/0.5 (主让平半) ---
+				{ "-0/0.5", 0, new Integer[] { 1, 0 }, Odds.ALL_WIN },
+				{ "0/0.5", 1, new Integer[] { 1, 0 }, Odds.ALL_LOSE },
+				{ "-0/0.5", 0, new Integer[] { 0, 0 }, Odds.LOSE_HALF },
+
+				// --- 0.5/1 (主受让半一) ---
+				{ "0.5/1", 0, new Integer[] { 0, 1 }, Odds.LOSE_HALF }, // 主受让0.75，输一球输一半
+				{ "0.5/1", 1, new Integer[] { 0, 1 }, Odds.WIN_HALF },  // 客让0.75，赢一球赢一半
+
+				// --- -0.5/1 (主让半一) ---
+				{ "-0.5/1", 0, new Integer[] { 1, 0 }, Odds.WIN_HALF }, // 让0.75，赢一球赢一半
+				{ "-0.5/1", 1, new Integer[] { 1, 0 }, Odds.LOSE_HALF },
+
+				// --- 1/1.5 (主受让球半) ---
+				{ "1/1.5", 0, new Integer[] { 0, 1 }, Odds.WIN_HALF }, // 受让1.25，输一球赢一半
+				{ "-1/1.5", 1, new Integer[] { 1, 0 }, Odds.WIN_HALF }, // 你的核心 case: 主让1.25，比分1:0，客队赢一半
+
+				// --- 整数盘 (1, -1, 2, -2) ---
+				{ "-1", 0, new Integer[] { 1, 0 }, Odds.DRAW },
+				{ "-2", 0, new Integer[] { 2, 0 }, Odds.DRAW },
+				{ "1", 1, new Integer[] { 1, 0 }, Odds.ALL_LOSE },
+
+				// --- 半球盘 (0.5, -0.5) ---
+				{ "-0.5", 0, new Integer[] { 1, 0 }, Odds.ALL_WIN },
+				{ "-0.5", 0, new Integer[] { 0, 0 }, Odds.ALL_LOSE },
+
+				// --- 大盘口/极端盘口 (3.5/4) ---
+				{ "-3.5/4", 0, new Integer[] { 4, 0 }, Odds.WIN_HALF },  // 让3.75，赢4球赢一半
+				{ "-3.5/4", 0, new Integer[] { 3, 0 }, Odds.ALL_LOSE },
+				{ "3.5/4", 1, new Integer[] { 4, 0 }, Odds.ALL_LOSE }  // 客受让3.75，输4球输一半
+		};
+
+		log.info("开始自动化盘口结算测试...");
+
+		for (Object[] tc : testCases) {
+			String ratio = (String) tc[0];
+			int parlaysIdx = (int) tc[1];
+			Integer[] score = (Integer[]) tc[2];
+			int expected = (int) tc[3];
+
+			// 构造简易 Odds 对象进行测试
+			Odds parlay = new Odds();
+			parlay.parlaysIdx = parlaysIdx;
+
+			// 构造 OddsInfo
+			OddsInfo aOdds = new OddsInfo();
+			aOdds.ratioRate = ratio;
+			aOdds.type = OddsType.R; // 让球盘
+			parlay.aOdds = aOdds;
+			parlay.bOdds = aOdds; // 测试解析，指向同一个即可
+
+			ScoreResult sr = new ScoreResult();
+			sr.score = score;
+
+			// 执行结算 (假设 provider 匹配，强制传 true 测 A)
+			boolean success = parlay.settle(sr, true);
+
+			if (!success) {
+				log.error("FAIL: 盘口 [{}] 解析失败", ratio);
+				continue;
+			}
+
+			if (parlay.result == expected) {
+				log.info("PASS: 盘口[{}], 投[{}], 比分[{}:{}], 结果[{}], 符合预期",
+						ratio, (parlaysIdx == 0 ? "主" : "客"), score[0], score[1], parlay.getResult_());
+			} else {
+				log.error("ERROR!!: 盘口[{}], 投[{}], 比分[{}:{}], 结果[{}], 预期应该是[{}]",
+						ratio, (parlaysIdx == 0 ? "主" : "客"), score[0], score[1],
+						parlay.getResult_(), toResult(expected));
+			}
+		}
+	}
+
+	@Test
+	public void settleHandicapTest() {
+
+		Object[][] testCases = {
+
+				// ======================
+				// 平手盘
+				// ======================
+				{ "0", 0, new Integer[] { 1, 0 }, Odds.ALL_WIN },
+				{ "0", 0, new Integer[] { 0, 1 }, Odds.ALL_LOSE },
+				{ "0", 0, new Integer[] { 1, 1 }, Odds.DRAW },
+
+				// ======================
+				// 半球盘
+				// ======================
+				{ "-0.5", 0, new Integer[] { 1, 0 }, Odds.ALL_WIN },
+				{ "-0.5", 0, new Integer[] { 0, 0 }, Odds.ALL_LOSE },
+
+				{ "+0.5", 0, new Integer[] { 0, 1 }, Odds.ALL_LOSE },
+				{ "+0.5", 0, new Integer[] { 1, 0 }, Odds.ALL_WIN },
+
+				// ======================
+				// 整数盘
+				// ======================
+				{ "-1", 0, new Integer[] { 2, 0 }, Odds.ALL_WIN },
+				{ "-1", 0, new Integer[] { 1, 0 }, Odds.DRAW },
+				{ "-1", 0, new Integer[] { 0, 0 }, Odds.ALL_LOSE },
+
+				{ "1", 0, new Integer[] { 0, 1 }, Odds.DRAW },
+				{ "1", 0, new Integer[] { 1, 0 }, Odds.ALL_WIN },
+				{ "1", 0, new Integer[] { 1, 1 }, Odds.ALL_WIN },
+				{ "1", 0, new Integer[] { 2, 0 }, Odds.ALL_WIN },
+				{ "1", 0, new Integer[] { 0, 2 }, Odds.ALL_LOSE },
+
+				// ======================
+				// 0/0.5（0.25）
+				// ======================
+				{ "-0/0.5", 0, new Integer[] { 1, 0 }, Odds.ALL_WIN },
+				{ "-0/0.5", 0, new Integer[] { 0, 0 }, Odds.LOSE_HALF },
+				{ "-0/0.5", 0, new Integer[] { 0, 1 }, Odds.ALL_LOSE },
+
+				{ "0/0.5", 0, new Integer[] { 0, 0 }, Odds.WIN_HALF },
+				{ "0/0.5", 0, new Integer[] { 0, 1 }, Odds.ALL_LOSE },
+				{ "0/0.5", 0, new Integer[] { 1, 0 }, Odds.ALL_WIN },
+
+				// ======================
+				// 0.5/1（0.75）
+				// ======================
+				{ "-0.5/1", 0, new Integer[] { 2, 0 }, Odds.ALL_WIN },
+				{ "-0.5/1", 0, new Integer[] { 1, 0 }, Odds.WIN_HALF },
+				{ "-0.5/1", 0, new Integer[] { 0, 0 }, Odds.ALL_LOSE },
+
+				{ "0.5/1", 0, new Integer[] { 0, 1 }, Odds.LOSE_HALF },
+				{ "0.5/1", 0, new Integer[] { 1, 1 }, Odds.ALL_WIN },
+				{ "0.5/1", 0, new Integer[] { 1, 0 }, Odds.ALL_WIN },
+
+				// ======================
+				// 1/1.5（1.25）
+				// ======================
+				{ "-1/1.5", 0, new Integer[] { 3, 0 }, Odds.ALL_WIN },
+				{ "-1/1.5", 0, new Integer[] { 2, 0 }, Odds.ALL_WIN },
+				{ "-1/1.5", 0, new Integer[] { 1, 0 }, Odds.LOSE_HALF },
+				{ "-1/1.5", 0, new Integer[] { 0, 0 }, Odds.ALL_LOSE },
+
+				{ "1/1.5", 0, new Integer[] { 0, 2 }, Odds.ALL_LOSE },
+				{ "1/1.5", 0, new Integer[] { 0, 1 }, Odds.WIN_HALF },
+				{ "1/1.5", 0, new Integer[] { 1, 1 }, Odds.ALL_WIN },
+				{ "1/1.5", 0, new Integer[] { 2, 1 }, Odds.ALL_WIN },
+
+				// ======================
+				// 3.5/4（3.75 极端盘）
+				// ======================
+				{ "-3.5/4", 0, new Integer[] { 5, 0 }, Odds.ALL_WIN },
+				{ "-3.5/4", 0, new Integer[] { 4, 0 }, Odds.WIN_HALF },
+				{ "-3.5/4", 0, new Integer[] { 3, 0 }, Odds.ALL_LOSE },
+
+				// 盘口 3.5/4 (即主队受让 +3.75)
+				{ "3.5/4", 0, new Integer[] { 0, 3 }, Odds.ALL_WIN },
+				{ "3.5/4", 0, new Integer[] { 0, 4 }, Odds.LOSE_HALF },
+				{ "3.5/4", 0, new Integer[] { 1, 4 }, Odds.ALL_WIN },
+				{ "3.5/4", 0, new Integer[] { 0, 5 }, Odds.ALL_LOSE },
+		};
+
+		runTestCases(testCases, OddsType.R);
+	}
+
+	@Test
+	public void settleOverUnderTest() {
+
+		Object[][] testCases = {
+
+				// ======================
+				// 整数盘
+				// ======================
+				{ "2", 0, new Integer[] { 2, 0 }, Odds.DRAW },
+				{ "2", 0, new Integer[] { 3, 0 }, Odds.ALL_WIN },
+				{ "2", 0, new Integer[] { 1, 0 }, Odds.ALL_LOSE },
+
+				{ "2", 1, new Integer[] { 2, 0 }, Odds.DRAW },
+				{ "2", 1, new Integer[] { 3, 0 }, Odds.ALL_LOSE },
+				{ "2", 1, new Integer[] { 1, 0 }, Odds.ALL_WIN },
+
+				// ======================
+				// 半球盘
+				// ======================
+				{ "2.5", 0, new Integer[] { 2, 1 }, Odds.ALL_WIN },
+				{ "2.5", 0, new Integer[] { 2, 0 }, Odds.ALL_LOSE },
+
+				{ "2.5", 1, new Integer[] { 2, 1 }, Odds.ALL_LOSE },
+				{ "2.5", 1, new Integer[] { 2, 0 }, Odds.ALL_WIN },
+
+				// ======================
+				// 2 / 2.5（2.25）
+				// ======================
+				{ "2/2.5", 0, new Integer[] { 1, 1 }, Odds.LOSE_HALF },
+				{ "2/2.5", 0, new Integer[] { 2, 1 }, Odds.ALL_WIN },
+				{ "2/2.5", 0, new Integer[] { 1, 0 }, Odds.ALL_LOSE },
+
+				{ "2/2.5", 1, new Integer[] { 1, 1 }, Odds.WIN_HALF },
+				{ "2/2.5", 1, new Integer[] { 2, 1 }, Odds.ALL_LOSE },
+				{ "2/2.5", 1, new Integer[] { 1, 0 }, Odds.ALL_WIN },
+
+				// ======================
+				// 2.5 / 3（2.75）
+				// ======================
+				{ "2.5/3", 0, new Integer[] { 2, 1 }, Odds.WIN_HALF },
+				{ "2.5/3", 0, new Integer[] { 3, 1 }, Odds.ALL_WIN },
+				{ "2.5/3", 0, new Integer[] { 1, 1 }, Odds.ALL_LOSE },
+
+				{ "2.5/3", 1, new Integer[] { 2, 1 }, Odds.LOSE_HALF },
+				{ "2.5/3", 1, new Integer[] { 3, 1 }, Odds.ALL_LOSE },
+				{ "2.5/3", 1, new Integer[] { 1, 1 }, Odds.ALL_WIN },
+		};
+
+		runTestCases(testCases, OddsType.OU);
+	}
+
+	private void runTestCases(Object[][] testCases, OddsType type) {
+
+		for (Object[] tc : testCases) {
+			String ratio = (String) tc[0];
+			int idx = (int) tc[1];
+			Integer[] score = (Integer[]) tc[2];
+			int expected = (int) tc[3];
+
+			Odds odds = new Odds();
+			odds.parlaysIdx = idx;
+
+			OddsInfo info = new OddsInfo();
+			info.type = type;
+			info.ratioRate = ratio;
+
+			odds.aOdds = info;
+			odds.bOdds = info;
+
+			ScoreResult sr = new ScoreResult();
+			sr.score = score;
+
+			odds.settle(sr, true);
+
+			Assertions.assertEquals(
+					Odds.toResult(expected),
+					odds.getResult_(),
+					"盘口=" + ratio + " 投=" + (idx == 0 ? "主赢" : "客赢") + " 比分=" + score[0] + ":" + score[1]
+			);
 		}
 	}
 

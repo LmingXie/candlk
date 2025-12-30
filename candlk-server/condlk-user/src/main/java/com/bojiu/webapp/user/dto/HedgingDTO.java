@@ -49,170 +49,40 @@ public class HedgingDTO extends BaseEntity {
 		public GameDTO aGame;
 		/** B平台 游戏信息 */
 		public GameDTO bGame;
-		/** A平台 盘口指针 */
-		public Integer oddsIdx;
-		/** A平台 赔率指针 */
-		public Integer aIdx;
-		/** A平台 赔率指针 */
-		public Integer bIdx;
+		/** A平台 赔率信息 */
+		public OddsInfo aOdds;
+		/** B平台 赔率信息 */
+		public OddsInfo bOdds;
+		/**
+		 * A平台串子投注方向（对冲平台投注方向取反）
+		 *
+		 * <p>让球盘：0=主队(Home), 1=客队(Client)
+		 * <p>大小盘：0=大球(Over), 1=小球(Under)
+		 * <p>独赢盘：0=主胜, 1=客胜, 2=平局
+		 *
+		 * @see GameDTO.OddsInfo#getRates
+		 */
+		public Integer parlaysIdx;
 		/** 开赛时间 */
 		@Setter
 		@Getter
 		public Long gameOpenTime;
-
-		/** 串子平台赛果定义：0=全赢；1=全输；2=赢半；3=输半；4=走水(平) [建议增加4处理走水] */
-		public Integer result;
-		/** 全赢 */
-		// static final int ALL_WIN = 0,;
-
-		/**
-		 * 结算赛果
-		 *
-		 * @param scoreResult 赛果
-		 * @param isAResult 是否为A平台的赛果
-		 */
-		public boolean settle(ScoreResult scoreResult, boolean isAResult) {
-			final OddsInfo oddsInfo = isAResult? aGame.getOdds().get(aIdx):aGame.getOdds().get(aIdx);
-			final OddsType type = oddsInfo.getType();
-			// 1. 获取对应进球数（全场或上半场）
-			Integer[] currentScore = (type.type == PeriodType.FULL) ? scoreResult.getScore() : scoreResult.getScoreH();
-
-			if (currentScore == null || currentScore.length < 2) {
-				return false;
-			}
-
-			int homeGoal = currentScore[0];
-			int clientGoal = currentScore[1];
-
-			switch (type) {
-				case R, HR -> {
-					// 解析让球值，例如 "-0.5/1" -> -0.75
-					final double r = parseRatio(oddsInfo.getRatioRate());
-					// 计算净胜球 D = 主队 - 客队
-					final double diff = (double) homeGoal - clientGoal;
-
-					// 如果是投注客队，需要反转差异值（相当于客队-主队）
-					// 假设 isAResult 代表当前处理的是“让球方/左侧球队”
-					double finalDiff = isAResult ? diff : -diff;
-					// 注意：ratioRate 的正负号通常是以主队为基准的，如果投注客队，r也要取反
-					double finalRatio = isAResult ? r : -r;
-
-					this.result = calculateHandicapResult(finalDiff, finalRatio);
-					return true;
-				}
-				case OU, HOU -> {
-					double r = parseRatio(oddsInfo.getRatioRate());
-					double total = (double) homeGoal + clientGoal;
-
-					// isAResult: true为大球(Over)，false为小球(Under)
-					this.result = calculateOverUnderResult(total, r, isAResult);
-					return true;
-				}
-				case M, HM -> {
-					// 独赢盘逻辑
-					if (homeGoal > clientGoal) {
-						this.result = isAResult ? 0 : 1;
-					} else if (homeGoal < clientGoal) {
-						this.result = isAResult ? 1 : 0;
-					} else {
-						this.result = 4; // 走水/平
-					}
-					return true;
-				}
-				default -> {
-					return false;
-				}
-			}
-		}
-
-		/**
-		 * 将多种格式的 ratioRate 转换为 double
-		 * e.g., "0.5/1" -> 0.75, "-1/1.5" -> -1.25, "0.75" -> 0.75
-		 */
-		private double parseRatio(String ratioRate) {
-			if (ratioRate == null || ratioRate.isEmpty()) {
-				return 0;
-			}
-
-			// 处理带 "/" 的情况，如 "0.5/1"
-			if (ratioRate.contains("/")) {
-				String[] parts = ratioRate.split("/");
-				double r1 = Double.parseDouble(parts[0]);
-				double r2 = Double.parseDouble(parts[1]);
-				return (r1 + r2) / 2.0;
-			}
-			// 处理直接数值情况，如 "0.75" 或 "1.5"
-			return Double.parseDouble(ratioRate);
-		}
-
-		/** 让球盘判定 */
-		private int calculateHandicapResult(double diff, double ratio) {
-			double score = diff - ratio; // 净胜球减去让球数
-
-			if (score >= 0.5) {
-				return 0;    // 全赢
-			}
-			if (score == 0.25) {
-				return 2;   // 赢半
-			}
-			if (score == 0) {
-				return 4;      // 走水
-			}
-			if (score == -0.25) {
-				return 3;  // 输半
-			}
-			if (score <= -0.5) {
-				return 1;   // 全输
-			}
-			return 1;
-		}
-
-		/** 大小盘判定 */
-		private int calculateOverUnderResult(double total, double ratio, boolean isOver) {
-			double score = total - ratio;
-			int res;
-
-			if (score >= 0.5) {
-				res = 0;      // 全赢
-			} else if (score == 0.25) {
-				res = 2; // 赢半
-			} else if (score == 0) {
-				res = 4;    // 走水
-			} else if (score == -0.25) {
-				res = 3;// 输半
-			} else {
-				res = 1;                   // 全输
-			}
-
-			// 如果投的是小球(Under)，结果完全反转
-			if (!isOver) {
-				if (res == 0) {
-					res = 1;
-				} else if (res == 1) {
-					res = 0;
-				} else if (res == 2) {
-					res = 3;
-				} else if (res == 3) {
-					res = 2;
-				}
-			}
-			return res;
-		}
-
 		/** 是否已锁定赔率（锁定后将不再自动更新赔率） */
 		public Boolean lock;
+		/** 串子平台赛果定义：0=全赢；1=全输；2=赢半；3=输半；4=走水(平) [建议增加4处理走水] */
+		public Integer result;
 
-		public Odds(double aRate, double bRate) {
+		public Odds(double aRate, double bRate, Integer parlaysIdx) {
 			this.aRate = aRate;
 			this.bRate = bRate;
+			this.parlaysIdx = parlaysIdx;
 		}
 
-		public Odds initGame(GameDTO aGame, GameDTO bGame, Integer oddsIdx, Integer aIdx, Integer bIdx) {
+		public Odds initGame(GameDTO aGame, GameDTO bGame, OddsInfo aOdds, OddsInfo bOdds) {
 			this.aGame = aGame;
 			this.bGame = bGame;
-			this.oddsIdx = oddsIdx;
-			this.aIdx = aIdx;
-			this.bIdx = bIdx;
+			this.aOdds = aOdds;
+			this.bOdds = bOdds;
 			this.lock = false;
 			return this;
 		}
@@ -220,9 +90,8 @@ public class HedgingDTO extends BaseEntity {
 		public String outInfo() {
 			if (aGame != null) {
 				final GameDTO game = this.aGame;
-				OddsInfo oddsInfo = game.odds.get(this.oddsIdx);
 				return "【" + game.league + "】" + game.teamHome + " VS " + game.teamClient
-						+ " 【" + oddsInfo.getType().getLabel() + "】（" + oddsInfo.ratioRate + "）";
+						+ " 【" + aOdds.getType().getLabel() + "】（" + aOdds.ratioRate + "）";
 
 			}
 			return null;
@@ -233,6 +102,174 @@ public class HedgingDTO extends BaseEntity {
 		/** B平台 赢的净收益系数 */
 		public double bWinFactor(double bRebate) {
 			return bWinFactor == null ? bWinFactor = (bRate - 1) * (1 + bRebate) : bWinFactor;
+		}
+
+		/** 全赢 */
+		public static final int ALL_WIN = 0,
+		/** 全输 */
+		ALL_LOSE = 1,
+		/** 赢半 */
+		WIN_HALF = 2,
+		/** 输半 */
+		LOSE_HALF = 3,
+		/** 走水/平局 */
+		DRAW = 4;
+
+		/**
+		 * 结算赛果（计算在A平台投注的输赢结果）
+		 *
+		 * @param scoreResult 赛果数据
+		 * @param isAResult scoreResult是否来自A平台（用于决定读取aOdds还是bOdds的盘口值）
+		 */
+		public boolean settle(ScoreResult scoreResult, boolean isAResult) {
+			// 根据来源获取对应的赔率盘口信息
+			final OddsInfo oddsInfo = isAResult ? aOdds : bOdds;
+			final OddsType type = oddsInfo.getType();
+			// 获取对应时段进球数
+			Integer[] currentScore = (type.type == PeriodType.FULL) ? scoreResult.getScore() : scoreResult.getScoreH();
+			final int homeGoal = currentScore[0], clientGoal = currentScore[1];
+
+			// 核心逻辑：所有计算最终需转化为“A平台投注方向”的胜平负
+			return switch (type) {
+				case R, HR -> {
+					// 1. 解析原始盘口（例如 -1.25 代表主让，1.25 代表客让）
+					final double r = parseRatio(oddsInfo.getRatioRate());
+
+					// 计算主队的赢盘表现分数
+					double homePerformance = (double) homeGoal + r - clientGoal;
+					;
+
+					// 3. 计算主队的赛果
+					int homeResult = calcHandicapResult(homePerformance);
+
+					// 4. 根据 A 平台投注方向输出结果
+					this.result = parlaysIdx == 0/*投主队*/ ? homeResult : reversedResult(homeResult);
+					yield true;
+				}
+				case OU, HOU -> {
+					final double r = parseRatio(oddsInfo.getRatioRate());
+					final double total = (double) homeGoal + clientGoal;
+
+					// 大小盘：parlaysIdx 0=大球(Over), 1=小球(Under)
+					final boolean isOver = (parlaysIdx == 0);
+					this.result = calculateOverUnderResult(total, r, isOver);
+					yield true;
+				}
+				case M, HM -> {
+					// 独赢盘：0=主胜, 1=客胜, 2=平
+					if (homeGoal > clientGoal) {
+						this.result = (parlaysIdx == 0) ? ALL_WIN : ALL_LOSE;
+					} else if (homeGoal < clientGoal) {
+						this.result = (parlaysIdx == 1) ? ALL_WIN : ALL_LOSE;
+					} else {
+						// 如果A平台投的是平局(2)，则全赢，否则全输（独赢盘通常没有走水，除非特定规则）
+						this.result = parlaysIdx == 2 ? ALL_WIN : ALL_LOSE;
+					}
+					yield true;
+				}
+				default -> false;
+			};
+		}
+
+		/**
+		 * 将多种格式的 ratioRate 转换为 double
+		 * <p>e.g., "0.5/1" -> 0.75, "-1/1.5" -> -1.25, "0.75" -> 0.75
+		 */
+		private double parseRatio(String ratioRate) {
+			if (ratioRate == null || ratioRate.isEmpty() || "0".equals(ratioRate)) {
+				return 0.0;
+			}
+
+			// 1. 判定整体正负号 (只要包含 "-" 就判定为负盘)
+			double sign = ratioRate.contains("-") ? -1.0 : 1.0;
+
+			// 2. 移除所有非数字和非分隔符的字符 (去掉 + -)
+			String cleanRate = ratioRate.replaceAll("[\\-+]", "");
+
+			// 3. 处理复合盘口 (0/0.5, 0.5/1, 1/1.5)
+			if (cleanRate.contains("/")) {
+				String[] parts = cleanRate.split("/");
+				// 使用绝对值计算，避免 -0 干扰
+				double r1 = Math.abs(Double.parseDouble(parts[0]));
+				double r2 = Math.abs(Double.parseDouble(parts[1]));
+				return sign * ((r1 + r2) / 2.0);
+			}
+
+			// 4. 处理单盘口 (1, -1, 0.5)
+			return sign * Double.parseDouble(cleanRate);
+		}
+
+		/**
+		 * 计算让球盘结果
+		 * 0.25: 赢一半 (e.g. 0 + 0.25)
+		 * 0.5: 全赢
+		 */
+		private int calcHandicapResult(double performance) {
+			if (performance >= 0.5) {
+				return ALL_WIN;
+			} else if (performance == 0.25) {
+				return WIN_HALF;
+			} else if (performance == 0) {
+				return DRAW;
+			} else if (performance == -0.25) {
+				return LOSE_HALF;
+			}
+			return ALL_LOSE;
+		}
+
+		/** 计算大小盘结果 */
+		private int calculateOverUnderResult(double total, double ratio, boolean isOver) {
+			final double score = total - ratio;
+			int res;
+			if (score >= 0.5) {
+				res = ALL_WIN;
+			} else if (score == 0.25) {
+				res = WIN_HALF;
+			} else if (score == 0) {
+				res = DRAW;
+			} else if (score == -0.25) {
+				res = LOSE_HALF;
+			} else {
+				res = ALL_LOSE;
+			}
+
+			// 如果投注方向是小球，结果完全对调
+			return isOver ? res : reversedResult(res);
+		}
+
+		/** 获取对冲平台的投注结果 */
+		public Integer getBResult() {
+			return result == null ? null : reversedResult(result);
+		}
+
+		public Integer reversedResult(Integer result) {
+			return switch (result) {
+				case ALL_WIN -> ALL_LOSE;
+				case ALL_LOSE -> ALL_WIN;
+				case WIN_HALF -> LOSE_HALF;
+				case LOSE_HALF -> WIN_HALF;
+				case DRAW -> DRAW;
+				default -> throw new IllegalArgumentException("Invalid result: " + result);
+			};
+		}
+
+		public String getResult_() {
+			return toResult(result);
+		}
+
+		public static String toResult(Integer res) {
+			return switch (res) {
+				case ALL_WIN -> "全赢";
+				case ALL_LOSE -> "全输";
+				case WIN_HALF -> "赢半";
+				case LOSE_HALF -> "输半";
+				case DRAW -> "走水";
+				default -> throw new IllegalArgumentException("未知的result：" + res);
+			};
+		}
+
+		public String getBResult_() {
+			return toResult(getBResult());
 		}
 
 	}
@@ -408,6 +445,10 @@ public class HedgingDTO extends BaseEntity {
 
 	public void toJson() {
 		this.getId(); // 初始化ID
+		for (Odds parlay : parlays) { // 移除冗余的赔率信息
+			parlay.aGame.odds = null;
+			parlay.bGame.odds = null;
+		}
 		json = Jsons.encode(this);
 	}
 

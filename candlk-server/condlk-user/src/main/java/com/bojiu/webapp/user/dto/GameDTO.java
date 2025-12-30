@@ -7,6 +7,7 @@ import com.bojiu.webapp.user.model.BetProvider;
 import com.bojiu.webapp.user.model.OddsType;
 import lombok.*;
 import lombok.extern.slf4j.Slf4j;
+import org.jspecify.annotations.Nullable;
 
 @Slf4j
 @Setter
@@ -178,6 +179,8 @@ public class GameDTO extends TimeBasedEntity {
 		return openTimeMs == null ? openTimeMs = openTime.getTime() : openTimeMs;
 	}
 
+	/** 根据A平台的赔率信息，查找对应B平台的赔率信息 */
+	@Nullable
 	public OddsInfo findOdds(OddsInfo aOdd) {
 		for (OddsInfo odds : odds) {
 			if (odds.type == aOdd.type && odds.ratioRate.equals(aOdd.ratioRate)) {

@@ -74,7 +74,7 @@ public class GameBetJob {
 				final Set<GameDTO> gameBets = gameApi.getGameBets();
 				if (!gameBets.isEmpty()) {
 					begin.lastTime = new Date();
-					List<Object> objects = RedisUtil.execInTransaction(redisOps -> {
+					final List<Object> objects = RedisUtil.execInTransaction(redisOps -> {
 						final HashOperations<String, Object, Object> opsForHash = redisOps.opsForHash();
 						final ZSetOperations<String, String> opsForZSet = redisOps.opsForZSet();
 						opsForHash.put(BET_SYNC_RELAY, providerName, Jsons.encode(begin));
@@ -119,8 +119,12 @@ public class GameBetJob {
 				// 根据id匹配并更新bGame中的赔率（aGame为串子赔率，创建后将不再更新）
 				GameDTO dto = CollectionUtil.findFirst(gameBets, game -> game.getId() != null && game.getId().equals(bGame.getId()));
 				if (dto != null) {
-					final OddsInfo oldOdds = bGame.odds.get(parlay.bIdx);
-					OddsInfo newOdds = dto.odds.get(parlay.bIdx);
+					final OddsInfo oldOdds = parlay.bOdds;
+					OddsInfo newOdds = dto.findOdds(oldOdds); // 查找新的赔率信息
+					if (newOdds == null) {
+						log.warn("未找到对应新的赔率信息：赛事ID={}，赔率类型={}，详细信息：{}", vo.getId(), Jsons.encode(oldOdds), Jsons.encode(dto));
+						continue;
+					}
 					final String ratioRate = newOdds.ratioRate;
 					// 验证赔率盘口是否一致
 					if (oldOdds.type != newOdds.type || !oldOdds.ratioRate.equals(ratioRate)) {
