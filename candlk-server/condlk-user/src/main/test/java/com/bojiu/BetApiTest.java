@@ -1,6 +1,5 @@
 package com.bojiu;
 
-import java.util.List;
 import java.util.Map;
 import javax.annotation.Resource;
 
@@ -36,9 +35,15 @@ public class BetApiTest {
 	public void getGameBetsTest() {
 		BetProvider type = BetProvider.HG;
 		BetApi api = BetApi.getInstance(type);
-		List<ScoreResult> scoreResult = api.getScoreResult();
+		gameBetJob.doQueryAndSyncGameBetsForSingleVendor(api);
+	}
+
+	@Test
+	public void getGameScoreResultTest() {
+		BetProvider type = BetProvider.HG;
+		BetApi api = BetApi.getInstance(type);
+		Map<Long, ScoreResult> scoreResult = api.getScoreResult();
 		log.info("赛果数据：{}", Jsons.encode(scoreResult));
-		// gameBetJob.doQueryAndSyncGameBetsForSingleVendor(api);
 	}
 
 	@Test

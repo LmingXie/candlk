@@ -353,9 +353,9 @@ public class KyBetImpl extends BaseBetApiImpl {
 	}
 
 	@Override
-	public List<ScoreResult> getScoreResult() {
+	public Map<Long, ScoreResult> getScoreResult() {
 		// TODO: 2025/12/30  
-		return List.of();
+		return Collections.EMPTY_MAP;
 	}
 
 }

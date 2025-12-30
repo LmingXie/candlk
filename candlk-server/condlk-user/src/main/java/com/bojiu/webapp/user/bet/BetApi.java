@@ -46,7 +46,7 @@ public interface BetApi {
 	/** 转换联赛名称 */
 	String convertLeague(String league);
 
-	/** 获取赛果 */
-	List<ScoreResult> getScoreResult();
+	/** 获取最新赛果 */
+	Map<Long, ScoreResult> getScoreResult();
 
 }
