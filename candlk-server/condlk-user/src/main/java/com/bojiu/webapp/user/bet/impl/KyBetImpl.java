@@ -15,12 +15,14 @@ import com.alibaba.fastjson2.JSONObject;
 import com.bojiu.common.model.Messager;
 import com.bojiu.common.util.Common;
 import com.bojiu.common.util.SpringUtil;
+import com.bojiu.context.web.Jsons;
 import com.bojiu.webapp.user.bet.BaseBetApiImpl;
 import com.bojiu.webapp.user.dto.GameDTO;
 import com.bojiu.webapp.user.dto.GameDTO.OddsInfo;
 import com.bojiu.webapp.user.dto.ScoreResult;
 import com.bojiu.webapp.user.model.*;
 import lombok.extern.slf4j.Slf4j;
+import me.codeplayer.util.EasyDate;
 import me.codeplayer.util.StringUtil;
 import org.springframework.http.HttpMethod;
 import org.springframework.stereotype.Service;
@@ -352,10 +354,110 @@ public class KyBetImpl extends BaseBetApiImpl {
 		};
 	}
 
+	transient String tournamentId;
+	transient long tournamentIdCacheTime = 0;
+
+	private String doQueryTournament(long startTime, long endTime) {
+		if (tournamentId == null || System.currentTimeMillis() > tournamentIdCacheTime) {
+			final Map<String, Object> params = new TreeMap<>();
+			params.put("sportType", "1");
+			params.put("endTime", endTime);
+			params.put("startTime", startTime);
+			params.put("langType", "zh");
+			params.put("nameStr", "");
+			params.put("isVirtualSport", "");
+			params.put("runningBar", "0"); // 是否包含滚球
+			params.put("champion", 0);
+			params.put("showem", 1);
+			params.put("orderByHot", 1);
+			final Messager<JSONObject> result = sendRequest(HttpMethod.POST, buildURI("/yewu11/v1/orderScoreResult/queryTournament"), params, FLAG);
+			if (result.isOK()) {
+				JSONArray array = result.data().getJSONArray("data");
+				if (!array.isEmpty()) {
+					final StringBuilder sb = new StringBuilder();
+					for (Object o : array) {
+						sb.append(((JSONObject) o).getString("id")).append(",");
+					}
+					tournamentId = sb.substring(0, sb.length() - 1);
+					tournamentIdCacheTime = System.currentTimeMillis() + (1000 * 60 * 30); // 缓存30分钟
+				}
+			}
+		}
+		return tournamentId;
+	}
+
+	/** 赛果最后一场比赛的结束时间 */
+	transient Long lastTime;
+
 	@Override
 	public Map<Long, ScoreResult> getScoreResult() {
-		// TODO: 2025/12/30  
-		return Collections.EMPTY_MAP;
+		EasyDate d = new EasyDate().beginOf(Calendar.DATE);
+		final long endTime = d.getTime(), startTime = d.addDay(-1).getTime();
+		final String tournamentId = doQueryTournament(startTime, endTime);
+		if (tournamentId != null) {
+			final Map<String, Object> params = new TreeMap<>();
+			params.put("tournamentId", tournamentId);
+			params.put("runningBar", "0"); // 是否包含滚球
+			params.put("isPlayBack", 0);
+			params.put("orderBy", 0);
+			params.put("sportType", "1");
+			params.put("startTime", startTime);
+			params.put("endTime", endTime);
+			params.put("langType", "zh");
+			params.put("page", JSONObject.of("size", 200, "current", 1));
+			params.put("isVirtualSport", "");
+			params.put("matchNameStr", "");
+			params.put("isNew", 1);
+			params.put("champion", 0);
+			params.put("isESport", "");
+			params.put("orderByHot", 0);
+			final Messager<JSONObject> result = sendRequest(HttpMethod.POST, buildURI("/yewu11/v1/orderScoreResult/queryTournamentScoreResult"), params, FLAG);
+			if (result.isOK()) {
+				final JSONArray array = result.data().getJSONObject("data").getJSONArray("records");
+				if (array != null && !array.isEmpty()) {
+					final Map<Long, ScoreResult> results = new HashMap<>(array.size(), 1F);
+					for (Object o : array) {
+						final JSONObject game = (JSONObject) o;
+						Long matchTime = game.getLong("matchTime");
+						if (lastTime == null || matchTime >= lastTime) { // 只处理后续赛事结果
+							final String scoreResultJson = game.getString("scoreResult");
+							if (!scoreResultJson.isEmpty()) {
+								// ["S1|2:4","S2|0:2","S3|2:2", "S15|1:3"] => S1=全场进球；S2=上半场进球；S3=下半场进球
+								final List<String> scores = Jsons.parseArray(scoreResultJson, String.class);
+								if (scores.isEmpty()) {
+									LOGGER.warn("【{}】无法解析的分数格式,score={}，详细信息={}", getProvider(), scoreResultJson, Jsons.encode(game));
+									continue;
+								}
+								final String s1 = scores.get(0), s2 = scores.size() > 1 ? scores.get(1) : null;
+								if (!s1.startsWith("S1")) {
+									LOGGER.warn("【{}】发现无法解析的分数格式,score={}，详细信息={}", getProvider(), scoreResultJson, Jsons.encode(game));
+									continue;
+								}
+
+								final ScoreResult scoreResult = new ScoreResult();
+								// 解析全场进球
+								int pos = s1.indexOf("|", 2) + 1, pos2 = s1.lastIndexOf(":");
+								scoreResult.setScore(new Integer[] { Integer.parseUnsignedInt(s1, pos, pos2, 10),
+										Integer.parseUnsignedInt(s1, pos2 + 1, s1.length(), 10) });
+
+								if (s2 != null && s2.startsWith("S2")) { // 可能不存在上半场
+									pos = s2.indexOf("|", 2) + 1;
+									pos2 = s2.lastIndexOf(":");
+									// 解析上半场进球
+									scoreResult.setScoreH(new Integer[] { Integer.parseUnsignedInt(s2, pos, pos2, 10),
+											Integer.parseUnsignedInt(s2, pos2 + 1, s1.length(), 10) });
+								}
+								scoreResult.setTeamHome(game.getString("homeName"));
+								scoreResult.setTeamClient(game.getString("awayName"));
+								results.put(game.getLong("matchId"), scoreResult);
+							}
+						}
+					}
+					return results;
+				}
+			}
+		}
+		return Collections.emptyMap();
 	}
 
 }

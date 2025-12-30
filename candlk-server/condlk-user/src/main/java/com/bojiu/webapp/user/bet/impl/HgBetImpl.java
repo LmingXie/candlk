@@ -633,12 +633,11 @@ public class HgBetImpl extends BaseBetApiImpl {
 	transient Long lastTime;
 
 	private void builderScoreResult(org.jsoup.nodes.Element clientEmt, String id, org.jsoup.nodes.Element homeTr, Map<Long, ScoreResult> results) {
-		final ScoreResult scoreResult = new ScoreResult();
 		var client = clientEmt.getElementsByTag("td");
-		long idLong = Long.parseLong(id.substring(id.lastIndexOf("_") + 1));
 		var homeTds = homeTr.getElementsByTag("td");
 		final long dateTime = parseTime(homeTds.get(0).text()).getTime();
 		if (lastTime == null || dateTime >= lastTime) { // 只处理后续赛事结果
+			final ScoreResult scoreResult = new ScoreResult();
 			// 主队名：<td class="acc_result_team">墨尔本胜利 &nbsp;&nbsp;</td>
 			scoreResult.setTeamHome(homeTds.get(1).text());
 			scoreResult.setTeamClient(client.get(0).text()); // 客队名
@@ -654,7 +653,8 @@ public class HgBetImpl extends BaseBetApiImpl {
 			// 上半场进球数：<td class="acc_result_bg"><span class="acc_cont_bold">2</span></td>
 			scoreResult.setScoreH(new Integer[] { Integer.parseInt(homeTds.get(3).getElementsByTag("span").get(0).text()),
 					Integer.parseInt(client.get(2).getElementsByTag("span").get(0).text()) });
-			results.put(idLong, scoreResult);
+			// 格式：TR_100710_8407017
+			results.put(Long.parseLong(id.substring(id.lastIndexOf("_") + 1)), scoreResult);
 			lastTime = dateTime;
 		}
 	}
