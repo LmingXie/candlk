@@ -3,7 +3,6 @@ package com.bojiu.webapp.user.job;
 import java.util.*;
 import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.ThreadPoolExecutor;
-import javax.annotation.PostConstruct;
 
 import com.bojiu.common.redis.RedisUtil;
 import com.bojiu.common.util.SpringUtil;
@@ -27,13 +26,6 @@ import static com.bojiu.webapp.user.model.UserRedisKey.*;
 @Configuration
 public class GameBetJob {
 
-	@PostConstruct
-	public void init() {
-		for (BetProvider type : BetProvider.CACHE) {
-			BetApi.getInstance(type);
-		}
-	}
-
 	// 线程数量不宜过多，避免 内存占用过大 以及 增加 资源IO 争用
 	static final ThreadPoolExecutor smallTaskThreadPool = TaskUtils.newThreadPool(4, 4
 			// 这里的队列容量（ 128 ） 一定不能小于 BetProvider.CACHE.length
@@ -46,6 +38,10 @@ public class GameBetJob {
 		final long startTime = System.currentTimeMillis();
 		final CountDownLatch latch = new CountDownLatch(size);
 		for (Map.Entry<BetProvider, BetApi> entry : enumMap.entrySet()) {
+			if (!entry.getKey().open) {
+				latch.countDown();
+				continue;
+			}
 			final BetApi betApi = entry.getValue();
 			smallTaskThreadPool.execute(() -> {
 				try {
@@ -68,8 +64,8 @@ public class GameBetJob {
 
 		final String nextJson = RedisUtil.opsForHash().get(BET_SYNC_RELAY, providerName);
 		final GameBetQueryDTO begin = StringUtil.isEmpty(nextJson) ? new GameBetQueryDTO() : Jsons.parseObject(nextJson, GameBetQueryDTO.class);
-		if (begin.lastTime == null || begin.lastTime.getTime() + 1000 * 60 < System.currentTimeMillis()) {
-			RedisUtil.fastAttemptInLock((BET_SYNC_RELAY + "_" + providerName), 1000 * 60 * 5L, () -> {
+		if (begin.lastTime == null || begin.lastTime.getTime() + 1000 * 30 < System.currentTimeMillis()) {
+			RedisUtil.fastAttemptInLock((BET_SYNC_RELAY + "_" + providerName), 1000 * 60 * 3L, () -> {
 				final long beginTime = System.currentTimeMillis();
 				final Set<GameDTO> gameBets = gameApi.getGameBets();
 				if (!gameBets.isEmpty()) {
