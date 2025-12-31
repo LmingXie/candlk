@@ -50,7 +50,7 @@ public class BetAction {
 		});
 		final Set<String> values = (Set<String>) scores.get(0);
 		final BaseRateConifg baseRateConifg = searchAll ? null : metaService.getCachedParsedValue(PLATFORM_ID, base_rate_config, BaseRateConifg.class);
-		page.setList(CollectionUtil.toList(values, o -> HedgingVO.of(o, baseRateConifg)));
+		page.setList(CollectionUtil.toList(values, o -> HedgingVO.ofAndFlush(o, baseRateConifg)));
 		page.setTotal((Long) scores.get(1));
 		return Messager.exposeData(page);
 	}
@@ -61,7 +61,7 @@ public class BetAction {
 	public Messager<Void> save(ProxyRequest q, String value) {
 		return RedisUtil.fastAttemptInLock(RedisKey.USER_OP_LOCK_PREFIX, () -> {
 			final BaseRateConifg baseRateConifg = metaService.getCachedParsedValue(PLATFORM_ID, base_rate_config, BaseRateConifg.class);
-			final HedgingDTO dto = HedgingVO.of(value, baseRateConifg);
+			final HedgingDTO dto = HedgingVO.ofAndFlush(value, baseRateConifg);
 			if (dto.hasValidId()) {
 				final Long id = dto.getId();
 				if (!RedisUtil.opsForZSet().rangeByScore(HEDGING_LIST_KEY, id, id).isEmpty()) {
@@ -100,14 +100,14 @@ public class BetAction {
 	@PostMapping("/calc")
 	@Permission(Permission.NONE)
 	public Messager<HedgingVO> calc(ProxyRequest q, String value) {
-		return Messager.exposeData(HedgingVO.of(value));
+		return Messager.exposeData(HedgingVO.ofAndFlush(value));
 	}
 
-	@Ready("计算利润并保存")
+	@Ready("推演赛果并保存数据")
 	@PostMapping("/calcSave")
 	@Permission(Permission.NONE)
 	public Messager<HedgingVO> calcSave(ProxyRequest q, String value) {
-		HedgingVO vo = HedgingVO.of(value, null);
+		final HedgingVO vo = HedgingVO.ofAndInfer(value, q.now());
 		final Long id = vo.getId();
 		final String newValue = Jsons.encode(vo);
 		RedisUtil.doInTransaction(redisOps -> {

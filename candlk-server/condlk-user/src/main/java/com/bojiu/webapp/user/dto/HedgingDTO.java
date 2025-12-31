@@ -372,12 +372,12 @@ public class HedgingDTO extends BaseEntity {
 		return hedgingCoins;
 	}
 
-	public void flushHedgingCoinsLock(Date now) {
-		flushHedgingCoinsLock(now, null);
+	public void calcHedgingCoinsLock(Date now) {
+		calcHedgingCoinsLock(now, null);
 	}
 
 	/** 计算剩余场次的对冲金额 */
-	public void flushHedgingCoinsLock(Date now, Boolean threeEnd) {
+	public void calcHedgingCoinsLock(Date now, Boolean threeEnd) {
 		if (hedgingCoins != null) {
 			boolean flag = false; // 全部锁住时不更新对冲金额
 			for (Odds parlay : parlays) {
@@ -433,8 +433,9 @@ public class HedgingDTO extends BaseEntity {
 					final double out = sumWin + (hedgingCoins[1] * factor1[2]) + (hedgingCoins[2] * factor1[1]);
 					oneOuts.add(new Out("第三场挂", out));
 					// 串子全赢：串子当前净输赢 + 第一场B平台已实现净盈亏 + 当前输一注净亏系数 *（B平台第二场投注 + B平台第三场投注）
-					oneOuts.add(new Out("串子全赢", aWinLoss + bWin + (factor1[2] * (hedgingCoins[1] + hedgingCoins[2]))));
-					log.info("推演一期对冲方案：ID={} 第二场投注={} 第三场投注={} 串子第三场输={}", getId(), hedgingCoins[1], hedgingCoins[2], out);
+					final double out2 = aWinLoss + bWin + (factor1[2] * (hedgingCoins[1] + hedgingCoins[2]));
+					oneOuts.add(new Out("串子全赢", out2));
+					log.info("推演一期对冲方案：ID={} 第二场投注={} 第三场投注={} 串子第三场输={} 串子全赢={}", getId(), hedgingCoins[1], hedgingCoins[2], out, out2);
 				}
 				// 第三场比赛开始 || 手动模拟第三场赛果
 				else if (threeEnd) {

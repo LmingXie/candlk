@@ -100,7 +100,7 @@ public class GameBetJob {
 		final Map<Long, String> updates = new HashMap<>(hedgingList.size(), 1F);
 		// 查询全部正在进行的串子
 		for (String json : hedgingList) {
-			final HedgingVO vo = HedgingVO.of(json);
+			final HedgingVO vo = HedgingVO.ofAndFlush(json);
 			for (HedgingDTO.Odds parlay : vo.parlays) {
 				final GameDTO bGame = parlay.bGame;
 				final boolean isA = parlay.aGame.betProvider == provider, isB = bGame.betProvider == provider;
@@ -140,7 +140,7 @@ public class GameBetJob {
 				}
 			}
 			// 针对开赛时间晚于当前时间的赛事，重新计算投注金额（已结束的赛事投注金额确定，只能手动修改）
-			vo.flushHedgingCoinsLock(now);
+			vo.calcHedgingCoinsLock(now);
 			if (vo.update != null && vo.update) {
 				updates.put(vo.getId(), Jsons.encode(vo));
 			}
