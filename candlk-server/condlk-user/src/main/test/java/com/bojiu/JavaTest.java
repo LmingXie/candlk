@@ -245,14 +245,25 @@ public class JavaTest {
 		vo.parlays[2].setNewBRateOdds(newOdds);
 		vo.flushHedgingCoinsLock(now);
 		log.info("第一场未结束，123场赔率发生变化，计算第二三场投注额和不同情况下的总盈亏情况：{}", Jsons.encode(vo));
-		// final ScoreResult result = new ScoreResult();
-		// for (Odds parlay : vo.parlays) {
-		// 	vo.update = parlay.settle(result, isA); // 结算赛果
-		// }
 
 		// 模拟第一场结束，得到赛果结算第一场，同时也会刷新2,3场投注额和不同情况下总盈亏
+		final ScoreResult result = new ScoreResult();
+		result.score = new Integer[] { 0, 0 }; // 判定串子赢：第一场 全场让球 -0/0.5 投客队
+		vo.parlays[0].settle(result, true); // 结算赛果
+		vo.flushHedgingCoinsLock(new Date(vo.parlays[0].gameOpenTime + 1000));
+		log.info("模拟第一场结束，得到赛果结算第一场，同时也会刷新2,3场投注额和不同情况下总盈亏：{}", Jsons.encode(vo));
 
 		// 模拟第2场结束，得到赛果，计算第二场，刷新3场投注额和不同情况下的总盈亏
+		result.score = new Integer[] { 2, 1 }; // 判定串子赢：第二场 全场大小球 投大2.5（总进球数3）
+		vo.parlays[1].settle(result, true); // 结算赛果
+		vo.flushHedgingCoinsLock(new Date(vo.parlays[1].gameOpenTime + 1000));
+		log.info("模拟第2场结束，得到赛果，计算第二场，刷新3场投注额和不同情况下的总盈亏：{}", Jsons.encode(vo));
+
+		// 模拟第3场结束，得到赛果，计算第三场，刷新3场投注额和不同情况下的总盈亏
+		result.score = new Integer[] { 0, 2 }; // 判定串子赢：第三场 全场让球 +0.5/1 投主赢
+		vo.parlays[2].settle(result, true); // 结算赛果
+		vo.flushHedgingCoinsLock(new Date(vo.parlays[2].gameOpenTime + 1000));
+		log.info("模拟第3场结束，得到赛果，计算第三场，刷新3场投注额和不同情况下的总盈亏：{}", Jsons.encode(vo));
 	}
 
 }

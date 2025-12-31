@@ -11,6 +11,8 @@ import lombok.*;
 import lombok.extern.slf4j.Slf4j;
 import org.jspecify.annotations.Nullable;
 
+import static com.bojiu.webapp.user.dto.HedgingDTO.Odds.*;
+
 /** 预估对冲算法类 */
 @Slf4j
 @Setter
@@ -388,8 +390,8 @@ public class HedgingDTO extends BaseEntity {
 				if (threeEnd == null) {
 					threeEnd = (parlays[2].lock || timeNow > parlays[2].gameOpenTime); // 第三场是否结束
 				}
-				// 第一场比赛结束，第二场比赛将开始：计算第二场下注，若存在第三场则继续推导第三场下注额
-				if (!firstEnd) {
+				// 第一场比赛开始 || 第二场比赛未开始：计算第二场下注，若存在第三场则继续推导第三场下注额
+				if (!firstEnd || !twoEnd) {
 					// 计算A平台串子第一场赛果赔率（第一场赛果系数）
 					final double firstRate = parlays[0].calcAResultRate();
 					// 计算当前的净输赢，A平台串子“后两场全赢”时净结果 W_A_当前（按输赢金额算返水）：
@@ -428,9 +430,37 @@ public class HedgingDTO extends BaseEntity {
 					// 串子全赢：串子当前净输赢 + 第一场B平台已实现净盈亏 + 当前输一注净亏系数 *（B平台第二场投注 + B平台第三场投注）
 					oneOuts.add(new Out("串子全赢", aWinLoss + bWin + (factor1[2] * (hedgingCoins[1] + hedgingCoins[2]))));
 				}
-
-				// 第二场比赛结束
-				else if (twoEnd) {
+				// 第三场比赛开始 || 手动模拟第三场赛果
+				else if (threeEnd) {
+					factor3 = new Double[6];
+					// 第三场A结果系数
+					factor3[0] = parlays[2].calcAResultRate();
+					// 第三场B结果系数
+					factor3[1] = switch (parlays[2].result == null ? ALL_WIN : parlays[2].result) { // 默认当做全赢处理
+						case ALL_WIN -> 0.0;
+						case DRAW -> 1.0;
+						case WIN_HALF -> 0.5;
+						case LOSE_HALF -> (1 + parlays[2].bRate) / 2;
+						case ALL_LOSE -> parlays[2].bRate;
+						default -> throw new IllegalArgumentException("Invalid result: " + parlays[2].result);
+					};
+					// 第三场B平台最终净盈亏
+					final double bThirdWinLoss = hedgingCoins[2] * parlays[2].calcBResultRate(baseRate);
+					// 计算A平台串子前两场赛果赔率（第一场系数和第二场系数）
+					final double firstRate = parlays[0].calcAResultRate(), twoRate = parlays[1].calcAResultRate();
+					// A平台最终净结果 P_A_最终（按输赢金额算返水）
+					final double aWinLoss = getAInCoin() * firstRate * twoRate * factor3[0] + getARebateCoin()
+							* Math.abs(firstRate * twoRate * factor3[0] - 1) - baseRate.aPrincipal;
+					// B平台最终净结果 P_B_最终
+					final double bWinLoss = factor1[3] + factor2[3] + bThirdWinLoss;
+					factor3[2] = bThirdWinLoss;
+					factor3[3] = aWinLoss;
+					factor3[4] = bWinLoss;
+					// 总最终盈亏
+					factor3[5] = aWinLoss + bWinLoss;
+				}
+				// 第二场比赛开始（赔率不再发生变化）
+				else {
 					// 计算A平台串子前两场赛果赔率（第一场系数和第二场系数）
 					final double firstRate = parlays[0].calcAResultRate(), twoRate = parlays[1].calcAResultRate();
 					// A平台串子全红净结果：串子投注 * 第一场系数 * 第二场系数 * A串子第三场赔率 + A平台返水金额 * abs（第一场系数 * 第二场系数 * A平台第三场赔率 - 1）- 本金
@@ -443,42 +473,20 @@ public class HedgingDTO extends BaseEntity {
 					twoOuts = new ArrayList<>(2);
 
 					// 前两场B平台已实现净盈亏
-					double firstBWin = factor1[3], twoBWin = hedgingCoins[2] * parlays[2].calcBResultRate(baseRate);
-					factor2 = new Double[3];
+					double firstBWin = factor1[3], twoBWin = hedgingCoins[1] * parlays[1].calcBResultRate(baseRate);
+					factor2 = new Double[4];
 					// 当前第三场净赢系数：（B第三场赔率 -1）*（1+B返水）
 					factor2[0] = (parlays[2].bRate - 1) * (1 + baseRate.bRebate);
 					// 当前输一注净亏系数：-1+B返水
 					factor2[1] = -1 + baseRate.bRebate;
+					// A平台串子全红净结果
+					factor2[2] = aWinLoss;
 					// 第二场B平台已实现净盈亏
-					factor2[2] = twoBWin;
+					factor2[3] = twoBWin;
 					// 串子第三场输：输光净结果 + 第一场B平台已实现净盈亏 + 第二场B平台已实现净盈亏 + B平台第三“场投注*当前第三场净赢系数
 					twoOuts.add(new Out("串子第三场输", getLoss() + firstBWin + twoBWin + (hedgingCoins[2] * factor2[0])));
 					// 串子全赢：串子当前净输赢 + 第一场B平台已实现净盈亏 + B平台第三场投注 * 当前输一注净亏系数
 					twoOuts.add(new Out("串子全赢", aWinLoss + firstBWin + twoBWin + (hedgingCoins[2] * factor2[1])));
-				}
-
-				// 第三场结束或手动模拟第三场赛果
-				else if (threeEnd) {
-					// 第三场A结果系数
-					final double aThirdRate = parlays[2].calcAResultRate();
-					// 第三场B结果系数
-					final double bThirdRate = parlays[2].calcBResultRate(baseRate);
-					factor3 = new Double[5];
-					factor3[0] = aThirdRate;
-					factor3[1] = bThirdRate;
-					// 第三场B平台最终净盈亏
-					final double bThirdWin = hedgingCoins[2] * bThirdRate;
-					// 计算A平台串子前两场赛果赔率（第一场系数和第二场系数）
-					final double firstRate = parlays[0].calcAResultRate(), twoRate = parlays[1].calcAResultRate();
-					// A平台最终净结果 P_A_最终（按输赢金额算返水）
-					final double aWinLoss = getAInCoin() * firstRate * twoRate * aThirdRate + getARebateCoin()
-							* Math.abs(firstRate * twoRate * aThirdRate - 1) - baseRate.aPrincipal;
-					// B平台最终净结果 P_B_最终
-					final double bWinLoss = factor1[3] + factor2[2] + bThirdWin;
-					factor3[2] = aWinLoss;
-					factor3[3] = bWinLoss;
-					// 总最终盈亏
-					factor3[4] = aWinLoss + bWinLoss;
 				}
 			}
 		}
