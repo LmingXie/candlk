@@ -139,8 +139,7 @@ public class GameBetJob {
 						}
 					}
 					// 更新赔率
-					oldOdds.cRate = newOdds.cRate;
-					oldOdds.hRate = newOdds.hRate;
+					parlay.setNewBRateOdds(newOdds);
 					vo.update = true;
 				}
 			}

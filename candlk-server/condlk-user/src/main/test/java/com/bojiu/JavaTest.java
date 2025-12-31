@@ -1,5 +1,6 @@
 package com.bojiu;
 
+import java.util.Date;
 import java.util.List;
 
 import com.bojiu.context.web.Jsons;
@@ -10,6 +11,7 @@ import com.bojiu.webapp.user.dto.HedgingDTO.Odds;
 import com.bojiu.webapp.user.dto.HedgingDTO.Out;
 import com.bojiu.webapp.user.model.OddsType;
 import com.bojiu.webapp.user.utils.HGOddsConverter;
+import com.bojiu.webapp.user.vo.HedgingVO;
 import lombok.extern.slf4j.Slf4j;
 import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.Test;
@@ -225,8 +227,32 @@ public class JavaTest {
 	}
 
 	@Test
-	public void settleTest(){
-		HedgingDTO dto = new HedgingDTO();
-		dto.parlays = new Odds[3];
+	public void settleTest() {
+		final HedgingVO vo = Jsons.parseObject("{\"AInCoin\":1000,\"ARebateCoin\":20,\"avgProfit\":-50.94577117228823,\"baseRate\":{\"aPrincipal\":1000,\"aRebate\":0.02,\"aRechargeRate\":0,\"bRebate\":0.025},\"hedgingCoins\":[871.5330476807804,1718.2312970939129,3403.8674205302177],\"id\":2637892,\"loss\":-980,\"parlays\":[{\"aGame\":{\"addTime\":1767145170055,\"betProvider\":0,\"id\":10315103,\"league\":\"澳大利亚女子甲组联赛\",\"openTime\":1767158100000,\"teamClient\":\"布里斯班狮吼(女)\",\"teamHome\":\"中央海岸水手(女)\",\"updateTime\":1767145170055},\"aOdds\":{\"cRate\":1.8599999999999999,\"hRate\":2.02,\"ratioRate\":\"-0/0.5\",\"type\":0},\"aRate\":1.8599999999999999,\"bGame\":{\"addTime\":1767145170052,\"betProvider\":2,\"id\":4984915,\"league\":\"澳大利亚女子甲组联赛\",\"openTime\":1767158100000,\"teamClient\":\"布里斯班狮吼(女)\",\"teamHome\":\"中央海岸水手(女)\",\"updateTime\":1767145170052},\"bOdds\":{\"cRate\":1.82,\"hRate\":2.04,\"ratioRate\":\"-0/0.5\",\"type\":0},\"bRate\":2.04,\"gameOpenTime\":1767158100000,\"lock\":false,\"parlaysIdx\":1},{\"aGame\":{\"addTime\":1767145170055,\"betProvider\":0,\"id\":10250561,\"league\":\"澳大利亚甲组联赛\",\"openTime\":1767168000000,\"teamClient\":\"布里斯班狮吼\",\"teamHome\":\"中央海岸水手\",\"updateTime\":1767145170055},\"aOdds\":{\"cRate\":1.98,\"hRate\":1.9,\"ratioRate\":\"2.5\",\"type\":1},\"aRate\":1.9,\"bGame\":{\"addTime\":1767145170052,\"betProvider\":2,\"id\":4977189,\"league\":\"澳大利亚甲组联赛\",\"openTime\":1767168000000,\"teamClient\":\"布里斯班狮吼\",\"teamHome\":\"中央海岸水手\",\"updateTime\":1767145170052},\"bOdds\":{\"cRate\":2.01,\"hRate\":1.87,\"ratioRate\":\"2.5\",\"type\":1},\"bRate\":2.01,\"gameOpenTime\":1767168000000,\"lock\":false,\"parlaysIdx\":0},{\"aGame\":{\"addTime\":1767145170055,\"betProvider\":0,\"id\":10212196,\"league\":\"非洲国家杯2025(在摩洛哥)\",\"openTime\":1767196800000,\"teamClient\":\"阿尔及利亚\",\"teamHome\":\"赤道几内亚\",\"updateTime\":1767145170055},\"aOdds\":{\"cRate\":1.9300000000000002,\"hRate\":1.8900000000000001,\"ratioRate\":\"+0.5/1\",\"type\":0},\"aRate\":1.8900000000000001,\"bGame\":{\"addTime\":1767145170052,\"betProvider\":2,\"id\":4979103,\"league\":\"非洲国家杯2025(在摩洛哥)\",\"openTime\":1767196800000,\"teamClient\":\"阿尔及利亚\",\"teamHome\":\"赤道几内亚\",\"updateTime\":1767145170052},\"bOdds\":{\"cRate\":1.99,\"hRate\":1.89,\"ratioRate\":\"+0.5/1\",\"type\":0},\"bRate\":1.99,\"gameOpenTime\":1767196800000,\"lock\":false,\"parlaysIdx\":0}],\"win\":5792.845200000001,\"selected\":false}\n"
+				, HedgingVO.class);
+
+		// 注意变化的只会是B对冲平台的赔率，A平台赔率组成串子后就不会再发生变化
+		final Date now = new Date();
+
+		// 第一场未结束，123场赔率发生变化，计算第二三场投注额和不同情况下的总盈亏情况
+		OddsInfo newOdds = new OddsInfo();
+		newOdds.hRate = 1.8;
+		newOdds.cRate = 2.06;
+		vo.parlays[1].setNewBRateOdds(newOdds);
+
+		newOdds.hRate = 1.87;
+		newOdds.cRate = 2.0;
+		vo.parlays[2].setNewBRateOdds(newOdds);
+		vo.flushHedgingCoinsLock(now);
+		log.info("第一场未结束，123场赔率发生变化，计算第二三场投注额和不同情况下的总盈亏情况：{}", Jsons.encode(vo));
+		// final ScoreResult result = new ScoreResult();
+		// for (Odds parlay : vo.parlays) {
+		// 	vo.update = parlay.settle(result, isA); // 结算赛果
+		// }
+
+		// 模拟第一场结束，得到赛果结算第一场，同时也会刷新2,3场投注额和不同情况下总盈亏
+
+		// 模拟第2场结束，得到赛果，计算第二场，刷新3场投注额和不同情况下的总盈亏
 	}
+
 }

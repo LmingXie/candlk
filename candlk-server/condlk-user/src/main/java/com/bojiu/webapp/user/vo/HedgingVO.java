@@ -13,10 +13,6 @@ public class HedgingVO extends HedgingDTO {
 	/** 标记是否需要更新 */
 	public transient Boolean update;
 
-	public double[] getHedging() {
-		return hedgingCoins;
-	}
-
 	public static HedgingVO of(String value) {
 		return of(value, null);
 	}
