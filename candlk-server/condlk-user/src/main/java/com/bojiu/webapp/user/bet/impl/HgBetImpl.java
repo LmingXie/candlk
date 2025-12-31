@@ -454,7 +454,7 @@ public class HgBetImpl extends BaseBetApiImpl {
 				}
 			}
 		}
-		GameDTO dto = new GameDTO(game.getLong("ECID"), getProvider(), openTime, game.getString("LEAGUE"),
+		final GameDTO dto = new GameDTO(game.getLong("ECID"), getProvider(), openTime, convertLeague(game.getString("LEAGUE")),
 				game.getString("TEAM_H"), game.getString("TEAM_C"), odds, now);
 		dto.setExt(isToday);
 		return dto;
@@ -571,7 +571,7 @@ public class HgBetImpl extends BaseBetApiImpl {
 
 	@Override
 	public String convertLeague(String league) {
-		return league;
+		return league.equals("埃及乙组联赛B") ? "埃及乙组联赛" : league;
 	}
 
 	@Override
@@ -593,8 +593,8 @@ public class HgBetImpl extends BaseBetApiImpl {
 						clientTrMap = CollectionUtil.toHashMap(clientTrs, h -> h.attr("id"));
 				int size = homeTrs.size();
 				if (size != clientTrs.size()) {
-					LOGGER.warn("【{}】游戏 查询赛果失败，结果数量不一致！", getProvider());
 					results.putAll(parseScore(homeTrMap, clientTrMap, size));
+					LOGGER.warn("【{}】游戏 查询赛果，进行差值映射", getProvider());
 					continue;
 				}
 				results.putAll(parseScore(homeTrs, clientTrs));
