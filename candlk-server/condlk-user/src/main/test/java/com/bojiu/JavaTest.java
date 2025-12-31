@@ -224,4 +224,9 @@ public class JavaTest {
 		}
 	}
 
+	@Test
+	public void settleTest(){
+		HedgingDTO dto = new HedgingDTO();
+		dto.parlays = new Odds[3];
+	}
 }

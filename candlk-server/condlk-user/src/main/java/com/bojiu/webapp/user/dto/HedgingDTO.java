@@ -251,7 +251,7 @@ public class HedgingDTO extends BaseEntity {
 		}
 
 		public static String toResult(Integer res) {
-			return switch (res) {
+			return res == null ? null : switch (res) {
 				case ALL_WIN -> "全赢";
 				case ALL_LOSE -> "全输";
 				case WIN_HALF -> "赢半";

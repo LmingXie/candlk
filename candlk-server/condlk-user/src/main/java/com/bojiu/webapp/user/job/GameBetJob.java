@@ -82,7 +82,7 @@ public class GameBetJob {
 						// 查询正在进行的串子
 						opsForZSet.reverseRangeByScore(HEDGING_LIST_KEY, DEFAULT_MIN_SCORE, DEFAULT_MAX_SCORE, 0, 1000);
 					});
-					final LinkedHashSet<String> hedgingList = X.castType(objects.get(2));
+					final Set<String> hedgingList = X.castType(objects.get(2));
 					if (!hedgingList.isEmpty()) {
 						try {
 							final Map<Long, ScoreResult> scoreResult = gameApi.getScoreResult();
@@ -99,7 +99,7 @@ public class GameBetJob {
 	}
 
 	/** 刷新正在进行中的串子赔率/结算赛果 */
-	public void flushHedgingBet(BetProvider provider, Set<GameDTO> gameBets, LinkedHashSet<String> hedgingList, Map<Long, ScoreResult> scoreResult) {
+	public void flushHedgingBet(BetProvider provider, Set<GameDTO> gameBets, Set<String> hedgingList, Map<Long, ScoreResult> scoreResult) {
 		Date now = new Date();
 		final Map<Long, String> updates = new HashMap<>(hedgingList.size(), 1F);
 		// 查询全部正在进行的串子

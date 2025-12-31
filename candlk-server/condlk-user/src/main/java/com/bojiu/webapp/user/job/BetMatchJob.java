@@ -15,7 +15,8 @@ import org.springframework.context.annotation.Configuration;
 import org.springframework.data.redis.core.ZSetOperations;
 import org.springframework.scheduling.annotation.Scheduled;
 
-import static com.bojiu.webapp.user.model.BetProvider.*;
+import static com.bojiu.webapp.user.model.BetProvider.HG;
+import static com.bojiu.webapp.user.model.BetProvider.KY;
 import static com.bojiu.webapp.user.model.UserRedisKey.BET_MATCH_DATA_KEY;
 
 /** 刷新推荐串子组合 */
@@ -29,10 +30,9 @@ public class BetMatchJob {
 	/** 需要匹配的平台对 */
 	static final List<Pair<BetProvider, BetProvider>> matchPair = List.of(
 			Pair.of(HG, KY),
-			Pair.of(HG, D1CE),
-			Pair.of(D1CE, KY)
+			Pair.of(KY, HG)
 	);
-	public static final Map<String, String> ALL_PAIR = new HashMap<>(matchPair.size(), 1F);
+	public static final Map<String, String> ALL_PAIR = new TreeMap<>();
 
 	static {
 		for (Pair<BetProvider, BetProvider> pair : matchPair) {
