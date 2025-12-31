@@ -219,7 +219,7 @@ public class JavaTest {
 			odds.settle(sr, true);
 
 			Assertions.assertEquals(
-					Odds.toResult(expected),
+					Odds.ALL_RESULT.get(expected),
 					odds.getResult_(),
 					"盘口=" + ratio + " 投=" + (idx == 0 ? "主赢" : "客赢") + " 比分=" + score[0] + ":" + score[1]
 			);
@@ -232,10 +232,11 @@ public class JavaTest {
 				, HedgingVO.class);
 
 		// 注意变化的只会是B对冲平台的赔率，A平台赔率组成串子后就不会再发生变化
-		final Date now = new Date();
 
 		// 第一场未结束，123场赔率发生变化，计算第二三场投注额和不同情况下的总盈亏情况
 		OddsInfo newOdds = new OddsInfo();
+		newOdds.type = OddsType.R;
+		newOdds.ratioRate = "模拟数据";
 		newOdds.hRate = 1.8;
 		newOdds.cRate = 2.06;
 		vo.parlays[1].setNewBRateOdds(newOdds);
@@ -243,7 +244,7 @@ public class JavaTest {
 		newOdds.hRate = 1.87;
 		newOdds.cRate = 2.0;
 		vo.parlays[2].setNewBRateOdds(newOdds);
-		vo.flushHedgingCoinsLock(now);
+		vo.flushHedgingCoinsLock(new Date(vo.parlays[0].gameOpenTime - 1000));
 		log.info("第一场未结束，123场赔率发生变化，计算第二三场投注额和不同情况下的总盈亏情况：{}", Jsons.encode(vo));
 
 		// 模拟第一场结束，得到赛果结算第一场，同时也会刷新2,3场投注额和不同情况下总盈亏

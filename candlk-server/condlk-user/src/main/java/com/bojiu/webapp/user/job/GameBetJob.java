@@ -110,7 +110,7 @@ public class GameBetJob {
 						vo.update = parlay.settle(result, isA); // 结算赛果
 					}
 				}
-				if (!isB/*匹配厂家*/ || X.isValid(parlay.lock)/*锁定*/ || bGame.openTime.after(now) /*未开赛*/) {
+				if (!isB/*厂家不匹配*/ || X.isValid(parlay.lock)/*被锁定*/ || now.after(bGame.openTime) /*已开赛*/) {
 					continue;
 				}
 				// 根据id匹配并更新bGame中的赔率（aGame为串子赔率，创建后将不再更新）
