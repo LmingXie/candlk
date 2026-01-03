@@ -19,6 +19,10 @@ public class UserApplication extends BaseApplication {
 		// 绕过主机名验证：HttpClient 忽略主机名与证书不匹配的问题（必须在VM参数中添加设置）
 		// -Djdk.internal.httpclient.disableHostnameVerification=true
 		System.setProperty("jdk.internal.httpclient.disableHostnameVerification", "true");
+		// 允许在隧道连接中使用 Basic 认证
+		// -Djdk.http.auth.proxying.disabledSchemes= -Djdk.http.auth.tunneling.disabledSchemes=
+		System.setProperty("jdk.http.auth.proxying.disabledSchemes", "");
+		System.setProperty("jdk.http.auth.tunneling.disabledSchemes", "");
 		startup(UserApplication.class, args);
 	}
 

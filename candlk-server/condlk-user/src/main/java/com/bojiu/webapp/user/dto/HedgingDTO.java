@@ -373,7 +373,11 @@ public class HedgingDTO extends BaseEntity {
 	}
 
 	public void calcHedgingCoinsLock(Date now) {
-		calcHedgingCoinsLock(now, null);
+		try {
+			calcHedgingCoinsLock(now, null);
+		} catch (Exception e) {
+			log.error("计算对冲金额时出错：", e);
+		}
 	}
 
 	/** 计算剩余场次的对冲金额 */

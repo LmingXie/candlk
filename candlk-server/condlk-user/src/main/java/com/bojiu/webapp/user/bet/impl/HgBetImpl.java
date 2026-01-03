@@ -643,16 +643,17 @@ public class HgBetImpl extends BaseBetApiImpl {
 			scoreResult.setTeamClient(client.get(0).text()); // 客队名
 
 			// 全场进球数：<td class="acc_result_full"><span class="acc_cont_bold">5</span></td>
-			final String text = homeTds.get(2).getElementsByTag("span").get(0).text();
-			if (!NumberUtil.isNumber(text)) {
+			final String text = homeTds.get(2).getElementsByTag("span").get(0).text(),
+					text2 = client.get(2).getElementsByTag("span").get(0).text(),
+					text3 = homeTds.get(3).getElementsByTag("span").get(0).text();
+			if (!NumberUtil.isNumber(text) || !NumberUtil.isNumber(text2) || !NumberUtil.isNumber(text3)) {
 				LOGGER.warn("解析进球数异常：{}", text);
 				return;
 			}
 			scoreResult.setScore(new Integer[] { Integer.parseInt(text),
 					Integer.parseInt(client.get(1).getElementsByTag("span").get(0).text()) });
 			// 上半场进球数：<td class="acc_result_bg"><span class="acc_cont_bold">2</span></td>
-			scoreResult.setScoreH(new Integer[] { Integer.parseInt(homeTds.get(3).getElementsByTag("span").get(0).text()),
-					Integer.parseInt(client.get(2).getElementsByTag("span").get(0).text()) });
+			scoreResult.setScoreH(new Integer[] { Integer.parseInt(text3), Integer.parseInt(text2) });
 			// 格式：TR_100710_8407017
 			results.put(Long.parseLong(id.substring(id.lastIndexOf("_") + 1)), scoreResult);
 			lastTime = dateTime;

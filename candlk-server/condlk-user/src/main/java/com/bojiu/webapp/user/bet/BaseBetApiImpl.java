@@ -8,17 +8,15 @@ import java.nio.charset.StandardCharsets;
 import java.text.ParseException;
 import java.time.Duration;
 import java.time.temporal.ChronoUnit;
-import java.util.Date;
-import java.util.Map;
+import java.util.*;
 import java.util.concurrent.ScheduledFuture;
-import javax.annotation.*;
+import javax.annotation.Resource;
 
 import com.alibaba.fastjson2.JSONObject;
 import com.alibaba.fastjson2.util.JDKUtils;
 import com.bojiu.common.context.I18N;
 import com.bojiu.common.model.*;
-import com.bojiu.common.util.BaseHttpUtil;
-import com.bojiu.common.util.EnhanceHttpResponseBodyHandler;
+import com.bojiu.common.util.*;
 import com.bojiu.context.model.BaseI18nKey;
 import com.bojiu.context.model.MessagerStatus;
 import com.bojiu.context.web.Jsons;
@@ -502,6 +500,7 @@ public abstract class BaseBetApiImpl extends BaseHttpUtil implements BetApi {
 	 */
 	public static HttpClient.Builder prepareProxyClient(@NonNull String proxyConfig) {
 		// "proxy://username:password@host:port"
+		// proxy://127.0.0.1:10809
 		final URI uri = URI.create(proxyConfig);
 		String username = null, password = null;
 		final String userInfo = uri.getUserInfo();

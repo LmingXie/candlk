@@ -68,7 +68,7 @@ public class GameBetJob {
 			RedisUtil.fastAttemptInLock((BET_SYNC_RELAY + "_" + providerName), 1000 * 60 * 3L, () -> {
 				final long beginTime = System.currentTimeMillis();
 				final Set<GameDTO> gameBets = gameApi.getGameBets();
-				if (!gameBets.isEmpty()) {
+				if (gameBets != null && !gameBets.isEmpty()) {
 					begin.lastTime = new Date();
 					final List<Object> objects = RedisUtil.execInTransaction(redisOps -> {
 						final HashOperations<String, Object, Object> opsForHash = redisOps.opsForHash();
