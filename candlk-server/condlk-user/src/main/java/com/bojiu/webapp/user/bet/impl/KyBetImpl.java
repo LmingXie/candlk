@@ -290,6 +290,9 @@ public class KyBetImpl extends BaseBetApiImpl {
 
 	@Override
 	public String convertLeague(String league) {
+		if (league.endsWith("）")) {
+			league = league.replaceFirst("）", ")");
+		}
 		// 1. 优先处理完全不规则的、或需要特殊映射的 KY 联赛名称
 		return switch (league) {
 			// 英格兰系列

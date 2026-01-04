@@ -65,7 +65,7 @@ public class GameBetJob {
 		final String nextJson = RedisUtil.opsForHash().get(BET_SYNC_RELAY, providerName);
 		final GameBetQueryDTO begin = StringUtil.isEmpty(nextJson) ? new GameBetQueryDTO() : Jsons.parseObject(nextJson, GameBetQueryDTO.class);
 		if (begin.lastTime == null || begin.lastTime.getTime() + 1000 * 30 < System.currentTimeMillis()) {
-			RedisUtil.fastAttemptInLock((BET_SYNC_RELAY + "_" + providerName), 1000 * 60 * 3L, () -> {
+			// RedisUtil.fastAttemptInLock((BET_SYNC_RELAY + "_" + providerName), 1000 * 60 * 3L, () -> {
 				final long beginTime = System.currentTimeMillis();
 				final Set<GameDTO> gameBets = gameApi.getGameBets();
 				if (gameBets != null && !gameBets.isEmpty()) {
@@ -89,8 +89,8 @@ public class GameBetJob {
 					}
 					log.info("厂商【{}】同步游戏赔率成功，数量={}，耗时：{} ms", providerName, gameBets.size(), begin.lastTime.getTime() - beginTime);
 				}
-				return true;
-			});
+				// return true;
+			// });
 		}
 	}
 

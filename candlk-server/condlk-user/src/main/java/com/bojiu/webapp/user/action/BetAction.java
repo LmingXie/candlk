@@ -18,8 +18,7 @@ import com.bojiu.webapp.user.form.query.HedgingQuery;
 import com.bojiu.webapp.user.service.MetaService;
 import com.bojiu.webapp.user.vo.HedgingVO;
 import lombok.extern.slf4j.Slf4j;
-import me.codeplayer.util.CollectionUtil;
-import me.codeplayer.util.StringUtil;
+import me.codeplayer.util.*;
 import org.springframework.data.redis.core.ZSetOperations;
 import org.springframework.web.bind.annotation.*;
 
@@ -45,13 +44,33 @@ public class BetAction {
 		final String key = searchAll ? HEDGING_LIST_KEY : BET_MATCH_DATA_KEY + query.pair;
 		final List<Object> scores = RedisUtil.execInPipeline(redisOps -> {
 			final ZSetOperations<String, String> opsForZSet = redisOps.opsForZSet();
-			opsForZSet.reverseRangeByScore(key, DEFAULT_MIN_SCORE, DEFAULT_MAX_SCORE, page.offset(), page.getSize());
+			opsForZSet.reverseRangeByScore(key, DEFAULT_MIN_SCORE, DEFAULT_MAX_SCORE, page.offset(), 10_000);
 			opsForZSet.count(key, DEFAULT_MIN_SCORE, DEFAULT_MAX_SCORE);
 		});
 		final Set<String> values = (Set<String>) scores.get(0);
-		final BaseRateConifg baseRateConifg = searchAll ? null : metaService.getCachedParsedValue(PLATFORM_ID, base_rate_config, BaseRateConifg.class);
-		page.setList(CollectionUtil.toList(values, o -> HedgingVO.ofAndFlush(o, baseRateConifg)));
-		page.setTotal((Long) scores.get(1));
+		final List<HedgingVO> vos = new ArrayList<>(1000);
+		final long timeNow = new EasyDate(q.now()).addDay(3).getTime(); // 只保留3天以内的赛事
+		for (String value : values) {
+			final HedgingVO vo = Jsons.parseObject(value, HedgingVO.class);
+			if (vo.parlays[vo.parlays.length - 1].gameOpenTime <= timeNow) {
+				vos.add(vo);
+			}
+		}
+		final int size = vos.size();
+		if (size > 0) {
+			// 按照第一场开赛时间升序排列
+			if (Cmp.eq(query.sortType, 1)) {
+				vos.sort(Comparator.comparingLong(vo -> vo.parlays[0].gameOpenTime));
+			}
+			page.fromAll(vos);
+			final BaseRateConifg baseRateConifg = searchAll ? null : metaService.getCachedParsedValue(PLATFORM_ID, base_rate_config, BaseRateConifg.class);
+			for (HedgingVO vo : page.getList()) { // 只计算分页部分数据的利润
+				vo.flush(baseRateConifg);
+			}
+		} else {
+			page.setList(vos);
+		}
+		page.setTotal(size);
 		return Messager.exposeData(page);
 	}
 

@@ -13,4 +13,7 @@ public class HedgingQuery {
 	/** 方案类型（0=推荐方案；1=存档方案） */
 	public Integer type;
 
+	/** 排序类型（0=平均利润；1=第一场时间） */
+	public Integer sortType;
+
 }

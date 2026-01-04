@@ -443,33 +443,35 @@ public class HedgingDTO extends BaseEntity {
 				}
 				// 第三场比赛开始 || 手动模拟第三场赛果
 				else if (threeEnd) {
-					factor3 = new Double[6];
-					// 第三场A结果系数
-					factor3[0] = parlays[2].calcAResultRate();
-					// 第三场B结果系数
-					factor3[1] = switch (parlays[2].result == null ? ALL_WIN : parlays[2].result) { // 默认当做全赢处理
-						case ALL_WIN -> 0.0;
-						case DRAW -> 1.0;
-						case WIN_HALF -> 0.5;
-						case LOSE_HALF -> (1 + parlays[2].bRate) / 2;
-						case ALL_LOSE -> parlays[2].bRate;
-						default -> throw new IllegalArgumentException("Invalid result: " + parlays[2].result);
-					};
-					// 第三场B平台最终净盈亏
-					final double bThirdWinLoss = hedgingCoins[2] * parlays[2].calcBResultRate(baseRate);
-					// 计算A平台串子前两场赛果赔率（第一场系数和第二场系数）
-					final double firstRate = parlays[0].calcAResultRate(), twoRate = parlays[1].calcAResultRate();
-					// A平台最终净结果 P_A_最终（按输赢金额算返水）
-					final double aWinLoss = getAInCoin() * firstRate * twoRate * factor3[0] + getARebateCoin()
-							* Math.abs(firstRate * twoRate * factor3[0] - 1) - baseRate.aPrincipal;
-					// B平台最终净结果 P_B_最终
-					final double bWinLoss = factor1[3] + factor2[3] + bThirdWinLoss;
-					factor3[2] = bThirdWinLoss;
-					factor3[3] = aWinLoss;
-					factor3[4] = bWinLoss;
-					// 总最终盈亏
-					factor3[5] = aWinLoss + bWinLoss;
-					log.info("推演三期对冲方案！ID={}，最终总盈亏={}", getId(), factor3[5]);
+					if (factor2 != null) { // 避免已过期赛事导致的影响
+						factor3 = new Double[6];
+						// 第三场A结果系数
+						factor3[0] = parlays[2].calcAResultRate();
+						// 第三场B结果系数
+						factor3[1] = switch (parlays[2].result == null ? ALL_WIN : parlays[2].result) { // 默认当做全赢处理
+							case ALL_WIN -> 0.0;
+							case DRAW -> 1.0;
+							case WIN_HALF -> 0.5;
+							case LOSE_HALF -> (1 + parlays[2].bRate) / 2;
+							case ALL_LOSE -> parlays[2].bRate;
+							default -> throw new IllegalArgumentException("Invalid result: " + parlays[2].result);
+						};
+						// 第三场B平台最终净盈亏
+						final double bThirdWinLoss = hedgingCoins[2] * parlays[2].calcBResultRate(baseRate);
+						// 计算A平台串子前两场赛果赔率（第一场系数和第二场系数）
+						final double firstRate = parlays[0].calcAResultRate(), twoRate = parlays[1].calcAResultRate();
+						// A平台最终净结果 P_A_最终（按输赢金额算返水）
+						final double aWinLoss = getAInCoin() * firstRate * twoRate * factor3[0] + getARebateCoin()
+								* Math.abs(firstRate * twoRate * factor3[0] - 1) - baseRate.aPrincipal;
+						// B平台最终净结果 P_B_最终
+						final double bWinLoss = factor1[3] + factor2[3] + bThirdWinLoss;
+						factor3[2] = bThirdWinLoss;
+						factor3[3] = aWinLoss;
+						factor3[4] = bWinLoss;
+						// 总最终盈亏
+						factor3[5] = aWinLoss + bWinLoss;
+						log.info("推演三期对冲方案！ID={}，最终总盈亏={}", getId(), factor3[5]);
+					}
 				}
 				// 第二场比赛开始（赔率不再发生变化）
 				else {
