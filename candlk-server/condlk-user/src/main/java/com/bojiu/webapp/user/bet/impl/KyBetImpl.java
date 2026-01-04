@@ -429,28 +429,33 @@ public class KyBetImpl extends BaseBetApiImpl {
 									// ["S1|2:4","S2|0:2","S3|2:2", "S15|1:3"] => S1=全场进球；S2=上半场进球；S3=下半场进球
 									final List<String> scores = Jsons.parseArray(scoreResultJson, String.class);
 									if (scores.isEmpty()) {
-										LOGGER.warn("【{}】无法解析的分数格式,score={}，详细信息={}", getProvider(), scoreResultJson, Jsons.encode(game));
+										LOGGER.warn("【{}】未读取到进球数据,score={}，详细信息={}", getProvider(), scoreResultJson, Jsons.encode(game));
 										continue;
 									}
-									final String s1 = scores.get(0), s2 = scores.size() > 1 ? scores.get(1) : null;
-									if (!s1.startsWith("S1")) {
-										LOGGER.warn("【{}】发现无法解析的分数格式,score={}，详细信息={}", getProvider(), scoreResultJson, Jsons.encode(game));
-										continue;
-									}
-
 									final ScoreResult scoreResult = new ScoreResult();
-									// 解析全场进球
-									int pos = s1.indexOf("|", 2) + 1, pos2 = s1.lastIndexOf(":");
-									scoreResult.setScore(new Integer[] { Integer.parseUnsignedInt(s1, pos, pos2, 10),
-											Integer.parseUnsignedInt(s1, pos2 + 1, s1.length(), 10) });
-
-									if (s2 != null && s2.startsWith("S2")) { // 可能不存在上半场
-										pos = s2.indexOf("|", 2) + 1;
-										pos2 = s2.lastIndexOf(":");
-										// 解析上半场进球
-										scoreResult.setScoreH(new Integer[] { Integer.parseUnsignedInt(s2, pos, pos2, 10),
-												Integer.parseUnsignedInt(s2, pos2 + 1, s2.length(), 10) });
+									for (int i = 0, size = scores.size(); i < 2; i++) {
+										if (i >= size) {
+											continue;
+										}
+										final String score = scores.get(i);
+										if (score.startsWith("S1")) {
+											// 解析全场进球
+											final int pos = score.indexOf("|", 2) + 1, pos2 = score.lastIndexOf(":");
+											scoreResult.setScore(new Integer[] { Integer.parseUnsignedInt(score, pos, pos2, 10),
+													Integer.parseUnsignedInt(score, pos2 + 1, score.length(), 10) });
+										} else if (score.startsWith("S2")) {
+											final int pos = score.indexOf("|", 2) + 1, pos2 = score.lastIndexOf(":");
+											// 解析上半场进球
+											scoreResult.setScoreH(new Integer[] { Integer.parseUnsignedInt(score, pos, pos2, 10),
+													Integer.parseUnsignedInt(score, pos2 + 1, score.length(), 10) });
+										} else {
+											LOGGER.warn("【{}】发现无法解析的分数格式,score={}，详细信息={}", getProvider(), scoreResultJson, Jsons.encode(game));
+										}
 									}
+									if (scoreResult.score == null && scoreResult.scoreH == null) {
+										continue;
+									}
+
 									scoreResult.setTeamHome(game.getString("homeName"));
 									scoreResult.setTeamClient(game.getString("awayName"));
 									results.put(game.getLong("matchId"), scoreResult);

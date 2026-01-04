@@ -78,7 +78,7 @@ public class BetMatchService {
 						continue;
 					}
 
-					log.warn("无法匹配赛事：aGame={}\n{}", Jsons.encodeRaw(aGame), Jsons.encode(bGames));
+					log.debug("无法匹配赛事：aGame={}\n{}", Jsons.encodeRaw(aGame), Jsons.encode(bGames));
 				}
 			}
 		}
@@ -266,7 +266,11 @@ public class BetMatchService {
 				// 如果是对冲，通常取对方平台的相反侧索引，这里保留你的原逻辑映射
 				final int hedgingIdx = parlaysIdx == 0 ? 1 : 0;
 
-				final Odds oddsNode = new Odds(rates[parlaysIdx], bOdds.getRates()[hedgingIdx], parlaysIdx)
+				Double rate = bOdds.getRates()[hedgingIdx]; // B平台可能没有此盘口
+				if (rate == null) {
+					continue;
+				}
+				final Odds oddsNode = new Odds(rates[parlaysIdx], rate, parlaysIdx)
 						.initGame(aGame, bGame, aOdd, bOdds);
 				// 记录当前比赛的开赛时间，用于下层递归校验
 				oddsNode.setGameOpenTime(aGame.openTimeMs());

@@ -6,7 +6,7 @@ server:
         path: /
 spring:
   profiles:
-    active: local
+    active: test
   application:
     name: nbr-bj-user
   main:

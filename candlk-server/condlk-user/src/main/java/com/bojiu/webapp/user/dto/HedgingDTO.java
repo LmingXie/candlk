@@ -142,6 +142,9 @@ public class HedgingDTO extends BaseEntity {
 			final OddsType type = oddsInfo.getType();
 			// 获取对应时段进球数
 			final Integer[] currentScore = (type.type == PeriodType.FULL) ? scoreResult.getScore() : scoreResult.getScoreH();
+			if (currentScore == null) { // 可能在没有赛果
+				return false;
+			}
 			final int homeGoal = currentScore[0], clientGoal = currentScore[1];
 
 			// 核心逻辑：所有计算最终需转化为“A平台投注方向”的胜平负
