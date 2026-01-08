@@ -25,12 +25,6 @@ public class GameDTO extends TimeBasedEntity {
 	public String teamHome;
 	/** 客队名称 */
 	public String teamClient;
-	/** 联赛名称 */
-	public String leagueZh;
-	/** 主队中文名 */
-	public String teamHomeZh;
-	/** 客队中文名 */
-	public String teamClientZh;
 	/** 赔率信息 */
 	public List<OddsInfo> odds;
 
@@ -46,17 +40,6 @@ public class GameDTO extends TimeBasedEntity {
 		this.teamClient = teamClient;
 		this.odds = odds;
 		this.initTime(now);
-	}
-
-	public boolean initZh(Map<String, String> getEnToZhCacheMap) {
-		this.leagueZh = getEnToZhCacheMap.get(league);
-		this.teamHomeZh = getEnToZhCacheMap.get(teamHome);
-		this.teamClientZh = getEnToZhCacheMap.get(teamClient);
-		boolean b = this.leagueZh == null || this.teamHomeZh == null || this.teamClientZh == null;
-		if(b){
-			System.out.println(1111);
-		}
-		return b;
 	}
 
 	/** 赔率信息 */
