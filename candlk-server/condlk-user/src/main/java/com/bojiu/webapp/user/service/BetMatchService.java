@@ -288,7 +288,7 @@ public class BetMatchService {
 	}
 
 	/** 赛事最小时间间隔 */
-	static final long LIMIT_MIN = 1000 * 60 * 60,
+	static final long LIMIT_MIN = 1000 * 60 * 60 * 2,
 	/** 赛事最大时间间隔 */
 	LIMIT_MAX = 1000 * 60 * 60 * 24 * 2;
 
@@ -296,7 +296,7 @@ public class BetMatchService {
 	private boolean isValidTimeGap(Odds[] path, int depth, GameDTO nextGame) {
 		final long lastGameTime = path[depth - 1].getGameOpenTime();
 		final long diff = nextGame.openTimeMs() - lastGameTime;
-		// 1小时到2天之间
+		// 2小时到2天之间
 		return diff < LIMIT_MIN || diff > LIMIT_MAX;
 	}
 

@@ -574,10 +574,14 @@ public class HgBetImpl extends BaseBetApiImpl {
 		return league.equals("埃及乙组联赛B") ? "埃及乙组联赛" : league;
 	}
 
+	public String getSourceResult() {
+		JSONObject login = doLogin();
+		return login.getString("uid");
+	}
+
 	@Override
 	public Map<Long, ScoreResult> getScoreResult() {
-		JSONObject login = doLogin();
-		final String uid = login.getString("uid");
+		final String uid = getSourceResult();
 		EasyDate d = new EasyDate();
 		final Map<Long, ScoreResult> results = new HashMap<>();
 		for (int i = 0; i < 2; i++) { // 只查询近两天的数据

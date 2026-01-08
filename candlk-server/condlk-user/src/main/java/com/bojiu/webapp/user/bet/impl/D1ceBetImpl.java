@@ -30,7 +30,7 @@ public class D1ceBetImpl extends HgBetImpl {
 
 	@Override
 	public Pair<String, String> getVersion() {
-		return Pair.of("-3ed5-iovation-1215-95881ae5676be3", "EZCECZ");
+		return Pair.of("-3ed5-iovation-0108-95881ae5676be3", "HDICAD");
 	}
 
 	final String clientId = "9dd3e87b3c8d466e8fd4dbaaab5be206", appId = "684bdb1fe87d097395894484", integrationId = "684bdb29e87d097395894520";
@@ -188,6 +188,11 @@ public class D1ceBetImpl extends HgBetImpl {
 					|| (uried == zendeskLoginUri && json.getJSONObject("appUser") != null);
 		}
 		return true;
+	}
+
+	@Override
+	public String getSourceResult() {
+		return "xktkruvxm39824030l120308b0"; // TODO: 2026/1/8 暂时固定死
 	}
 
 	@Override
