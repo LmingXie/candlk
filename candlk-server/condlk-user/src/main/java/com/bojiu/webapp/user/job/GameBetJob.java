@@ -67,14 +67,32 @@ public class GameBetJob {
 		if (begin.lastTime == null || begin.lastTime.getTime() + 1000 * 30 < System.currentTimeMillis()) {
 			// RedisUtil.fastAttemptInLock((BET_SYNC_RELAY + "_" + providerName), 1000 * 60 * 3L, () -> {
 				final long beginTime = System.currentTimeMillis();
-				final Set<GameDTO> gameBets = gameApi.getGameBets();
-				if (gameBets != null && !gameBets.isEmpty()) {
+				final Set<GameDTO> gameEnBets = gameApi.getGameBets(BetApi.LANG_EN);
+				if (gameEnBets != null && !gameEnBets.isEmpty()) {
+					// 使用缓存映射初始化中文信息
+					Map<String, String> enToZhCacheMap = TeamMatcher.getEnToZhCacheMap(provider, gameEnBets);
+					boolean needFlush = false;
+					for (GameDTO dto : gameEnBets) {
+						if (dto.initZh(enToZhCacheMap)) {
+							needFlush = true;
+							break;
+						}
+					}
+					if (needFlush) { // 缓存映射初始化失败，刷新缓存数据
+						enToZhCacheMap = TeamMatcher.getEnToZhCacheMap(provider, gameEnBets, true);
+						for (GameDTO dto : gameEnBets) {
+							if (dto.initZh(enToZhCacheMap)) {
+								log.warn("初始化中文信息失败：{}", Jsons.encode(dto));
+							}
+						}
+					}
+
 					begin.lastTime = new Date();
 					final List<Object> objects = RedisUtil.execInTransaction(redisOps -> {
 						final HashOperations<String, Object, Object> opsForHash = redisOps.opsForHash();
 						final ZSetOperations<String, String> opsForZSet = redisOps.opsForZSet();
 						opsForHash.put(BET_SYNC_RELAY, providerName, Jsons.encode(begin));
-						opsForHash.put(GAME_BETS_PERFIX, providerName, Jsons.encode(gameBets));
+						opsForHash.put(GAME_BETS_PERFIX, providerName, Jsons.encode(gameEnBets));
 						// 查询正在进行的串子
 						opsForZSet.reverseRangeByScore(HEDGING_LIST_KEY, DEFAULT_MIN_SCORE, DEFAULT_MAX_SCORE, 0, 1000);
 					});
@@ -82,14 +100,14 @@ public class GameBetJob {
 					if (!hedgingList.isEmpty()) {
 						try {
 							final Map<Long, ScoreResult> scoreResult = gameApi.getScoreResult();
-							this.flushHedgingBet(provider, gameBets, hedgingList, scoreResult);
+							this.flushHedgingBet(provider, gameEnBets, hedgingList, scoreResult);
 						} catch (Throwable e) {
 							log.error("厂商【{}】刷新正在进行中的串子赔率异常", providerName, e);
 						}
 					}
-					log.info("厂商【{}】同步游戏赔率成功，数量={}，耗时：{} ms", providerName, gameBets.size(), begin.lastTime.getTime() - beginTime);
+					log.info("厂商【{}】同步游戏赔率成功，数量={}，耗时：{} ms", providerName, gameEnBets.size(), begin.lastTime.getTime() - beginTime);
 				}
-				// return true;
+			// 	return true;
 			// });
 		}
 	}

@@ -23,6 +23,8 @@ public interface BetApi {
 
 	Logger LOGGER = LoggerFactory.getLogger(BetApi.class);
 
+	String LANG_ZH = "zh-cn", LANG_EN = "en-us";
+
 	/** 生产厂商 */
 	BetProvider getProvider();
 
@@ -37,8 +39,14 @@ public interface BetApi {
 		return implMapRef.get().get(betProvider);
 	}
 
+	String getLanguage(String lang);
+
+	default String getDefaultLanguage() {
+		return getLanguage(LANG_EN);
+	}
+
 	/** 查询游戏赔率数据 */
-	Set<GameDTO> getGameBets();
+	Set<GameDTO> getGameBets(String lang);
 
 	/** 检查当前API服务器状态是否正常 */
 	Messager<Void> ping();

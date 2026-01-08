@@ -130,6 +130,11 @@ public class HgBetImpl extends BaseBetApiImpl {
 
 	transient JSONObject loginInfo;
 
+	@Override
+	public String getLanguage(String lang) {
+		return lang;
+	}
+
 	protected JSONObject doLogin() {
 		if (loginInfo == null) {
 			ValueOperations<String, String> opsForValue = RedisUtil.template().opsForValue();
@@ -138,7 +143,7 @@ public class HgBetImpl extends BaseBetApiImpl {
 				loginInfo = Jsons.parseObject(loginJson, new TypeReference<>() {
 				});
 			} else {
-				Messager<JSONObject> result = doGetLogin();
+				final Messager<JSONObject> result = doGetLogin(getDefaultLanguage());
 				if (result.isOK()) {
 					loginInfo = result.data();
 					opsForValue.set(key, Jsons.encode(loginInfo), getTimeoutDay(), TimeUnit.DAYS);
@@ -148,13 +153,13 @@ public class HgBetImpl extends BaseBetApiImpl {
 		return loginInfo;
 	}
 
-	protected @NonNull Messager<JSONObject> doGetLogin() {
+	protected @NonNull Messager<JSONObject> doGetLogin(String langx) {
 		final Map<String, Object> params = new TreeMap<>();
 		Pair<String, String> pair = getVersion();
 		final String ver = pair.getKey();
 		params.put("ver", ver);
 		params.put("p", "chk_login");
-		params.put("langx", "zh-cn");
+		params.put("langx", langx);
 		params.put("username", this.getConfig().username);
 		params.put("password", this.getConfig().password);
 		params.put("app", "N");
@@ -269,13 +274,17 @@ public class HgBetImpl extends BaseBetApiImpl {
 	static final List<String> betObtType = List.of("OU|MIX");
 
 	@Override
-	public Set<GameDTO> getGameBets() {
+	public Set<GameDTO> getGameBets(String lang) {
+		return getGameDTOS(lang);
+	}
+
+	private @NonNull Set<GameDTO> getGameDTOS(String langx) {
 		JSONObject login = doLogin();
 		final String uid = login.getString("uid");
 		// 查询赛事统计数据
 		Date now = new Date();
 		Set<GameDTO> gameDTOs = new HashSet<>();
-		Messager<JSONObject> result = doGetLeagueCount(uid);
+		Messager<JSONObject> result = doGetLeagueCount(uid, langx);
 		if (!result.isOK()) {
 			final String callback = result.getCallback();
 			if (callback != null && callback.startsWith("无可执行的采集UID")) {
@@ -311,9 +320,9 @@ public class HgBetImpl extends BaseBetApiImpl {
 			if (count > 0) { // 存在赛事
 				List<GameDTO> dtos = switch (i) {
 					// 今日赛事
-					case 0 -> parseGames(doGetGameList(uid, true), startTimeThreshold, true, now);
+					case 0 -> parseGames(doGetGameList(uid, true, langx), startTimeThreshold, true, now);
 					// 早盘赛事
-					case 1 -> parseGames(doGetGameList(uid, false), startTimeThreshold, false, now);
+					case 1 -> parseGames(doGetGameList(uid, false, langx), startTimeThreshold, false, now);
 					default -> throw new IllegalArgumentException("未知状态：" + i);
 				};
 				if (dtos != null) {
@@ -483,7 +492,7 @@ public class HgBetImpl extends BaseBetApiImpl {
 	}
 
 	/** 赛事统计数据 */
-	protected Messager<JSONObject> doGetLeagueCount(String uid) {
+	protected Messager<JSONObject> doGetLeagueCount(String uid, String langx) {
 		/*
 		联赛统计数据：
 		get_league_count
@@ -501,7 +510,7 @@ public class HgBetImpl extends BaseBetApiImpl {
 		params.put("p", "get_league_count");
 		params.put("uid", uid);
 		params.put("ver", ver);
-		params.put("langx", "zh-cn");
+		params.put("langx", langx);
 		params.put("sorttype", "league");
 		params.put("date", "ALL");
 		params.put("ltype", getProvider() == BetProvider.HG ? "3" : "4");
@@ -511,13 +520,13 @@ public class HgBetImpl extends BaseBetApiImpl {
 	}
 
 	/** 查询游戏场次列表 */
-	protected Messager<JSONObject> doGetGameList(String uid, boolean isToday) {
+	protected Messager<JSONObject> doGetGameList(String uid, boolean isToday, String langx) {
 		final Map<String, Object> params = new TreeMap<>();
 		Pair<String, String> pair = getVersion();
 		final String ver = pair.getKey();
 		params.put("uid", uid);
 		params.put("ver", ver);
-		params.put("langx", "zh-cn");
+		params.put("langx", langx);
 		params.put("p", "get_game_list");
 		params.put("p3type", "");
 		params.put("gtype", "ft"); // 足球
@@ -542,13 +551,13 @@ public class HgBetImpl extends BaseBetApiImpl {
 		return sendRequest(HttpMethod.POST, buildURI(ver), params, FLAG);
 	}
 
-	protected Messager<JSONObject> doGetGameOBT(String uid, GameDTO dto, String model) {
+	protected Messager<JSONObject> doGetGameOBT(String uid, GameDTO dto, String model, String langx) {
 		final Map<String, Object> params = new TreeMap<>();
 		Pair<String, String> pair = getVersion();
 		final String ver = pair.getKey();
 		params.put("uid", uid);
 		params.put("ver", ver);
-		params.put("langx", "zh-cn");
+		params.put("langx", langx);
 		params.put("p", "get_game_OBT");
 		params.put("gtype", "ft"); // 足球
 		params.put("isSpecial", "");

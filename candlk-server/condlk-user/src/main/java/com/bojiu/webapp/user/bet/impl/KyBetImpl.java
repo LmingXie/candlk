@@ -65,13 +65,22 @@ public class KyBetImpl extends BaseBetApiImpl {
 	/** 返回结果为文档，且屏蔽Body输出 */
 	final int FLAG = FLAG_LOG_OUT_BRIEF_BODY;
 
-	/*
-	可用域名：
-		api.q7stajv.com
-		api.togav85.com
-	 */
 	@Override
-	public Set<GameDTO> getGameBets() {
+	public String getLanguage(String lang) {
+		return switch (lang) {
+			case LANG_EN -> "en";
+			case LANG_ZH -> "zh";
+			default -> throw new IllegalArgumentException("未知的语言：" + lang);
+		};
+	}
+
+	/*
+		可用域名：
+			api.q7stajv.com
+			api.togav85.com
+		 */
+	@Override
+	public Set<GameDTO> getGameBets(String lang) {
 		final Map<String, Object> params = new TreeMap<>();
 		final StringBuilder sb = new StringBuilder();
 		Set<GameDTO> gameDTOs = new HashSet<>();
@@ -79,7 +88,9 @@ public class KyBetImpl extends BaseBetApiImpl {
 		Date now = new Date();
 		// 比赛的最小开赛时间
 		final long startTimeThreshold = getStartTimeThreshold(now.getTime());
+		lang = getLanguage(lang);
 		for (Map.Entry<String, String> entry : euidToTidMap.entrySet()) {
+			params.put("lang", lang);
 			params.put("cuid", userId);
 			params.put("sort", 1);
 			params.put("tid", entry.getValue());
@@ -102,13 +113,13 @@ public class KyBetImpl extends BaseBetApiImpl {
 					if (mgt > startTimeThreshold) {
 						sb.append(game.getString("mids")).append(",");
 						if (i > 0 && i % 40 == 0) {
-							handlerBatch(entry, params, sb, gameDTOs, provider, now);
+							handlerBatch(entry, params, sb, gameDTOs, provider, now, lang);
 							sb.setLength(0);
 						}
 					}
 				}
 				if (!sb.isEmpty()) {
-					handlerBatch(entry, params, sb, gameDTOs, provider, now);
+					handlerBatch(entry, params, sb, gameDTOs, provider, now, lang);
 				}
 			}
 			params.clear();
@@ -117,11 +128,13 @@ public class KyBetImpl extends BaseBetApiImpl {
 		return gameDTOs;
 	}
 
-	private void handlerBatch(Map.Entry<String, String> entry, Map<String, Object> params, StringBuilder sb, Set<GameDTO> gameDTOs, BetProvider provider, Date now) {
+	private void handlerBatch(Map.Entry<String, String> entry, Map<String, Object> params, StringBuilder sb, Set<GameDTO> gameDTOs, BetProvider provider, Date now
+			, String lang) {
 		int size;
 		Messager<JSONObject> result;
 		// 根据ID查询赛事信息列表
 		params.clear();
+		params.put("lang", lang);
 		params.put("mids", sb.substring(0, sb.length() - 1));
 		params.put("cuid", userId);
 		params.put("cos", 0);
@@ -130,12 +143,13 @@ public class KyBetImpl extends BaseBetApiImpl {
 		if (!result.isOK()) {
 			params.clear();
 			final String msg = result.data().getString("msg");
-			if (msg != null && msg.startsWith("当前访问人数过多")) {
+			// The current number of visitors is too high. Please try again later
+			if (msg != null && msg.startsWith("The current number of visitors")) {
 				try {
 					Thread.sleep(2100);
 				} catch (InterruptedException ignore) {
 				}
-				handlerBatch(entry, params, sb, gameDTOs, provider, now);
+				handlerBatch(entry, params, sb, gameDTOs, provider, now, lang);
 			}
 			return;
 		}
@@ -178,7 +192,7 @@ public class KyBetImpl extends BaseBetApiImpl {
 				}
 				if (!odds.isEmpty()) {
 					final String league = game.getString("tn").replaceAll(" ", "");
-					if (!"梦幻对垒".equals(league)) {  // 排除虚拟球赛
+					if (!"FantasyMatches".equals(league)) {  // 排除虚拟球赛
 						// leagueSet.add(league);
 						gameDTOs.add(new GameDTO(game.getLong("mid"), provider, new Date(game.getLong("mgt")), convertLeague(league),
 								game.getString("mhn"), game.getString("man"), odds, now));
@@ -219,7 +233,7 @@ public class KyBetImpl extends BaseBetApiImpl {
 		builder.setHeader("User-Agent", "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/143.0.0.0 Safari/537.36");
 		final String token = getConfig().token;
 		builder.setHeader("checkId", "pc-" + token + "-" + userId + "-" + System.currentTimeMillis());
-		builder.setHeader("lang", "zh");
+		builder.setHeader("lang", params == null ? getDefaultLanguage() : (String) params.remove("lang"));
 		builder.setHeader("request-code", "{\"panda-bss-source\":\"2\"}");
 		builder.setHeader("requestId", token);
 		builder.setHeader("sec-ch-ua", "\"Google Chrome\";v=\"143\", \"Chromium\";v=\"143\", \"Not A(Brand\";v=\"24\"");
@@ -363,6 +377,7 @@ public class KyBetImpl extends BaseBetApiImpl {
 	private String doQueryTournament(long startTime, long endTime) {
 		if (tournamentId == null || System.currentTimeMillis() > tournamentIdCacheTime) {
 			final Map<String, Object> params = new TreeMap<>();
+			params.put("lang", getDefaultLanguage());
 			params.put("sportType", "1");
 			params.put("endTime", endTime);
 			params.put("startTime", startTime);
@@ -399,6 +414,7 @@ public class KyBetImpl extends BaseBetApiImpl {
 		final String tournamentId = doQueryTournament(startTime, endTime);
 		if (tournamentId != null) {
 			final Map<String, Object> params = new TreeMap<>();
+			params.put("lang", getDefaultLanguage());
 			params.put("tournamentId", tournamentId);
 			params.put("runningBar", "0"); // 是否包含滚球
 			params.put("isPlayBack", 0);
@@ -406,7 +422,7 @@ public class KyBetImpl extends BaseBetApiImpl {
 			params.put("sportType", "1");
 			params.put("startTime", startTime);
 			params.put("endTime", endTime);
-			params.put("langType", "zh");
+			params.put("langType", getDefaultLanguage());
 			params.put("page", JSONObject.of("size", 200, "current", 1));
 			params.put("isVirtualSport", "");
 			params.put("matchNameStr", "");
@@ -448,11 +464,10 @@ public class KyBetImpl extends BaseBetApiImpl {
 											// 解析上半场进球
 											scoreResult.setScoreH(new Integer[] { Integer.parseUnsignedInt(score, pos, pos2, 10),
 													Integer.parseUnsignedInt(score, pos2 + 1, score.length(), 10) });
-										} else {
-											LOGGER.warn("【{}】发现无法解析的分数格式,score={}，详细信息={}", getProvider(), scoreResultJson, Jsons.encode(game));
 										}
 									}
 									if (scoreResult.score == null && scoreResult.scoreH == null) {
+										LOGGER.warn("【{}】发现无法解析的分数格式,score={}，详细信息={}", getProvider(), scoreResultJson, Jsons.encode(game));
 										continue;
 									}
 
