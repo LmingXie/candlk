@@ -52,11 +52,7 @@ public class GameDTO extends TimeBasedEntity {
 		this.leagueZh = getEnToZhCacheMap.get(league);
 		this.teamHomeZh = getEnToZhCacheMap.get(teamHome);
 		this.teamClientZh = getEnToZhCacheMap.get(teamClient);
-		boolean b = this.leagueZh == null || this.teamHomeZh == null || this.teamClientZh == null;
-		if(b){
-			System.out.println(1111);
-		}
-		return b;
+		return this.leagueZh == null || this.teamHomeZh == null || this.teamClientZh == null;
 	}
 
 	/** 赔率信息 */

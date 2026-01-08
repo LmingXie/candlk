@@ -308,10 +308,9 @@ public class KyBetImpl extends BaseBetApiImpl {
 			league = league.replaceFirst("）", ")");
 		}
 		// 1. 优先处理完全不规则的、或需要特殊映射的 KY 联赛名称
+		// TODO: 2026/1/8 需要替换为英文映射
 		return switch (league) {
 			// 英格兰系列
-			case "英格兰超级联赛" -> League.EnglishPremierLeague;
-			case "英格兰冠军联赛" -> League.EnglishLeagueChampionship;
 			case "英格兰甲级联赛", "英格兰甲组联赛" -> League.EnglishLeague1;
 			case "英格兰乙级联赛", "英格兰乙组联赛" -> League.EnglishLeague2;
 			case "英格兰足球协会全国联赛" -> League.EnglishNationalLeague;
