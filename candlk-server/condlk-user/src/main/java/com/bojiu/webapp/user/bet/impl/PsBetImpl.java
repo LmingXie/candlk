@@ -2,8 +2,6 @@ package com.bojiu.webapp.user.bet.impl;
 
 import java.net.URI;
 import java.net.http.*;
-import java.time.Duration;
-import java.time.temporal.ChronoUnit;
 import java.util.*;
 import java.util.concurrent.*;
 
@@ -11,7 +9,7 @@ import com.alibaba.fastjson2.JSONObject;
 import com.bojiu.common.model.ErrorMessageException;
 import com.bojiu.common.model.Messager;
 import com.bojiu.context.web.Jsons;
-import com.bojiu.webapp.user.bet.LoginBaseBetApiImpl;
+import com.bojiu.webapp.user.bet.WsBaseBetApiImpl;
 import com.bojiu.webapp.user.dto.*;
 import com.bojiu.webapp.user.model.BetProvider;
 import lombok.extern.slf4j.Slf4j;
@@ -22,7 +20,7 @@ import org.springframework.stereotype.Service;
 
 @Slf4j
 @Service
-public class PsBetImpl extends LoginBaseBetApiImpl implements WebSocket.Listener {
+public class PsBetImpl extends WsBaseBetApiImpl {
 
 	@Override
 	public BetProvider getProvider() {
@@ -40,7 +38,7 @@ public class PsBetImpl extends LoginBaseBetApiImpl implements WebSocket.Listener
 
 	@Override
 	public Set<GameDTO> getGameBets(String lang) {
-		WebSocket webSocket = getWs();
+		final WebSocket webSocket = getWsConnection();
 		if (ws != null) {
 			try {
 				JSONObject todayBets = getGameBets(webSocket, lang, true);
@@ -95,7 +93,7 @@ public class PsBetImpl extends LoginBaseBetApiImpl implements WebSocket.Listener
 					return null;
 				});
 		try {
-			return future.get(3, TimeUnit.SECONDS);
+			return future.get(5, TimeUnit.SECONDS);
 		} catch (Exception e) {
 			log.warn("获取数据失败或超时，UUID: {}", uuid);
 			return null;
@@ -118,7 +116,7 @@ public class PsBetImpl extends LoginBaseBetApiImpl implements WebSocket.Listener
 			if (!chunk.contains("\"type\":\"FULL_ODDS\"")) {
 				// 单帧即结束，直接退出丢弃状态
 				discarding = !last;
-				return WebSocket.Listener.super.onText(webSocket, data, last);
+				return super.onText(webSocket, data, last);
 			}
 		}
 
@@ -131,7 +129,7 @@ public class PsBetImpl extends LoginBaseBetApiImpl implements WebSocket.Listener
 		if (last) {
 			if (!discarding && !buffer.isEmpty()) {
 				final String jsonData = buffer.toString();
-				log.info("收到 FULL_ODDS 数据: {}", jsonData);
+				log.debug("收到 FULL_ODDS 数据: {}", jsonData);
 
 				// 处理 JSON
 				if (jsonData.contains("\"type\":\"FULL_ODDS\"")) {
@@ -149,7 +147,7 @@ public class PsBetImpl extends LoginBaseBetApiImpl implements WebSocket.Listener
 			discarding = false;
 		}
 		// 回调父级获取下一帧数据
-		return WebSocket.Listener.super.onText(webSocket, data, last);
+		return super.onText(webSocket, data, last);
 	}
 
 	@Override
@@ -158,50 +156,28 @@ public class PsBetImpl extends LoginBaseBetApiImpl implements WebSocket.Listener
 		return client == null ? defaultClient() : client;
 	}
 
-	protected WebSocket ws;
-
-	public WebSocket getWs() {
-		if (ws == null) {
-			final String wsToken = getWsToken();
-			if (wsToken == null) {
-				throw new ErrorMessageException("获取WS Token失败");
-			}
-
-			final JSONObject login = getLoginToken();
-			final String ulp = login.getString("_ulp");
-			// 建立连接
-			final BetApiConfig config = this.getConfig();
-			final String url = "wss://" + config.domain + "/sports-websocket/ws?token=" + wsToken + "&ulp=" + ulp;
-			log.info("【{}】开始建立 WebSocket 连接：{}", getProvider(), url);
-			this.ws = currentClient().newWebSocketBuilder()
-					.connectTimeout(Duration.of(15, ChronoUnit.SECONDS))
-					.header("Origin", config.endPoint)
-					.header("User-Agent", "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/135.0.0.0 Safari/537.36")
-					.buildAsync(URI.create(url),
-							this)
-					.join();
+	@Override
+	protected String getWsUrl() {
+		if (1 == 1) { // TODO: 2026/1/9 调整为动态
+			return "wss://www.ps3838.com/sports-websocket/ws?token=AAAAAARwR7AAAAGbolBR34P0dTqRBIzzaEog_xo0_LpqMgpWIaLni2vcoRmgwhB_&ulp=azZlNWJKMlVrUG9WSlpZSThvUS9Ua3o1UWRjQngrUG5ENHpVcFB0YU95bWJFaHE5c0VzYVRiaE5aQkh1ZnQyeUdMMXJJOWQ4dVhWdWNkYzBCbVVsY2c9PXw5MjljMDgxZmQ2NDdiYTIyYjQ5NWY4NGYwZDAwMzVjOQ%3D%3D";
 		}
-		return ws;
+		final String wsToken = getWsToken();
+		if (wsToken == null) {
+			throw new ErrorMessageException("获取WS Token失败");
+		}
+
+		final JSONObject login = getLoginToken();
+		final String ulp = login.getString("_ulp");
+		// 建立连接
+		final BetApiConfig config = this.getConfig();
+		return "wss://" + config.domain + "/sports-websocket/ws?token=" + wsToken + "&ulp=" + ulp;
 	}
 
 	final String pingMsg = "{\"type\":\"PONG\",\"destination\":\"ALL\"}";
 
 	@Override
-	public void onOpen(WebSocket webSocket) {
-		WebSocket.Listener.super.onOpen(webSocket);
-		log.info("【{}】建立 WebSocket 连接成功！", getProvider());
-	}
-
-	@Override
-	public CompletionStage<?> onClose(WebSocket webSocket, int statusCode, String reason) {
-		this.ws = null;
-		return WebSocket.Listener.super.onClose(webSocket, statusCode, reason);
-	}
-
-	@Override
-	public void onError(WebSocket webSocket, Throwable error) {
-		LOGGER.error("【{}】WS连接异常：{}", getProvider(), error);
-		WebSocket.Listener.super.onError(webSocket, error);
+	protected String getPingMsg() {
+		return pingMsg;
 	}
 
 	@Override
@@ -274,7 +250,7 @@ public class PsBetImpl extends LoginBaseBetApiImpl implements WebSocket.Listener
 
 	@Override
 	protected String postHandleResult(final Messager<JSONObject> result, String responseBody, HttpResponse<String> response) {
-		if (response.statusCode() == 403 && responseBody.contains("MULTIPLE_LOGIN")) {
+		if (response.statusCode() == 403) {
 			clearLoginToken();
 			return responseBody;
 		}

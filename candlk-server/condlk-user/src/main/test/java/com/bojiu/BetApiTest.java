@@ -36,7 +36,15 @@ public class BetApiTest {
 	public void getBetApi() {
 		BetProvider type = BetProvider.PS;
 		PsBetImpl api = (PsBetImpl) BetApi.getInstance(type);
-		api.getGameBets(BetApi.LANG_ZH);
+		for (int i = 0; i < 10; i++) {
+			long systemTime = System.currentTimeMillis();
+			api.getGameBets(BetApi.LANG_EN);
+			log.info("【{}】查询耗时：{}ms", i + 1, System.currentTimeMillis() - systemTime);
+			try {
+				Thread.sleep(3000L);
+			} catch (InterruptedException ignore) {
+			}
+		}
 	}
 
 	@Test
