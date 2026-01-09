@@ -376,11 +376,12 @@ public class KyBetImpl extends BaseBetApiImpl {
 	private String doQueryTournament(long startTime, long endTime) {
 		if (tournamentId == null || System.currentTimeMillis() > tournamentIdCacheTime) {
 			final Map<String, Object> params = new TreeMap<>();
-			params.put("lang", getDefaultLanguage());
+			final String lang = getDefaultLanguage();
+			params.put("lang", lang);
 			params.put("sportType", "1");
 			params.put("endTime", endTime);
 			params.put("startTime", startTime);
-			params.put("langType", "zh");
+			params.put("langType", lang);
 			params.put("nameStr", "");
 			params.put("isVirtualSport", "");
 			params.put("runningBar", "0"); // 是否包含滚球

@@ -153,7 +153,7 @@ public class D1ceBetImpl extends HgBetImpl {
 				}
 			}
 			builder.setHeader("accept-language", "zh-CN,zh;q=0.9");
-			builder.setHeader("locale", "en");
+			builder.setHeader("locale", getDefaultLanguage());
 			builder.setHeader("priority", "u=1, i");
 			builder.setHeader("sec-ch-ua", "\"Google Chrome\";v=\"143\", \"Chromium\";v=\"143\", \"Not A(Brand\";v=\"24\"");
 			builder.setHeader("sec-ch-ua-mobile", "?0");

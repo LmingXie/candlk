@@ -6,6 +6,7 @@ import javax.annotation.Resource;
 import com.bojiu.context.web.Jsons;
 import com.bojiu.webapp.UserApplication;
 import com.bojiu.webapp.user.bet.BetApi;
+import com.bojiu.webapp.user.bet.impl.PsBetImpl;
 import com.bojiu.webapp.user.dto.*;
 import com.bojiu.webapp.user.job.BetMatchJob;
 import com.bojiu.webapp.user.job.GameBetJob;
@@ -30,6 +31,13 @@ public class BetApiTest {
 	BetMatchService betMatchService;
 	@Resource
 	BetMatchJob betMatchJob;
+
+	@Test
+	public void getBetApi() {
+		BetProvider type = BetProvider.PS;
+		PsBetImpl api = (PsBetImpl) BetApi.getInstance(type);
+		api.doWsToken();
+	}
 
 	@Test
 	public void getGameBetsTest() {

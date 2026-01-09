@@ -18,9 +18,8 @@ import com.bojiu.common.model.Messager;
 import com.bojiu.common.redis.RedisUtil;
 import com.bojiu.context.web.Jsons;
 import com.bojiu.webapp.user.bet.BaseBetApiImpl;
-import com.bojiu.webapp.user.dto.GameDTO;
+import com.bojiu.webapp.user.dto.*;
 import com.bojiu.webapp.user.dto.GameDTO.OddsInfo;
-import com.bojiu.webapp.user.dto.ScoreResult;
 import com.bojiu.webapp.user.model.BetProvider;
 import com.bojiu.webapp.user.model.OddsType;
 import me.codeplayer.util.*;
@@ -128,12 +127,12 @@ public class HgBetImpl extends BaseBetApiImpl {
 		return sendRequest(HttpMethod.POST, buildURI(), params, FLAG);
 	}
 
-	transient JSONObject loginInfo;
-
 	@Override
 	public String getLanguage(String lang) {
 		return lang;
 	}
+
+	transient JSONObject loginInfo;
 
 	protected JSONObject doLogin() {
 		if (loginInfo == null) {
@@ -160,8 +159,9 @@ public class HgBetImpl extends BaseBetApiImpl {
 		params.put("ver", ver);
 		params.put("p", "chk_login");
 		params.put("langx", langx);
-		params.put("username", this.getConfig().username);
-		params.put("password", this.getConfig().password);
+		final BetApiConfig config = this.getConfig();
+		params.put("username", config.username);
+		params.put("password", config.password);
 		params.put("app", "N");
 		params.put("auto", pair.getValue());
 		params.put("blackbox", "");
