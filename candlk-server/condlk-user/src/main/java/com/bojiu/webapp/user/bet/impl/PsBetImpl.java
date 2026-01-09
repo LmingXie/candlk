@@ -1,11 +1,15 @@
 package com.bojiu.webapp.user.bet.impl;
 
+import java.io.File;
+import java.io.IOException;
 import java.net.URI;
 import java.net.http.*;
+import java.nio.charset.StandardCharsets;
+import java.nio.file.Files;
 import java.util.*;
 import java.util.concurrent.*;
 
-import com.alibaba.fastjson2.JSONObject;
+import com.alibaba.fastjson2.*;
 import com.bojiu.common.model.ErrorMessageException;
 import com.bojiu.common.model.Messager;
 import com.bojiu.context.web.Jsons;
@@ -42,6 +46,8 @@ public class PsBetImpl extends WsBaseBetApiImpl {
 		if (ws != null) {
 			try {
 				JSONObject todayBets = getGameBets(webSocket, lang, true);
+				JSONPath jsonPath = JSONPath.of("$.odds.n[0].[2]", JSONArray.class);
+				JSONArray oddsInfo = (JSONArray) todayBets.eval(jsonPath);
 
 				JSONObject earlyBets = getGameBets(webSocket, lang, false);
 			} finally {
@@ -50,6 +56,50 @@ public class PsBetImpl extends WsBaseBetApiImpl {
 			}
 		}
 		return Collections.emptySet();
+	}
+
+	public String getDefaultLanguage() {
+		return getLanguage(LANG_ZH);
+	}
+
+	public static void main(String[] args) throws IOException {
+		File file = new File("D:\\idea\\candlk\\ps.json");
+		String jsonStr = Files.readString(file.toPath(), StandardCharsets.UTF_8);
+		JSONObject todayBets = JSON.parseObject(jsonStr);
+		JSONPath jsonPath = JSONPath.of("$.odds.n[0][2]", JSONArray.class);
+		JSONArray oddsInfo = (JSONArray) todayBets.eval(jsonPath);
+		for (Object o : oddsInfo) {
+			JSONArray leagueGroup = (JSONArray) o;
+			JSONArray games = leagueGroup.getJSONArray(2).getJSONArray(0);
+			if (!games.isEmpty()) {
+				// TODO: 2026/1/9 映射联赛、团队名
+				final String leagueZh = leagueGroup.getString(1), leagueEn = leagueGroup.getString(4);
+				for (Object gameObj : games) {
+					JSONArray game = (JSONArray) gameObj;
+					Long id = game.getLong(0);
+					final String teamHomeZh = parseTeamName(game.getString(1)), teamClientZh = parseTeamName(game.getString(2)),
+							teamHomeEn = parseTeamName(game.getString(24)), teamClientEn = parseTeamName(game.getString(25));
+					Date openTime = game.getDate(4);
+					JSONObject odds = game.getJSONObject(8);
+					// 全场赔率
+					JSONArray fullOdds = odds.getJSONArray("0");
+					if (fullOdds != null) {
+						// 0=让球盘；1=大小盘；2=主客平
+					}
+
+					// 上半场赔率
+					JSONArray halfOdds = odds.getJSONArray("1");
+					if (halfOdds != null) {
+
+					}
+				}
+			}
+		}
+	}
+
+	public static String parseTeamName(String teamName) {
+		int idx = teamName.indexOf("\\r\\n");
+		return (idx > 0 ? teamName.substring(0, idx) : teamName).trim();
 	}
 
 	/** 等待响应的 UUID 映射（订阅消息 -> 响应 Future） */
