@@ -33,14 +33,14 @@ public class BetApiTest {
 
 	@Test
 	public void getGameBetsTest() {
-		BetProvider type = BetProvider.KY;
+		BetProvider type = BetProvider.D1CE;
 		BetApi api = BetApi.getInstance(type);
 		gameBetJob.doQueryAndSyncGameBetsForSingleVendor(api);
 	}
 
 	@Test
 	public void getGameScoreResultTest() {
-		BetProvider type = BetProvider.KY;
+		BetProvider type = BetProvider.D1CE;
 		BetApi api = BetApi.getInstance(type);
 		Map<Long, ScoreResult> scoreResult = api.getScoreResult();
 		log.info("赛果数据：{}", Jsons.encode(scoreResult));

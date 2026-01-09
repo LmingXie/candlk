@@ -42,7 +42,7 @@ public interface BetApi {
 	String getLanguage(String lang);
 
 	default String getDefaultLanguage() {
-		return getLanguage(LANG_ZH);
+		return getLanguage(LANG_EN);
 	}
 
 	/** 查询游戏赔率数据 */

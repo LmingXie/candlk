@@ -68,6 +68,7 @@ public class D1ceBetImpl extends HgBetImpl {
 			+ "        }"
 			+ "    }");
 
+	@Override
 	protected @NonNull Messager<JSONObject> doGetLogin() {
 		final Map<String, Object> params = new TreeMap<>();
 		final String email = getConfig().username;
@@ -187,6 +188,11 @@ public class D1ceBetImpl extends HgBetImpl {
 					|| (uried == zendeskLoginUri && json.getJSONObject("appUser") != null);
 		}
 		return true;
+	}
+
+	@Override
+	public String getSourceResult() {
+		return "xktkruvxm39824030l120308b0"; // TODO: 2026/1/8 暂时固定死
 	}
 
 	@Override

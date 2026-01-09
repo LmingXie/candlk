@@ -23,7 +23,7 @@ public enum BetProvider implements ValueProxyImpl<BetProvider, Integer> {
 	 */
 	HG("皇冠"),
 	/** D1CE/皇冠D盘口 <a href="https://d1ce.com/">D1CE</a>（账密：1611826811@qq.com/123456789Cr） */
-	D1CE("D1CE", false),
+	D1CE("D1CE"),
 	/** <a href="https://www.g9i3sr.vip:8443/">开云体育</a>（账密：anxiu55m/rewq4321） */
 	KY("开云体育"),
 	/** <a href="https://www.ps3838.com/">PS3838</a>（账密：ATLUBCP004/Aa123123） */

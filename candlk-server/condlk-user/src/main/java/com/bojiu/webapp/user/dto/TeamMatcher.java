@@ -2,14 +2,6 @@ package com.bojiu.webapp.user.dto;
 
 import java.util.*;
 
-import com.bojiu.common.redis.RedisUtil;
-import com.bojiu.webapp.user.bet.BetApi;
-import com.bojiu.webapp.user.model.BetProvider;
-import com.bojiu.webapp.user.model.UserRedisKey;
-import me.codeplayer.util.CollectionUtil;
-import me.codeplayer.util.X;
-import org.springframework.data.redis.core.HashOperations;
-
 /** 球队匹配器 */
 public class TeamMatcher {
 
@@ -273,68 +265,6 @@ public class TeamMatcher {
 			}
 		}
 		return null;
-	}
-
-	/** 团队与联赛名的英中文映射（） */
-	private static final Map<BetProvider, Map<String, String>> enToZhCache = new HashMap<>(BetProvider.CACHE.length, 1F);
-
-	public static Map<String, String> getEnToZhCacheMap(BetProvider betProvider, Set<GameDTO> gameEnDTOs) {
-		return getEnToZhCacheMap(betProvider, gameEnDTOs, false);
-	}
-
-	public static Map<String, String> getEnToZhCacheMap(BetProvider betProvider, Set<GameDTO> gameEnDTOs, boolean flush) {
-		if (flush) {
-			return flushEnToZhCache(betProvider, gameEnDTOs, false);
-		}
-		return enToZhCache.computeIfAbsent(betProvider, k -> {
-			final Map<String, String> redisCache = X.castType(RedisUtil.template().opsForHash().entries(UserRedisKey.TEAM_NAME_EN2ZH_CACHE + betProvider.name()));
-			if (redisCache.isEmpty()) {
-				return flushEnToZhCache(betProvider, gameEnDTOs, true);
-			}
-			return redisCache;
-		});
-	}
-
-	/** 刷新缓存数据 */
-	private static Map<String, String> flushEnToZhCache(BetProvider betProvider, Set<GameDTO> gameEnDTOs, boolean isCompute) {
-		final Set<GameDTO> gameZhBets = BetApi.getInstance(betProvider).getGameBets(BetApi.LANG_ZH);
-		final Map<String, String> cache = isCompute ? new HashMap<>() : enToZhCache.computeIfAbsent(betProvider, k -> new HashMap<>());
-		final boolean empty = cache.isEmpty();
-		final Map<String, String> newMap = new HashMap<>();
-		final HashMap<Long, GameDTO> enGameMap = CollectionUtil.toHashMap(gameEnDTOs, GameDTO::getId);
-		for (GameDTO zhDto : gameZhBets) {
-			final GameDTO enDto = enGameMap.get(zhDto.getId());
-			if (enDto != null) {
-				if (empty) {
-					newMap.put(enDto.getLeague(), zhDto.getLeague());
-					newMap.put(enDto.getTeamHome(), zhDto.getTeamHome());
-					newMap.put(enDto.getTeamClient(), zhDto.getTeamClient());
-					cache.put(enDto.getLeague(), zhDto.getLeague());
-					cache.put(enDto.getTeamHome(), zhDto.getTeamHome());
-					cache.put(enDto.getTeamClient(), zhDto.getTeamClient());
-				} else {
-					if (!cache.containsKey(enDto.getLeague())) {
-						newMap.put(enDto.getLeague(), zhDto.getLeague());
-						cache.put(enDto.getLeague(), zhDto.getLeague());
-					}
-					if (!cache.containsKey(enDto.getTeamHome())) {
-						newMap.put(enDto.getTeamHome(), zhDto.getTeamHome());
-						cache.put(enDto.getTeamHome(), zhDto.getTeamHome());
-					}
-					if (!cache.containsKey(enDto.getTeamClient())) {
-						newMap.put(enDto.getTeamClient(), zhDto.getTeamClient());
-						cache.put(enDto.getTeamClient(), zhDto.getTeamClient());
-					}
-				}
-			}
-		}
-		if (!newMap.isEmpty()) {
-			RedisUtil.doInTransaction(redisOps -> {
-				final HashOperations<String, Object, Object> opsForHash = redisOps.opsForHash();
-				opsForHash.putAll(UserRedisKey.TEAM_NAME_EN2ZH_CACHE + betProvider.name(), newMap);
-			});
-		}
-		return cache;
 	}
 
 }
