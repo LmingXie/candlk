@@ -125,4 +125,13 @@ public interface League {
 
 	String JapanWomenSUniversityFootballChampionship = "日本女子大学足球锦标赛";
 
+	String EnglandPremierLeagueU21 = "England Premier League 2 U21";
+	String AFCU23AsianCup2026InSaudiArabia = "AFC U23 Asian Cup 2026 (In Saudi Arabia)";
+	String EnglandSuperLeagueWomen = "England Women Super League";
+	String AfricaCupOfNations2025InMorocco2En = "Africa Cup Of Nations 2025 (In Morocco)";
+	String FIFAWorldCup2026EuropeQualifiersPlayOff = "FIFA World Cup 2026 Europe Qualifiers - Playoff";
+	String BelgiumFirstAmateurDivision = "Belgium First Amateur Division";
+	String MexicoLigaMXU19Playoff = "Mexico Liga MX U19 - Playoff";
+	String SpainCopaDelRey = "Spain Copa del Rey";
+
 }

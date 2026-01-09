@@ -49,8 +49,7 @@ public class BetApiTest {
 
 	@Test
 	public void getGameBetsTest() {
-		BetProvider type = BetProvider.D1CE;
-		BetApi api = BetApi.getInstance(type);
+		BetApi api = BetApi.getInstance(BetProvider.HG);
 		gameBetJob.doQueryAndSyncGameBetsForSingleVendor(api);
 	}
 
@@ -66,7 +65,7 @@ public class BetApiTest {
 	public void matchTest() {
 		int parlaysSize = 3; // 串关大小（3场比赛为一组）
 		BetProvider parlaysProvider = BetProvider.HG; // 组串子的厂家
-		BetProvider hedgingProvider = BetProvider.D1CE; // 组串子的厂家
+		BetProvider hedgingProvider = BetProvider.KY; // 组串子的厂家
 
 		// 以下将串关平台称为“A”，对冲平台称为“B”
 		long startTime = System.currentTimeMillis();

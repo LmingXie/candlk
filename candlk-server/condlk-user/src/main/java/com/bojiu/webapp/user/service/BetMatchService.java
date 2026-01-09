@@ -50,7 +50,7 @@ public class BetMatchService {
 				GameDTO bGame = CollectionUtil.findFirst(bGames, b ->
 						(teamHome.contains(b.teamHome) || b.teamHome.contains(teamHome)
 								|| teamClient.contains(b.teamClient) || b.teamClient.contains(teamClient))
-								&& aGame.league.equals(b.league) // 要求联赛名称一致
+								&& aGame.league.equalsIgnoreCase(b.league) // 要求联赛名称一致
 				);
 				if (bGame != null) {
 					// log.debug("队伍名匹配成功：{}-{}\t{}-{}", teamHome, teamClient, bGame.teamHome, bGame.teamClient);
@@ -60,7 +60,7 @@ public class BetMatchService {
 					// 	System.out.println("teamHome: " + teamHome + " teamClient: " + teamClient);
 					// }
 					// 匹配联赛名称（仅一场时则认为是正确的）
-					final List<GameDTO> games_ = CollectionUtil.filter(bGames, b -> aGame.league.equals(b.league));
+					final List<GameDTO> games_ = CollectionUtil.filter(bGames, b -> aGame.league.equalsIgnoreCase(b.league));
 					// 尝试匹配前后 2,3 个字符
 					final GameDTO bGameDTO = matchPrefixOrSuffix(games_, teamHome), bGameDTO2 = matchPrefixOrSuffix(games_, teamClient);
 					if (bGameDTO != null && bGameDTO.equals(bGameDTO2)) {

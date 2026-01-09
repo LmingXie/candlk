@@ -20,8 +20,7 @@ import com.bojiu.context.web.Jsons;
 import com.bojiu.webapp.user.bet.LoginBaseBetApiImpl;
 import com.bojiu.webapp.user.dto.*;
 import com.bojiu.webapp.user.dto.GameDTO.OddsInfo;
-import com.bojiu.webapp.user.model.BetProvider;
-import com.bojiu.webapp.user.model.OddsType;
+import com.bojiu.webapp.user.model.*;
 import me.codeplayer.util.*;
 import org.apache.commons.lang3.time.FastDateFormat;
 import org.apache.commons.lang3.tuple.Pair;
@@ -368,7 +367,7 @@ public class HgBetImpl extends LoginBaseBetApiImpl {
 				JSONObject game = ecs.getJSONObject(j).getJSONObject("game");
 				final Date openTime = parseTime(game.getString("DATETIME"));
 				if (openTime.getTime() >= startTimeThreshold &&
-						!"奇幻赛事".equals(game.getString("LEAGUE")) // 排除虚拟球赛
+						!"Fantasy Matches".equals(game.getString("LEAGUE")) // 排除虚拟球赛
 				) {
 					gameDTOs.add(parseGameDTO(isToday, game, openTime, now));
 				}
@@ -557,7 +556,19 @@ public class HgBetImpl extends LoginBaseBetApiImpl {
 
 	@Override
 	public String convertLeague(String league) {
-		return league.equals("埃及乙组联赛B") ? "埃及乙组联赛" : league;
+		return switch (league) {
+			case "World Cup 2026 Europe Qualifiers - PlayOff" -> League.FIFAWorldCup2026EuropeQualifiersPlayOff;
+			case "Belgium National Division 1" -> League.BelgiumFirstAmateurDivision;
+			case "Mexico League U19" -> League.MexicoLigaMXU19Playoff;
+			case "Spain Cup" -> League.SpainCopaDelRey;
+			default -> {
+
+				if (league.contains("English ")) {
+					yield league.replace("English ", "England ");
+				}
+				yield league.equals("埃及乙组联赛B") ? "埃及乙组联赛" : league;
+			}
+		};
 	}
 
 	public String getSourceResult() {

@@ -144,7 +144,7 @@ public class KyBetImpl extends BaseBetApiImpl {
 			params.clear();
 			final String msg = result.data().getString("msg");
 			// The current number of visitors is too high. Please try again later
-			if (msg != null && msg.startsWith("The current number of visitors")) {
+			if (msg != null && (msg.startsWith("The current number of visitors") || msg.startsWith("当前访问人数过多"))) {
 				try {
 					Thread.sleep(2100);
 				} catch (InterruptedException ignore) {
@@ -153,6 +153,7 @@ public class KyBetImpl extends BaseBetApiImpl {
 			}
 			return;
 		}
+		boolean isZh = "zh".equals(lang);
 		JSONArray games = result.data().getJSONObject("data").getJSONArray("data");
 		if (games != null && (size = games.size()) > 0) {
 			for (int i = 0; i < size; i++) {
@@ -191,7 +192,7 @@ public class KyBetImpl extends BaseBetApiImpl {
 					}
 				}
 				if (!odds.isEmpty()) {
-					final String league = game.getString("tn").replaceAll(" ", "");
+					final String league = isZh ? game.getString("tn").replaceAll(" ", "") : game.getString("tn");
 					if (!"FantasyMatches".equals(league)) {  // 排除虚拟球赛
 						// leagueSet.add(league);
 						gameDTOs.add(new GameDTO(game.getLong("mid"), provider, new Date(game.getLong("mgt")), convertLeague(league),
@@ -308,7 +309,6 @@ public class KyBetImpl extends BaseBetApiImpl {
 			league = league.replaceFirst("）", ")");
 		}
 		// 1. 优先处理完全不规则的、或需要特殊映射的 KY 联赛名称
-		// TODO: 2026/1/8 需要替换为英文映射
 		return switch (league) {
 			// 英格兰系列
 			case "英格兰甲级联赛", "英格兰甲组联赛" -> League.EnglishLeague1;
@@ -354,10 +354,17 @@ public class KyBetImpl extends BaseBetApiImpl {
 			case "希腊超级联赛甲级" -> League.GreeceSuperLeague1;
 			case "希腊超级联赛乙级" -> League.GreeceSuperLeague2;
 			case "日本大学女子锦标赛" -> League.JapanWomenSUniversityFootballChampionship;
+			case "England Premier League U21" -> League.EnglandPremierLeagueU21;
+			case "AFC U23 Asian Cup 2026 (in Saudi Arabia)" -> League.AFCU23AsianCup2026InSaudiArabia;
+			case "England Super League Women" -> League.EnglandSuperLeagueWomen;
+			case "Africa Cup of Nations 2025 (In Morocco)" -> League.AfricaCupOfNations2025InMorocco2En;
 
 			// 默认处理：如果无法精准匹配，尝试通用的字符替换逻辑（注意：这依然返回字符串）
 			default -> {
 				String temp = league;
+				if (temp.contains("Qualifier")) {
+					temp = temp.replace("Qualifier", "Qualifiers");
+				}
 				if (temp.contains("级联赛") && !temp.contains("超级联赛")) {
 					temp = temp.replace("级联赛", "组联赛");
 				} else if (temp.contains("级联赛-附加赛")) {

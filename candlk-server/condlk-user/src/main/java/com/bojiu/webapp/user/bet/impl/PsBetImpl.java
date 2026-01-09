@@ -42,6 +42,7 @@ public class PsBetImpl extends WsBaseBetApiImpl {
 		if (ws != null) {
 			try {
 				JSONObject todayBets = getGameBets(webSocket, lang, true);
+
 				JSONObject earlyBets = getGameBets(webSocket, lang, false);
 			} finally {
 				// 每30秒一次心跳
