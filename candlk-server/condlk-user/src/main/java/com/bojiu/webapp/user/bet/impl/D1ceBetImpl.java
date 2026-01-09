@@ -68,7 +68,6 @@ public class D1ceBetImpl extends HgBetImpl {
 			+ "        }"
 			+ "    }");
 
-	@Override
 	protected @NonNull Messager<JSONObject> doGetLogin() {
 		final Map<String, Object> params = new TreeMap<>();
 		final String email = getConfig().username;

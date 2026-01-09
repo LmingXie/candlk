@@ -18,4 +18,6 @@ public interface UserRedisKey extends RedisKey {
 	Double DEFAULT_MIN_SCORE = -Double.MAX_VALUE,
 			DEFAULT_MAX_SCORE = Double.MAX_VALUE;
 
+	/** 英中文映射数据 */
+	String TEAM_NAME_EN2ZH_CACHE = "teamEn2Zh:";
 }
