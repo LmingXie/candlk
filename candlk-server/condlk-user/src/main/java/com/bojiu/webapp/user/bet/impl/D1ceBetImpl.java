@@ -47,7 +47,7 @@ public class D1ceBetImpl extends HgBetImpl {
 
 	private String getAccessToken() {
 		if (accessToken == null) {
-			doLogin();
+			doGetLogin();
 		}
 		return accessToken;
 	}

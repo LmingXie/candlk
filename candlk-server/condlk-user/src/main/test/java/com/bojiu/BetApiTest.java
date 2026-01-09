@@ -36,7 +36,7 @@ public class BetApiTest {
 	public void getBetApi() {
 		BetProvider type = BetProvider.PS;
 		PsBetImpl api = (PsBetImpl) BetApi.getInstance(type);
-		api.doWsToken();
+		api.getGameBets(BetApi.LANG_ZH);
 	}
 
 	@Test

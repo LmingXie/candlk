@@ -17,7 +17,7 @@ import com.alibaba.fastjson2.*;
 import com.bojiu.common.model.Messager;
 import com.bojiu.common.redis.RedisUtil;
 import com.bojiu.context.web.Jsons;
-import com.bojiu.webapp.user.bet.BaseBetApiImpl;
+import com.bojiu.webapp.user.bet.LoginBaseBetApiImpl;
 import com.bojiu.webapp.user.dto.*;
 import com.bojiu.webapp.user.dto.GameDTO.OddsInfo;
 import com.bojiu.webapp.user.model.BetProvider;
@@ -38,7 +38,7 @@ import org.xml.sax.SAXException;
 import static com.bojiu.webapp.user.utils.HGOddsConverter.convertOddsRatio;
 
 @Service
-public class HgBetImpl extends BaseBetApiImpl {
+public class HgBetImpl extends LoginBaseBetApiImpl {
 
 	@Override
 	public BetProvider getProvider() {
@@ -132,33 +132,14 @@ public class HgBetImpl extends BaseBetApiImpl {
 		return lang;
 	}
 
-	transient JSONObject loginInfo;
-
-	protected JSONObject doLogin() {
-		if (loginInfo == null) {
-			ValueOperations<String, String> opsForValue = RedisUtil.template().opsForValue();
-			final String key = getProvider() + "_login", loginJson = opsForValue.get(key);
-			if (loginJson != null) {
-				loginInfo = Jsons.parseObject(loginJson, new TypeReference<>() {
-				});
-			} else {
-				final Messager<JSONObject> result = doGetLogin(getDefaultLanguage());
-				if (result.isOK()) {
-					loginInfo = result.data();
-					opsForValue.set(key, Jsons.encode(loginInfo), getTimeoutDay(), TimeUnit.DAYS);
-				}
-			}
-		}
-		return loginInfo;
-	}
-
-	protected @NonNull Messager<JSONObject> doGetLogin(String langx) {
+	@Override
+	protected JSONObject doLogin(String lang) {
 		final Map<String, Object> params = new TreeMap<>();
 		Pair<String, String> pair = getVersion();
 		final String ver = pair.getKey();
 		params.put("ver", ver);
 		params.put("p", "chk_login");
-		params.put("langx", langx);
+		params.put("langx", lang);
 		final BetApiConfig config = this.getConfig();
 		params.put("username", config.username);
 		params.put("password", config.password);
@@ -167,12 +148,8 @@ public class HgBetImpl extends BaseBetApiImpl {
 		params.put("blackbox", "");
 		// Base64加密 Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/142.0.0.0 Safari/537.36
 		params.put("userAgent", "TW96aWxsYS81LjAgKFdpbmRvd3MgTlQgMTAuMDsgV2luNjQ7IHg2NCkgQXBwbGVXZWJLaXQvNTM3LjM2IChLSFRNTCwgbGlrZSBHZWNrbykgQ2hyb21lLzE0Mi4wLjAuMCBTYWZhcmkvNTM3LjM2");
-		return sendRequest(HttpMethod.POST, buildURI(ver), params, FLAG);
-	}
-
-	private void clearLoginToken() {
-		loginInfo = null;
-		RedisUtil.template().delete(getProvider() + "_login");
+		Messager<JSONObject> result = sendRequest(HttpMethod.POST, buildURI(ver), params, FLAG);
+		return result.isOK() ? result.data() : null;
 	}
 
 	final DocumentBuilderFactory factory = DocumentBuilderFactory.newInstance();
@@ -279,7 +256,7 @@ public class HgBetImpl extends BaseBetApiImpl {
 	}
 
 	private @NonNull Set<GameDTO> getGameDTOS(String langx) {
-		JSONObject login = doLogin();
+		JSONObject login = getLoginToken();
 		final String uid = login.getString("uid");
 		// 查询赛事统计数据
 		Date now = new Date();
@@ -584,7 +561,7 @@ public class HgBetImpl extends BaseBetApiImpl {
 	}
 
 	public String getSourceResult() {
-		JSONObject login = doLogin();
+		final JSONObject login = getLoginToken();
 		return login.getString("uid");
 	}
 

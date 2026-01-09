@@ -2,28 +2,27 @@ package com.bojiu.webapp.user.bet.impl;
 
 import java.net.URI;
 import java.net.http.*;
+import java.time.Duration;
+import java.time.temporal.ChronoUnit;
 import java.util.*;
-import java.util.concurrent.TimeUnit;
+import java.util.concurrent.*;
 
 import com.alibaba.fastjson2.JSONObject;
-import com.alibaba.fastjson2.TypeReference;
+import com.bojiu.common.model.ErrorMessageException;
 import com.bojiu.common.model.Messager;
-import com.bojiu.common.redis.RedisUtil;
 import com.bojiu.context.web.Jsons;
-import com.bojiu.webapp.user.bet.BaseBetApiImpl;
+import com.bojiu.webapp.user.bet.LoginBaseBetApiImpl;
 import com.bojiu.webapp.user.dto.*;
 import com.bojiu.webapp.user.model.BetProvider;
 import lombok.extern.slf4j.Slf4j;
-import me.codeplayer.util.EasyDate;
-import org.apache.commons.lang3.time.FastDateFormat;
+import org.apache.commons.lang3.tuple.Pair;
 import org.jspecify.annotations.Nullable;
-import org.springframework.data.redis.core.ValueOperations;
 import org.springframework.http.HttpMethod;
 import org.springframework.stereotype.Service;
 
 @Slf4j
 @Service
-public class PsBetImpl extends BaseBetApiImpl {
+public class PsBetImpl extends LoginBaseBetApiImpl implements WebSocket.Listener {
 
 	@Override
 	public BetProvider getProvider() {
@@ -39,67 +38,186 @@ public class PsBetImpl extends BaseBetApiImpl {
 		};
 	}
 
-	protected WebSocket ws;
-
 	@Override
 	public Set<GameDTO> getGameBets(String lang) {
-		if (ws == null) {
-
+		WebSocket webSocket = getWs();
+		if (ws != null) {
+			try {
+				JSONObject todayBets = getGameBets(webSocket, lang, true);
+				JSONObject earlyBets = getGameBets(webSocket, lang, false);
+			} finally {
+				// 每30秒一次心跳
+				ws.sendText(pingMsg, true);
+			}
 		}
-		// TODO: 2026/1/8 登录获得Token
-		// TODO: 2026/1/8 兑换wsToken
-		// TODO: 2026/1/8 建立WSS链接（使用wsToken）
-		/*
-		获取数据的方式：
-			赛果分数：HTTP
-			今日、早盘： WSS
-			1、发送订阅消息（并阻塞等待响应 生成随机UUID 映射当前请求线程）
-			2、Socket 收到消息后进行解除阻塞（收到g应后解除阻塞的线程并设置响应数据）
-		wss://www.ps3838.com/sports-websocket/ws?token=AAAAAARwR7AAAAGbnT-ygWQ6PedV1SFW-mstAcOFXPIrXue-jvfMeei3PUetz66B&ulp=azZlNWJKMlVrUG9WSlpZSThvUS9Ua3o1UWRjQngrUG5ENHpVcFB0YU95bWJFaHE5c0VzYVRiaE5aQkh1ZnQyeUdMMXJJOWQ4dVhWdWNkYzBCbVVsY2c9PXw5MjljMDgxZmQ2NDdiYTIyYjQ5NWY4NGYwZDAwMzVjOQ==
-		 TODO: 2026/1/8 查询今日赛事赔率：
-		{"type":"UNSUBSCRIBE","destination":"ODDS","body":{
-			"sp":29,"lg":"","ev":"","mk":1,"btg":"1","ot":1,
-			"d":"","o":1,"l":3,"v":"","lv":"","me":0,"more":false,
-			"lang":"","tm":0,"pa":0,"c":"","g":"QQ==","pn":-1,"ec":"",
-			"cl":3,"hle":false,"pimo":"0,1,8,39,2,3,6,7,4,5","inl":false,
-			"pv":1,"ic":false,"ice":false,"dpVXz":"ZDfaFZUP9","locale":"zh_CN"
-			},"id":"015b18d9-b0aa-741d-89e6-7e91307843b9"}
-		 */
 		return Collections.emptySet();
 	}
 
-	transient JSONObject loginInfo;
+	/** 等待响应的 UUID 映射（订阅消息 -> 响应 Future） */
+	final Map<String, Pair<String, CompletableFuture<JSONObject>>> pendingMap = new ConcurrentHashMap<>(100, 1F);
 
-	protected JSONObject doLogin() {
-		if (loginInfo == null) {
-			ValueOperations<String, String> opsForValue = RedisUtil.template().opsForValue();
-			final String key = getProvider() + "_login", loginJson = opsForValue.get(key);
-			if (loginJson != null) {
-				loginInfo = Jsons.parseObject(loginJson, new TypeReference<>() {
-				});
-			} else {
-				final Messager<JSONObject> result = doGetLogin(getDefaultLanguage());
-				if (result.isOK()) {
-					loginInfo = result.data().getJSONObject("tokens");
-					opsForValue.set(key, Jsons.encode(loginInfo), 3, TimeUnit.DAYS);
-				}
-			}
-		}
-		return loginInfo;
+	public JSONObject getGameBets(WebSocket webSocket, String lang, boolean today) {
+		final String uuid = genUuid();
+		final String msg = "{\"type\":\"SUBSCRIBE\",\"destination\":\"ODDS\",\"body\":{\"sp\":29,\"lg\":\"\",\"ev\":\"\","
+				+ "\"mk\":" + (today ? 1 : 0) + ","
+				+ "\"btg\":\"1\",\"ot\":1,\"d\":\"\",\"o\":1,\"l\":3,\"v\":\"\",\"lv\":\"\",\"me\":0,\"more\":false,\"lang\":\"\",\"tm\":0,\"pa\":0,"
+				+ "\"c\":\"\",\"g\":\"QQ==\",\"pn\":-1,\"ec\":\"\",\"cl\":3,"
+				+ "\"hle\":" + !today + ","
+				+ "\"pimo\":\"0,1,8,39,2,3,6,7,4,5\",\"inl\":false,\"pv\":1,\"ic\":false,\"ice\":false,\"dpVXz\":\"ZDfaFZUP9\","
+				+ "\"locale\":\"" + lang + "\"},"
+				+ "\"id\":\"" + uuid + "\"}";
+		return syncRequestWs(webSocket, uuid, msg);
 	}
 
-	protected Messager<JSONObject> doGetLogin(String lang) {
+	public String genUuid() {
+		while (true) {
+			final String uuid = UUID.randomUUID().toString();
+			if (!pendingMap.containsKey(uuid)) {
+				return uuid;
+			}
+		}
+	}
+
+	public JSONObject syncRequestWs(WebSocket webSocket, String uuid, String msg) {
+		final CompletableFuture<JSONObject> future = new CompletableFuture<>();
+		// 🚩 只有发送成功（或失败）之后才注册 future 到 pendingMap
+		webSocket.sendText(msg, true)
+				.thenRun(() -> {
+					// 发送成功后允许监听响应
+					pendingMap.put(uuid, Pair.of(
+							msg.replaceFirst("SUBSCRIBE", "UNSUBSCRIBE"),
+							future
+					));
+				})
+				.exceptionally(ex -> {
+					// 发送失败，直接 fail 掉 future
+					future.completeExceptionally(ex);
+					return null;
+				});
+		try {
+			return future.get(3, TimeUnit.SECONDS);
+		} catch (Exception e) {
+			log.warn("获取数据失败或超时，UUID: {}", uuid);
+			return null;
+		} finally {
+			pendingMap.remove(uuid);
+		}
+	}
+
+	private final StringBuilder buffer = new StringBuilder();
+	/** 是否处于丢弃模式 */
+	private volatile boolean discarding = false;
+
+	@Override
+	public CompletionStage<?> onText(WebSocket webSocket, CharSequence data, boolean last) {
+		// 第一帧必然调用（buffer 空 + discarding=false 的状态下进入）
+		if (!discarding && buffer.isEmpty()) {
+			final String chunk = data.toString();
+
+			// 第一帧不包含 FULL_ODDS → 进入丢弃模式
+			if (!chunk.contains("\"type\":\"FULL_ODDS\"")) {
+				// 单帧即结束，直接退出丢弃状态
+				discarding = !last;
+				return WebSocket.Listener.super.onText(webSocket, data, last);
+			}
+		}
+
+		// 非丢弃模式才拼接
+		if (!discarding) {
+			buffer.append(data);
+		}
+
+		// 包尾处理
+		if (last) {
+			if (!discarding && !buffer.isEmpty()) {
+				final String jsonData = buffer.toString();
+				log.info("收到 FULL_ODDS 数据: {}", jsonData);
+
+				// 处理 JSON
+				if (jsonData.contains("\"type\":\"FULL_ODDS\"")) {
+					final JSONObject event = Jsons.parseObject(jsonData);
+					final String id = event.getString("id");
+					final Pair<String, CompletableFuture<JSONObject>> pair = pendingMap.remove(id);
+					if (pair != null) {
+						webSocket.sendText(pair.getLeft(), true); // 取消订阅
+						pair.getRight().complete(event);
+					}
+				}
+			}
+			// 无论是正常还是丢弃，结束后都要 reset
+			buffer.setLength(0);
+			discarding = false;
+		}
+		// 回调父级获取下一帧数据
+		return WebSocket.Listener.super.onText(webSocket, data, last);
+	}
+
+	@Override
+	protected HttpClient currentClient() {
+		HttpClient client = getProxyClient();
+		return client == null ? defaultClient() : client;
+	}
+
+	protected WebSocket ws;
+
+	public WebSocket getWs() {
+		if (ws == null) {
+			final String wsToken = getWsToken();
+			if (wsToken == null) {
+				throw new ErrorMessageException("获取WS Token失败");
+			}
+
+			final JSONObject login = getLoginToken();
+			final String ulp = login.getString("_ulp");
+			// 建立连接
+			final BetApiConfig config = this.getConfig();
+			final String url = "wss://" + config.domain + "/sports-websocket/ws?token=" + wsToken + "&ulp=" + ulp;
+			log.info("【{}】开始建立 WebSocket 连接：{}", getProvider(), url);
+			this.ws = currentClient().newWebSocketBuilder()
+					.connectTimeout(Duration.of(15, ChronoUnit.SECONDS))
+					.header("Origin", config.endPoint)
+					.header("User-Agent", "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/135.0.0.0 Safari/537.36")
+					.buildAsync(URI.create(url),
+							this)
+					.join();
+		}
+		return ws;
+	}
+
+	final String pingMsg = "{\"type\":\"PONG\",\"destination\":\"ALL\"}";
+
+	@Override
+	public void onOpen(WebSocket webSocket) {
+		WebSocket.Listener.super.onOpen(webSocket);
+		log.info("【{}】建立 WebSocket 连接成功！", getProvider());
+	}
+
+	@Override
+	public CompletionStage<?> onClose(WebSocket webSocket, int statusCode, String reason) {
+		this.ws = null;
+		return WebSocket.Listener.super.onClose(webSocket, statusCode, reason);
+	}
+
+	@Override
+	public void onError(WebSocket webSocket, Throwable error) {
+		LOGGER.error("【{}】WS连接异常：{}", getProvider(), error);
+		WebSocket.Listener.super.onError(webSocket, error);
+	}
+
+	@Override
+	protected JSONObject doLogin(String lang) {
 		final Map<String, Object> params = new TreeMap<>();
 		final BetApiConfig config = this.getConfig();
 		params.put("loginId", config.username);
 		params.put("password", config.password);
 		params.put("Referer", this.getConfig().endPoint + "/" + lang.toLowerCase() + "/sports/soccer");
-		return sendRequest(HttpMethod.POST, buildURI("/member-auth/v2/authenticate", lang), params);
+		final Messager<JSONObject> result = sendRequest(HttpMethod.POST, buildURI("/member-auth/v2/authenticate", lang), params);
+		return result.data().getJSONObject("tokens");
 	}
 
 	@Nullable
-	public String doWsToken() {
-		doLogin();
+	public String getWsToken() {
+		getLoginToken();
 		if (loginInfo != null) {
 			final Map<String, Object> params = new TreeMap<>();
 			final String lang = getDefaultLanguage();
@@ -112,8 +230,6 @@ public class PsBetImpl extends BaseBetApiImpl {
 		return null;
 	}
 
-	final FastDateFormat DATE_FORMAT = FastDateFormat.getInstance("YYYYMMddhhmm");
-
 	@Override
 	protected HttpRequest.Builder createRequest(HttpMethod method, URI uri, Map<String, Object> params, int flags) {
 		HttpRequest.Builder builder = super.createRequest(method, uri, params, flags);
@@ -123,21 +239,9 @@ public class PsBetImpl extends BaseBetApiImpl {
 		builder.setHeader("user-agent", "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/143.0.0.0 Safari/537.36");
 		builder.setHeader("x-trust-client", "false");
 		if (loginInfo != null) {
-			final String nowTime = new EasyDate().toString(DATE_FORMAT);
-			final String XCustid = loginInfo.getString("X-Custid");
-			final String custid = XCustid != null ? XCustid : "id=ATLUBCP004&login=" + nowTime + "&roundTrip=" + nowTime + "&hash=F9345FC1F820D6B1281512F08F0A88F0";
 			final String XBrowserSessionId = loginInfo.getString("X-Browser-Session-Id");
-
-			builder.setHeader("x-app-data", "dpVXz=ZDfaFZUP9;"
-					+ "pctag=7cb0d652-ae60-47f2-bf0e-07322c19d9c7;"
-					+ "directusToken=TwEdnphtyxsfMpXoJkCkWaPsL2KJJ3lo;"
-					+ "BrowserSessionId=" + XBrowserSessionId + ";"
-					+ "PCTR=1925630200704;_og=QQ%3D%3D;"
-					+ "_ulp=azZlNWJKMlVrUG9WSlpZSThvUS9Ua3o1UWRjQngrUG5ENHpVcFB0YU95bWJFaHE5c0VzYVRiaE5aQkh1ZnQyeUdMMXJJOWQ4dVhWdWNkYzBCbVVsY2c9PXw5MjljMDgxZmQ2NDdiYTIyYjQ5NWY4NGYwZDAwMzVjOQ==;"
-					+ "custid=" + custid + ";"
-					+ "_userDefaultView=COMPACT;"
-					+ "__prefs=W251bGwsMiwxLDAsMSxudWxsLGZhbHNlLDAuMDAwMCx0cnVlLHRydWUsIl8zTElORVMiLDEsbnVsbCx0cnVlLGZhbHNlLGZhbHNlLGZhbHNlLG51bGwsbnVsbCx0cnVlXQ==");
-			builder.setHeader("x-custid", custid);
+			builder.setHeader("x-app-data", loginInfo.getString("X-App-Data"));
+			builder.setHeader("x-custid", loginInfo.getString("custid"));
 			builder.setHeader("x-lcu", loginInfo.getString("X-Lcu"));
 			builder.setHeader("x-u", loginInfo.getString("X-U"));
 			builder.setHeader("x-slid", loginInfo.getString("X-SLID"));
@@ -154,6 +258,9 @@ public class PsBetImpl extends BaseBetApiImpl {
 	protected String mapStatus(JSONObject json, HttpResponse<String> response) {
 		final String errorCode = (String) getErrorCode(json);
 		if (errorCode != null && !"1".equals(errorCode)) {
+			if ("403".equals(errorCode)) {
+				clearLoginToken();
+			}
 			return null;
 		}
 		return Messager.OK;
@@ -161,7 +268,40 @@ public class PsBetImpl extends BaseBetApiImpl {
 
 	@Override
 	protected Object getErrorCode(JSONObject json) {
-		return json.getString("code");
+		final String code = json.getString("code");
+		return code == null ? json.getString("error") : code;
+	}
+
+	@Override
+	protected String postHandleResult(final Messager<JSONObject> result, String responseBody, HttpResponse<String> response) {
+		if (response.statusCode() == 403 && responseBody.contains("MULTIPLE_LOGIN")) {
+			clearLoginToken();
+			return responseBody;
+		}
+		if (response.request().uri().getPath().endsWith("/authenticate")) { // 登录响应头信息
+			Map<String, List<String>> headers = response.headers().map();
+			final List<String> list = headers.get("X-App-Data");
+			final JSONObject data = result.data();
+			if (data != null) {
+				final JSONObject tokens = data.getJSONObject("tokens");
+				if (list != null && !list.isEmpty()) {
+					tokens.put("X-App-Data", list.get(0));
+				}
+				List<String> setCookies = headers.get("set-cookie");
+				if (setCookies != null) {
+					for (String cookie : setCookies) {
+						// _ulp=azZlNWJKMlVrUG9WSlpZSThvUS9Ua3o1UWRjQngrUG5ENHpVcFB0YU95bWJFaHE5c0VzYVRiaE5aQkh1ZnQyeUdMMXJJOWQ4dVhWdWNkYzBCbVVsY2c9PXw5MjljMDgxZmQ2NDdiYTIyYjQ5NWY4NGYwZDAwMzVjOQ==; Path=/; Domain=.ps3838.com; HttpOnly; SameSite=None; Secure
+						if (cookie.startsWith("_ulp=")) {
+							tokens.put("_ulp", cookie.substring(5, cookie.indexOf(";")));
+						} else if (cookie.startsWith("custid=")) {
+							// custid=id=ATLUBCP004&login=202601090027&roundTrip=202601090027&hash=6B19901E568660C19D41145DDF0F2669; Path=/; Domain=.ps3838.com; Expires=Fri, 09-Jan-2026 06:27:42 GMT; SameSite=None; Secure
+							tokens.put("custid", cookie.substring(7, cookie.indexOf(";")));
+						}
+					}
+				}
+			}
+		}
+		return responseBody;
 	}
 
 	@Override
