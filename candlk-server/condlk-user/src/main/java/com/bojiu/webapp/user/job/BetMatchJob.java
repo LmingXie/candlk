@@ -58,18 +58,20 @@ public class BetMatchJob {
 
 			final Pair<HedgingDTO[], Long> topNPair = betMatchService.match(gameMapper, parlaysSize, 1000);
 			final HedgingDTO[] topN = topNPair.getKey();
-			for (HedgingDTO dto : topN) {
-				dto.toJson();
-			}
-			// 缓存匹配结果
-			RedisUtil.doInTransaction(redisOps -> {
-				final ZSetOperations<String, String> opsForZSet = redisOps.opsForZSet();
-				final String key = BET_MATCH_DATA_KEY + parlaysProvider + "-" + hedgingProvider;
-				redisOps.delete(key); // 删除历史数据
+			if (topN.length > 0) {
 				for (HedgingDTO dto : topN) {
-					opsForZSet.add(key, dto.json, dto.avgProfit);
+					dto.toJson();
 				}
-			});
+				// 缓存匹配结果
+				RedisUtil.doInTransaction(redisOps -> {
+					final ZSetOperations<String, String> opsForZSet = redisOps.opsForZSet();
+					final String key = BET_MATCH_DATA_KEY + parlaysProvider + "-" + hedgingProvider;
+					redisOps.delete(key); // 删除历史数据
+					for (HedgingDTO dto : topN) {
+						opsForZSet.add(key, dto.json, dto.avgProfit);
+					}
+				});
+			}
 
 			log.info("【{}】->【{}】匹配结束，共【{}】种组合，计算最佳结果：{}，耗时：{} ms", parlaysProvider, hedgingProvider,
 					format.format(topNPair.getValue()), topN.length, System.currentTimeMillis() - beginTime);
