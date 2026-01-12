@@ -29,22 +29,6 @@
 			<artifactId>spring-session-data-redis</artifactId>
 		</dependency>
 
-		<dependency>
-			<groupId>com.bojiu</groupId>
-			<artifactId>xxl-job-core</artifactId>
-			<version>1.0.0</version>
-			<exclusions>
-				<exclusion>
-					<groupId>io.netty</groupId>
-					<artifactId>netty-resolver-dns-classes-macos</artifactId>
-				</exclusion>
-				<exclusion>
-					<groupId>io.netty</groupId>
-					<artifactId>netty-resolver-dns-native-macos</artifactId>
-				</exclusion>
-			</exclusions>
-		</dependency>
-
 		<!-- poi-ooxml 间接依赖，低版本有漏洞 -->
 		<dependency>
 			<groupId>org.apache.commons</groupId>
