@@ -43,18 +43,19 @@ public class PsBetImpl extends WsBaseBetApiImpl {
 		if (ws != null) {
 			try {
 				final Date now = new Date();
-				final List<GameDTO> list = new ArrayList<>();
+				final Set<GameDTO> gameDTOS = new HashSet<>();
 				final JSONObject todayBets = getGameBets(webSocket, lang, true);
 				// 解析滚球赛事
-				parseBlock(todayBets, JSONPath.of("$.odds.l[0][2]", JSONArray.class), list, now);
+				parseBlock(todayBets, JSONPath.of("$.odds.l[0][2]", JSONArray.class), gameDTOS, now);
 				// 解析今日赛事
-				parseBlock(todayBets, JSONPath.of("$.odds.n[0][2]", JSONArray.class), list, now);
+				parseBlock(todayBets, JSONPath.of("$.odds.n[0][2]", JSONArray.class), gameDTOS, now);
 
 				final JSONObject earlyBets = getGameBets(webSocket, lang, false);
 				// 解析早盘赛事
-				parseBlock(earlyBets, JSONPath.of("$.odds.n[0][2]", JSONArray.class), list, now);
+				parseBlock(earlyBets, JSONPath.of("$.odds.n[0][2]", JSONArray.class), gameDTOS, now);
 				// 解析亮点赛事
-				parseBlock(earlyBets, JSONPath.of("$.odds.hle[0][2]", JSONArray.class), list, now);
+				parseBlock(earlyBets, JSONPath.of("$.odds.hle[0][2]", JSONArray.class), gameDTOS, now);
+				return gameDTOS;
 			} finally {
 				// 每30秒一次心跳
 				ws.sendText(pingMsg, true);
@@ -67,13 +68,13 @@ public class PsBetImpl extends WsBaseBetApiImpl {
 		return getLanguage(LANG_ZH);
 	}
 
-	private void parseBlock(JSONObject todayBets, JSONPath jsonPath, List<GameDTO> list, Date now) {
+	private void parseBlock(JSONObject todayBets, JSONPath jsonPath, Set<GameDTO> gameDTOS, Date now) {
 		for (Object o : (JSONArray) todayBets.eval(jsonPath)) {
-			parseGames((JSONArray) o, list, now);
+			parseGames((JSONArray) o, gameDTOS, now);
 		}
 	}
 
-	private void parseGames(JSONArray leagueGroup, List<GameDTO> list, Date now) {
+	private void parseGames(JSONArray leagueGroup, Set<GameDTO> gameDTOS, Date now) {
 		final JSONArray games = leagueGroup.getJSONArray(2);
 		if (!games.isEmpty()) {
 			final String leagueZh = leagueGroup.getString(1), leagueEn = leagueGroup.getString(4);
@@ -107,7 +108,7 @@ public class PsBetImpl extends WsBaseBetApiImpl {
 				final String teamHomeZh = parseTeamName(game.getString(1)), teamClientZh = parseTeamName(game.getString(2)),
 						teamHomeEn = parseTeamName(game.getString(24)), teamClientEn = parseTeamName(game.getString(25));
 				final Date openTime = game.getDate(4);
-				list.add(new GameDTO(id, getProvider(), openTime, convertLeague(leagueEn), teamHomeEn, teamClientEn, oddsInfos, now)
+				gameDTOS.add(new GameDTO(id, getProvider(), openTime, convertLeague(leagueEn), teamHomeEn, teamClientEn, oddsInfos, now)
 						.initZh(leagueZh, teamHomeZh, teamClientZh));
 			}
 		}
