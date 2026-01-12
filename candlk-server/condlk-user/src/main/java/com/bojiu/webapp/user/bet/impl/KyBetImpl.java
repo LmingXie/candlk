@@ -357,6 +357,7 @@ public class KyBetImpl extends BaseBetApiImpl {
 			case "AFC U23 Asian Cup 2026 (in Saudi Arabia)" -> League.AFCU23AsianCup2026InSaudiArabia;
 			case "England Super League Women" -> League.EnglandSuperLeagueWomen;
 			case "Africa Cup of Nations 2025 (In Morocco)" -> League.AfricaCupOfNations2025InMorocco2En;
+			case "Israel Premier League Women" -> League.IsraelWomenPremierLeague;
 
 			// 默认处理：如果无法精准匹配，尝试通用的字符替换逻辑（注意：这依然返回字符串）
 			default -> {

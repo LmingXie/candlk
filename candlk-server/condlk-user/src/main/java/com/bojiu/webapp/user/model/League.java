@@ -170,5 +170,25 @@ public interface League {
 	String IsraelWomenPremierLeague = "Israel Women Premier League";
 	/** 阿联酋超级联赛U23 */
 	String UAEProLeagueU23 = "UAE Pro League U23";
+	/** 巴西圣保罗青年杯U20 */
+	String BrazilCopaSaoPauloJuniorU20 = "Brazil Copa Sao Paulo Junior U20";
+	/** 世界杯2026(在加拿大、墨西哥&美国) */
+	String FIFAWorldCup2026InCanadaMexico_USA = "FIFA World Cup 2026 (In Canada, Mexico & USA)";
+	/** 毛里塔尼亚甲组联赛 */
+	String MauritaniaSuperD1 = "Mauritania Super D1";
+	/** 乌拉圭足协联赛杯 */
+	String UruguayCopadelaLigaAUF = "Uruguay Copa de la Liga AUF";
+	/** 巴西圣保罗州甲组一联赛 */
+	String BrazilCampeonatoPaulistaSerieA1 = "Brazil Campeonato Paulista Serie A1";
+	/** 葡萄牙联赛U23 - 附加赛 */
+	String PortugalLigaRevelacaoU23Playoff = "Portugal Liga Revelacao U23 - Playoff";
+	/** 欧美杯2026(在卡塔尔) */
+	String FinalissimaCupofChampions2026InQatar = "Finalissima Cup of Champions 2026 (In Qatar)";
+	/** 北爱尔兰职业超级联赛U20 */
+	String NorthernIrelandPremiershipDevelopmentLeagueU20 = "Northern Ireland Premiership Development League U20";
+	/** 巴林联赛U21 */
+	String BahrainLeagueU21 = "Bahrain League U21";
+	/** 哥伦比亚超级联赛 */
+	String ColombiaSuperliga = "Colombia Superliga";
 
 }

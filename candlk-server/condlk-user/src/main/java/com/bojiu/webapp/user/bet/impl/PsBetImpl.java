@@ -150,6 +150,9 @@ public class PsBetImpl extends WsBaseBetApiImpl {
 
 	public static String parseTeamName(String teamName) {
 		final int idx = teamName.indexOf("\\r\\n");
+		if (teamName.startsWith("Al-")) {
+			teamName = teamName.replaceFirst("Al-", "Al ");
+		}
 		return (idx > 0 ? teamName.substring(0, idx) : teamName).trim();
 	}
 
@@ -437,8 +440,20 @@ public class PsBetImpl extends WsBaseBetApiImpl {
 			case "Colombia Superliga" -> League.ColombiaSuperCup;
 			case "England Southern League Division 1" -> League.EnglandSouthernLeagueDivisionOneSouth;
 			case "FIFA World Cup Qualifiers Europe" -> League.FIFAWorldCup2026EuropeQualifiersPlayOff;
-			case "Israel Premier League Women" -> League.IsraelWomenPremierLeague;
 			case "UAE Reserve League U23" -> League.UAEProLeagueU23;
+			case "Brazil Sao Paulo Cup U20" -> League.BrazilCopaSaoPauloJuniorU20;
+			case "FIFA World Cup" -> League.FIFAWorldCup2026InCanadaMexico_USA;
+			case "Mauritania Ligue 1" -> League.MauritaniaSuperD1;
+			case "Oman Cup" -> League.OmanSultanCup;
+			case "Uruguay League Cup" -> League.UruguayCopadelaLigaAUF;
+			case "Uruguay - League Cup" -> "乌拉圭足协联赛杯";
+			case "Brazil Paulista" -> League.BrazilCampeonatoPaulistaSerieA1;
+			case "Portugal U23 Championship" -> League.PortugalLigaRevelacaoU23Playoff;
+			case "International Finalissima" -> League.FinalissimaCupofChampions2026InQatar;
+			case "Israel Premier League Women" -> League.IsraelWomenPremierLeague;
+			case "Northern Ireland Reserve League" -> League.NorthernIrelandPremiershipDevelopmentLeagueU20;
+			case "Bahrain U21 League" -> League.BahrainLeagueU21;
+			case "Colombia Super Cup" -> League.ColombiaSuperliga;
 			default -> league;
 		};
 	}

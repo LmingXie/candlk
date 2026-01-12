@@ -234,8 +234,10 @@ public class TeamMatcher {
 			"Al-Ettifaq,Al Ettifaq",
 			"Al-Nassr,Al Nassr Riyadh",
 			"Al-Hilal,Al Hilal Riyadh",
-			"瓦尔维克,瓦尔韦克",
-			"瓦尔维克,瓦尔韦克",
+			"Al-Kholood,Al Kholood",
+			"Al-Akhdoud,Al Okhdood",
+			"Al Khalidiya,Al Khaldiya SC U21",
+			"Al-Najma,Al Najma Manama U21",
 	};
 
 	// 2. 预处理后的倒排索引 Map
