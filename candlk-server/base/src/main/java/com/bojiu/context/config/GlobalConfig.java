@@ -17,7 +17,6 @@ import com.bojiu.context.model.*;
 import com.bojiu.context.web.RequestContextImpl;
 import com.bojiu.webapp.base.entity.Merchant;
 import com.bojiu.webapp.base.service.*;
-import com.xxl.job.core.executor.impl.XxlJobSpringExecutor;
 import lombok.extern.slf4j.Slf4j;
 import me.codeplayer.util.ArrayUtil;
 import me.codeplayer.util.X;
@@ -26,10 +25,9 @@ import net.sf.jsqlparser.expression.LongValue;
 import net.sf.jsqlparser.expression.operators.conditional.AndExpression;
 import net.sf.jsqlparser.expression.operators.relational.*;
 import net.sf.jsqlparser.schema.Column;
-import org.apache.dubbo.config.annotation.DubboService;
 import org.mybatis.spring.annotation.MapperScan;
-import org.springframework.boot.autoconfigure.condition.*;
-import org.springframework.boot.context.properties.ConfigurationProperties;
+import org.springframework.boot.autoconfigure.condition.ConditionalOnBean;
+import org.springframework.boot.autoconfigure.condition.ConditionalOnClass;
 import org.springframework.context.annotation.*;
 import org.springframework.context.support.ResourceBundleMessageSource;
 import org.springframework.core.task.TaskExecutor;
@@ -148,13 +146,13 @@ public class GlobalConfig {
 	/**
 	 * 分布式定时任务 XXL-JOB 配置
 	 */
-	@ConditionalOnProperty("xxl-job.admin-addresses")
-	@ConfigurationProperties(prefix = "xxl-job")
-	@Bean
-	public XxlJobSpringExecutor xxlJobExecutor() {
-		log.info(">>>>>>>>>>> xxl-job config init.");
-		return new XxlJobSpringExecutor();
-	}
+	// @ConditionalOnProperty("xxl-job.admin-addresses")
+	// @ConfigurationProperties(prefix = "xxl-job")
+	// @Bean
+	// public XxlJobSpringExecutor xxlJobExecutor() {
+	// 	log.info(">>>>>>>>>>> xxl-job config init.");
+	// 	return new XxlJobSpringExecutor();
+	// }
 
 	/**
 	 * 本地缓存跨服务同步刷新支持配置
