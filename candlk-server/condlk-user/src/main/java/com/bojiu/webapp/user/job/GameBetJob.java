@@ -31,7 +31,7 @@ public class GameBetJob {
 			// 这里的队列容量（ 128 ） 一定不能小于 BetProvider.CACHE.length
 			, 128, "game-bet-sync-", new ThreadPoolExecutor.AbortPolicy());
 
-	@Scheduled(cron = "${service.cron.GameBetJob:0/30 * * * * ?}")
+	@Scheduled(cron = "${service.cron.GameBetJob:0/45 * * * * ?}")
 	public void run() throws InterruptedException {
 		final EnumMap<BetProvider, BetApi> enumMap = BetApi.implMapRef.get();
 		final int size = enumMap.size();

@@ -33,7 +33,6 @@ public class BetMatchJob {
 			Pair.of(D1CE, HG),
 			Pair.of(HG, KY),
 			Pair.of(HG, D1CE),
-			Pair.of(KY, HG),
 			Pair.of(D1CE, KY)
 	);
 	public static final Map<String, String> ALL_PAIR = new TreeMap<>();
@@ -45,7 +44,7 @@ public class BetMatchJob {
 		}
 	}
 
-	@Scheduled(cron = "${service.cron.BetMatchJob:0/20 * * * * ?}")
+	@Scheduled(cron = "${service.cron.BetMatchJob:0 0/5 * * * ?}")
 	public void run() {
 		long startTime = System.currentTimeMillis();
 		final int parlaysSize = 3; // 串关大小（3场比赛为一组）
