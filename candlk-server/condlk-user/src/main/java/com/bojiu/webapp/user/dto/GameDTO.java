@@ -55,6 +55,13 @@ public class GameDTO extends TimeBasedEntity {
 		return this.leagueZh == null || this.teamHomeZh == null || this.teamClientZh == null;
 	}
 
+	public GameDTO initZh(String leagueZh, String teamHomeZh, String teamClientZh) {
+		this.leagueZh = leagueZh;
+		this.teamHomeZh = teamHomeZh;
+		this.teamClientZh = teamClientZh;
+		return this;
+	}
+
 	/** 赔率信息 */
 	@Setter
 	@Getter

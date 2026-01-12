@@ -1,11 +1,7 @@
 package com.bojiu.webapp.user.bet.impl;
 
-import java.io.File;
-import java.io.IOException;
 import java.net.URI;
 import java.net.http.*;
-import java.nio.charset.StandardCharsets;
-import java.nio.file.Files;
 import java.util.*;
 import java.util.concurrent.*;
 
@@ -15,7 +11,8 @@ import com.bojiu.common.model.Messager;
 import com.bojiu.context.web.Jsons;
 import com.bojiu.webapp.user.bet.WsBaseBetApiImpl;
 import com.bojiu.webapp.user.dto.*;
-import com.bojiu.webapp.user.model.BetProvider;
+import com.bojiu.webapp.user.dto.GameDTO.OddsInfo;
+import com.bojiu.webapp.user.model.*;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.lang3.tuple.Pair;
 import org.jspecify.annotations.Nullable;
@@ -45,11 +42,19 @@ public class PsBetImpl extends WsBaseBetApiImpl {
 		final WebSocket webSocket = getWsConnection();
 		if (ws != null) {
 			try {
-				JSONObject todayBets = getGameBets(webSocket, lang, true);
-				JSONPath jsonPath = JSONPath.of("$.odds.n[0].[2]", JSONArray.class);
-				JSONArray oddsInfo = (JSONArray) todayBets.eval(jsonPath);
+				final Date now = new Date();
+				final List<GameDTO> list = new ArrayList<>();
+				final JSONObject todayBets = getGameBets(webSocket, lang, true);
+				// 解析滚球赛事
+				parseBlock(todayBets, JSONPath.of("$.odds.l[0][2]", JSONArray.class), list, now);
+				// 解析今日赛事
+				parseBlock(todayBets, JSONPath.of("$.odds.n[0][2]", JSONArray.class), list, now);
 
-				JSONObject earlyBets = getGameBets(webSocket, lang, false);
+				final JSONObject earlyBets = getGameBets(webSocket, lang, false);
+				// 解析早盘赛事
+				parseBlock(earlyBets, JSONPath.of("$.odds.n[0][2]", JSONArray.class), list, now);
+				// 解析亮点赛事
+				parseBlock(earlyBets, JSONPath.of("$.odds.hle[0][2]", JSONArray.class), list, now);
 			} finally {
 				// 每30秒一次心跳
 				ws.sendText(pingMsg, true);
@@ -62,39 +67,88 @@ public class PsBetImpl extends WsBaseBetApiImpl {
 		return getLanguage(LANG_ZH);
 	}
 
-	public static void main(String[] args) throws IOException {
-		File file = new File("D:\\idea\\candlk\\ps.json");
-		String jsonStr = Files.readString(file.toPath(), StandardCharsets.UTF_8);
-		JSONObject todayBets = JSON.parseObject(jsonStr);
-		JSONPath jsonPath = JSONPath.of("$.odds.n[0][2]", JSONArray.class);
-		JSONArray oddsInfo = (JSONArray) todayBets.eval(jsonPath);
-		for (Object o : oddsInfo) {
-			JSONArray leagueGroup = (JSONArray) o;
-			JSONArray games = leagueGroup.getJSONArray(2).getJSONArray(0);
-			if (!games.isEmpty()) {
-				// TODO: 2026/1/9 映射联赛、团队名
-				final String leagueZh = leagueGroup.getString(1), leagueEn = leagueGroup.getString(4);
-				for (Object gameObj : games) {
-					JSONArray game = (JSONArray) gameObj;
-					Long id = game.getLong(0);
-					final String teamHomeZh = parseTeamName(game.getString(1)), teamClientZh = parseTeamName(game.getString(2)),
-							teamHomeEn = parseTeamName(game.getString(24)), teamClientEn = parseTeamName(game.getString(25));
-					Date openTime = game.getDate(4);
-					JSONObject odds = game.getJSONObject(8);
-					// 全场赔率
-					JSONArray fullOdds = odds.getJSONArray("0");
-					if (fullOdds != null) {
-						// 0=让球盘；1=大小盘；2=主客平
-					}
+	private void parseBlock(JSONObject todayBets, JSONPath jsonPath, List<GameDTO> list, Date now) {
+		for (Object o : (JSONArray) todayBets.eval(jsonPath)) {
+			parseGames((JSONArray) o, list, now);
+		}
+	}
 
-					// 上半场赔率
-					JSONArray halfOdds = odds.getJSONArray("1");
-					if (halfOdds != null) {
-
-					}
+	private void parseGames(JSONArray leagueGroup, List<GameDTO> list, Date now) {
+		final JSONArray games = leagueGroup.getJSONArray(2);
+		if (!games.isEmpty()) {
+			final String leagueZh = leagueGroup.getString(1), leagueEn = leagueGroup.getString(4);
+			for (Object gameObj : games) {
+				final JSONArray game = (JSONArray) gameObj;
+				final JSONObject odds = game.getJSONObject(8);
+				// 全场赔率
+				final JSONArray fullOdds = odds.getJSONArray("0");
+				final JSONArray halfOdds = odds.getJSONArray("1");
+				int fullSize = fullOdds == null ? 0 : fullOdds.size(), halfSize = halfOdds == null ? 0 : halfOdds.size();
+				final List<OddsInfo> oddsInfos = new ArrayList<>(fullSize + halfSize);
+				if (fullSize > 0) {
+					// 0=让球盘；
+					parseRAndOu(fullOdds, 0, oddsInfos, OddsType.R);
+					// 1=大小盘；
+					parseRAndOu(fullOdds, 1, oddsInfos, OddsType.OU);
+					// 2=主客平
+					parseM(fullOdds, oddsInfos, OddsType.M);
 				}
+
+				// 上半场赔率
+				if (halfSize > 0) {
+					// 0=让球盘
+					parseRAndOu(halfOdds, 0, oddsInfos, OddsType.HR);
+					// 1=大小盘
+					parseRAndOu(halfOdds, 1, oddsInfos, OddsType.HOU);
+					// 2=主客平
+					parseM(halfOdds, oddsInfos, OddsType.HM);
+				}
+				final Long id = game.getLong(0);
+				final String teamHomeZh = parseTeamName(game.getString(1)), teamClientZh = parseTeamName(game.getString(2)),
+						teamHomeEn = parseTeamName(game.getString(24)), teamClientEn = parseTeamName(game.getString(25));
+				final Date openTime = game.getDate(4);
+				list.add(new GameDTO(id, getProvider(), openTime, convertLeague(leagueEn), teamHomeEn, teamClientEn, oddsInfos, now)
+						.initZh(leagueZh, teamHomeZh, teamClientZh));
 			}
 		}
+	}
+
+	@Override
+	public String convertLeague(String league) {
+		return switch (league) {
+			case "World Cup 2026 Europe Qualifiers - PlayOff" -> League.FIFAWorldCup2026EuropeQualifiersPlayOff;
+			default -> league.replaceFirst(" -", "");
+		};
+	}
+
+	/** 解析独赢盘 */
+	private static void parseM(JSONArray fullOdds, List<OddsInfo> oddsInfos, OddsType oddsType) {
+		final JSONArray ms = fullOdds.getJSONArray(2);
+		if (ms != null && !ms.isEmpty()) {
+			oddsInfos.add(new OddsInfo(oddsType, ms.getDouble(1),
+					ms.getDouble(0), ms.getDouble(2)));
+		}
+	}
+
+	/** 解析让球盘和大小盘 */
+	private static void parseRAndOu(JSONArray fullOdds, int index, List<OddsInfo> oddsInfos, OddsType oddsType) {
+		final JSONArray rs = fullOdds.getJSONArray(index);
+		if (rs != null && !rs.isEmpty()) {
+			for (Object r : rs) {
+				JSONArray row = (JSONArray) r;
+				oddsInfos.add(new OddsInfo(oddsType, parseRatioRate(row.getString(2)),
+						row.getDouble(3), row.getDouble(4)));
+			}
+		}
+	}
+
+	/**
+	 * 解析赔率盘口值/比率
+	 *
+	 * @see OddsInfo#ratioRate
+	 */
+	protected static String parseRatioRate(String ratioRate) {
+		return "0.0".equals(ratioRate) ? "0" : ratioRate.replaceFirst("-", "/");
 	}
 
 	public static String parseTeamName(String teamName) {
@@ -209,9 +263,6 @@ public class PsBetImpl extends WsBaseBetApiImpl {
 
 	@Override
 	protected String getWsUrl() {
-		if (1 == 1) { // TODO: 2026/1/9 调整为动态
-			return "wss://www.ps3838.com/sports-websocket/ws?token=AAAAAARwR7AAAAGbolBR34P0dTqRBIzzaEog_xo0_LpqMgpWIaLni2vcoRmgwhB_&ulp=azZlNWJKMlVrUG9WSlpZSThvUS9Ua3o1UWRjQngrUG5ENHpVcFB0YU95bWJFaHE5c0VzYVRiaE5aQkh1ZnQyeUdMMXJJOWQ4dVhWdWNkYzBCbVVsY2c9PXw5MjljMDgxZmQ2NDdiYTIyYjQ5NWY4NGYwZDAwMzVjOQ%3D%3D";
-		}
 		final String wsToken = getWsToken();
 		if (wsToken == null) {
 			throw new ErrorMessageException("获取WS Token失败");
@@ -347,11 +398,6 @@ public class PsBetImpl extends WsBaseBetApiImpl {
 	@Override
 	public Map<Long, ScoreResult> getScoreResult() {
 		return Collections.emptyMap();
-	}
-
-	@Override
-	public String convertLeague(String league) {
-		return league;
 	}
 
 }
