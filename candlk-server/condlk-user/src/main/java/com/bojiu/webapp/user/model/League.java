@@ -1,7 +1,5 @@
 package com.bojiu.webapp.user.model;
 
-import net.sf.jsqlparser.statement.select.First;
-
 public interface League {
 
 	// --- 原有英格兰部分补充 ---
@@ -20,7 +18,7 @@ public interface League {
 	String EnglandNorthernEastLeague1 = "英格兰北部东部甲组联赛";
 
 	// --- 原有德国部分补充 ---
-	String GermanyBundesliga1 = "德国甲组联赛";
+	String GermanyBundesliga1 = "Germany Bundesliga 1";
 	String GermanyBundesliga2 = "德国乙组联赛";
 	String GermanyBundesliga2Specials = "德国乙组联赛-特别投注";
 	/** 德国丙组联赛 */
@@ -35,9 +33,9 @@ public interface League {
 	String SpainQueensCup = "西班牙皇后杯";
 
 	// --- 原有意大利部分补充 ---
-	String ItalySerieA = "意大利甲组联赛";
-	String ItalySerieB = "意大利乙组联赛";
-	String ItalySerieC = "意大利丙组联赛";
+	String ItalySerieA = "Italy Serie A";
+	String ItalySerieB = "Italy Serie B";
+	String ItalySerieC = "Italy Serie C";
 	String ItalyPrimavera2U19 = "意大利青年春季乙组联赛U19";
 	String ItalySuperCup = "意大利超级杯";
 
@@ -62,7 +60,7 @@ public interface League {
 	String TurkeyTFFFirstLeague = "Turkey TFF First League";
 
 	// --- 原有北爱尔兰部分 ---
-	String NorthernIrelandPremiership = "北爱尔兰超级联赛";
+	String NorthernIrelandPremiership = "Northern Ireland Premiership";
 
 	// --- 原有葡萄牙部分补充 ---
 	String PortugalPrimeiraLiga = "葡萄牙超级联赛";
@@ -70,8 +68,8 @@ public interface League {
 	String PortugalLiga3 = "葡萄牙丙组联赛";
 	String PortugalLigaRevelacaoU23 = "葡萄牙联赛U23";
 	// 希腊
-	String GreeceSuperLeague1 = "希腊超级联赛甲组";
-	String GreeceSuperLeague2 = "希腊超级联赛乙组";
+	String GreeceSuperLeague1 = "Greece Super League 1";
+	String GreeceSuperLeague2 = "Greece Super League 2";
 
 	// 欧洲
 	String UefaChampionsLeague = "欧洲冠军联赛";
@@ -117,8 +115,8 @@ public interface League {
 
 	String BahrainPremierLeague = "巴林超级联赛";
 
-	// KY 平台特有/补充常量
-	String IsraelLeague1 = "以色列甲组联赛";
+	/** 以色列甲组联赛 */
+	String IsraelLeague1 = "Israel Liga Leumit";
 	String UnitedArabEmiratesPremierLeague = "阿联酋超级联赛";
 	String SaudiArabiaPremierLeague = "沙特超级联赛";
 	String SaudiArabiaLeague1 = "沙特甲组联赛";
@@ -150,7 +148,27 @@ public interface League {
 	String SaudiDivision1 = "Saudi Division 1";
 	/** 墨西哥甲组联赛 */
 	String MexicoLigaExpansionMX = "Mexico Liga Expansion MX";
-	// /** 土耳其甲级联赛 */
-	// String TurkeyTFFFirstLeague = "";
+	/** 巴林国王杯 */
+	String BahrainKingCup = "Bahrain King Cup";
+	/** 英格兰冠军联赛 */
+	String EnglandLeagueChampionship = "England League Championship";
+	/** 荷兰KNVB杯 */
+	String NetherlandsKNVBCup = "Netherlands KNVB Cup";
+	/** 法国全国联赛 */
+	String FranceChampionnatNational = "France Championnat National";
+	/** 英格兰联赛杯 */
+	String EnglandLeagueCup = "England League Cup";
+	/** 意大利青年春季甲组联赛U20 */
+	String ItalyCampionatoPrimavera1U20 = "Italy Campionato Primavera 1 U20";
+	/** 哥伦比亚超级杯 */
+	String ColombiaSuperCup = "Colombia Super Cup";
+	/** 英格兰南部南区甲组联赛 */
+	String EnglandSouthernLeagueDivisionOneSouth = "England Southern League Division One South";
+	/** 阿曼苏丹杯 */
+	String OmanSultanCup = "Oman Sultan Cup";
+	/** 以色列女子超级联赛 */
+	String IsraelWomenPremierLeague = "Israel Women Premier League";
+	/** 阿联酋超级联赛U23 */
+	String UAEProLeagueU23 = "UAE Pro League U23";
 
 }

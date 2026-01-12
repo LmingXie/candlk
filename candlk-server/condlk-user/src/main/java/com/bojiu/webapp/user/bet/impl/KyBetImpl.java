@@ -88,7 +88,6 @@ public class KyBetImpl extends BaseBetApiImpl {
 		Date now = new Date();
 		// 比赛的最小开赛时间
 		final long startTimeThreshold = getStartTimeThreshold(now.getTime());
-		lang = getLanguage(lang);
 		for (Map.Entry<String, String> entry : euidToTidMap.entrySet()) {
 			params.put("lang", lang);
 			params.put("cuid", userId);
@@ -380,10 +379,9 @@ public class KyBetImpl extends BaseBetApiImpl {
 	transient String tournamentId;
 	transient long tournamentIdCacheTime = 0;
 
-	private String doQueryTournament(long startTime, long endTime) {
+	private String doQueryTournament(long startTime, long endTime, String lang) {
 		if (tournamentId == null || System.currentTimeMillis() > tournamentIdCacheTime) {
 			final Map<String, Object> params = new TreeMap<>();
-			final String lang = getDefaultLanguage();
 			params.put("lang", lang);
 			params.put("sportType", "1");
 			params.put("endTime", endTime);
@@ -418,10 +416,11 @@ public class KyBetImpl extends BaseBetApiImpl {
 	public Map<Long, ScoreResult> getScoreResult() {
 		EasyDate d = new EasyDate().beginOf(Calendar.DATE);
 		final long endTime = d.getTime(), startTime = d.addDay(-1).getTime();
-		final String tournamentId = doQueryTournament(startTime, endTime);
+		final String lang = getDefaultLanguage();
+		final String tournamentId = doQueryTournament(startTime, endTime, lang);
 		if (tournamentId != null) {
 			final Map<String, Object> params = new TreeMap<>();
-			params.put("lang", getDefaultLanguage());
+			params.put("lang", lang);
 			params.put("tournamentId", tournamentId);
 			params.put("runningBar", "0"); // 是否包含滚球
 			params.put("isPlayBack", 0);
@@ -429,7 +428,7 @@ public class KyBetImpl extends BaseBetApiImpl {
 			params.put("sportType", "1");
 			params.put("startTime", startTime);
 			params.put("endTime", endTime);
-			params.put("langType", getDefaultLanguage());
+			params.put("langType", lang);
 			params.put("page", JSONObject.of("size", 200, "current", 1));
 			params.put("isVirtualSport", "");
 			params.put("matchNameStr", "");
