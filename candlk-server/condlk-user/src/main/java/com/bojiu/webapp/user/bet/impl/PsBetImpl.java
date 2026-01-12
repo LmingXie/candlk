@@ -114,15 +114,9 @@ public class PsBetImpl extends WsBaseBetApiImpl {
 		}
 	}
 
-	@Override
-	public String convertLeague(String league) {
-		return switch (league) {
-			case "World Cup 2026 Europe Qualifiers - PlayOff" -> League.FIFAWorldCup2026EuropeQualifiersPlayOff;
-			default -> league.replaceFirst(" -", "");
-		};
-	}
-
-	/** 解析独赢盘 */
+	/**
+	 * 解析独赢盘
+	 */
 	private static void parseM(JSONArray fullOdds, List<OddsInfo> oddsInfos, OddsType oddsType) {
 		final JSONArray ms = fullOdds.getJSONArray(2);
 		if (ms != null && !ms.isEmpty()) {
@@ -131,7 +125,9 @@ public class PsBetImpl extends WsBaseBetApiImpl {
 		}
 	}
 
-	/** 解析让球盘和大小盘 */
+	/**
+	 * 解析让球盘和大小盘
+	 */
 	private static void parseRAndOu(JSONArray fullOdds, int index, List<OddsInfo> oddsInfos, OddsType oddsType) {
 		final JSONArray rs = fullOdds.getJSONArray(index);
 		if (rs != null && !rs.isEmpty()) {
@@ -153,11 +149,13 @@ public class PsBetImpl extends WsBaseBetApiImpl {
 	}
 
 	public static String parseTeamName(String teamName) {
-		int idx = teamName.indexOf("\\r\\n");
+		final int idx = teamName.indexOf("\\r\\n");
 		return (idx > 0 ? teamName.substring(0, idx) : teamName).trim();
 	}
 
-	/** 等待响应的 UUID 映射（订阅消息 -> 响应 Future） */
+	/**
+	 * 等待响应的 UUID 映射（订阅消息 -> 响应 Future）
+	 */
 	final Map<String, Pair<String, CompletableFuture<JSONObject>>> pendingMap = new ConcurrentHashMap<>(100, 1F);
 
 	public JSONObject getGameBets(WebSocket webSocket, String lang, boolean today) {
@@ -209,7 +207,9 @@ public class PsBetImpl extends WsBaseBetApiImpl {
 	}
 
 	private final StringBuilder buffer = new StringBuilder();
-	/** 是否处于丢弃模式 */
+	/**
+	 * 是否处于丢弃模式
+	 */
 	private volatile boolean discarding = false;
 
 	@Override
@@ -296,6 +296,9 @@ public class PsBetImpl extends WsBaseBetApiImpl {
 
 	@Nullable
 	public String getWsToken() {
+		// if (1 == 1) { // TODO: 2026/1/12 删除
+		// 	return "AAAAAARwR7AAAAGbsIeXIekTIwBk3Z8xtuecPK3_xDRabNtYotmy44KvPdP96g7b";
+		// }
 		getLoginToken();
 		if (loginInfo != null) {
 			final Map<String, Object> params = new TreeMap<>();
@@ -393,12 +396,36 @@ public class PsBetImpl extends WsBaseBetApiImpl {
 		return result.castDataType(null);
 	}
 
-	/** 赛果最后一场比赛的结束时间 */
+	/**
+	 * 赛果最后一场比赛的结束时间
+	 */
 	transient Long lastTime;
 
 	@Override
 	public Map<Long, ScoreResult> getScoreResult() {
 		return Collections.emptyMap();
+	}
+
+	@Override
+	public String convertLeague(String league) {
+		league = league.replaceFirst(" -", "");
+		return switch (league) {
+			case "CAF Africa Cup of Nations" -> League.AfricaCupOfNations2025InMorocco2En;
+			case "England EFL Trophy" -> League.EnglandFootballLeagueTrophy;
+			case "Spain La Liga" -> League.SpainPrimeraDivision;
+			case "Belgium Pro League" -> League.BelgiumFirstDivisionA;
+			case "Argentina Liga Pro" -> League.ArgentinaLigaProfesional;
+			case "Saudi Arabia Pro League" -> League.SaudiProLeague;
+			case "Germany 3. Liga" -> League.CyprusDivision1;
+			case "Cyprus 1st Division" -> League.Germany3rdLiga;
+			case "Turkey 1st League" -> League.TurkeyTFFFirstLeague;
+			case "England Isthmian Premier League" -> League.EnglandIsthmianPremierDivision;
+			case "Egypt 2nd Division B" -> League.EgyptDivision2B;
+			case "AFC U23 Asian Cup" -> League.AFCU23AsianCup2026InSaudiArabia;
+			case "Saudi Arabia Division 1" -> League.SaudiDivision1;
+			case "Mexico Liga de Expansión MX" -> League.MexicoLigaExpansionMX;
+			default -> league;
+		};
 	}
 
 }

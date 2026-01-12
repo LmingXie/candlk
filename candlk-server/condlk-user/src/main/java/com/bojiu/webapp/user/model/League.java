@@ -1,5 +1,7 @@
 package com.bojiu.webapp.user.model;
 
+import net.sf.jsqlparser.statement.select.First;
+
 public interface League {
 
 	// --- 原有英格兰部分补充 ---
@@ -21,11 +23,12 @@ public interface League {
 	String GermanyBundesliga1 = "德国甲组联赛";
 	String GermanyBundesliga2 = "德国乙组联赛";
 	String GermanyBundesliga2Specials = "德国乙组联赛-特别投注";
-	String Germany3rdLiga = "德国丙组联赛";
+	/** 德国丙组联赛 */
+	String Germany3rdLiga = "Germany 3rd Liga";
 	String GermanyWomenBundesliga1 = "德国女子甲组联赛";
 
 	// --- 原有西班牙部分补充 ---
-	String SpainPrimeraDivision = "西班牙甲组联赛";
+	String SpainPrimeraDivision = "Spain Primera Division";
 	String SpainSegundaDivision = "西班牙乙组联赛";
 	String SpainPrimeraDivisionU19 = "西班牙甲组联赛U19";
 	String SpainFederationLeague1 = "西班牙足协甲组联赛";
@@ -49,14 +52,14 @@ public interface League {
 	String NetherlandsDivision1U21 = "荷兰甲组联赛1 U21";
 
 	// --- 原有比利时部分补充 ---
-	String BelgiumFirstDivisionA = "比利时甲组联赛A";
+	String BelgiumFirstDivisionA = "Belgium First Division A";
 	String BelgiumChallengerProLeague = "比利时乙组联赛";
 	String BelgiumWomenSuperLeague = "比利时女子超级联赛";
 	String BelgiumDivision3 = "比利时丙组联赛";
 
 	// --- 原有土耳其部分 ---
 	String TurkeySuperLeague = "土耳其超级联赛";
-	String TurkeyTFFFirstLeague = "土耳其甲组联赛";
+	String TurkeyTFFFirstLeague = "Turkey TFF First League";
 
 	// --- 原有北爱尔兰部分 ---
 	String NorthernIrelandPremiership = "北爱尔兰超级联赛";
@@ -133,5 +136,21 @@ public interface League {
 	String BelgiumFirstAmateurDivision = "Belgium First Amateur Division";
 	String MexicoLigaMXU19Playoff = "Mexico Liga MX U19 - Playoff";
 	String SpainCopaDelRey = "Spain Copa del Rey";
+	String EnglandFootballLeagueTrophy = "England Football League Trophy";
+	String ArgentinaLigaProfesional = "Argentina Liga Profesional";
+	/** 沙特超级联赛 */
+	String SaudiProLeague = "Saudi Pro League";
+	/** 塞浦路斯甲级联赛 */
+	String CyprusDivision1 = "Cyprus Division 1";
+	/** 英格兰伊斯米安超级联赛 */
+	String EnglandIsthmianPremierDivision = "England Isthmian Premier Division";
+	/** 埃及乙组联赛 */
+	String EgyptDivision2B = "Egypt Division 2 B";
+	/** 沙特甲组联赛 */
+	String SaudiDivision1 = "Saudi Division 1";
+	/** 墨西哥甲组联赛 */
+	String MexicoLigaExpansionMX = "Mexico Liga Expansion MX";
+	// /** 土耳其甲级联赛 */
+	// String TurkeyTFFFirstLeague = "";
 
 }

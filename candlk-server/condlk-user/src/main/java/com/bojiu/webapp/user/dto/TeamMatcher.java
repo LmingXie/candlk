@@ -228,6 +228,14 @@ public class TeamMatcher {
 			"班尼文托,贝内文托",
 			"乌德勒支青年队,乌德勒支(青年)",
 			"瓦尔维克,瓦尔韦克",
+			"Qus,El Qusiya",
+			"Al Madina Al Monawara SC,El Madina El Monowara",
+			"Al-Khaleej,Al Khaleej Saihat",
+			"Al-Ettifaq,Al Ettifaq",
+			"Al-Nassr,Al Nassr Riyadh",
+			"Al-Hilal,Al Hilal Riyadh",
+			"瓦尔维克,瓦尔韦克",
+			"瓦尔维克,瓦尔韦克",
 	};
 
 	// 2. 预处理后的倒排索引 Map
