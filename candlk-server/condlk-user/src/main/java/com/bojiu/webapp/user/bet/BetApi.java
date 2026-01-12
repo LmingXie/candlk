@@ -16,65 +16,57 @@ import org.slf4j.LoggerFactory;
  */
 public interface BetApi {
 
-    /**
-     * 正在维护中
-     */
-    String STATUS_MAINTAIN = "game503";
-    /**
-     * 已被限流的
-     */
-    String STATUS_FREQ_LIMITED = "freqLimited";
+	/** 正在维护中 */
+	String STATUS_MAINTAIN = "game503";
+	/** 已被限流的 */
+	String STATUS_FREQ_LIMITED = "freqLimited";
 
-    Logger LOGGER = LoggerFactory.getLogger(BetApi.class);
+	Logger LOGGER = LoggerFactory.getLogger(BetApi.class);
 
-    String LANG_ZH = "zh-cn", LANG_EN = "en-us";
+	String LANG_ZH = "zh-cn", LANG_EN = "en-us";
 
-    /**
-     * 生产厂商
-     */
-    BetProvider getProvider();
+	/** 生产厂商 */
+	BetProvider getProvider();
 
-    /**
-     * 初始化全部已开启的厂商
-     */
-    private static EnumMap<BetProvider, BetApi> init() {
-        return SpringUtil.newEnumImplMap(BetProvider.class, BetApi.class, BetApi::getProvider);
-    }
+	/** 初始化全部已开启的厂商 */
+	private static EnumMap<BetProvider, BetApi> init() {
+		return SpringUtil.newEnumImplMap(BetProvider.class, BetApi.class, BetApi::getProvider);
+	}
 
-    LazyCacheLoader<EnumMap<BetProvider, BetApi>> implMapRef = new LazyCacheLoader<>(BetApi::init);
+	LazyCacheLoader<EnumMap<BetProvider, BetApi>> implMapRef = new LazyCacheLoader<>(BetApi::init);
 
-    static BetApi getInstance(BetProvider betProvider) {
-        return implMapRef.get().get(betProvider);
-    }
+	static BetApi getInstance(BetProvider betProvider) {
+		return implMapRef.get().get(betProvider);
+	}
 
-    String getLanguage(String lang);
+	String getLanguage(String lang);
 
-    default String getDefaultLanguage() {
-        return getLanguage(LANG_EN);
-    }
+	default String getDefaultLanguage() {
+		return getLanguage(LANG_EN);
+	}
 
-    /**
-     * 查询游戏赔率数据
-     */
-    Set<GameDTO> getGameBets(String lang);
+	/** 查询游戏赔率数据 */
+	Set<GameDTO> getGameBets(String lang);
 
-    default Set<GameDTO> getGameBets() {
-        return getGameBets(getDefaultLanguage());
-    }
+	default Set<GameDTO> getGameBets() {
+		return getGameBets(getDefaultLanguage());
+	}
 
-    /**
-     * 检查当前API服务器状态是否正常
-     */
-    Messager<Void> ping();
+	/** 检查当前API服务器状态是否正常 */
+	Messager<Void> ping();
 
-    /**
-     * 转换联赛名称
-     */
-    String convertLeague(String league);
+	/** 转换联赛名称 */
+	String convertLeague(String league);
 
-    /**
-     * 获取最新赛果
-     */
-    Map<Long, ScoreResult> getScoreResult();
+	/** 获取最新赛果 */
+	Map<Object, ScoreResult> getScoreResult();
+
+	/**
+	 * 根据game解析分数
+	 * <p>部分厂家不返回ID，需根据赛事信息进行映射</p>
+	 */
+	default ScoreResult scoreGetter(Map<Object, ScoreResult> scoreResult, GameDTO game) {
+		return scoreResult.get(game.getId());
+	}
 
 }

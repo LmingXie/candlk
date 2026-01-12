@@ -14,6 +14,8 @@ import com.bojiu.webapp.user.dto.*;
 import com.bojiu.webapp.user.dto.GameDTO.OddsInfo;
 import com.bojiu.webapp.user.model.*;
 import lombok.extern.slf4j.Slf4j;
+import me.codeplayer.util.EasyDate;
+import me.codeplayer.util.StringUtil;
 import org.apache.commons.lang3.tuple.Pair;
 import org.jspecify.annotations.Nullable;
 import org.springframework.http.HttpMethod;
@@ -299,9 +301,6 @@ public class PsBetImpl extends WsBaseBetApiImpl {
 
 	@Nullable
 	public String getWsToken() {
-		// if (1 == 1) { // TODO: 2026/1/12 删除
-		// 	return "AAAAAARwR7AAAAGbsIeXIekTIwBk3Z8xtuecPK3_xDRabNtYotmy44KvPdP96g7b";
-		// }
 		getLoginToken();
 		if (loginInfo != null) {
 			final Map<String, Object> params = new TreeMap<>();
@@ -340,7 +339,21 @@ public class PsBetImpl extends WsBaseBetApiImpl {
 	}
 
 	@Override
+	protected JSONObject responseBodyToJSON(String responseBody) {
+		return StringUtil.isEmpty(responseBody) ? null
+				: responseBody.startsWith("[") ? JSONObject.of("data", Jsons.parseArray(responseBody))
+				: Jsons.parseObject(responseBody);
+	}
+
+	@Override
 	protected String mapStatus(JSONObject json, HttpResponse<String> response) {
+		if (json == null) {
+			// 兼容赛果不返回数据 -> 掉登录
+			if (response.request().uri().getPath().endsWith("/results/events")) {
+				clearLoginToken();
+			}
+			return null;
+		}
 		final String errorCode = (String) getErrorCode(json);
 		if (errorCode != null && !"1".equals(errorCode)) {
 			if ("403".equals(errorCode)) {
@@ -399,14 +412,64 @@ public class PsBetImpl extends WsBaseBetApiImpl {
 		return result.castDataType(null);
 	}
 
-	/**
-	 * 赛果最后一场比赛的结束时间
-	 */
-	transient Long lastTime;
+	@Override
+	public Map<Object, ScoreResult> getScoreResult() {
+		getLoginToken();
+		final String lang = getLanguage(LANG_EN); // 需要确保联赛名称一定是英文
+		final EasyDate d = new EasyDate();
+		final Map<Object, ScoreResult> scoreMap = new HashMap<>();
+		final TreeMap<String, Object> params = new TreeMap<>();
+		final String referer = this.getConfig().endPoint + "/" + lang.toLowerCase() + "/account/results";
+		for (int i = 0; i < 2; i++) { // 只查询近两天的数据
+			d.addDay(-i);
+			params.put("Referer", referer);
+			final Messager<JSONObject> result = sendRequest(HttpMethod.GET, URI.create(this.getConfig().endPoint
+					+ "/member-service/v2/results/events?sp=29&lg=0&o=LEAGUE&d=" + d
+					+ "&locale=" + lang + "&_" + System.currentTimeMillis()), params, FLAG_LOG_OUT_BRIEF_BODY);
+			if (result.isOK()) {
+				final JSONArray scoreResults = result.data().getJSONArray("data").getJSONArray(2);
+				if (scoreResults != null && !scoreResults.isEmpty()) {
+					for (Object o : scoreResults) {
+						final JSONArray leagueGroup = (JSONArray) o;
+						final String leagueName = convertLeague(leagueGroup.getString(0));
+						JSONArray scores = leagueGroup.getJSONArray(1);
+						if (scores != null && !scores.isEmpty()) {
+							for (Object s : scores) {
+								final JSONArray gameScore = (JSONArray) s;
+								JSONObject score = gameScore.getJSONObject(6);
+								if (score != null) {
+									final ScoreResult scoreResult = new ScoreResult();
+									scoreResult.setLeagueName(leagueName);
+									scoreResult.setTeamHome(gameScore.getString(8));
+									scoreResult.setTeamClient(gameScore.getString(9));
+									scoreResult.setOpenTime(gameScore.getDate(2));
+									scoreResult.setScore(parseScore(score.getString("0")));
+									scoreResult.setScoreH(parseScore(score.getString("1")));
+									scoreMap.put(scoreResult, scoreResult);
+								}
+							}
+						}
+					}
+				}
+			}
+		}
+		return scoreMap;
+	}
 
 	@Override
-	public Map<Long, ScoreResult> getScoreResult() {
-		return Collections.emptyMap();
+	public ScoreResult scoreGetter(Map<Object, ScoreResult> scoreResult, GameDTO game) {
+		return scoreResult.get(game);
+	}
+
+	private static Integer[] parseScore(String scoreVal) {
+		if (StringUtil.notEmpty(scoreVal)) {
+			int idx = scoreVal.indexOf("-");
+			if (idx > 0) { // 不能等于0，等于0代表还没出结果
+				return new Integer[] { Integer.parseUnsignedInt(scoreVal, 0, idx, 10),
+						Integer.parseUnsignedInt(scoreVal, idx + 1, scoreVal.length(), 10) };
+			}
+		}
+		return null;
 	}
 
 	@Override

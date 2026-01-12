@@ -410,11 +410,8 @@ public class KyBetImpl extends BaseBetApiImpl {
 		return tournamentId;
 	}
 
-	/** 赛果最后一场比赛的结束时间 */
-	transient Long lastTime;
-
 	@Override
-	public Map<Long, ScoreResult> getScoreResult() {
+	public Map<Object, ScoreResult> getScoreResult() {
 		EasyDate d = new EasyDate().beginOf(Calendar.DATE);
 		final long endTime = d.getTime(), startTime = d.addDay(-1).getTime();
 		final String lang = getDefaultLanguage();
@@ -441,49 +438,47 @@ public class KyBetImpl extends BaseBetApiImpl {
 			if (result.isOK()) {
 				final JSONArray array = result.data().getJSONObject("data").getJSONArray("records");
 				if (array != null && !array.isEmpty()) {
-					final Map<Long, ScoreResult> results = new HashMap<>(array.size(), 1F);
+					final Map<Object, ScoreResult> results = new HashMap<>(array.size(), 1F);
 					for (Object o : array) {
 						final JSONObject game = (JSONObject) o;
 						Long matchTime = game.getLong("matchTime");
-						if (lastTime == null || matchTime >= lastTime) { // 只处理后续赛事结果
-							final String scoreResultJson = game.getString("scoreResult");
-							if (!scoreResultJson.isEmpty()) {
-								try {
-									// ["S1|2:4","S2|0:2","S3|2:2", "S15|1:3"] => S1=全场进球；S2=上半场进球；S3=下半场进球
-									final List<String> scores = Jsons.parseArray(scoreResultJson, String.class);
-									if (scores.isEmpty()) {
-										LOGGER.warn("【{}】未读取到进球数据,score={}，详细信息={}", getProvider(), scoreResultJson, Jsons.encode(game));
-										continue;
-									}
-									final ScoreResult scoreResult = new ScoreResult();
-									for (int i = 0, size = scores.size(); i < 2; i++) {
-										if (i >= size) {
-											continue;
-										}
-										final String score = scores.get(i);
-										if (score.startsWith("S1")) {
-											// 解析全场进球
-											final int pos = score.indexOf("|", 2) + 1, pos2 = score.lastIndexOf(":");
-											scoreResult.setScore(new Integer[] { Integer.parseUnsignedInt(score, pos, pos2, 10),
-													Integer.parseUnsignedInt(score, pos2 + 1, score.length(), 10) });
-										} else if (score.startsWith("S2")) {
-											final int pos = score.indexOf("|", 2) + 1, pos2 = score.lastIndexOf(":");
-											// 解析上半场进球
-											scoreResult.setScoreH(new Integer[] { Integer.parseUnsignedInt(score, pos, pos2, 10),
-													Integer.parseUnsignedInt(score, pos2 + 1, score.length(), 10) });
-										}
-									}
-									if (scoreResult.score == null && scoreResult.scoreH == null) {
-										LOGGER.warn("【{}】发现无法解析的分数格式,score={}，详细信息={}", getProvider(), scoreResultJson, Jsons.encode(game));
-										continue;
-									}
-
-									scoreResult.setTeamHome(game.getString("homeName"));
-									scoreResult.setTeamClient(game.getString("awayName"));
-									results.put(game.getLong("matchId"), scoreResult);
-								} catch (Exception e) {
-									log.error("【{}】无法解析的分数格式,score={}，详细信息={}", getProvider(), scoreResultJson, Jsons.encode(game), e);
+						final String scoreResultJson = game.getString("scoreResult");
+						if (!scoreResultJson.isEmpty()) {
+							try {
+								// ["S1|2:4","S2|0:2","S3|2:2", "S15|1:3"] => S1=全场进球；S2=上半场进球；S3=下半场进球
+								final List<String> scores = Jsons.parseArray(scoreResultJson, String.class);
+								if (scores.isEmpty()) {
+									LOGGER.warn("【{}】未读取到进球数据,score={}，详细信息={}", getProvider(), scoreResultJson, Jsons.encode(game));
+									continue;
 								}
+								final ScoreResult scoreResult = new ScoreResult();
+								for (int i = 0, size = scores.size(); i < 2; i++) {
+									if (i >= size) {
+										continue;
+									}
+									final String score = scores.get(i);
+									if (score.startsWith("S1")) {
+										// 解析全场进球
+										final int pos = score.indexOf("|", 2) + 1, pos2 = score.lastIndexOf(":");
+										scoreResult.setScore(new Integer[] { Integer.parseUnsignedInt(score, pos, pos2, 10),
+												Integer.parseUnsignedInt(score, pos2 + 1, score.length(), 10) });
+									} else if (score.startsWith("S2")) {
+										final int pos = score.indexOf("|", 2) + 1, pos2 = score.lastIndexOf(":");
+										// 解析上半场进球
+										scoreResult.setScoreH(new Integer[] { Integer.parseUnsignedInt(score, pos, pos2, 10),
+												Integer.parseUnsignedInt(score, pos2 + 1, score.length(), 10) });
+									}
+								}
+								if (scoreResult.score == null && scoreResult.scoreH == null) {
+									LOGGER.warn("【{}】发现无法解析的分数格式,score={}，详细信息={}", getProvider(), scoreResultJson, Jsons.encode(game));
+									continue;
+								}
+
+								scoreResult.setTeamHome(game.getString("homeName"));
+								scoreResult.setTeamClient(game.getString("awayName"));
+								results.put(game.getLong("matchId"), scoreResult);
+							} catch (Exception e) {
+								log.error("【{}】无法解析的分数格式,score={}，详细信息={}", getProvider(), scoreResultJson, Jsons.encode(game), e);
 							}
 						}
 					}

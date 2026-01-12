@@ -38,7 +38,7 @@ public class BetApiTest {
 		PsBetImpl api = (PsBetImpl) BetApi.getInstance(type);
 		for (int i = 0; i < 10; i++) {
 			long systemTime = System.currentTimeMillis();
-			api.getGameBets(BetApi.LANG_EN);
+			api.getGameBets();
 			log.info("【{}】查询耗时：{}ms", i + 1, System.currentTimeMillis() - systemTime);
 			try {
 				Thread.sleep(3000L);
@@ -55,9 +55,9 @@ public class BetApiTest {
 
 	@Test
 	public void getGameScoreResultTest() {
-		BetProvider type = BetProvider.HG;
+		BetProvider type = BetProvider.PS;
 		BetApi api = BetApi.getInstance(type);
-		Map<Long, ScoreResult> scoreResult = api.getScoreResult();
+		Map<Object, ScoreResult> scoreResult = api.getScoreResult();
 		log.info("赛果数据：{}", Jsons.encode(scoreResult));
 	}
 

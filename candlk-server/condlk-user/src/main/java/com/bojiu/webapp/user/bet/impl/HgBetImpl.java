@@ -577,10 +577,10 @@ public class HgBetImpl extends LoginBaseBetApiImpl {
 	}
 
 	@Override
-	public Map<Long, ScoreResult> getScoreResult() {
+	public Map<Object, ScoreResult> getScoreResult() {
 		final String uid = getSourceResult();
-		EasyDate d = new EasyDate();
-		final Map<Long, ScoreResult> results = new HashMap<>();
+		final EasyDate d = new EasyDate();
+		final Map<Object, ScoreResult> results = new HashMap<>();
 		for (int i = 0; i < 2; i++) { // 只查询近两天的数据
 			d.addDay(-i);
 			final Messager<JSONObject> result = sendRequest(HttpMethod.GET, URI.create(this.getConfig().scoreResultUrl + "/app/member/account/result/result.php?game_type=FT"
