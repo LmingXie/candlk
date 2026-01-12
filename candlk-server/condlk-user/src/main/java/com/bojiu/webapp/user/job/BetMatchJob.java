@@ -29,7 +29,7 @@ public class BetMatchJob {
 	/** 需要匹配的平台对 */
 	static final List<Pair<BetProvider, BetProvider>> matchPair = List.of(
 			Pair.of(KY, PS),
-			Pair.of(D1CE, PS),
+			Pair.of(HG, PS),
 			Pair.of(D1CE, HG),
 			Pair.of(HG, KY),
 			Pair.of(HG, D1CE),

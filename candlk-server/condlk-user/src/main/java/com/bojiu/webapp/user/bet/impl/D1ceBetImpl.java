@@ -14,7 +14,6 @@ import com.bojiu.context.web.Jsons;
 import com.bojiu.webapp.user.model.BetProvider;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.lang3.tuple.Pair;
-import org.jspecify.annotations.NonNull;
 import org.jspecify.annotations.Nullable;
 import org.springframework.http.HttpMethod;
 import org.springframework.stereotype.Service;
@@ -30,7 +29,7 @@ public class D1ceBetImpl extends HgBetImpl {
 
 	@Override
 	public Pair<String, String> getVersion() {
-		return Pair.of("-3ed5-iovation-0108-95881ae5676be3", "HDICAD");
+		return Pair.of("-3ed5-iovation-0112-95881ae5676be3", "HDICAD");
 	}
 
 	final String clientId = "9dd3e87b3c8d466e8fd4dbaaab5be206", appId = "684bdb1fe87d097395894484", integrationId = "684bdb29e87d097395894520";
@@ -47,7 +46,7 @@ public class D1ceBetImpl extends HgBetImpl {
 
 	private String getAccessToken() {
 		if (accessToken == null) {
-			doGetLogin();
+			doLogin(getDefaultLanguage());
 		}
 		return accessToken;
 	}
@@ -68,7 +67,8 @@ public class D1ceBetImpl extends HgBetImpl {
 			+ "        }"
 			+ "    }");
 
-	protected @NonNull Messager<JSONObject> doGetLogin() {
+	@Override
+	protected JSONObject doLogin(String lang) {
 		final Map<String, Object> params = new TreeMap<>();
 		final String email = getConfig().username;
 		params.put("email", email);
@@ -109,7 +109,7 @@ public class D1ceBetImpl extends HgBetImpl {
 						final String uid = html.substring(begin, html.indexOf("';", begin));
 
 						// 返回正确的登录信息，在父级会进行缓存
-						return result.setStatus(Messager.OK).setData(JSONObject.of("uid", uid));
+						return JSONObject.of("uid", uid);
 					}
 				}
 			}
