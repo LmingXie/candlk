@@ -65,7 +65,7 @@ public class MetaAction extends BaseAction {
 	@GetMapping("/types")
 	@Permission(Permission.NONE)
 	public Messager<MetaVO> types(ProxyRequest q, MetaForm form) {
-		return Messager.exposeData(MetaVO.fromItem(metaAdminService.get(q.getMerchantId(), form.getType().value, null)));
+		return Messager.exposeData(MetaVO.fromItem(metaAdminService.get(q.getMerchantId(), form.getType().value, form.getName())));
 	}
 
 }
