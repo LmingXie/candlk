@@ -1,6 +1,7 @@
 package com.bojiu.webapp.user.dto;
 
 import java.util.*;
+import java.util.concurrent.ConcurrentHashMap;
 
 import com.bojiu.common.redis.RedisUtil;
 import com.bojiu.webapp.user.bet.BetApi;

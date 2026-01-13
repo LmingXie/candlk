@@ -11,7 +11,6 @@ public interface RedisKey {
 	@Permanent
 	String APP_VERSION_PREFIX = "appVersion:";
 
-
 	/** 用户操作分布式锁前缀 */
 	String USER_OP_LOCK_PREFIX = "user:lock:";
 	/**
@@ -62,5 +61,8 @@ public interface RedisKey {
 	 * Set < "whitelistNotCheck", $merchantId >
 	 */
 	String WHITELIST_NOT_CHECK = "whitelistNotCheck";
+
+	/** 元数据配置前缀*/
+	String META_PREFIX = "meta:";
 
 }

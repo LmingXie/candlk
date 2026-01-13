@@ -4,9 +4,10 @@ import java.util.*;
 import java.util.concurrent.TimeUnit;
 import java.util.function.Function;
 
-import com.bojiu.common.model.Status;
+import com.bojiu.common.redis.RedisUtil;
+import com.bojiu.context.model.RedisKey;
+import com.bojiu.context.web.Jsons;
 import com.bojiu.webapp.base.service.*;
-import com.bojiu.webapp.user.dao.MetaDao;
 import com.bojiu.webapp.user.entity.Meta;
 import com.bojiu.webapp.user.model.MetaType;
 import com.github.benmanes.caffeine.cache.Cache;
@@ -17,11 +18,10 @@ import me.codeplayer.util.NumberUtil;
 import me.codeplayer.util.X;
 import org.jspecify.annotations.NonNull;
 import org.jspecify.annotations.Nullable;
+import org.springframework.aop.target.EmptyTargetSource;
 import org.springframework.beans.factory.InitializingBean;
+import org.springframework.data.redis.core.HashOperations;
 import org.springframework.stereotype.Service;
-import org.springframework.transaction.annotation.Transactional;
-
-import static com.bojiu.webapp.user.entity.Meta.*;
 
 /**
  * 商户站点元数据配置表 服务实现类
@@ -31,7 +31,7 @@ import static com.bojiu.webapp.user.entity.Meta.*;
  */
 @Slf4j
 @Service
-public class MetaService extends BaseServiceImpl<Meta, MetaDao, Long> implements CacheSyncService, InitializingBean {
+public class MetaService /*extends BaseServiceImpl<Meta, MetaDao, Long>*/ implements CacheSyncService, InitializingBean {
 
 	static MetaService instance;
 
@@ -78,79 +78,38 @@ public class MetaService extends BaseServiceImpl<Meta, MetaDao, Long> implements
 		return findCached(merchantId, type, false);
 	}
 
-	@NonNull
-	public Map<Long, Meta> multiGetCached(@NonNull MetaType type, Collection<Long> merchantIds) {
-		type.checkServiceRanges(); // 检查调用缓存的服务是否超出声明的服务范围
-		final Map<Long, Meta> map = new HashMap<>(merchantIds.size(), 1F);
-		final List<Long> missingIds = new ArrayList<>();
-		for (Long merchantId : merchantIds) {
-			EnumMap<MetaType, Map<String, Meta>> m = cache.getIfPresent(merchantId);
-			Map<String, Meta> typedMap = m == null ? null : m.get(type);
-			if (typedMap == null) {
-				missingIds.add(merchantId);
-			} else {
-				map.put(merchantId, typedMap.get(type.name()));
-			}
-		}
-		if (!missingIds.isEmpty()) {
-			final List<Meta> metas = find(type.name(), type, missingIds);
-			for (Meta meta : metas) {
-				Long merchantId = meta.getMerchantId();
-				map.put(merchantId, meta);
-				EnumMap<MetaType, Map<String, Meta>> enumMap = cache.get(merchantId, merchantMapBuilder);
-				Map<String, Meta> old = enumMap.put(type, ImmutableMap.of(type.name(), meta));
-				if (old != null) {
-					enumMap.remove(type);
-				}
-			}
-		}
-		return map;
-	}
-
 	public List<Meta> find(Long merchantId, MetaType type, @Nullable String name) {
-		return find(merchantId, type, name, null);
-	}
-
-	public List<Meta> find(Long merchantId, MetaType type, @Nullable String name, @Nullable String ext) {
-		var wrapper = smartEq(TYPE, type, NAME, name, STATUS, Status.YES.value)
-				.eq(MERCHANT_ID, merchantId)
-				.eq(ext != null, EXT, ext)
-				.orderByAsc(ID);
-		return selectList(wrapper);
-	}
-
-	public List<Meta> find(Long merchantId, @Nullable String name, MetaType... types) {
-		var wrapper = smartEq(NAME, name, STATUS, Status.YES.value)
-				.eq(true, MERCHANT_ID, merchantId)
-				.ins(TYPE, types)
-				.orderByAsc(ID);
-		return selectList(wrapper);
-	}
-
-	public List<Meta> find(@Nullable String name, MetaType type, Collection<Long> merchantIds) {
-		return this.findAll(name, type, merchantIds, Status.YES.value);
-	}
-
-	public List<Meta> findAll(@Nullable String name, MetaType type, Collection<Long> merchantIds, @Nullable Integer status) {
-		var wrapper = smartEq(TYPE, type, NAME, name, STATUS, status)
-				.in(MERCHANT_ID, merchantIds)
-				.orderByAsc(ID);
-		return selectList(wrapper);
-	}
-
-	public List<Meta> find(@Nullable String name, MetaType type, String merchantIds) {
-		var wrapper = smartEq(TYPE, type, NAME, name, STATUS, Status.YES.value)
-				.inSql(MERCHANT_ID, merchantIds)
-				.orderByAsc(ID);
-		return selectList(wrapper);
+		final HashOperations<String, String, String> opsForHash = RedisUtil.opsForHash();
+		if (name != null) {
+			final String value = opsForHash.get(RedisKey.META_PREFIX + merchantId + ":" + type.value, name);
+			final Meta meta = new Meta();
+			meta.setMerchantId(merchantId);
+			meta.setType(type);
+			meta.setName(name);
+			meta.setValue(value);
+			meta.setLabel(type.getLabel());
+			return value != null ? List.of(meta) : Collections.emptyList();
+		} else {
+			final Map<String, String> map = opsForHash.entries(RedisKey.META_PREFIX + merchantId + ":" + type.value);
+			if (map.isEmpty()) {
+				return Collections.emptyList();
+			}
+			List<Meta> metas = new ArrayList<>(map.size());
+			for (Map.Entry<String, String> entry : map.entrySet()) {
+				final Meta meta = new Meta();
+				meta.setMerchantId(merchantId);
+				meta.setType(type);
+				meta.setName(entry.getKey());
+				meta.setValue(entry.getValue());
+				meta.setLabel(type.getLabel());
+				metas.add(meta);
+			}
+			return metas;
+		}
 	}
 
 	public List<Meta> find(Long merchantId, MetaType type) {
 		return find(merchantId, type, null);
-	}
-
-	public List<Meta> find(Long merchantId, MetaType... type) {
-		return find(merchantId, null, type);
 	}
 
 	public Meta getCached(@NonNull Long merchantId, @NonNull MetaType type, @NonNull String name, boolean flush) {
@@ -178,11 +137,6 @@ public class MetaService extends BaseServiceImpl<Meta, MetaDao, Long> implements
 	public Meta getBy(@NonNull Long merchantId, @NonNull MetaType type, @NonNull String name) {
 		List<Meta> list = find(merchantId, type, name);
 		return list.isEmpty() ? null : list.get(0);
-	}
-
-	@Transactional
-	public void saveOrUpdate(Meta meta) {
-		super.saveOrUpdate(meta, meta.hasValidId());
 	}
 
 	@Override
