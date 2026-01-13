@@ -1,13 +1,10 @@
 package com.bojiu.webapp.user.action;
 
 import java.util.List;
-import java.util.Map;
-import java.util.stream.Collectors;
 import javax.annotation.Resource;
 
 import com.bojiu.common.context.I18N;
 import com.bojiu.common.model.Messager;
-import com.bojiu.common.web.Page;
 import com.bojiu.common.web.Ready;
 import com.bojiu.context.auth.Permission;
 import com.bojiu.context.i18n.AdminI18nKey;
@@ -19,8 +16,7 @@ import com.bojiu.webapp.user.entity.Meta;
 import com.bojiu.webapp.user.form.MetaForm;
 import com.bojiu.webapp.user.form.query.MetaQuery;
 import com.bojiu.webapp.user.model.MetaType;
-import com.bojiu.webapp.user.service.GlobalCacheSyncService;
-import com.bojiu.webapp.user.service.MetaAdminService;
+import com.bojiu.webapp.user.service.*;
 import com.bojiu.webapp.user.vo.MetaVO;
 import me.codeplayer.util.CollectionUtil;
 import org.springframework.validation.annotation.Validated;
@@ -39,6 +35,8 @@ public class MetaAction extends BaseAction {
 
 	@Resource
 	MetaAdminService metaAdminService;
+	@Resource
+	MetaService metaService;
 
 	@Ready("元数据管理")
 	@GetMapping("/typeList")
@@ -66,6 +64,14 @@ public class MetaAction extends BaseAction {
 	@Permission(Permission.NONE)
 	public Messager<MetaVO> types(ProxyRequest q, MetaForm form) {
 		return Messager.exposeData(MetaVO.fromItem(metaAdminService.get(q.getMerchantId(), form.getType().value, form.getName())));
+	}
+
+	@Ready("元数据列表")
+	@GetMapping("/typeItemList")
+	@Permission(Permission.NONE)
+	public Messager<List<MetaVO>> typeItemList(ProxyRequest q, MetaQuery query) {
+		final List<Meta> list = metaService.find(q.getMerchantId(), query.type, query.name);
+		return Messager.exposeData(CollectionUtil.toList(list, MetaVO::from));
 	}
 
 }
