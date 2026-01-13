@@ -28,12 +28,12 @@ public class BetMatchJob {
 
 	/** 需要匹配的平台对 */
 	static final List<Pair<BetProvider, BetProvider>> matchPair = List.of(
-			Pair.of(KY, PS),
-			Pair.of(HG, PS),
 			Pair.of(D1CE, HG),
+			Pair.of(D1CE, KY),
 			Pair.of(HG, KY),
 			Pair.of(HG, D1CE),
-			Pair.of(D1CE, KY)
+			Pair.of(KY, PS),
+			Pair.of(HG, PS)
 	);
 	public static final Map<String, String> ALL_PAIR = new TreeMap<>();
 
@@ -44,7 +44,7 @@ public class BetMatchJob {
 		}
 	}
 
-	@Scheduled(cron = "${service.cron.BetMatchJob:0 0/5 * * * ?}")
+	@Scheduled(cron = "${service.cron.BetMatchJob:0 0/2 * * * ?}")
 	public void run() {
 		long startTime = System.currentTimeMillis();
 		final int parlaysSize = 3; // 串关大小（3场比赛为一组）
