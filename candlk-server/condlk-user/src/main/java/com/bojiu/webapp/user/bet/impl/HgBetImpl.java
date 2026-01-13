@@ -566,7 +566,7 @@ public class HgBetImpl extends LoginBaseBetApiImpl {
 				if (league.contains("English ")) {
 					yield league.replace("English ", "England ");
 				}
-				yield league.equals("埃及乙组联赛B") ? "埃及乙组联赛" : league;
+				yield league;
 			}
 		};
 	}

@@ -307,52 +307,8 @@ public class KyBetImpl extends BaseBetApiImpl {
 		if (league.endsWith("）")) {
 			league = league.replaceFirst("）", ")");
 		}
-		// 1. 优先处理完全不规则的、或需要特殊映射的 KY 联赛名称
+		// 优先处理完全不规则的、或需要特殊映射的 KY 联赛名称
 		return switch (league) {
-			// 英格兰系列
-			case "英格兰甲级联赛", "英格兰甲组联赛" -> League.EnglishLeague1;
-			case "英格兰乙级联赛", "英格兰乙组联赛" -> League.EnglishLeague2;
-			case "英格兰足球协会全国联赛" -> League.EnglishNationalLeague;
-			case "英格兰足球协会北部全国联赛" -> League.EnglishNationalLeagueNorth;
-			case "英格兰足球协会南部全国联赛" -> League.EnglishNationalLeagueSouth;
-			case "超级联赛国际杯U21(在英格兰)" -> League.PremierLeagueCupU21;
-			case "英格兰北部超级联赛" -> League.EnglandNorthernPremierLeague;
-			case "英格兰北部东区甲级联赛" -> League.EnglandNorthernEastLeague1;
-			case "英格兰南部南区超级联赛", "英格兰南部超级联赛(南部)" -> League.EnglandSouthernLeagueSouth;
-			case "英格兰南部超级联赛(中部)" -> League.EnglandSouthernLeagueCentral;
-			case "超级联赛国际杯(在英格兰)" -> League.PremierLeagueInternationalCupInEngland;
-
-			// 欧洲/国际系列
-			case "欧洲冠军联赛" -> League.UefaChampionsLeague;
-			case "欧洲联赛" -> League.UefaEuropaLeague;
-			case "世界杯2026欧洲资格赛-附加赛" -> League.WorldCup2026EuropeQualifiersPlayOff;
-			case "非洲国家杯2025(在摩洛哥)" -> League.AfricaCupOfNations2025InMorocco;
-
-			// 德西意法系列
-			case "德国甲级联赛" -> League.GermanyBundesliga1;
-			case "德国乙级联赛" -> League.GermanyBundesliga2;
-			case "西班牙甲级联赛" -> League.SpainPrimeraDivision;
-			case "西班牙乙级联赛" -> League.SpainSegundaDivision;
-			case "意大利甲级联赛" -> League.ItalySerieA;
-			case "意大利乙级联赛" -> League.ItalySerieB;
-			case "法国甲级联赛" -> League.FranceLigue1;
-			case "法国杯" -> League.FranceCup;
-
-			// 其他地区
-			case "阿曼职业联赛" -> League.OmanSuperLeague;
-			case "科威特超级联赛" -> League.KuwaitPremierLeague;
-			case "阿尔及利亚甲级联赛" -> League.AlgeriaLigue1;
-			case "阿尔及利亚乙级联赛" -> League.AlgeriaLigue2;
-			case "澳洲女子甲级联赛", "澳大利亚女子甲级联赛" -> League.AustraliaALeagueWomen;
-			case "保加利亚甲级联赛" -> League.BulgariaFirstProfessionalFootballLeague;
-			case "罗马尼亚甲级联赛" -> League.RomaniaLiga1;
-			case "克罗地亚足球联赛" -> League.CroatiaHNLLeague;
-			case "埃及联赛杯" -> League.EgyptLeagueCup;
-			case "荷兰乙级联赛" -> League.NetherlandsEersteDivisie;
-			case "比利时甲级联赛A" -> League.BelgiumFirstDivisionA;
-			case "希腊超级联赛甲级" -> League.GreeceSuperLeague1;
-			case "希腊超级联赛乙级" -> League.GreeceSuperLeague2;
-			case "日本大学女子锦标赛" -> League.JapanWomenSUniversityFootballChampionship;
 			case "England Premier League U21" -> League.EnglandPremierLeagueU21;
 			case "AFC U23 Asian Cup 2026 (in Saudi Arabia)" -> League.AFCU23AsianCup2026InSaudiArabia;
 			case "England Super League Women" -> League.EnglandSuperLeagueWomen;
@@ -364,13 +320,6 @@ public class KyBetImpl extends BaseBetApiImpl {
 				String temp = league;
 				if (temp.contains("Qualifier")) {
 					temp = temp.replace("Qualifier", "Qualifiers");
-				}
-				if (temp.contains("级联赛") && !temp.contains("超级联赛")) {
-					temp = temp.replace("级联赛", "组联赛");
-				} else if (temp.contains("级联赛-附加赛")) {
-					temp = temp.replace("级联赛-附加赛", "组联赛-附加赛");
-				} else if (temp.contains("级冠军赛")) {
-					temp = temp.replace("级冠军赛", "组冠军赛");
 				}
 				yield temp;
 			}
