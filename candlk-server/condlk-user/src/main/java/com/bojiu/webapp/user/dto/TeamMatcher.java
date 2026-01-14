@@ -239,6 +239,8 @@ public class TeamMatcher {
 			"Al-Akhdoud,Al Okhdood",
 			"Al Khalidiya,Al Khaldiya SC U21",
 			"Al-Najma,Al Najma Manama U21",
+			"Al Khaldiya SC,Khalidiya,Al Khaldiya",
+			"A Ali SC,A Ali Bahrain,A'Ali",
 	};
 
 	// 2. 预处理后的倒排索引 Map

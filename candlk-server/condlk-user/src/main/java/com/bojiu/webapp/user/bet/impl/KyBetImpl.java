@@ -192,7 +192,7 @@ public class KyBetImpl extends BaseBetApiImpl {
 				}
 				if (!odds.isEmpty()) {
 					final String league = isZh ? game.getString("tn").replaceAll(" ", "") : game.getString("tn");
-					if (!"Fantasy Matches".equals(league)) {  // 排除虚拟球赛
+					if (!"Fantasy Matches".equals(league) && !"梦幻对垒".equals(league)) {  // 排除虚拟球赛
 						// leagueSet.add(league);
 						gameDTOs.add(new GameDTO(game.getLong("mid"), provider, new Date(game.getLong("mgt")), convertLeague(league),
 								game.getString("mhn"), game.getString("man"), odds, now));
@@ -314,6 +314,16 @@ public class KyBetImpl extends BaseBetApiImpl {
 			case "England Super League Women" -> League.EnglandSuperLeagueWomen;
 			case "Africa Cup of Nations 2025 (In Morocco)" -> League.AfricaCupOfNations2025InMorocco2En;
 			case "Israel Premier League Women" -> League.IsraelWomenPremierLeague;
+			case "Uruguay Copa de la Liga AUF" -> League.UruguayCopadelaLigaAUF;
+			case "Spain Primera Division Women" -> League.SpainWomenPrimeraDivision;
+			case "France Division 1 Women" -> League.FranceWomenPremiereLigue;
+			case "Club Friendly" -> League.ClubFriendlies;
+			case "Mexico Liga MX U21" -> League.MexicoLigaMX;
+			case "Premier League International Cup U21 (In England)" -> League.PremierLeagueInternationalCupInEngland;
+			case "Portugal League Cup Women" -> League.PortugalWomenLeagueCup;
+			case "Vietnam Championship U19 Qualifiers" -> League.VietnamU19Championship;
+			case "Colombia Superliga" -> League.ColombiaSuperCup;
+			case "Winter League (In Czech Republic & Slovakia)" -> League.CzechRepublicTipsportLiga;
 
 			// 默认处理：如果无法精准匹配，尝试通用的字符替换逻辑（注意：这依然返回字符串）
 			default -> {

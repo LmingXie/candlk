@@ -1,5 +1,7 @@
 package com.bojiu.webapp.user.model;
 
+import net.bytebuddy.implementation.bind.annotation.Super;
+
 public interface League {
 
 	// --- 原有英格兰部分补充 ---
@@ -77,7 +79,8 @@ public interface League {
 	String UefaEuropaLeague = "欧洲联赛";
 	String UefaConferenceLeague = "欧洲协会联赛";
 	String UefaWomenChampionsLeague = "欧洲女子冠军联赛";
-	String PremierLeagueInternationalCupInEngland = "超级联赛国际杯(在英格兰)";
+	/** 超级联赛国际杯(在英格兰) */
+	String PremierLeagueInternationalCupInEngland = "Premier League International Cup (In England)";
 	String UefaYouthLeagueU19 = "欧洲青年联赛U19";
 
 	// 国际
@@ -177,7 +180,7 @@ public interface League {
 	/** 毛里塔尼亚甲组联赛 */
 	String MauritaniaSuperD1 = "Mauritania Super D1";
 	/** 乌拉圭足协联赛杯 */
-	String UruguayCopadelaLigaAUF = "Uruguay Copa de la Liga AUF";
+	String UruguayCopadelaLigaAUF = "Uruguay League Cup";
 	/** 巴西圣保罗州甲组一联赛 */
 	String BrazilCampeonatoPaulistaSerieA1 = "Brazil Campeonato Paulista Serie A1";
 	/** 葡萄牙联赛U23 - 附加赛 */
@@ -190,5 +193,61 @@ public interface League {
 	String BahrainLeagueU21 = "Bahrain League U21";
 	/** 哥伦比亚超级联赛 */
 	String ColombiaSuperliga = "Colombia Superliga";
+	/** 西班牙女子甲组联赛 */
+	String SpainWomenPrimeraDivision = "Spain Women Primera Division";
+	/** 法国女子超级联赛 */
+	String FranceWomenPremiereLigue = "France Women Premiere Ligue";
+	/** 球会友谊赛 */
+	String ClubFriendlies = "Club Friendlies";
+	/** 墨西哥超级联赛 */
+	String MexicoLigaMX = "Mexico Liga MX";
+	/** 葡萄牙女子联赛杯 */
+	String PortugalWomenLeagueCup = "Portugal Women League Cup";
+	/** 德国杯赛 */
+	String GermanyDFBCup = "Germany DFB Cup";
+	/** 巴西米内罗甲组联赛 */
+	String BrazilCampeonatoMineiroDivision1 = "Brazil Campeonato Mineiro Division 1";
+	/** 巴西圣保罗州甲组二联赛 */
+	String BrazilCampeonatoPaulistaSerieA2 = "Brazil Campeonato Paulista Serie A2";
+	/** 巴西高卓甲组一联赛 */
+	String BrazilCampeonatoGauchoSerieA1 = "Brazil Campeonato Gaucho Serie A1";
+	/** 巴西帕拉尼恩斯甲组联赛 */
+	String BrazilCampeonatoParanaenseDivision1 = "Brazil Campeonato Paranaense Division 1";
+	/** 西班牙加泰罗尼亚杯 */
+	String BrazilCopaCatalunya = "Copa Catalunya";
+	/** 巴西巴亚诺甲组联赛 */
+	String BrazilCampeonatoBaianoSerieA = "Brazil Campeonato Baiano Serie A";
+	/** 巴西里约州甲组联赛 */
+	String BrazilCampeonatoCariocaSerieA = "Brazil Campeonato Carioca Serie A";
+	/** 国际友谊赛U19 */
+	String InternationalFriendlyU19 = "International Friendly U19";
+	/** 巴西卡德里那斯甲组联赛 */
+	String BrazilCampeonatoCatarinenseSerieA = "Brazil Campeonato Catarinense Serie A";
+	/** 苏格兰足总杯 */
+	String ScotlandFACup = "Scotland FA Cup";
+	/** 越南锦标赛U19资格赛 */
+	String VietnamU19Championship = "Vietnam U19 Championship";
+	/** 英格兰南部中区超级联赛 */
+	String EnglandSouthernPremierDivisionCentral = "England Southern Premier Division Central";
+	/** 巴西阿拉戈斯甲级联赛 */
+	String BrazilCampeonatoAlagoanoDivision1 = "Brazil Campeonato Alagoano Division 1";
+	/** 南非超级联赛 */
+	String SouthAfricaPremiership = "South Africa Premiership";
+	/** 以色列超级联赛U19 */
+	String IsraelPremierLeagueU19 = "Israel Premier League U19";
+	/** 巴西伯南布哥甲级一联赛 */
+	String BrazilCampeonatoPernambucanoSerieA1 = "Brazil Campeonato Pernambucano Serie A1";
+	/** 埃及甲组联赛 */
+	String EgyptDivision1 = "Egypt Division 1";
+	/** 沙特乙级联赛 */
+	String EgyptDivision2 = "Saudi Division 2";
+	/** 意大利丁级联赛 */
+	String ItalySerieD = "Italy Serie D";
+	/** 越南女子锦标赛U19 */
+	String VietnamChampionshipWomenU19 = "Vietnam Championship Women U19";
+	/** 女子球会友谊赛 */
+	String ClubFriendlyWomen = "Club Friendly Women";
+	/** 冬季联赛(在捷克和斯洛伐克) / 捷克共和国Tipsport联赛 */
+	String CzechRepublicTipsportLiga = "Czech Republic Tipsport Liga";
 
 }

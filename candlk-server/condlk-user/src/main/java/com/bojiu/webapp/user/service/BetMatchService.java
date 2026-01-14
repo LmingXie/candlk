@@ -47,18 +47,21 @@ public class BetMatchService {
 			if (bGames != null) {
 				// 匹配队伍名（假设同一时间，同一只队伍不能同时存在两场比赛）
 				final String teamHome = aGame.teamHome, teamClient = aGame.teamClient;
-				GameDTO bGame = CollectionUtil.findFirst(bGames, b ->
+				// if (aGame.teamHome.equals("Cong An TP Ho Chi Minh U19") && aGame.teamClient.equals("PVF Vietnam U19")) {
+				// 	System.out.println("teamHome: " + teamHome + " teamClient: " + teamClient);
+				// }
+				final GameDTO bGame = CollectionUtil.findFirst(bGames, b ->
+						// 队伍名称存在包含关系，且联赛名称一致
 						(teamHome.contains(b.teamHome) || b.teamHome.contains(teamHome)
 								|| teamClient.contains(b.teamClient) || b.teamClient.contains(teamClient))
-								&& aGame.league.equalsIgnoreCase(b.league) // 要求联赛名称一致
+								&& aGame.league.equalsIgnoreCase(b.league)
+								// 两只队伍名称一致则允许联赛名称不一致
+								|| (aGame.teamHome.equalsIgnoreCase(b.teamHome) && aGame.teamClient.equalsIgnoreCase(b.teamClient))
 				);
 				if (bGame != null) {
 					// log.debug("队伍名匹配成功：{}-{}\t{}-{}", teamHome, teamClient, bGame.teamHome, bGame.teamClient);
 					gameMapper.put(aGame, bGame);
 				} else {
-					// if (aGame.teamHome.equals("阿尔菲斯") && aGame.teamClient.equals("阿尔艾利吉达")) {
-					// 	System.out.println("teamHome: " + teamHome + " teamClient: " + teamClient);
-					// }
 					// 匹配联赛名称（仅一场时则认为是正确的）
 					final List<GameDTO> games_ = CollectionUtil.filter(bGames, b -> aGame.league.equalsIgnoreCase(b.league));
 					// 尝试匹配前后 2,3 个字符
@@ -78,7 +81,17 @@ public class BetMatchService {
 						continue;
 					}
 
-					log.debug("无法匹配赛事：aGame={}\n{}", Jsons.encodeRaw(aGame), Jsons.encode(bGames));
+					if (CollectionUtil.findFirst(bGames, b ->
+							// 队伍名称存在包含关系
+							(teamHome.contains(b.teamHome) || b.teamHome.contains(teamHome)
+									|| teamClient.contains(b.teamClient) || b.teamClient.contains(teamClient))
+					) != null) {
+						aGame.setOdds(null);
+						for (GameDTO game : bGames) {
+							game.setOdds(null);
+						}
+						log.debug("无法匹配赛事：aGame={}\n{}", Jsons.encodeRaw(aGame), Jsons.encode(bGames));
+					}
 				}
 			}
 		}
@@ -88,8 +101,8 @@ public class BetMatchService {
 	public GameDTO matchPrefixOrSuffix(List<GameDTO> games_, String team) {
 		final String[] fix = parseLeaguePerfixAndSuffix(team);
 		if (fix != null) {
-			boolean is3 = team.length() == 3;
-			List<GameDTO> gameDTOS = CollectionUtil.filter(games_, b -> {
+			final boolean is3 = team.length() == 3;
+			final List<GameDTO> gameDTOS = CollectionUtil.filter(games_, b -> {
 						if (is3) { // 三个字，且首尾相同
 							final String word1 = team.substring(0, 1), word2 = team.substring(2, 3);
 							if (b.teamHome.startsWith(word1) && b.teamClient.endsWith(word2)
