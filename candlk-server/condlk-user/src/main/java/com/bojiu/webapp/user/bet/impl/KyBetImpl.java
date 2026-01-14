@@ -152,8 +152,8 @@ public class KyBetImpl extends BaseBetApiImpl {
 			}
 			return;
 		}
-		boolean isZh = "zh".equals(lang);
-		JSONArray games = result.data().getJSONObject("data").getJSONArray("data");
+		final boolean isZh = "zh".equals(lang);
+		final JSONArray games = result.data().getJSONObject("data").getJSONArray("data");
 		if (games != null && (size = games.size()) > 0) {
 			for (int i = 0; i < size; i++) {
 				// 解析赛事赔率信息（开云赔率包含本金无需二次转换）
@@ -173,8 +173,8 @@ public class KyBetImpl extends BaseBetApiImpl {
 				// 解析拓展盘口信息
 				for (Object hpsAdd : hpsData.getJSONArray("hpsAdd")) {
 					final JSONObject oddsData = (JSONObject) hpsAdd;
-					OddsType oddsType = parseOddsType(oddsData.getString("hpid"));
-					JSONArray hls = oddsData.getJSONArray("hl"); // hpsAdd中是 Array
+					final OddsType oddsType = parseOddsType(oddsData.getString("hpid"));
+					final JSONArray hls = oddsData.getJSONArray("hl"); // hpsAdd中是 Array
 					if (hls != null && !hls.isEmpty()) {
 						int offset = switch (oddsType) {
 							case R, HR, OU, HOU -> 2; // 2个为一组，可能存在多组
@@ -192,7 +192,7 @@ public class KyBetImpl extends BaseBetApiImpl {
 				}
 				if (!odds.isEmpty()) {
 					final String league = isZh ? game.getString("tn").replaceAll(" ", "") : game.getString("tn");
-					if (!"FantasyMatches".equals(league)) {  // 排除虚拟球赛
+					if (!"Fantasy Matches".equals(league)) {  // 排除虚拟球赛
 						// leagueSet.add(league);
 						gameDTOs.add(new GameDTO(game.getLong("mid"), provider, new Date(game.getLong("mgt")), convertLeague(league),
 								game.getString("mhn"), game.getString("man"), odds, now));
