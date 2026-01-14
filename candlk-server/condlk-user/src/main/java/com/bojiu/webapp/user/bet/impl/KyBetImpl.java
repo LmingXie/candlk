@@ -400,7 +400,6 @@ public class KyBetImpl extends BaseBetApiImpl {
 					final Map<Object, ScoreResult> results = new HashMap<>(array.size(), 1F);
 					for (Object o : array) {
 						final JSONObject game = (JSONObject) o;
-						Long matchTime = game.getLong("matchTime");
 						final String scoreResultJson = game.getString("scoreResult");
 						if (!scoreResultJson.isEmpty()) {
 							try {

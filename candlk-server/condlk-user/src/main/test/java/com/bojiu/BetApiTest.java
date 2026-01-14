@@ -55,7 +55,7 @@ public class BetApiTest {
 
 	@Test
 	public void getGameScoreResultTest() {
-		BetProvider type = BetProvider.D1CE;
+		BetProvider type = BetProvider.KY;
 		BetApi api = BetApi.getInstance(type);
 		Map<Object, ScoreResult> scoreResult = api.getScoreResult();
 		log.info("赛果数据：{}", Jsons.encode(scoreResult));
