@@ -15,6 +15,7 @@ import com.bojiu.context.web.ProxyRequest;
 import com.bojiu.webapp.user.dto.BaseRateConifg;
 import com.bojiu.webapp.user.dto.HedgingDTO;
 import com.bojiu.webapp.user.form.query.HedgingQuery;
+import com.bojiu.webapp.user.service.BetMatchService;
 import com.bojiu.webapp.user.service.MetaService;
 import com.bojiu.webapp.user.vo.HedgingVO;
 import lombok.extern.slf4j.Slf4j;
@@ -33,6 +34,8 @@ public class BetAction {
 
 	@Resource
 	MetaService metaService;
+	@Resource
+	BetMatchService betMatchService;
 
 	@Ready(value = "推荐/存档方案列表", merchantIdRequired = false)
 	@GetMapping("/list")
@@ -137,8 +140,16 @@ public class BetAction {
 		return Messager.exposeData(vo);
 	}
 
+	@Ready("计算多平台投注方案")
+	@PostMapping("/calcMuti")
+	@Permission(Permission.NONE)
+	public Messager<HedgingVO> calcMuti(ProxyRequest q, String value) {
+		final HedgingVO vo = Jsons.parseObject(value, HedgingVO.class);
+		betMatchService.calcMuti(vo, q.now());
+		return Messager.exposeData(vo);
+	}
+
 	// TODO: 2025/12/26 赔率需按ID拆分缓存，避免删除无法同步到的赔率数据
-	// TODO	存档后的方案支持多平台赔率对比 投注方案
 	// TODO 支持二串一（具体的计算公式还需要确定下）
 
 }

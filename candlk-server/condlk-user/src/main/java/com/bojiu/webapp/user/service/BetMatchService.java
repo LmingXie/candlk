@@ -2,19 +2,26 @@ package com.bojiu.webapp.user.service;
 
 import java.util.*;
 import java.util.concurrent.*;
+import java.util.function.Function;
 import javax.annotation.Resource;
 
+import com.bojiu.common.context.Env;
 import com.bojiu.common.redis.RedisUtil;
+import com.bojiu.common.util.BeanUtil;
 import com.bojiu.context.web.Jsons;
 import com.bojiu.context.web.TaskUtils;
 import com.bojiu.webapp.user.dto.*;
 import com.bojiu.webapp.user.dto.GameDTO.OddsInfo;
 import com.bojiu.webapp.user.dto.HedgingDTO.Odds;
 import com.bojiu.webapp.user.model.BetProvider;
+import com.bojiu.webapp.user.vo.HedgingVO;
+import com.github.benmanes.caffeine.cache.Cache;
+import com.github.benmanes.caffeine.cache.Caffeine;
 import lombok.extern.slf4j.Slf4j;
 import me.codeplayer.util.ArrayUtil;
 import me.codeplayer.util.CollectionUtil;
 import org.apache.commons.lang3.tuple.Pair;
+import org.jspecify.annotations.NonNull;
 import org.jspecify.annotations.Nullable;
 import org.springframework.stereotype.Service;
 
@@ -29,21 +36,82 @@ public class BetMatchService {
 	@Resource
 	MetaService metaService;
 
+	static Cache<BetProvider, List<GameDTO>> cache = Caffeine.newBuilder()
+			.initialCapacity(BetProvider.CACHE.length)
+			.maximumSize(1024)
+			.expireAfterAccess(30, TimeUnit.SECONDS)
+			.build();
+	static Function<BetProvider, List<GameDTO>> findGameBuilder = k -> Jsons.parseArray(RedisUtil.opsForHash().get(GAME_BETS_PERFIX, k.name()), GameDTO.class);
+
+	public final void calcMuti(HedgingVO vo, Date now) {
+		// 计算当前选择的串关平台的对冲方案
+		vo.calcHedgingCoinsLock(now);
+
+		final Odds[] parlays = vo.getParlays();
+		final BetProvider currAProvider = parlays[0].aGame.betProvider, currBProvider = parlays[0].bGame.betProvider;
+		final BetProvider[] allProvider = BetProvider.CACHE;
+		final int len = allProvider.length;
+		if (len > 1) {
+			return;
+		}
+		final long timeNow = now.getTime();
+		// 查找最近的赛事
+		Odds next = null;
+		int nextIdx = -1;
+		for (int i = 0, size = parlays.length; i < size; i++) {
+			Odds odds = parlays[i];
+			if (odds.gameOpenTime > timeNow) {
+				next = odds;
+				nextIdx = i;
+				break;
+			}
+		}
+		if (next == null) { // 没有找到下一场赛事
+			return;
+		}
+
+		// 查找串关平台赛事数据
+		final List<GameDTO> gameBets = cache.get(currAProvider, findGameBuilder);
+		next.extBOdds = new ArrayList<>(len);
+
+		// 匹配对冲平台赛事数据
+		for (final BetProvider hedgingProvider : allProvider) {
+			if (hedgingProvider != currAProvider && hedgingProvider != currBProvider) { // 排除当前串关平台
+				final Map<GameDTO, GameDTO> gameMap = getGameMap(gameBets, cache.get(hedgingProvider, findGameBuilder));
+				// 查找当前串子是否能匹配当前平台的全部赔率
+				final GameDTO bGameDTO = gameMap.get(next.aGame);
+				if (bGameDTO != null) {
+					final OddsInfo bOdds = bGameDTO.findOdds(next.aOdds); // 查找B平台的赔率信息
+					if (bOdds != null) {
+						final HedgingVO newVo = BeanUtil.copy(vo, HedgingVO::new);
+						newVo.parlays[nextIdx].bOdds = bOdds; // 替换B平台的赔率信息
+						newVo.calcHedgingCoinsLock(now); // 重新计算赔率信息
+						next.extBOdds.add(newVo);
+					}
+				}
+			}
+		}
+	}
+
 	/** 获取A平台到B平台赛事的映射 */
 	public final Map<GameDTO, GameDTO> getGameMapper(Pair<BetProvider, BetProvider> pair) {
 		// 查询平台上的全部赛事和赔率信息
 		final List<String> values = RedisUtil.opsForHash().multiGet(GAME_BETS_PERFIX, Arrays.asList(pair.getKey().name(), pair.getValue().name()));
 		final List<GameDTO> gameBets = Jsons.parseArray(values.get(0), GameDTO.class),
 				hedgingBets = Jsons.parseArray(values.get(1), GameDTO.class);
+		return getGameMap(gameBets, hedgingBets);
+	}
 
+	private @NonNull Map<GameDTO, GameDTO> getGameMap(List<GameDTO> gameBets, List<GameDTO> hedgingBets) {
 		// A平台赛事 与 B平台赛事 的映射
 		final Map<GameDTO, GameDTO> gameMapper = new HashMap<>(Math.max(gameBets.size(), hedgingBets.size()), 1F);
 		// 根据开赛时间分组（由于时间是更大的尺度，因此先匹配时间，再匹配队伍名称）
 		final Map<Date, List<GameDTO>> hedgingMap = CollectionUtil.groupBy(hedgingBets, GameDTO::getOpenTime);
+		final boolean isTest = Env.inTest();
 
 		// 从 hedgingBets 过滤能在 hedgingBets 匹配的赛事
 		for (GameDTO aGame : gameBets) {
-			List<GameDTO> bGames = hedgingMap.get(aGame.getOpenTime());
+			final List<GameDTO> bGames = hedgingMap.get(aGame.getOpenTime());
 			if (bGames != null) {
 				// 匹配队伍名（假设同一时间，同一只队伍不能同时存在两场比赛）
 				final String teamHome = aGame.teamHome, teamClient = aGame.teamClient;
@@ -81,7 +149,7 @@ public class BetMatchService {
 						continue;
 					}
 
-					if (CollectionUtil.findFirst(bGames, b ->
+					if (!isTest && CollectionUtil.findFirst(bGames, b ->
 							// 队伍名称存在包含关系
 							(teamHome.contains(b.teamHome) || b.teamHome.contains(teamHome)
 									|| teamClient.contains(b.teamClient) || b.teamClient.contains(teamClient))
