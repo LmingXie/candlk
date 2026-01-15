@@ -163,5 +163,7 @@ public interface League {
 	String TunisiaLigue1 = "Tunisia Ligue 1";
 	/** 西班牙足协甲组联赛 */
 	String SpainPrimeraFederacion = "Spain Primera Federacion";
+	/** 印尼丙组联赛 */
+	String IndonesiaLigaNusantara = "Indonesia Liga Nusantara";
 
 }

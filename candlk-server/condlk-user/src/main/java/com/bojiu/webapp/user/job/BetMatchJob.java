@@ -46,7 +46,7 @@ public class BetMatchJob {
 
 	@Scheduled(cron = "${service.cron.BetMatchJob:0 0/2 * * * ?}")
 	public void run() {
-		RedisUtil.fastAttemptInLock("bet-match-job", 20 * 1000 * 60, () -> {
+		RedisUtil.fastAttemptInLock("bet-match-job", 60 * 1000 * 60, () -> {
 			long startTime = System.currentTimeMillis();
 			final int parlaysSize = 3; // 串关大小（3场比赛为一组）
 			final NumberFormat format = NumberFormat.getInstance();
