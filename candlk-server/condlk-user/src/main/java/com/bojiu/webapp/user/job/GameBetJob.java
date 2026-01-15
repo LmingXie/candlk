@@ -33,7 +33,7 @@ public class GameBetJob {
 
 	@Scheduled(cron = "${service.cron.GameBetJob:0/10 * * * * ?}")
 	public void run() {
-		RedisUtil.fastAttemptInLock("game-bet-job", 2 * 1000 * 60, () -> {
+		RedisUtil.fastAttemptInLock("game-bet-job", 3 * 1000 * 60, () -> {
 			try {
 				final EnumMap<BetProvider, BetApi> enumMap = BetApi.implMapRef.get();
 				final int size = enumMap.size();

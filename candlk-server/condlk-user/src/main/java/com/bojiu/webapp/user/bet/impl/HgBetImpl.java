@@ -649,7 +649,7 @@ public class HgBetImpl extends LoginBaseBetApiImpl {
 					text2 = client.get(2).getElementsByTag("span").get(0).text(),
 					text3 = homeTds.get(3).getElementsByTag("span").get(0).text();
 			if (!NumberUtil.isNumber(text) || !NumberUtil.isNumber(text2) || !NumberUtil.isNumber(text3)) {
-				LOGGER.warn("解析进球数异常：{}", text);
+				// LOGGER.warn("解析进球数异常：{}", text);
 				return;
 			}
 			scoreResult.setScore(new Integer[] { Integer.parseInt(text),
