@@ -57,7 +57,7 @@ public class GameBetJob {
 					});
 				}
 				latch.await(); // 被阻塞，等待唤醒
-				log.info("【游戏赔率】同步完成，耗时：{} ms", System.currentTimeMillis() - startTime);
+				log.info("【游戏赔率】同步完成，耗时：{} s", (System.currentTimeMillis() - startTime) / 1000D);
 			} catch (InterruptedException e) {
 				log.warn("同步游戏赔率时出错", e);
 			}
@@ -114,7 +114,8 @@ public class GameBetJob {
 							log.error("厂商【{}】刷新正在进行中的串子赔率异常", providerName, e);
 						}
 					}
-					log.info("厂商【{}】同步游戏赔率成功，数量={}，耗时：{} ms", providerName, gameEnBets.size(), begin.lastTime.getTime() - beginTime);
+					log.info("厂商【{}】同步游戏赔率成功，数量={}，耗时：{} s", providerName, gameEnBets.size(),
+							(begin.lastTime.getTime() - beginTime) / 1000D);
 				}
 				return true;
 			});

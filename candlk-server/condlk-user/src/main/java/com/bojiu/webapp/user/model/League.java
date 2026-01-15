@@ -39,7 +39,7 @@ public interface League {
 	String EnglandSuperLeagueWomen = "England Women Super League";
 	String AfricaCupOfNations2025InMorocco2En = "Africa Cup Of Nations 2025 (In Morocco)";
 	String FIFAWorldCup2026EuropeQualifiersPlayOff = "FIFA World Cup 2026 Europe Qualifiers - Playoff";
-	/**葡萄牙丙级联赛*/
+	/** 葡萄牙丙级联赛 */
 	String BelgiumFirstAmateurDivision = "Belgium First Amateur Division";
 	String MexicoLigaMXU19Playoff = "Mexico Liga MX U19 - Playoff";
 	String SpainCopaDelRey = "Spain Copa del Rey";
@@ -165,5 +165,14 @@ public interface League {
 	String SpainPrimeraFederacion = "Spain Primera Federacion";
 	/** 印尼丙组联赛 */
 	String IndonesiaLigaNusantara = "Indonesia Liga Nusantara";
+	/** 菲律宾UAAP足球锦标赛 */
+	String PhilippinesUAAPFootballChampionship = "Philippines UAAP Football Championship";
+	/** 西班牙足协丙级联赛 */
+	String SpainTerceraDivision = "Spain Tercera Division";
+	/** 西班牙足协乙组联赛 */
+	String SpainSegundaFederacion = "Spain Segunda Federacion";
+	/** 卡塔尔联赛U19 */
+	String QatarLeagueU19 = "Qatar League U19";
+
 
 }

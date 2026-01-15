@@ -499,7 +499,7 @@ public class PsBetImpl extends WsBaseBetApiImpl {
 			case "Israel Ligat Leumit" -> League.IsraelLeague1;
 			case "England Championship" -> League.EnglandLeagueChampionship;
 			case "Greece Super League" -> League.GreeceSuperLeague1;
-			case "Italy Serie C Group C" -> League.ItalySerieC;
+			case "Serie C Group A", "Serie C Group B", "Serie C Group C" -> League.ItalySerieC;
 			case "Netherlands Cup" -> League.NetherlandsKNVBCup;
 			case "France National" -> League.FranceChampionnatNational;
 			case "England EFL Cup" -> League.EnglandLeagueCup;
@@ -542,13 +542,18 @@ public class PsBetImpl extends WsBaseBetApiImpl {
 			case "Brazil Pernambucano" -> League.BrazilCampeonatoPernambucanoSerieA1;
 			case "Egypt 2nd Division A" -> League.EgyptDivision1;
 			case "Saudi Arabia Division 2" -> League.EgyptDivision2;
-			case "Italy Serie D Group E" -> League.ItalySerieD;
+			case "Italy Serie D Group A", "Italy Serie D Group B", "Italy Serie D Group C",
+			     "Italy Serie D Group D", "Italy Serie D Group E" -> League.ItalySerieD;
 			case "Vietnam U19 Womens Championship" -> League.VietnamChampionshipWomenU19;
 			case "Club Friendlies Women" -> League.ClubFriendlyWomen;
 			case "Wales Premier Womens League" -> League.WalesPremierLeagueWomen;
 			case "Tunisia League 1" -> League.TunisiaLigue1;
 			case "Scotland Cup" -> League.ScotlandFACup;
 			case "Spain Primera RFEF Group 1", "Spain Primera RFEF Group 2", "Spain Primera RFEF Group 3" -> League.SpainPrimeraFederacion;
+			case "Philippines UAAP Championship" -> League.PhilippinesUAAPFootballChampionship;
+			case "Spain Segunda RFEF Group 1", "Spain Segunda RFEF Group 2", "Spain Segunda RFEF Group 3",
+			     "Spain Segunda RFEF Group 4", "Spain Segunda RFEF Group 5" -> League.SpainSegundaFederacion;
+			case "Qatar U19 League" -> League.QatarLeagueU19;
 			default -> league;
 		};
 	}

@@ -64,10 +64,34 @@ public class HedgingDTO extends BaseEntity {
 		 * <p>让球盘：0=主队(Home), 1=客队(Client)
 		 * <p>大小盘：0=大球(Over), 1=小球(Under)
 		 * <p>独赢盘：0=主胜, 1=客胜, 2=平局
+		 * <p>两队都得分：0=否, 1=是
+		 * <p>单双盘：0=双, 1=单
 		 *
 		 * @see GameDTO.OddsInfo#getRates
 		 */
 		public Integer parlaysIdx;
+
+		/** A平台串子 投注方向 */
+		public String getBetADirection() {
+			return aOdds.type == null ? null : switch (aOdds.type) {
+				case R, HR -> parlaysIdx == 0 ? "让主胜" : "让客胜";
+				case OU, HOU -> parlaysIdx == 0 ? "大" : "小";
+				case M, HM -> parlaysIdx == 0 ? "主胜" : parlaysIdx == 1 ? "客胜" : "平局";
+				case TS -> parlaysIdx == 0 ? "都不得分" : "都得分";
+				case EO -> parlaysIdx == 0 ? "双" : "单";
+			};
+		}
+
+		public String getBetBDirection() {
+			return bOdds.type == null ? null : switch (bOdds.type) {
+				case R, HR -> parlaysIdx == 1 ? "让球主胜" : "让球客胜";
+				case OU, HOU -> parlaysIdx == 1 ? "大" + bOdds.ratioRate + "球" : "小" + bOdds.ratioRate + "球";
+				case M, HM -> parlaysIdx == 1 ? "主胜" : parlaysIdx == 0 ? "客胜" : "平局"; // TODO: 2026/1/15 暂未确定
+				case TS -> parlaysIdx == 1 ? "都不得分" : "都得分";
+				case EO -> parlaysIdx == 1 ? "双" : "单";
+			};
+		}
+
 		/** 开赛时间 */
 		@Setter
 		@Getter
