@@ -32,30 +32,37 @@ public class GameBetJob {
 			, 128, "game-bet-sync-", new ThreadPoolExecutor.AbortPolicy());
 
 	@Scheduled(cron = "${service.cron.GameBetJob:0/10 * * * * ?}")
-	public void run() throws InterruptedException {
-		final EnumMap<BetProvider, BetApi> enumMap = BetApi.implMapRef.get();
-		final int size = enumMap.size();
-		final long startTime = System.currentTimeMillis();
-		final CountDownLatch latch = new CountDownLatch(size);
-		for (Map.Entry<BetProvider, BetApi> entry : enumMap.entrySet()) {
-			if (!entry.getKey().open) {
-				latch.countDown();
-				continue;
-			}
-			final BetApi betApi = entry.getValue();
-			smallTaskThreadPool.execute(() -> {
-				try {
-					doQueryAndSyncGameBetsForSingleVendor(betApi);
-				} catch (Throwable e) {
-					// 关键业务，上报异常信息
-					SpringUtil.logError(log, "同步游戏赔率时出错：厂商=" + betApi.getProvider(), e);
-				} finally {
-					latch.countDown();
+	public void run() {
+		RedisUtil.fastAttemptInLock("game-bet-job", 2 * 1000 * 60, () -> {
+			try {
+				final EnumMap<BetProvider, BetApi> enumMap = BetApi.implMapRef.get();
+				final int size = enumMap.size();
+				final long startTime = System.currentTimeMillis();
+				final CountDownLatch latch = new CountDownLatch(size);
+				for (Map.Entry<BetProvider, BetApi> entry : enumMap.entrySet()) {
+					if (!entry.getKey().open) {
+						latch.countDown();
+						continue;
+					}
+					final BetApi betApi = entry.getValue();
+					smallTaskThreadPool.execute(() -> {
+						try {
+							doQueryAndSyncGameBetsForSingleVendor(betApi);
+						} catch (Throwable e) {
+							// 关键业务，上报异常信息
+							SpringUtil.logError(log, "同步游戏赔率时出错：厂商=" + betApi.getProvider(), e);
+						} finally {
+							latch.countDown();
+						}
+					});
 				}
-			});
-		}
-		latch.await(); // 被阻塞，等待唤醒
-		log.info("【游戏赔率】同步完成，耗时：{} ms", System.currentTimeMillis() - startTime);
+				latch.await(); // 被阻塞，等待唤醒
+				log.info("【游戏赔率】同步完成，耗时：{} ms", System.currentTimeMillis() - startTime);
+			} catch (InterruptedException e) {
+				log.warn("同步游戏赔率时出错", e);
+			}
+			return true;
+		});
 	}
 
 	public void doQueryAndSyncGameBetsForSingleVendor(BetApi betApi) {

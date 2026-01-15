@@ -46,38 +46,41 @@ public class BetMatchJob {
 
 	@Scheduled(cron = "${service.cron.BetMatchJob:0 0/2 * * * ?}")
 	public void run() {
-		long startTime = System.currentTimeMillis();
-		final int parlaysSize = 3; // 串关大小（3场比赛为一组）
-		final NumberFormat format = NumberFormat.getInstance();
-		for (Pair<BetProvider, BetProvider> pair : matchPair) {
-			long beginTime = System.currentTimeMillis();
-			final String parlaysProvider = pair.getKey().name(), hedgingProvider = pair.getValue().name();
-			// 获取A平台到B平台赛事的映射
-			final Map<GameDTO, GameDTO> gameMapper = betMatchService.getGameMapper(pair);
-			log.info("【{}】->【{}】进行赛事映射完成，总【{}】场。", parlaysProvider, hedgingProvider, gameMapper.size());
+		RedisUtil.fastAttemptInLock("bet-match-job", 20 * 1000 * 60, () -> {
+			long startTime = System.currentTimeMillis();
+			final int parlaysSize = 3; // 串关大小（3场比赛为一组）
+			final NumberFormat format = NumberFormat.getInstance();
+			for (Pair<BetProvider, BetProvider> pair : matchPair) {
+				long beginTime = System.currentTimeMillis();
+				final String parlaysProvider = pair.getKey().name(), hedgingProvider = pair.getValue().name();
+				// 获取A平台到B平台赛事的映射
+				final Map<GameDTO, GameDTO> gameMapper = betMatchService.getGameMapper(pair);
+				log.info("【{}】->【{}】进行赛事映射完成，总【{}】场。", parlaysProvider, hedgingProvider, gameMapper.size());
 
-			final Pair<HedgingDTO[], Long> topNPair = betMatchService.match(gameMapper, parlaysSize, 1000);
-			final HedgingDTO[] topN = topNPair.getKey();
-			if (topN.length > 0) {
-				for (HedgingDTO dto : topN) {
-					dto.toJson();
-				}
-				// 缓存匹配结果
-				RedisUtil.doInTransaction(redisOps -> {
-					final ZSetOperations<String, String> opsForZSet = redisOps.opsForZSet();
-					final String key = BET_MATCH_DATA_KEY + parlaysProvider + "-" + hedgingProvider;
-					redisOps.delete(key); // 删除历史数据
+				final Pair<HedgingDTO[], Long> topNPair = betMatchService.match(gameMapper, parlaysSize, 1000);
+				final HedgingDTO[] topN = topNPair.getKey();
+				if (topN.length > 0) {
 					for (HedgingDTO dto : topN) {
-						opsForZSet.add(key, dto.json, dto.avgProfit);
+						dto.toJson();
 					}
-				});
+					// 缓存匹配结果
+					RedisUtil.doInTransaction(redisOps -> {
+						final ZSetOperations<String, String> opsForZSet = redisOps.opsForZSet();
+						final String key = BET_MATCH_DATA_KEY + parlaysProvider + "-" + hedgingProvider;
+						redisOps.delete(key); // 删除历史数据
+						for (HedgingDTO dto : topN) {
+							opsForZSet.add(key, dto.json, dto.avgProfit);
+						}
+					});
+				}
+
+				log.info("【{}】->【{}】匹配结束，共【{}】种组合，计算最佳结果：{}，耗时：{} ms", parlaysProvider, hedgingProvider,
+						format.format(topNPair.getValue()), topN.length, System.currentTimeMillis() - beginTime);
 			}
 
-			log.info("【{}】->【{}】匹配结束，共【{}】种组合，计算最佳结果：{}，耗时：{} ms", parlaysProvider, hedgingProvider,
-					format.format(topNPair.getValue()), topN.length, System.currentTimeMillis() - beginTime);
-		}
-
-		log.info("【刷新推荐串子】完成，耗时：{} ms", System.currentTimeMillis() - startTime);
+			log.info("【刷新推荐串子】完成，耗时：{} ms", System.currentTimeMillis() - startTime);
+			return true;
+		});
 	}
 
 }
