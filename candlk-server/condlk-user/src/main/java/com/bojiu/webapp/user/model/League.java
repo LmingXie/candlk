@@ -39,6 +39,7 @@ public interface League {
 	String EnglandSuperLeagueWomen = "England Women Super League";
 	String AfricaCupOfNations2025InMorocco2En = "Africa Cup Of Nations 2025 (In Morocco)";
 	String FIFAWorldCup2026EuropeQualifiersPlayOff = "FIFA World Cup 2026 Europe Qualifiers - Playoff";
+	/**葡萄牙丙级联赛*/
 	String BelgiumFirstAmateurDivision = "Belgium First Amateur Division";
 	String MexicoLigaMXU19Playoff = "Mexico Liga MX U19 - Playoff";
 	String SpainCopaDelRey = "Spain Copa del Rey";
@@ -130,7 +131,7 @@ public interface League {
 	String BrazilCampeonatoCatarinenseSerieA = "Brazil Campeonato Catarinense Serie A";
 	/** 苏格兰足总杯 */
 	String ScotlandFACup = "Scotland FA Cup";
-	/** 越南锦标赛U19资格赛 */
+	/** 越南锦标赛U19 - 附加赛 */
 	String VietnamU19Championship = "Vietnam U19 Championship";
 	/** 英格兰南部中区超级联赛 */
 	String EnglandSouthernPremierDivisionCentral = "England Southern Premier Division Central";
@@ -154,5 +155,13 @@ public interface League {
 	String ClubFriendlyWomen = "Club Friendly Women";
 	/** 冬季联赛(在捷克和斯洛伐克) / 捷克共和国Tipsport联赛 */
 	String CzechRepublicTipsportLiga = "Czech Republic Tipsport Liga";
+	/** 阿曼职业联赛 */
+	String OmanProLeague = "Oman Pro League";
+	/** 威尔士女子超级联赛 */
+	String WalesPremierLeagueWomen = "Wales Premier League Women";
+	/** 突尼斯甲级联赛 */
+	String TunisiaLigue1 = "Tunisia Ligue 1";
+	/** 西班牙足协甲组联赛 */
+	String SpainPrimeraFederacion = "Spain Primera Federacion";
 
 }

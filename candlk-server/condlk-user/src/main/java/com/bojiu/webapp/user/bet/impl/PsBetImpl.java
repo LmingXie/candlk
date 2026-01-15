@@ -244,7 +244,7 @@ public class PsBetImpl extends WsBaseBetApiImpl {
 		if (last) {
 			if (!discarding && !buffer.isEmpty()) {
 				final String jsonData = buffer.toString();
-				log.debug("收到 FULL_ODDS 数据: {}", jsonData);
+				// log.debug("收到 FULL_ODDS 数据: {}", jsonData);
 
 				// 处理 JSON
 				if (jsonData.contains("\"type\":\"FULL_ODDS\"")) {
@@ -545,7 +545,10 @@ public class PsBetImpl extends WsBaseBetApiImpl {
 			case "Italy Serie D Group E" -> League.ItalySerieD;
 			case "Vietnam U19 Womens Championship" -> League.VietnamChampionshipWomenU19;
 			case "Club Friendlies Women" -> League.ClubFriendlyWomen;
-			case "Portugal Liga 3" -> League.BelgiumFirstAmateurDivision;
+			case "Wales Premier Womens League" -> League.WalesPremierLeagueWomen;
+			case "Tunisia League 1" -> League.TunisiaLigue1;
+			case "Scotland Cup" -> League.ScotlandFACup;
+			case "Spain Primera RFEF Group 1", "Spain Primera RFEF Group 2", "Spain Primera RFEF Group 3" -> League.SpainPrimeraFederacion;
 			default -> league;
 		};
 	}

@@ -56,6 +56,8 @@ public class HedgingDTO extends BaseEntity {
 		public OddsInfo aOdds;
 		/** B平台 赔率信息 */
 		public OddsInfo bOdds;
+		/** 拓展其他B平台 赔率信息 */
+		public List<HedgingDTO> extBOdds;
 		/**
 		 * A平台串子投注方向（对冲平台投注方向取反）
 		 *

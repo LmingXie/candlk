@@ -202,9 +202,11 @@ public class GameDTO extends TimeBasedEntity {
 	/** 根据A平台的赔率信息，查找对应B平台的赔率信息 */
 	@Nullable
 	public OddsInfo findOdds(OddsInfo aOdd) {
-		for (OddsInfo odds : odds) {
-			if (odds.type == aOdd.type && odds.ratioRate.equals(aOdd.ratioRate)) {
-				return odds;
+		if (odds != null) {
+			for (OddsInfo odds : odds) {
+				if (odds.type == aOdd.type && odds.ratioRate.equals(aOdd.ratioRate)) {
+					return odds;
+				}
 			}
 		}
 		return null;

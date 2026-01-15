@@ -321,9 +321,10 @@ public class KyBetImpl extends BaseBetApiImpl {
 			case "Mexico Liga MX U21" -> League.MexicoLigaMX;
 			case "Premier League International Cup U21 (In England)" -> League.PremierLeagueInternationalCupInEngland;
 			case "Portugal League Cup Women" -> League.PortugalWomenLeagueCup;
-			case "Vietnam Championship U19 Qualifiers" -> League.VietnamU19Championship;
+			case "Vietnam Championship U19 Qualifiers", "Vietnam Championship U19 - Playoff" -> League.VietnamU19Championship;
 			case "Colombia Superliga" -> League.ColombiaSuperCup;
 			case "Winter League (In Czech Republic & Slovakia)" -> League.CzechRepublicTipsportLiga;
+			case "Oman Professional League" -> League.OmanProLeague;
 
 			// 默认处理：如果无法精准匹配，尝试通用的字符替换逻辑（注意：这依然返回字符串）
 			default -> {

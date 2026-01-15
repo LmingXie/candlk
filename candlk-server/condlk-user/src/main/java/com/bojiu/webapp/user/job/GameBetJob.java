@@ -31,7 +31,7 @@ public class GameBetJob {
 			// 这里的队列容量（ 128 ） 一定不能小于 BetProvider.CACHE.length
 			, 128, "game-bet-sync-", new ThreadPoolExecutor.AbortPolicy());
 
-	@Scheduled(cron = "${service.cron.GameBetJob:0/30 * * * * ?}")
+	@Scheduled(cron = "${service.cron.GameBetJob:0/10 * * * * ?}")
 	public void run() throws InterruptedException {
 		final EnumMap<BetProvider, BetApi> enumMap = BetApi.implMapRef.get();
 		final int size = enumMap.size();
@@ -64,7 +64,7 @@ public class GameBetJob {
 
 		final String nextJson = RedisUtil.opsForHash().get(BET_SYNC_RELAY, providerName);
 		final GameBetQueryDTO begin = StringUtil.isEmpty(nextJson) ? new GameBetQueryDTO() : Jsons.parseObject(nextJson, GameBetQueryDTO.class);
-		if (begin.lastTime == null || begin.lastTime.getTime() + 1000 * 30 < System.currentTimeMillis()) {
+		if (begin.lastTime == null || begin.lastTime.getTime() + 1000 * 3 < System.currentTimeMillis()) {
 			RedisUtil.fastAttemptInLock((BET_SYNC_RELAY + "_" + providerName), 1000 * 60 * 3L, () -> {
 				final long beginTime = System.currentTimeMillis();
 				final Set<GameDTO> gameEnBets = betApi.getGameBets();

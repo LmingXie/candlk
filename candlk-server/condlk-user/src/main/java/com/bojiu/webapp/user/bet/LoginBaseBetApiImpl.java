@@ -23,7 +23,7 @@ public abstract class LoginBaseBetApiImpl extends BaseBetApiImpl {
 	/** 获取登录 Token */
 	protected JSONObject getLoginToken() {
 		if (loginInfo == null) {
-			ValueOperations<String, String> opsForValue = RedisUtil.template().opsForValue();
+			final ValueOperations<String, String> opsForValue = RedisUtil.template().opsForValue();
 			final String key = getProvider() + "_token", loginJson = opsForValue.get(key);
 			if (loginJson != null) {
 				loginInfo = Jsons.parseObject(loginJson);

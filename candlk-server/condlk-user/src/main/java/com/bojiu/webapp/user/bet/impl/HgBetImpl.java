@@ -561,6 +561,7 @@ public class HgBetImpl extends LoginBaseBetApiImpl {
 			case "Belgium National Division 1" -> League.BelgiumFirstAmateurDivision;
 			case "Mexico League U19" -> League.MexicoLigaMXU19Playoff;
 			case "Spain Cup" -> League.SpainCopaDelRey;
+			case "Egypt Division 2 A" -> League.EgyptDivision1;
 			default -> {
 
 				if (league.contains("English ")) {
