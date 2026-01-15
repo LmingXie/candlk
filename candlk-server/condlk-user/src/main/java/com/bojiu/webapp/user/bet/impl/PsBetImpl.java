@@ -499,7 +499,7 @@ public class PsBetImpl extends WsBaseBetApiImpl {
 			case "Israel Ligat Leumit" -> League.IsraelLeague1;
 			case "England Championship" -> League.EnglandLeagueChampionship;
 			case "Greece Super League" -> League.GreeceSuperLeague1;
-			case "Serie C Group A", "Serie C Group B", "Serie C Group C" -> League.ItalySerieC;
+			case "Serie C Group A", "Serie C Group B", "Serie C Group C", "Serie C Group D" -> League.ItalySerieC;
 			case "Netherlands Cup" -> League.NetherlandsKNVBCup;
 			case "France National" -> League.FranceChampionnatNational;
 			case "England EFL Cup" -> League.EnglandLeagueCup;

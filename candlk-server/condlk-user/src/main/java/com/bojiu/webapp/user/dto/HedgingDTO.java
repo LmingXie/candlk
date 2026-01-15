@@ -75,7 +75,7 @@ public class HedgingDTO extends BaseEntity {
 		public String getBetADirection() {
 			return aOdds.type == null ? null : switch (aOdds.type) {
 				case R, HR -> parlaysIdx == 0 ? "让主胜" : "让客胜";
-				case OU, HOU -> parlaysIdx == 0 ? "大" : "小";
+				case OU, HOU -> parlaysIdx == 0 ? "大" + bOdds.ratioRate + "球" : "小" + bOdds.ratioRate + "球";
 				case M, HM -> parlaysIdx == 0 ? "主胜" : parlaysIdx == 1 ? "客胜" : "平局";
 				case TS -> parlaysIdx == 0 ? "都不得分" : "都得分";
 				case EO -> parlaysIdx == 0 ? "双" : "单";
@@ -84,7 +84,7 @@ public class HedgingDTO extends BaseEntity {
 
 		public String getBetBDirection() {
 			return bOdds.type == null ? null : switch (bOdds.type) {
-				case R, HR -> parlaysIdx == 1 ? "让球主胜" : "让球客胜";
+				case R, HR -> parlaysIdx == 1 ? "让主胜" : "让客胜";
 				case OU, HOU -> parlaysIdx == 1 ? "大" + bOdds.ratioRate + "球" : "小" + bOdds.ratioRate + "球";
 				case M, HM -> parlaysIdx == 1 ? "主胜" : parlaysIdx == 0 ? "客胜" : "平局"; // TODO: 2026/1/15 暂未确定
 				case TS -> parlaysIdx == 1 ? "都不得分" : "都得分";
