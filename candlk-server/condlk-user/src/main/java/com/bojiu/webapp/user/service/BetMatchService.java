@@ -117,26 +117,39 @@ public class BetMatchService {
 			final List<GameDTO> bGames = hedgingMap.get(aGame.getOpenTime());
 			if (bGames != null) {
 				// 匹配队伍名（假设同一时间，同一只队伍不能同时存在两场比赛）
-				final String teamHome = aGame.teamHome, teamClient = aGame.teamClient;
+				final String teamHomeLower = aGame.teamHomeLower(), teamClientLower = aGame.teamClientLower(), leagueLower = aGame.leagueLower();
 				// if (aGame.teamHome.equals("Cong An TP Ho Chi Minh U19") && aGame.teamClient.equals("PVF Vietnam U19")) {
 				// 	System.out.println("teamHome: " + teamHome + " teamClient: " + teamClient);
 				// }
-				final GameDTO bGame = CollectionUtil.findFirst(bGames, b ->
-						// 队伍名称存在包含关系，且联赛名称一致
-						(teamHome.contains(b.teamHome) || b.teamHome.contains(teamHome)
-								|| teamClient.contains(b.teamClient) || b.teamClient.contains(teamClient))
-								&& aGame.league.equalsIgnoreCase(b.league)
-								// 两只队伍名称一致则允许联赛名称不一致
-								|| (aGame.teamHome.equalsIgnoreCase(b.teamHome) && aGame.teamClient.equalsIgnoreCase(b.teamClient))
-				);
+				final GameDTO bGame = CollectionUtil.findFirst(bGames, b -> {
+					final String bTeamHome = b.teamHomeLower(), bTeamClient = b.teamClientLower(), league = b.leagueLower();
+					// 两只队伍名称一致则允许联赛名称不一致
+					if ((teamHomeLower.equalsIgnoreCase(bTeamHome) && teamClientLower.equalsIgnoreCase(bTeamClient))) {
+						return true;
+					}
+					final boolean homeContains = teamHomeLower.contains(bTeamHome) || bTeamHome.contains(teamHomeLower),
+							clientContains = teamClientLower.contains(bTeamClient) || bTeamClient.contains(teamClientLower);
+
+					// 队名至少有一边重叠，否则直接剪枝
+					if (!homeContains && !clientContains) {
+						return false;
+					}
+					//  队伍名称存在包含关系，且联赛名称一致
+					if (leagueLower.equals(league)) {
+						return true;
+					}
+
+					// 队伍名和联赛名都存在包含关系
+					return homeContains && clientContains && (leagueLower.contains(league) || league.contains(leagueLower));
+				});
 				if (bGame != null) {
 					// log.debug("队伍名匹配成功：{}-{}\t{}-{}", teamHome, teamClient, bGame.teamHome, bGame.teamClient);
 					gameMapper.put(aGame, bGame);
 				} else {
 					// 匹配联赛名称（仅一场时则认为是正确的）
-					final List<GameDTO> games_ = CollectionUtil.filter(bGames, b -> aGame.league.equalsIgnoreCase(b.league));
+					final List<GameDTO> games_ = CollectionUtil.filter(bGames, b -> leagueLower.equalsIgnoreCase(b.league));
 					// 尝试匹配前后 2,3 个字符
-					final GameDTO bGameDTO = matchPrefixOrSuffix(games_, teamHome), bGameDTO2 = matchPrefixOrSuffix(games_, teamClient);
+					final GameDTO bGameDTO = matchPrefixOrSuffix(games_, teamHomeLower), bGameDTO2 = matchPrefixOrSuffix(games_, teamClientLower);
 					if (bGameDTO != null && bGameDTO.equals(bGameDTO2)) {
 						gameMapper.put(aGame, bGameDTO);
 						// log.debug("前缀匹配成功：{}-{}\t{}-{}\t{}-{}", teamHome, teamClient, bGameDTO.teamHome, bGameDTO.teamClient,
@@ -154,8 +167,8 @@ public class BetMatchService {
 
 					if (!isTest && CollectionUtil.findFirst(bGames, b ->
 							// 队伍名称存在包含关系
-							(teamHome.contains(b.teamHome) || b.teamHome.contains(teamHome)
-									|| teamClient.contains(b.teamClient) || b.teamClient.contains(teamClient))
+							(teamHomeLower.contains(b.teamHomeLower) || b.teamHomeLower.contains(teamHomeLower)
+									|| teamClientLower.contains(b.teamClientLower) || b.teamClientLower.contains(teamClientLower))
 					) != null) {
 						aGame.setOdds(null);
 						for (GameDTO game : bGames) {

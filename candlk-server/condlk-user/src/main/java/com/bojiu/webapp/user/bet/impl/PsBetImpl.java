@@ -561,7 +561,7 @@ public class PsBetImpl extends WsBaseBetApiImpl {
 			case "Belgium Super League Women" -> League.BelgiumWomenSuperLeague;
 			case "UAE U21 Cup" -> League.UAECupU21;
 			case "France National 2" -> League.FranceChampionnatNational2;
-			case "Ireland Leinster Senior League" -> League.IrelandLeinsterSeniorLeagueSeniorDivision;
+			case "Ireland Leinster Senior League", "Ireland Leinster Senior League Senior Division" -> League.IrelandLeinsterSeniorLeagueSeniorDivision;
 			case "Belgium Reserve Pro League U21" -> League.BelgiumProLeagueU21;
 			case "England FA Cup Women" -> League.EnglandFAWomenCup;
 

@@ -229,4 +229,22 @@ public class GameDTO extends TimeBasedEntity {
 		return tier.eqId(id);
 	}
 
+	public transient String leagueLower;
+
+	public String leagueLower() {
+		return leagueLower == null ? leagueLower = league.toLowerCase() : leagueLower;
+	}
+
+	public transient String teamHomeLower;
+
+	public String teamHomeLower() {
+		return teamHomeLower == null ? teamHomeLower = teamHome.toLowerCase() : teamHomeLower;
+	}
+
+	public transient String teamClientLower;
+
+	public String teamClientLower() {
+		return teamClientLower == null ? teamClientLower = teamClient.toLowerCase() : teamClientLower;
+	}
+
 }
