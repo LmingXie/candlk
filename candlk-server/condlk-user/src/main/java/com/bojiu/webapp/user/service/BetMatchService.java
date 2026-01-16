@@ -7,7 +7,6 @@ import javax.annotation.Resource;
 
 import com.bojiu.common.context.Env;
 import com.bojiu.common.redis.RedisUtil;
-import com.bojiu.common.util.BeanUtil;
 import com.bojiu.context.web.Jsons;
 import com.bojiu.context.web.TaskUtils;
 import com.bojiu.webapp.user.dto.*;
@@ -43,16 +42,15 @@ public class BetMatchService {
 			.build();
 	static Function<BetProvider, List<GameDTO>> findGameBuilder = k -> Jsons.parseArray(RedisUtil.opsForHash().get(GAME_BETS_PERFIX, k.name()), GameDTO.class);
 
-	public final void calcMuti(HedgingVO vo, Date now) {
-		// 计算当前选择的串关平台的对冲方案
-		vo.calcHedgingCoinsLock(now);
+	public final HedgingVO calcMuti(String value, Date now) {
+		final HedgingVO vo = HedgingVO.ofAndInfer(value, now);
 
 		final Odds[] parlays = vo.getParlays();
 		final BetProvider currAProvider = parlays[0].aGame.betProvider, currBProvider = parlays[0].bGame.betProvider;
 		final BetProvider[] allProvider = BetProvider.CACHE;
 		final int len = allProvider.length;
 		if (len < 2) {
-			return;
+			return vo;
 		}
 		final long timeNow = now.getTime();
 		// 查找最近的赛事
@@ -67,13 +65,15 @@ public class BetMatchService {
 			}
 		}
 		if (next == null) { // 没有找到下一场赛事
-			return;
+			return vo;
 		}
 
 		// 查找串关平台赛事数据
 		final List<GameDTO> gameBets = cache.get(currAProvider, findGameBuilder);
 		final List<HedgingVO> extBOdds = new ArrayList<>(len);
 		vo.setNextIdx(nextIdx);
+		final int bIdx = next.getBIdx();
+		final double bRate = next.bRate;
 
 		// 匹配对冲平台赛事数据
 		for (final BetProvider hedgingProvider : allProvider) {
@@ -84,16 +84,22 @@ public class BetMatchService {
 				if (bGameDTO != null) {
 					final OddsInfo bOdds = bGameDTO.findOdds(next.aOdds); // 查找B平台的赔率信息
 					if (bOdds != null) {
-						final HedgingVO newVo = BeanUtil.copy(vo, HedgingVO::new);
-						newVo.parlays[nextIdx].bOdds = bOdds; // 替换B平台的赔率信息
-						newVo.calcHedgingCoinsLock(now); // 重新计算赔率信息
-						newVo.setBaseRate(null);
-						extBOdds.add(newVo);
+						final Double[] rates = bOdds.getRates();
+						final Double newRate = bIdx > rates.length - 1 ? null : rates[bIdx];
+						if (newRate != null && !newRate.equals(bRate)) { // 与当前对冲平台赔率不一致才计算
+							final HedgingVO newVo = Jsons.parseObject(value, HedgingVO.class);
+							newVo.parlays[nextIdx].bGame = bGameDTO;
+							newVo.parlays[nextIdx].bOdds = bOdds; // 替换B平台的赔率信息
+							newVo.parlays[nextIdx].bRate = newRate;
+							newVo.calcHedgingCoinsLock(now); // 重新计算赔率信息
+							extBOdds.add(newVo);
+						}
 					}
 				}
 			}
 		}
 		vo.setExtBOdds(extBOdds);
+		return vo;
 	}
 
 	/** 获取A平台到B平台赛事的映射 */
@@ -122,7 +128,7 @@ public class BetMatchService {
 				// 	System.out.println("teamHome: " + teamHome + " teamClient: " + teamClient);
 				// }
 				final GameDTO bGame = CollectionUtil.findFirst(bGames, b -> {
-					final String bTeamHome = b.teamHomeLower(), bTeamClient = b.teamClientLower(), league = b.leagueLower();
+					final String bTeamHome = b.teamHomeLower(), bTeamClient = b.teamClientLower(), bLeague = b.leagueLower();
 					// 两只队伍名称一致则允许联赛名称不一致
 					if ((teamHomeLower.equalsIgnoreCase(bTeamHome) && teamClientLower.equalsIgnoreCase(bTeamClient))) {
 						return true;
@@ -135,12 +141,12 @@ public class BetMatchService {
 						return false;
 					}
 					//  队伍名称存在包含关系，且联赛名称一致
-					if (leagueLower.equals(league)) {
+					if (leagueLower.equals(bLeague)) {
 						return true;
 					}
 
 					// 队伍名和联赛名都存在包含关系
-					return homeContains && clientContains && (leagueLower.contains(league) || league.contains(leagueLower));
+					return homeContains && clientContains && (leagueLower.contains(bLeague) || bLeague.contains(leagueLower));
 				});
 				if (bGame != null) {
 					// log.debug("队伍名匹配成功：{}-{}\t{}-{}", teamHome, teamClient, bGame.teamHome, bGame.teamClient);

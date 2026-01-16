@@ -11,7 +11,7 @@ import lombok.Setter;
 
 @Setter
 @Getter
-public class HedgingVO extends HedgingDTO {
+public class HedgingVO extends HedgingDTO  {
 
 	/** 标记是否需要更新 */
 	public transient Boolean update;
@@ -56,8 +56,8 @@ public class HedgingVO extends HedgingDTO {
 		final int len = parlays.length;
 		Double[] bOdds = new Double[len];
 		for (int i = 0; i < len; i++) {
-			final Integer parlaysIdx = parlays[i].parlaysIdx;
-			bOdds[i] = parlays[i].bOdds.getRates()[parlaysIdx == 0 ? 1 : 0];
+			final Integer bIdx = parlays[i].getBIdx();
+			bOdds[i] = parlays[i].bOdds.getRates()[bIdx];
 		}
 		return bOdds;
 	}

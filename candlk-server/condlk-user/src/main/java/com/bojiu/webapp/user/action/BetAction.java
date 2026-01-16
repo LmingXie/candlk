@@ -131,6 +131,7 @@ public class BetAction {
 	@PostMapping("/calcSave")
 	@Permission(Permission.NONE)
 	public Messager<HedgingVO> calcSave(ProxyRequest q, String value) {
+		I18N.assertNotNull(value);
 		final HedgingVO vo = HedgingVO.ofAndInfer(value, q.now());
 		final Long id = vo.getId();
 		final String newValue = Jsons.encode(vo);
@@ -142,13 +143,12 @@ public class BetAction {
 		return Messager.exposeData(vo);
 	}
 
-	@Ready("")
+	@Ready("多平台收益对比")
 	@PostMapping("/compare")
 	@Permission(Permission.NONE)
 	public Messager<HedgingVO> compare(ProxyRequest q, String value) {
-		final HedgingVO vo = Jsons.parseObject(value, HedgingVO.class);
-		betMatchService.calcMuti(vo, q.now());
-		return Messager.exposeData(vo);
+		I18N.assertNotNull(value);
+		return Messager.exposeData(betMatchService.calcMuti(value, q.now()));
 	}
 
 

@@ -71,6 +71,12 @@ public class HedgingDTO extends BaseEntity {
 		 * @see GameDTO.OddsInfo#getRates
 		 */
 		public Integer parlaysIdx;
+		/**缓存对冲投注方向指针*/
+		transient Integer bIdx;
+
+		public Integer getBIdx() {
+			return bIdx == null ? bIdx = parlaysIdx == 0 ? 1 : 0 : bIdx;
+		}
 
 		/** A平台串子 投注方向 */
 		public String getBetADirection() {
