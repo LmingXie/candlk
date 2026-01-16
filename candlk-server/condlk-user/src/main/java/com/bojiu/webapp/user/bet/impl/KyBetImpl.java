@@ -327,6 +327,7 @@ public class KyBetImpl extends BaseBetApiImpl {
 			case "Oman Professional League" -> League.OmanProLeague;
 			case "Indonesia Liga 3" -> League.IndonesiaLigaNusantara;
 			case "Spain Tercera Federacion" -> League.SpainTerceraDivision;
+			case "Panama Liga Panamena de Futbol - Playoff" -> League.PanamaPrimeraDivision;
 
 			// 默认处理：如果无法精准匹配，尝试通用的字符替换逻辑（注意：这依然返回字符串）
 			default -> {

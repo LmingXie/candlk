@@ -499,7 +499,8 @@ public class PsBetImpl extends WsBaseBetApiImpl {
 			case "Israel Ligat Leumit" -> League.IsraelLeague1;
 			case "England Championship" -> League.EnglandLeagueChampionship;
 			case "Greece Super League" -> League.GreeceSuperLeague1;
-			case "Serie C Group A", "Serie C Group B", "Serie C Group C", "Serie C Group D" -> League.ItalySerieC;
+			case "Italy Serie C Group A", "Italy Serie C Group B", "Italy Serie C Group C",
+			     "Italy Serie C Group D" -> League.ItalySerieC;
 			case "Netherlands Cup" -> League.NetherlandsKNVBCup;
 			case "France National" -> League.FranceChampionnatNational;
 			case "England EFL Cup" -> League.EnglandLeagueCup;
@@ -554,6 +555,11 @@ public class PsBetImpl extends WsBaseBetApiImpl {
 			case "Spain Segunda RFEF Group 1", "Spain Segunda RFEF Group 2", "Spain Segunda RFEF Group 3",
 			     "Spain Segunda RFEF Group 4", "Spain Segunda RFEF Group 5" -> League.SpainSegundaFederacion;
 			case "Qatar U19 League" -> League.QatarLeagueU19;
+			case "Bahrain 2nd Division" -> League.BahrainDivision2;
+			case "Algeria U20 League" -> League.AlgeriaLeagueU20;
+			case "Malaysia Liga A1" -> League.MalaysiaA1SemiProLeague;
+			case "Belgium Super League Women" -> League.BelgiumWomenSuperLeague;
+
 			default -> league;
 		};
 	}

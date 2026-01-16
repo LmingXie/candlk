@@ -173,6 +173,17 @@ public interface League {
 	String SpainSegundaFederacion = "Spain Segunda Federacion";
 	/** 卡塔尔联赛U19 */
 	String QatarLeagueU19 = "Qatar League U19";
-
+	/** 墨西哥乙级联赛 */
+	String MexicoLigaPremier = "Mexico Liga Premier";
+	/** 巴拿马甲级联赛 */
+	String PanamaPrimeraDivision = "Panama Primera Division";
+	/** 巴林乙级联赛 */
+	String BahrainDivision2 = "Bahrain Division 2";
+	/** 阿尔及利亚联赛U20 */
+	String AlgeriaLeagueU20 = "Algeria League U20";
+	/** 马来西亚A1半职业联赛 */
+	String MalaysiaA1SemiProLeague = "Malaysia A1 Semi Pro League";
+	/** 比利时女子超级联赛 */
+	String BelgiumWomenSuperLeague = "Belgium Women Super League";
 
 }

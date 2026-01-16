@@ -32,4 +32,23 @@ public class HedgingVO extends HedgingDTO {
 		return vo;
 	}
 
+	public Double[] getAOdds_() {
+		final int len = parlays.length;
+		Double[] aOdds = new Double[len];
+		for (int i = 0; i < len; i++) {
+			aOdds[i] = parlays[i].aOdds.getRates()[parlays[i].parlaysIdx];
+		}
+		return aOdds;
+	}
+
+	public Double[] getBOdds_() {
+		final int len = parlays.length;
+		Double[] bOdds = new Double[len];
+		for (int i = 0; i < len; i++) {
+			final Integer parlaysIdx = parlays[i].parlaysIdx;
+			bOdds[i] = parlays[i].bOdds.getRates()[parlaysIdx == 0 ? 0 : 1];
+		}
+		return bOdds;
+	}
+
 }

@@ -90,7 +90,7 @@ public class GameBetJob {
 							enToZhCacheMap = TeamMatcher.getEnToZhCacheMap(provider, gameEnBets, true);
 							for (GameDTO dto : gameEnBets) {
 								if (dto.initZh(enToZhCacheMap)) {
-									log.warn("初始化中文信息失败：{}", Jsons.encode(dto));
+									log.warn("赛事映射中文信息失败：{}", Jsons.encode(dto));
 								}
 							}
 						}
