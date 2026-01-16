@@ -130,7 +130,7 @@ public class GameBetJob {
 		final Map<Long, String> updates = new HashMap<>(hedgingList.size(), 1F);
 		// 查询全部正在进行的串子
 		for (String json : hedgingList) {
-			final HedgingVO vo = HedgingVO.ofAndFlush(json);
+			final HedgingVO vo = HedgingVO.ofAndFlush(json, null, false);
 			for (HedgingDTO.Odds parlay : vo.parlays) {
 				final GameDTO bGame = parlay.bGame;
 				final boolean isA = parlay.aGame.betProvider == provider, isB = bGame.betProvider == provider;
@@ -182,7 +182,7 @@ public class GameBetJob {
 				for (Map.Entry<Long, String> entry : updates.entrySet()) {
 					final Long id = entry.getKey();
 					opsForZSet.removeRangeByScore(HEDGING_LIST_KEY, id, id); // 更新数据
-					opsForZSet.incrementScore(HEDGING_LIST_KEY, entry.getValue(), id); // 更新数据
+					opsForZSet.add(HEDGING_LIST_KEY, entry.getValue(), id); // 更新数据
 				}
 			});
 		}

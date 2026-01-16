@@ -41,10 +41,10 @@ public class BetAction {
 	@GetMapping("/list")
 	@Permission(Permission.NONE)
 	public Messager<Page<HedgingVO>> list(ProxyRequest q, HedgingQuery query) {
-		boolean searchAll = Objects.equals(query.type, 1);
-		I18N.assertTrue(searchAll || query.pair != null);
+		boolean searchPlan = Objects.equals(query.type, 1);
+		I18N.assertTrue(searchPlan || query.pair != null);
 		final Page<HedgingVO> page = q.getPage();
-		final String key = searchAll ? HEDGING_LIST_KEY : BET_MATCH_DATA_KEY + query.pair;
+		final String key = searchPlan ? HEDGING_LIST_KEY : BET_MATCH_DATA_KEY + query.pair;
 		final List<Object> scores = RedisUtil.execInPipeline(redisOps -> {
 			final ZSetOperations<String, String> opsForZSet = redisOps.opsForZSet();
 			opsForZSet.reverseRangeByScore(key, DEFAULT_MIN_SCORE, DEFAULT_MAX_SCORE, page.offset(), 10_000);
@@ -66,9 +66,11 @@ public class BetAction {
 				vos.sort(Comparator.comparingLong(vo -> vo.parlays[0].gameOpenTime));
 			}
 			page.fromAll(vos);
-			final BaseRateConifg baseRateConifg = searchAll ? null : metaService.getCachedParsedValue(PLATFORM_ID, base_rate_config, BaseRateConifg.class);
-			for (HedgingVO vo : page.getList()) { // 只计算分页部分数据的利润
-				vo.flush(baseRateConifg);
+			if (!searchPlan) { // 已存档的方案无须再进行计算
+				final BaseRateConifg baseRateConifg = metaService.getCachedParsedValue(PLATFORM_ID, base_rate_config, BaseRateConifg.class);
+				for (HedgingVO vo : page.getList()) { // 只计算分页部分数据的利润
+					vo.flush(baseRateConifg);
+				}
 			}
 		} else {
 			page.setList(vos);
@@ -134,8 +136,8 @@ public class BetAction {
 		final String newValue = Jsons.encode(vo);
 		RedisUtil.doInTransaction(redisOps -> {
 			ZSetOperations<String, String> opsForZSet = redisOps.opsForZSet();
-			opsForZSet.removeRangeByScore(HEDGING_LIST_KEY, id, id); // 更新数据
-			opsForZSet.incrementScore(HEDGING_LIST_KEY, newValue, id); // 更新数据
+			opsForZSet.removeRangeByScore(HEDGING_LIST_KEY, id, id); // 删除旧数据
+			opsForZSet.add(HEDGING_LIST_KEY, newValue, id); // 更新数据
 		});
 		return Messager.exposeData(vo);
 	}

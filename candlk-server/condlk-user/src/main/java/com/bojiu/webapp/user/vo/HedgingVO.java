@@ -20,8 +20,14 @@ public class HedgingVO extends HedgingDTO {
 	}
 
 	public static HedgingVO ofAndFlush(String value, BaseRateConifg baseRateConifg) {
+		return ofAndFlush(value, baseRateConifg, true);
+	}
+
+	public static HedgingVO ofAndFlush(String value, BaseRateConifg baseRateConifg, boolean isFlush) {
 		final HedgingVO vo = Jsons.parseObject(value, HedgingVO.class);
-		vo.flush(baseRateConifg);
+		if (isFlush) {
+			vo.flush(baseRateConifg);
+		}
 		return vo;
 	}
 
