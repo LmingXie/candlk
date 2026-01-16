@@ -141,9 +141,9 @@ public class BetAction {
 	}
 
 	@Ready("计算多平台投注方案")
-	@PostMapping("/calcMuti")
+	@PostMapping("/compare")
 	@Permission(Permission.NONE)
-	public Messager<HedgingVO> calcMuti(ProxyRequest q, String value) {
+	public Messager<HedgingVO> compare(ProxyRequest q, String value) {
 		final HedgingVO vo = Jsons.parseObject(value, HedgingVO.class);
 		betMatchService.calcMuti(vo, q.now());
 		return Messager.exposeData(vo);

@@ -73,22 +73,24 @@ public class HedgingDTO extends BaseEntity {
 
 		/** A平台串子 投注方向 */
 		public String getBetADirection() {
-			return aOdds.type == null ? null : switch (aOdds.type) {
-				case R, HR -> parlaysIdx == 0 ? "让主胜" : "让客胜";
-				case OU, HOU -> parlaysIdx == 0 ? "大" + bOdds.ratioRate + "球" : "小" + bOdds.ratioRate + "球";
-				case M, HM -> parlaysIdx == 0 ? "主胜" : parlaysIdx == 1 ? "客胜" : "平局";
-				case TS -> parlaysIdx == 0 ? "都不得分" : "都得分";
-				case EO -> parlaysIdx == 0 ? "双" : "单";
-			};
+			return parseBetDirection(true);
 		}
 
 		public String getBetBDirection() {
-			return bOdds.type == null ? null : switch (bOdds.type) {
-				case R, HR -> parlaysIdx == 1 ? "让主胜" : "让客胜";
-				case OU, HOU -> parlaysIdx == 1 ? "大" + bOdds.ratioRate + "球" : "小" + bOdds.ratioRate + "球";
-				case M, HM -> parlaysIdx == 1 ? "主胜" : parlaysIdx == 0 ? "客胜" : "平局"; // TODO: 2026/1/15 暂未确定
-				case TS -> parlaysIdx == 1 ? "都不得分" : "都得分";
-				case EO -> parlaysIdx == 1 ? "双" : "单";
+			return parseBetDirection(false);
+		}
+
+		private @Nullable String parseBetDirection(boolean isParlays) {
+			if (bOdds.type == null) {
+				return null;
+			}
+			final boolean direction = isParlays ? parlaysIdx == 0 : parlaysIdx == 1;
+			return switch (bOdds.type) {
+				case R, HR -> direction ? "让主胜" : "让客胜";
+				case OU, HOU -> direction ? "大" + bOdds.ratioRate + "球" : "小" + bOdds.ratioRate + "球";
+				case M, HM -> direction ? "主胜" : parlaysIdx == 0 ? "客胜" : "平局"; // TODO: 2026/1/15 暂未确定
+				case TS -> direction ? "都不得分" : "都得分";
+				case EO -> direction ? "双" : "单";
 			};
 		}
 
