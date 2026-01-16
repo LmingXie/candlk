@@ -185,5 +185,15 @@ public interface League {
 	String MalaysiaA1SemiProLeague = "Malaysia A1 Semi Pro League";
 	/** 比利时女子超级联赛 */
 	String BelgiumWomenSuperLeague = "Belgium Women Super League";
+	/** 阿联酋酋长杯U21 */
+	String UAECupU21 = "UAE Cup U21";
+	/** 法国乙组全国联赛 */
+	String FranceChampionnatNational2 = "France Championnat National 2";
+	/** 爱尔兰伦斯特高级联赛高级组 */
+	String IrelandLeinsterSeniorLeagueSeniorDivision = "Ireland Leinster Senior League Senior Division";
+	/** 比利时超级联赛U21 */
+	String BelgiumProLeagueU21 = "Belgium Pro League U21";
+	/** 英格兰女子足总杯 */
+	String EnglandFAWomenCup = "England FA Women Cup";
 
 }

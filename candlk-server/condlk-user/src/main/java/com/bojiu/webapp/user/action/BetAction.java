@@ -142,7 +142,7 @@ public class BetAction {
 		return Messager.exposeData(vo);
 	}
 
-	@Ready("计算多平台投注方案")
+	@Ready("")
 	@PostMapping("/compare")
 	@Permission(Permission.NONE)
 	public Messager<HedgingVO> compare(ProxyRequest q, String value) {
@@ -151,7 +151,5 @@ public class BetAction {
 		return Messager.exposeData(vo);
 	}
 
-	// TODO: 2025/12/26 赔率需按ID拆分缓存，避免删除无法同步到的赔率数据
-	// TODO 支持二串一（具体的计算公式还需要确定下）
 
 }

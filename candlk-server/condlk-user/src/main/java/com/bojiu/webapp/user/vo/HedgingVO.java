@@ -1,6 +1,7 @@
 package com.bojiu.webapp.user.vo;
 
 import java.util.Date;
+import java.util.List;
 
 import com.bojiu.context.web.Jsons;
 import com.bojiu.webapp.user.dto.BaseRateConifg;
@@ -14,6 +15,10 @@ public class HedgingVO extends HedgingDTO {
 
 	/** 标记是否需要更新 */
 	public transient Boolean update;
+	/** 当前正在分析赛事索引位置 */
+	public Integer nextIdx;
+	/** 对比平台赔率信息 */
+	public List<HedgingVO> extBOdds;
 
 	public static HedgingVO ofAndFlush(String value) {
 		return ofAndFlush(value, null);
@@ -52,7 +57,7 @@ public class HedgingVO extends HedgingDTO {
 		Double[] bOdds = new Double[len];
 		for (int i = 0; i < len; i++) {
 			final Integer parlaysIdx = parlays[i].parlaysIdx;
-			bOdds[i] = parlays[i].bOdds.getRates()[parlaysIdx == 0 ? 0 : 1];
+			bOdds[i] = parlays[i].bOdds.getRates()[parlaysIdx == 0 ? 1 : 0];
 		}
 		return bOdds;
 	}

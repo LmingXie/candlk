@@ -7,6 +7,7 @@ import com.bojiu.context.web.Jsons;
 import com.bojiu.webapp.base.entity.BaseEntity;
 import com.bojiu.webapp.user.dto.GameDTO.OddsInfo;
 import com.bojiu.webapp.user.model.*;
+import com.bojiu.webapp.user.vo.HedgingVO;
 import com.google.common.collect.ImmutableMap;
 import lombok.*;
 import lombok.extern.slf4j.Slf4j;
@@ -57,7 +58,7 @@ public class HedgingDTO extends BaseEntity {
 		/** B平台 赔率信息 */
 		public OddsInfo bOdds;
 		/** 拓展其他B平台 赔率信息 */
-		public List<HedgingDTO> extBOdds;
+		public List<HedgingVO> extBOdds;
 		/**
 		 * A平台串子投注方向（对冲平台投注方向取反）
 		 *

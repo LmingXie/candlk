@@ -51,7 +51,7 @@ public class BetMatchService {
 		final BetProvider currAProvider = parlays[0].aGame.betProvider, currBProvider = parlays[0].bGame.betProvider;
 		final BetProvider[] allProvider = BetProvider.CACHE;
 		final int len = allProvider.length;
-		if (len > 1) {
+		if (len < 2) {
 			return;
 		}
 		final long timeNow = now.getTime();
@@ -72,7 +72,8 @@ public class BetMatchService {
 
 		// 查找串关平台赛事数据
 		final List<GameDTO> gameBets = cache.get(currAProvider, findGameBuilder);
-		next.extBOdds = new ArrayList<>(len);
+		final List<HedgingVO> extBOdds = new ArrayList<>(len);
+		vo.setNextIdx(nextIdx);
 
 		// 匹配对冲平台赛事数据
 		for (final BetProvider hedgingProvider : allProvider) {
@@ -86,11 +87,13 @@ public class BetMatchService {
 						final HedgingVO newVo = BeanUtil.copy(vo, HedgingVO::new);
 						newVo.parlays[nextIdx].bOdds = bOdds; // 替换B平台的赔率信息
 						newVo.calcHedgingCoinsLock(now); // 重新计算赔率信息
-						next.extBOdds.add(newVo);
+						newVo.setBaseRate(null);
+						extBOdds.add(newVo);
 					}
 				}
 			}
 		}
+		vo.setExtBOdds(extBOdds);
 	}
 
 	/** 获取A平台到B平台赛事的映射 */
