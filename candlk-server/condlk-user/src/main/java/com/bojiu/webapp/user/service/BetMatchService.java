@@ -147,15 +147,17 @@ public class BetMatchService {
 					}
 
 					// 队伍名和联赛名都存在包含关系
+					Double leagueScore = null;
 					if (homeContains && clientContains && (
 							leagueLower.contains(bLeague) || bLeague.contains(leagueLower)
-									|| similarity(leagueLower, bLeague) > 0.6 // 联赛名称相似度大于 0.6
+									|| (leagueScore = similarity(leagueLower, bLeague)) > 0.6 // 联赛名称相似度大于 0.6
 					)) {
 						return true;
 					}
 
 					// 匹配相似度
-					return similarity(teamHomeLower, bTeamHome) > 0.8 && similarity(teamClientLower, bTeamClient) > 0.8 && similarity(leagueLower, bLeague) > 0.7;
+					return similarity(teamHomeLower, bTeamHome) > 0.8 && similarity(teamClientLower, bTeamClient) > 0.8
+							&& (leagueScore == null ? similarity(leagueLower, bLeague) : leagueScore) > 0.7;
 				});
 				if (bGame != null) {
 					// log.debug("队伍名匹配成功：{}-{}\t{}-{}", teamHome, teamClient, bGame.teamHome, bGame.teamClient);
