@@ -567,6 +567,8 @@ public class HgBetImpl extends LoginBaseBetApiImpl {
 			case "Mexico Liga Premier Serie A", "Mexico Liga Premier Serie B", "Mexico Liga Premier Serie C" -> League.MexicoLigaPremier;
 			case "Ireland Munster Senior League Senior Premier Division" -> League.IrelandLeinsterSeniorLeagueSeniorDivision;
 			case "Cyprus Division 2 - PlayOff" -> League.CyprusDivision2;
+			case "South Africa Reserve League" -> League.SouthAfricaPremierLeagueReserve;
+			case "Winter Tournament (In Estonia)" -> League.ClubFriendlies; // 冬季锦标赛(在爱沙尼亚)
 
 			default -> {
 				if (league.contains("English ")) {

@@ -167,8 +167,6 @@ public interface League {
 	String IndonesiaLigaNusantara = "Indonesia Liga Nusantara";
 	/** 菲律宾UAAP足球锦标赛 */
 	String PhilippinesUAAPFootballChampionship = "Philippines UAAP Football Championship";
-	/** 西班牙足协丙级联赛 */
-	String SpainTerceraDivision = "Spain Tercera Division";
 	/** 西班牙足协乙组联赛 */
 	String SpainSegundaFederacion = "Spain Segunda Federacion";
 	/** 卡塔尔联赛U19 */
@@ -199,5 +197,56 @@ public interface League {
 	String ReykjavikWomenFootballTournamentInIceland = "Reykjavik Women Football Tournament (In Iceland)";
 	/** 塞浦路斯乙组联赛 / 塞浦路斯乙组联赛-附加赛 Cyprus Division 2 - PlayOff */
 	String CyprusDivision2 = "Cyprus Division 2";
+	/** 柬埔寨超级联赛 */
+	String CambodiaPremierLeague = "Cambodia Premier League";
+	/** 英格兰南部南区超级联赛 */
+	String EnglandSouthernPremierDivisionSouth = "England Southern Premier Division South";
+	/** 菲律宾足球联赛 */
+	String PhilippinesFootballLeague = "Philippines Football League";
+	/** 英格兰伊斯米安北部甲级联赛 */
+	String EnglandIsthmianLeagueDivisionOneNorth = "England Isthmian League Division One North";
+	/** 英格兰北部超级联赛 */
+	String EnglandNorthernPremierDivision = "England Northern Premier Division";
+	/** 巴西巴西利亚甲级联赛 */
+	String BrazilCampeonatoBrasilienseDivision1 = "Brazil Campeonato Brasiliense Division 1";
+	/** 法国全国联赛U19 */
+	String FranceChampionnatNationalU19 = "France Championnat National U19";
+	/** 南非超级联赛后备队 */
+	String SouthAfricaPremierLeagueReserve = "South Africa Premier League Reserve";
+	/** 意大利青年春季乙级联赛U19 */
+	String ItalyCampionatoPrimavera2U19 = "Italy Campionato Primavera 2 U19";
+	/** 巴西阿克里甲级联赛 */
+	String BrazilCampeonatoAcreanoDivision1 = "Brazil Campeonato Acreano Division 1";
+	/** 土耳其PAF联赛U19 */
+	String TurkeyPAFLeagueU19 = "Turkey PAF League U19";
+	/** 突尼斯乙级联赛 */
+	String TunisiaLigue2 = "Tunisia Ligue 2";
+	/** 缅甸MFF女子联赛 */
+	String MyanmarMFFLeagueWomen = "Myanmar MFF League Women";
+	/** 意大利女子甲组联赛 */
+	String ItalyWomenSerieA = "Italy Women Serie A";
+	/** 法国丙级全国联赛 */
+	String FranceChampionnatNational3 = "France Championnat National 3";
+	/** 土耳其乙级联赛 */
+	String TurkeyTFFSecondLeague = "Turkey TFF Second League";
+	/** 土耳其丙级联赛 */
+	String TurkeyTFFThirdLeague = "Turkey TFF Third League";
+	/** 西班牙足协丙组联赛 */
+	String SpainTerceraFederacion = "Spain Tercera Federacion";
+	/** 葡萄牙冠军联赛 */
+	String PortugalDeCampeonato = "Portugal De Campeonato";
+	/** 香港甲级联赛 */
+	String HongKongDivision1 = "Hong Kong Division 1";
+	/** 肯尼亚全国超级联赛 */
+	String KenyaPremierLeague = "Kenya Premier League";
+	/** 阿尔巴尼亚甲级联赛 */
+	String AlbaniaDivision1 = "Albania Division 1";
+	/** 巴西塞尔希培州甲级一联赛 */
+	String BrazilCampeonatoSergipanoSerieA1 = "Brazil Campeonato Sergipano Serie A1";
+	/** 巴西国亚诺甲级联赛 */
+	String BrazilCampeonatoGoianoDivision1 = "Brazil Campeonato Goiano Division 1";
+	/** 葡萄牙女子杯 */
+	String PortugalWomenCup = "Portugal Women Cup";
+
 
 }

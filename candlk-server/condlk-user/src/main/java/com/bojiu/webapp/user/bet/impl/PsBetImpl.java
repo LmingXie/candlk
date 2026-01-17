@@ -480,11 +480,12 @@ public class PsBetImpl extends WsBaseBetApiImpl {
 	public String convertLeague(String league) {
 		league = league.replaceFirst(" -", "")
 				// 处理形如 "Egypt 2nd Division" → "Egypt Division 2"
-				.replaceAll("(\\d+)nd Division", "Division $1");
+				.replaceFirst("(\\d+)nd Division", "Division $1")
+				.replaceFirst("National (\\d+)", "Championnat National $1");
 		return switch (league) {
 			case "Egypt 2nd Division A" -> League.EgyptDivision1;
 			case "Bahrain 2nd Division" -> League.BahrainDivision2;
-			case "Cyprus 2nd Division" -> League.CyprusDivision2;
+			case "Cyprus 2nd Division", "Cyprus Division 2" -> League.CyprusDivision2;
 			case "Saudi Arabia Division 2" -> League.EgyptDivision2;
 			case "CAF Africa Cup of Nations" -> League.AfricaCupOfNations2025InMorocco2En;
 			case "England EFL Trophy" -> League.EnglandFootballLeagueTrophy;
@@ -569,6 +570,31 @@ public class PsBetImpl extends WsBaseBetApiImpl {
 			case "Belgium Reserve Pro League U21" -> League.BelgiumProLeagueU21;
 			case "England FA Cup Women" -> League.EnglandFAWomenCup;
 			case "Iceland Reykjavik Cup Women" -> League.ReykjavikWomenFootballTournamentInIceland;
+			case "England Southern Premier League South" -> League.EnglandSouthernPremierDivisionSouth;
+			case "Philippines PFL" -> League.PhilippinesFootballLeague;
+			case "England Isthmian Division 1 North" -> League.EnglandIsthmianLeagueDivisionOneNorth;
+			case "England Northern Premier League" -> League.EnglandNorthernPremierDivision;
+			case "Brazil Brasiliense" -> League.BrazilCampeonatoBrasilienseDivision1;
+			case "France U19 League" -> League.FranceChampionnatNationalU19;
+			case "South Africa Diski Challenge U23" -> League.SouthAfricaPremierLeagueReserve;
+			case "Italy Primavera 2 U19" -> League.ItalyCampionatoPrimavera2U19;
+			case "Brazil Acreano" -> League.BrazilCampeonatoAcreanoDivision1;
+			case "Turkey Super Lig U19" -> League.TurkeyPAFLeagueU19;
+			case "Tunisia League 2" -> League.TunisiaLigue2;
+			case "Myanmar Women League" -> League.MyanmarMFFLeagueWomen;
+			case "France National 3" -> League.FranceChampionnatNational3;
+			case "Turkey 3rd League Group 1", "Turkey 3rd League Group 2", "Turkey 3rd League Group 3",
+			     "Turkey 3rd League Group 4" -> League.TurkeyTFFThirdLeague;
+			case "Spain Tercera Division" -> League.SpainTerceraFederacion;
+			case "Portugal Campeonato de Portugal Prio" -> League.PortugalDeCampeonato;
+			case "Hong Kong HKFA 1. Division" -> League.HongKongDivision1;
+			case "Italy Serie A Women" -> League.ItalyWomenSerieA;
+			case "Kenya Super League" -> League.KenyaPremierLeague;
+			case "Turkey 2nd League" -> League.TurkeyTFFSecondLeague;
+			case "Albania 1st Division" -> League.AlbaniaDivision1;
+			case "Brazil Sergipano" -> League.BrazilCampeonatoSergipanoSerieA1;
+			case "Brazil Goiano" -> League.BrazilCampeonatoGoianoDivision1;
+			case "Portugal Cup Women" -> League.PortugalWomenCup;
 
 			default -> league;
 		};
