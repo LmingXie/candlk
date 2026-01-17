@@ -301,6 +301,10 @@ public abstract class BaseBetApiImpl extends BaseHttpUtil implements BetApi {
 		return responseBody;
 	}
 
+	protected Messager<JSONObject> doRequest(HttpRequest request, String body, final int flags) throws UncheckedIOException, ErrorMessageException {
+		return doRequest(request, body, flags, 1);
+	}
+
 	/**
 	 * @param request 请求对象
 	 * @param body 将传入 request 的请求数据作为独立参数传递进来，便于内部进行统一日志记录
@@ -310,7 +314,7 @@ public abstract class BaseBetApiImpl extends BaseHttpUtil implements BetApi {
 	 * @throws ErrorMessageException 线程中断异常（服务被打断，对外提示网络异常）
 	 */
 	@NonNull
-	protected Messager<JSONObject> doRequest(HttpRequest request, String body, final int flags) throws UncheckedIOException, ErrorMessageException {
+	protected Messager<JSONObject> doRequest(HttpRequest request, String body, final int flags, int timeoutRetryCount) throws UncheckedIOException, ErrorMessageException {
 		String responseBody = null;
 		Exception ex = null;
 		int statusCode = 200;
@@ -340,6 +344,13 @@ public abstract class BaseBetApiImpl extends BaseHttpUtil implements BetApi {
 			responseBody = postHandleResult(result, responseBody, response);
 			return result;
 		} catch (IOException e) {
+			/*
+			HttpConnectTimeoutException并不能保证服务端没有收到请求，也不能保证服务端没有处理。
+			但同步赔率，不存在写入问题，因此出现连接超时直接进行一次重试补偿
+			 */
+			if (e instanceof HttpConnectTimeoutException && timeoutRetryCount > 0) {
+				return doRequest(request, body, flags, timeoutRetryCount - 1);
+			}
 			ex = e;
 			raiseTimeout(getProvider(), e);
 			throw new UncheckedIOException(e);
