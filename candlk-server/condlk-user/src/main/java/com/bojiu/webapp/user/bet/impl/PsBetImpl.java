@@ -478,8 +478,14 @@ public class PsBetImpl extends WsBaseBetApiImpl {
 
 	@Override
 	public String convertLeague(String league) {
-		league = league.replaceFirst(" -", "");
+		league = league.replaceFirst(" -", "")
+				// 处理形如 "Egypt 2nd Division" → "Egypt Division 2"
+				.replaceAll("(\\d+)nd Division", "Division $1");
 		return switch (league) {
+			case "Egypt 2nd Division A" -> League.EgyptDivision1;
+			case "Bahrain 2nd Division" -> League.BahrainDivision2;
+			case "Cyprus 2nd Division" -> League.CyprusDivision2;
+			case "Saudi Arabia Division 2" -> League.EgyptDivision2;
 			case "CAF Africa Cup of Nations" -> League.AfricaCupOfNations2025InMorocco2En;
 			case "England EFL Trophy" -> League.EnglandFootballLeagueTrophy;
 			case "Spain La Liga" -> League.SpainPrimeraDivision;
@@ -541,8 +547,6 @@ public class PsBetImpl extends WsBaseBetApiImpl {
 			case "South Africa PSL" -> League.SouthAfricaPremiership;
 			case "Israel U19 Elite Division" -> League.IsraelPremierLeagueU19;
 			case "Brazil Pernambucano" -> League.BrazilCampeonatoPernambucanoSerieA1;
-			case "Egypt 2nd Division A" -> League.EgyptDivision1;
-			case "Saudi Arabia Division 2" -> League.EgyptDivision2;
 			case "Italy Serie D Group A", "Italy Serie D Group B", "Italy Serie D Group C",
 			     "Italy Serie D Group D", "Italy Serie D Group E" -> League.ItalySerieD;
 			case "Vietnam U19 Womens Championship" -> League.VietnamChampionshipWomenU19;
@@ -555,15 +559,16 @@ public class PsBetImpl extends WsBaseBetApiImpl {
 			case "Spain Segunda RFEF Group 1", "Spain Segunda RFEF Group 2", "Spain Segunda RFEF Group 3",
 			     "Spain Segunda RFEF Group 4", "Spain Segunda RFEF Group 5" -> League.SpainSegundaFederacion;
 			case "Qatar U19 League" -> League.QatarLeagueU19;
-			case "Bahrain 2nd Division" -> League.BahrainDivision2;
 			case "Algeria U20 League" -> League.AlgeriaLeagueU20;
 			case "Malaysia Liga A1" -> League.MalaysiaA1SemiProLeague;
 			case "Belgium Super League Women" -> League.BelgiumWomenSuperLeague;
 			case "UAE U21 Cup" -> League.UAECupU21;
 			case "France National 2" -> League.FranceChampionnatNational2;
-			case "Ireland Leinster Senior League", "Ireland Leinster Senior League Senior Division" -> League.IrelandLeinsterSeniorLeagueSeniorDivision;
+			case "Ireland Leinster Senior League", "Ireland Leinster Senior League Senior Division",
+			     "Ireland Munster Senior League" -> League.IrelandLeinsterSeniorLeagueSeniorDivision;
 			case "Belgium Reserve Pro League U21" -> League.BelgiumProLeagueU21;
 			case "England FA Cup Women" -> League.EnglandFAWomenCup;
+			case "Iceland Reykjavik Cup Women" -> League.ReykjavikWomenFootballTournamentInIceland;
 
 			default -> league;
 		};

@@ -562,10 +562,11 @@ public class HgBetImpl extends LoginBaseBetApiImpl {
 			case "Mexico League U19" -> League.MexicoLigaMXU19Playoff;
 			case "Spain Cup" -> League.SpainCopaDelRey;
 			case "Egypt Division 2 A" -> League.EgyptDivision1;
-			case "Club Friendly" -> League.ClubFriendlies;
+			case "Club Friendly", "Serie Rio De La Plata (In Uruguay)" -> League.ClubFriendlies;
 			case "Winter League (In Czech Republic ＆ Slovakia)" -> League.CzechRepublicTipsportLiga;
 			case "Mexico Liga Premier Serie A", "Mexico Liga Premier Serie B", "Mexico Liga Premier Serie C" -> League.MexicoLigaPremier;
 			case "Ireland Munster Senior League Senior Premier Division" -> League.IrelandLeinsterSeniorLeagueSeniorDivision;
+			case "Cyprus Division 2 - PlayOff" -> League.CyprusDivision2;
 
 			default -> {
 				if (league.contains("English ")) {

@@ -195,5 +195,9 @@ public interface League {
 	String BelgiumProLeagueU21 = "Belgium Pro League U21";
 	/** 英格兰女子足总杯 */
 	String EnglandFAWomenCup = "England FA Women Cup";
+	/** 雷克雅未克女子足球锦标赛(在冰岛) */
+	String ReykjavikWomenFootballTournamentInIceland = "Reykjavik Women Football Tournament (In Iceland)";
+	/** 塞浦路斯乙组联赛 / 塞浦路斯乙组联赛-附加赛 Cyprus Division 2 - PlayOff */
+	String CyprusDivision2 = "Cyprus Division 2";
 
 }

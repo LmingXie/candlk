@@ -304,9 +304,7 @@ public class KyBetImpl extends BaseBetApiImpl {
 
 	@Override
 	public String convertLeague(String league) {
-		if (league.endsWith("）")) {
-			league = league.replaceFirst("）", ")");
-		}
+		league = league.replaceFirst("（", "(").replaceFirst("）", ")");
 		// 优先处理完全不规则的、或需要特殊映射的 KY 联赛名称
 		return switch (league) {
 			case "England Premier League U21" -> League.EnglandPremierLeagueU21;
@@ -332,6 +330,7 @@ public class KyBetImpl extends BaseBetApiImpl {
 			case "UAE Emirates Cup U21" -> League.UAECupU21;
 			case "England FA Cup Women" -> League.EnglandFAWomenCup;
 			case "Ireland Munster Senior League Senior Premier Division" -> League.IrelandLeinsterSeniorLeagueSeniorDivision;
+			case "Reykjavik Football Tournament(In Iceland)" -> League.ReykjavikWomenFootballTournamentInIceland;
 
 			// 默认处理：如果无法精准匹配，尝试通用的字符替换逻辑（注意：这依然返回字符串）
 			default -> {
