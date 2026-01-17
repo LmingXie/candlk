@@ -371,12 +371,12 @@ public abstract class BaseBetApiImpl extends BaseHttpUtil implements BetApi {
 							if (endPos == -1) {
 								endPos = length - 1;
 							}
-							LOGGER.info("【{}游戏】请求地址：{}\n请求参数：{}\n返回数据：{}", getProvider(), uri, body, StringUtils.substring(responseBody, startPos, endPos + 1));
+							LOGGER.info("【{}游戏】请求地址：{}\n请求参数：{}\n返回数据S：{}", getProvider(), uri, body, StringUtils.substring(responseBody, startPos, endPos + 1));
 							startPos = endPos + 1;
 						} while (startPos < length);
 					} else {
 						LOGGER.info("【{}游戏】请求地址：{}\n请求参数：{}\n返回数据：{}", getProvider(), uri, body,
-								(outBody && responseBody.length() > 100) ? responseBody.substring(0, 100) : responseBody);
+								(outBody && StringUtil.length(responseBody) > 100) ? responseBody.substring(0, 100) : responseBody);
 					}
 				} else { // 非正常响应时记录 响应码
 					LOGGER.warn("【{}游戏】请求地址：{}\n请求参数：{}\n响应码={}，返回数据：{}", getProvider(), uri, body, statusCode, responseBody);
