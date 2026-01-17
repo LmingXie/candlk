@@ -599,7 +599,7 @@ public class PsBetImpl extends WsBaseBetApiImpl {
 			case "Brazil Potiguar" -> League.BrazilCampeonatoPotiguarDivision1;
 
 			default -> {
-				// 提高巴西联赛的得分字符串相似度得分
+				// 提高巴西联赛的相似度匹配得分
 				if (league.startsWith("Brazil ") && league.split(" ").length == 2) {
 					yield league.replaceFirst("Brazil ", "Brazil Campeonato ");
 				}
