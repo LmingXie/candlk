@@ -71,7 +71,7 @@ public class HedgingDTO extends BaseEntity {
 		 * @see GameDTO.OddsInfo#getRates
 		 */
 		public Integer parlaysIdx;
-		/**缓存对冲投注方向指针*/
+		/** 缓存对冲投注方向指针 */
 		transient Integer bIdx;
 
 		public Integer getBIdx() {
@@ -91,6 +91,7 @@ public class HedgingDTO extends BaseEntity {
 			if (bOdds.type == null) {
 				return null;
 			}
+			// true = A平台投注方向; false = B平台投注方向
 			final boolean direction = isParlays ? parlaysIdx == 0 : parlaysIdx == 1;
 			return switch (bOdds.type) {
 				case R, HR -> direction ? "让主胜" : "让客胜";

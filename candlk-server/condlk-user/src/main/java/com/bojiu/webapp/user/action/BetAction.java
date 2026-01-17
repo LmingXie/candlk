@@ -151,5 +151,4 @@ public class BetAction {
 		return Messager.exposeData(betMatchService.calcMuti(value, q.now()));
 	}
 
-
 }
