@@ -595,8 +595,16 @@ public class PsBetImpl extends WsBaseBetApiImpl {
 			case "Brazil Sergipano" -> League.BrazilCampeonatoSergipanoSerieA1;
 			case "Brazil Goiano" -> League.BrazilCampeonatoGoianoDivision1;
 			case "Portugal Cup Women" -> League.PortugalWomenCup;
+			case "Brazil Capixaba" -> League.BrazilCampeonatoCapixabaSerieA;
+			case "Brazil Potiguar" -> League.BrazilCampeonatoPotiguarDivision1;
 
-			default -> league;
+			default -> {
+				// 提高巴西联赛的得分字符串相似度得分
+				if (league.startsWith("Brazil ") && league.split(" ").length == 2) {
+					yield league.replaceFirst("Brazil ", "Brazil Campeonato ");
+				}
+				yield league;
+			}
 		};
 	}
 

@@ -247,6 +247,9 @@ public interface League {
 	String BrazilCampeonatoGoianoDivision1 = "Brazil Campeonato Goiano Division 1";
 	/** 葡萄牙女子杯 */
 	String PortugalWomenCup = "Portugal Women Cup";
-
+	/** 巴西卡皮沙巴甲级联赛 */
+	String BrazilCampeonatoCapixabaSerieA = "Brazil Campeonato Capixaba Serie A";
+	/** 巴西波蒂加甲级联赛 */
+	String BrazilCampeonatoPotiguarDivision1 = "Brazil Campeonato Potiguar Division 1";
 
 }

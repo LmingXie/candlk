@@ -125,8 +125,8 @@ public class BetMatchService {
 			if (bGames != null) {
 				// 匹配队伍名（假设同一时间，同一只队伍不能同时存在两场比赛）
 				final String teamHomeLower = aGame.teamHomeLower(), teamClientLower = aGame.teamClientLower(), leagueLower = aGame.leagueLower();
-				// if (aGame.teamHome.equals("Cong An TP Ho Chi Minh U19") && aGame.teamClient.equals("PVF Vietnam U19")) {
-				// 	System.out.println("teamHome: " + teamHome + " teamClient: " + teamClient);
+				// if (aGame.teamHome.equals("Vitoria ES") && aGame.teamClient.equals("Porto Vitoria ES")) {
+				// 	System.out.println("teamHome: " + teamHomeLower + " teamClient: " + teamClientLower);
 				// }
 				final GameDTO bGame = CollectionUtil.findFirst(bGames, b -> {
 					final String bTeamHome = b.teamHomeLower(), bTeamClient = b.teamClientLower(), bLeague = b.leagueLower();
@@ -146,18 +146,15 @@ public class BetMatchService {
 						return true;
 					}
 
-					// 队伍名和联赛名都存在包含关系
-					Double leagueScore = null;
-					if (homeContains && clientContains && (
-							leagueLower.contains(bLeague) || bLeague.contains(leagueLower)
-									|| (leagueScore = similarity(leagueLower, bLeague)) > 0.6 // 联赛名称相似度大于 0.6
-					)) {
+					final double teamHomeScore = similarity(teamHomeLower, bTeamHome), teamClientScore = similarity(teamClientLower, bTeamClient),
+							leagueScore = similarity(leagueLower, bLeague);
+					// 高相似度
+					if (teamHomeScore >= 0.8 && teamClientScore >= 0.8 && leagueScore >= 0.7) {
 						return true;
 					}
-
-					// 匹配相似度
-					return similarity(teamHomeLower, bTeamHome) > 0.8 && similarity(teamClientLower, bTeamClient) > 0.8
-							&& (leagueScore == null ? similarity(leagueLower, bLeague) : leagueScore) > 0.7;
+					// 队伍名和联赛名 存在 包含关系 或 中等相似度
+					return (homeContains || teamHomeScore >= 0.7) && (clientContains || teamClientScore >= 0.7)
+							&& (leagueLower.contains(bLeague) || bLeague.contains(leagueLower) || leagueScore >= 0.6);
 				});
 				if (bGame != null) {
 					// log.debug("队伍名匹配成功：{}-{}\t{}-{}", teamHome, teamClient, bGame.teamHome, bGame.teamClient);

@@ -64,7 +64,7 @@ public class BetApiTest {
 	@Test
 	public void matchTest() {
 		int parlaysSize = 2; // 串关大小（3场比赛为一组）
-		BetProvider parlaysProvider = BetProvider.HG; // 组串子的厂家
+		BetProvider parlaysProvider = BetProvider.KY; // 组串子的厂家
 		BetProvider hedgingProvider = BetProvider.PS; // 组串子的厂家
 
 		// 以下将串关平台称为“A”，对冲平台称为“B”
@@ -74,18 +74,18 @@ public class BetApiTest {
 		Map<GameDTO, GameDTO> gameMapper = betMatchService.getGameMapper(Pair.of(parlaysProvider, hedgingProvider));
 		log.info("查询赛事映射完成，耗时：{}ms", System.currentTimeMillis() - startTime);
 
-		startTime = System.currentTimeMillis();
-		Pair<HedgingDTO[], Long> pair = betMatchService.match(gameMapper, parlaysSize, 1000);
-		final HedgingDTO[] globalTop = pair.getKey();
-
-		for (HedgingDTO hedgingDTO : globalTop) {
-			double avgProfit = hedgingDTO.avgProfit;
-			if (avgProfit > 0) {
-				log.info("估算串关投注方案：{}，平均利润：{}，详细信息：{}", Jsons.encode(hedgingDTO.getHedgingCoins()),
-						avgProfit, Jsons.encode(hedgingDTO));
-			}
-		}
-		log.info("计算【{}】种组合耗时：{}ms", pair.getValue(), System.currentTimeMillis() - startTime);
+		// startTime = System.currentTimeMillis();
+		// Pair<HedgingDTO[], Long> pair = betMatchService.match(gameMapper, parlaysSize, 1000);
+		// final HedgingDTO[] globalTop = pair.getKey();
+		//
+		// for (HedgingDTO hedgingDTO : globalTop) {
+		// 	double avgProfit = hedgingDTO.avgProfit;
+		// 	if (avgProfit > 0) {
+		// 		log.info("估算串关投注方案：{}，平均利润：{}，详细信息：{}", Jsons.encode(hedgingDTO.getHedgingCoins()),
+		// 				avgProfit, Jsons.encode(hedgingDTO));
+		// 	}
+		// }
+		// log.info("计算【{}】种组合耗时：{}ms", pair.getValue(), System.currentTimeMillis() - startTime);
 	}
 
 	@Test
