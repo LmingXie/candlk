@@ -125,7 +125,7 @@ public class BetMatchService {
 			if (bGames != null) {
 				// 匹配队伍名（假设同一时间，同一只队伍不能同时存在两场比赛）
 				final String teamHomeLower = aGame.teamHomeLower(), teamClientLower = aGame.teamClientLower(), leagueLower = aGame.leagueLower();
-				// if (aGame.teamHome.equals("Vitoria ES") && aGame.teamClient.equals("Porto Vitoria ES")) {
+				// if (aGame.teamHome.equals("Maranguape CE") && aGame.teamClient.equals("Floresta CE")) {
 				// 	System.out.println("teamHome: " + teamHomeLower + " teamClient: " + teamClientLower);
 				// }
 				final GameDTO bGame = CollectionUtil.findFirst(bGames, b -> {

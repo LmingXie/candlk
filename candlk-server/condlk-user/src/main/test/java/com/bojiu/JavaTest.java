@@ -271,7 +271,7 @@ public class JavaTest {
 	@Test
 	public void similarityTest() {
 		final GameDTO missed = Jsons.parseObject(
-				"{\"addTime\":1768640840004,\"betProvider\":2,\"id\":5035367,\"league\":\"Brazil Campeonato Piauiense Division 1\",\"leagueZh\":\"巴西皮奥伊恩斯甲级联赛\",\"openTime\":1768680000000,\"teamClient\":\"Piaui PI\",\"teamClientZh\":\"皮奧伊PI\",\"teamHome\":\"Fluminense PI\",\"teamHomeZh\":\"富明尼斯PI\",\"updateTime\":1768640840004}"
+				"{\"addTime\":1768645360003,\"betProvider\":0,\"id\":10396873,\"league\":\"Brazil Campeonato Cearense Serie A\",\"leagueZh\":\"巴西塞阿仁斯甲组联赛\",\"openTime\":1768687200000,\"teamClient\":\"Floresta CE\",\"teamClientZh\":\"弗罗勒斯塔CE\",\"teamHome\":\"Maranguape CE\",\"teamHomeZh\":\"马兰瓜佩CE\",\"updateTime\":1768645360003}"
 				, GameDTO.class);
 
 		final List<GameDTO> targets = Jsons.parseArray(
@@ -282,7 +282,7 @@ public class JavaTest {
 		// 		StringSimilarityUtils.match(missed.league, 0.6, CollectionUtil.toList(targets, t -> t.league));
 		// hits1.forEach(System.out::println);
 
-		System.out.println("得分：" + StringSimilarityUtils.similarity(missed.league, "Brazil Campeonato Piauiense")); // Brazil Capixaba
+		System.out.println("得分：" + StringSimilarityUtils.similarity(missed.league, "Brazil Campeonato Cearense")); // Brazil Capixaba
 		// System.out.println("最佳得分：" + StringSimilarityUtils.matchBest(missed.league, 0.6, CollectionUtil.toSet(targets, t -> t.league)));
 
 	}
