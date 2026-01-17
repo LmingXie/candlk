@@ -251,5 +251,7 @@ public interface League {
 	String BrazilCampeonatoCapixabaSerieA = "Brazil Campeonato Capixaba Serie A";
 	/** 巴西波蒂加甲级联赛 */
 	String BrazilCampeonatoPotiguarDivision1 = "Brazil Campeonato Potiguar Division 1";
+	/** 巴西塞阿仁斯甲组联赛 */
+	String BrazilCampeonatoCearenseSerieA = "Brazil Campeonato Cearense Serie A";
 
 }

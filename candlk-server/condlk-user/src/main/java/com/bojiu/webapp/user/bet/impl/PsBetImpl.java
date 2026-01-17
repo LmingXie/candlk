@@ -597,6 +597,7 @@ public class PsBetImpl extends WsBaseBetApiImpl {
 			case "Portugal Cup Women" -> League.PortugalWomenCup;
 			case "Brazil Capixaba" -> League.BrazilCampeonatoCapixabaSerieA;
 			case "Brazil Potiguar" -> League.BrazilCampeonatoPotiguarDivision1;
+			case "Brazil Cearense" -> League.BrazilCampeonatoCearenseSerieA;
 
 			default -> {
 				// 提高巴西联赛的相似度匹配得分

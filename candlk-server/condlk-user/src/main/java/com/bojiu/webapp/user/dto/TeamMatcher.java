@@ -14,7 +14,7 @@ import org.springframework.data.redis.core.HashOperations;
 /** 球队匹配器 */
 public class TeamMatcher {
 
-	// 1. 定义原始别名常量
+	// 定义原始别名常量
 	private static final String[] ALIAS_CONFIG = {
 			"Qus,El Qusiya",
 			"Al Madina Al Monawara SC,El Madina El Monowara",
@@ -32,7 +32,7 @@ public class TeamMatcher {
 			"Maranguape CE,Maranguape FC",
 	};
 
-	// 2. 预处理后的倒排索引 Map
+	// 预处理后的倒排索引 Map
 	private static final Map<String, String> ALIAS_MAP = new HashMap<>();
 
 	static {
@@ -45,30 +45,19 @@ public class TeamMatcher {
 		}
 	}
 
-	/**
-	 * 获取队伍的标准身份
-	 */
-	private static String getStandardName(String teamName) {
-		if (teamName == null) {
-			return null;
-		}
-		// 先查别名映射表，查不到则返回原名（归一化处理）
-		return ALIAS_MAP.getOrDefault(teamName, teamName);
-	}
-
-	/**
-	 * 优化后的匹配方法
-	 */
+	/** 队名匹配 */
 	public static GameDTO findMatchedGame(GameDTO aGame, List<GameDTO> bGames) {
 		// 预先计算出 A 平台的主客队标准标识
-		final String aHome = getStandardName(aGame.teamHome), aClient = getStandardName(aGame.teamClient);
+		final String aHome = ALIAS_MAP.getOrDefault(aGame.teamHome, aGame.teamHome),
+				aClient = ALIAS_MAP.getOrDefault(aGame.teamClient, aGame.teamClient);
 
 		for (GameDTO bGame : bGames) {
-			final String bHome = getStandardName(bGame.teamHome), bClient = getStandardName(bGame.teamClient);
+			final String bHome = ALIAS_MAP.getOrDefault(bGame.teamHome, bGame.teamHome),
+					bClient = ALIAS_MAP.getOrDefault(bGame.teamClient, bGame.teamClient);
 
-			// 只需要简单的字符串相等判断 (ID 化比对)
-			final boolean isMatch = (aHome.equals(bHome) && aClient.equals(bClient))
-					|| (aHome.equals(bClient) && aClient.equals(bHome));
+			// 只需要简单的字符串相等判断
+			final boolean isMatch = (aHome.equalsIgnoreCase(bHome) && aClient.equalsIgnoreCase(bClient))
+					|| (aHome.equalsIgnoreCase(bClient) && aClient.equalsIgnoreCase(bHome));
 
 			if (isMatch) {
 				return bGame;
