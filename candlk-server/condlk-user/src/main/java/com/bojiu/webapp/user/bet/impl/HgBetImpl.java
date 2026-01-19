@@ -46,8 +46,13 @@ public class HgBetImpl extends LoginBaseBetApiImpl {
 
 	@Override
 	protected HttpClient currentClient() {
-		HttpClient client = getProxyClient();
-		return client == null ? defaultClient() : client;
+		final HttpClient client = getProxyClient(true);
+		if (client == null) {
+			final HttpClient.Builder builder = httpClientBuilder();
+			setIgnoreCertificate(builder);
+			return builder.build();
+		}
+		return client;
 	}
 
 	public HgBetImpl() {

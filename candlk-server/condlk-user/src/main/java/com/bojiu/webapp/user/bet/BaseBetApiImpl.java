@@ -5,6 +5,8 @@ import java.io.UncheckedIOException;
 import java.net.*;
 import java.net.http.*;
 import java.nio.charset.StandardCharsets;
+import java.security.SecureRandom;
+import java.security.cert.X509Certificate;
 import java.text.ParseException;
 import java.time.Duration;
 import java.time.temporal.ChronoUnit;
@@ -12,6 +14,7 @@ import java.util.Date;
 import java.util.Map;
 import java.util.concurrent.ScheduledFuture;
 import javax.annotation.Resource;
+import javax.net.ssl.*;
 
 import com.alibaba.fastjson2.JSONObject;
 import com.alibaba.fastjson2.util.JDKUtils;
@@ -79,10 +82,14 @@ public abstract class BaseBetApiImpl extends BaseHttpUtil implements BetApi {
 	@Nullable
 	private HttpClient proxyClient;
 
-	/** 初始化代理客户端 */
 	protected HttpClient getProxyClient() {
+		return getProxyClient(false);
+	}
+
+	/** 初始化代理客户端 */
+	protected HttpClient getProxyClient(boolean ignoreCertificate) {
 		if (proxyClient == null) {
-			proxyClient = getProxyOrDefaultClient(getConfig().proxy);
+			proxyClient = getProxyOrDefaultClient(getConfig().proxy, ignoreCertificate);
 		}
 		return proxyClient;
 	}
@@ -480,6 +487,28 @@ public abstract class BaseBetApiImpl extends BaseHttpUtil implements BetApi {
 		return bytes.length > allowMaxByteSize;
 	}
 
+	/** 忽略证书验证 */
+	public static HttpClient.Builder setIgnoreCertificate(HttpClient.Builder builder) {
+		try {
+			final SSLContext ssl = SSLContext.getInstance("TLS");
+			ssl.init(null, new TrustManager[] { new X509TrustManager() {
+				public void checkClientTrusted(X509Certificate[] xcs, String s) {
+				}
+
+				public void checkServerTrusted(X509Certificate[] xcs, String s) {
+				}
+
+				public X509Certificate[] getAcceptedIssuers() {
+					return new X509Certificate[0];
+				}
+			} }, new SecureRandom());
+			builder.sslContext(ssl);
+		} catch (Exception e) {
+			LOGGER.error("SSLContext 初始化失败", e);
+		}
+		return builder;
+	}
+
 	/**
 	 * 基于代理配置信息创建HTTP客户端
 	 */
@@ -530,8 +559,16 @@ public abstract class BaseBetApiImpl extends BaseHttpUtil implements BetApi {
 	 *
 	 * @param proxyConfig 形如 <code> "proxy://username:password@host:port" </code>
 	 */
-	public static HttpClient getProxyOrDefaultClient(@Nullable String proxyConfig) {
-		return StringUtil.isBlank(proxyConfig) ? defaultClient() : prepareProxyClient(proxyConfig).build();
+	public static HttpClient getProxyOrDefaultClient(@Nullable String proxyConfig, boolean ignoreCertificate) {
+		if (StringUtil.isBlank(proxyConfig)) {
+			return defaultClient();
+		} else {
+			final HttpClient.Builder builder = prepareProxyClient(proxyConfig);
+			if (ignoreCertificate) {
+				setIgnoreCertificate(builder);
+			}
+			return builder.build();
+		}
 	}
 
 	/** 赛事采集阈值：仅处理开赛时间在未来 3 小时内的赛事 */
