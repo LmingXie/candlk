@@ -484,9 +484,10 @@ public class PsBetImpl extends WsBaseBetApiImpl {
 				.replaceFirst("National (\\d+)", "Championnat National $1");
 		return switch (league) {
 			case "Egypt 2nd Division A" -> League.EgyptDivision1;
+			case "Egypt Division 2 B", "Egypt 2nd Division B" -> League.EgyptDivision2B;
 			case "Bahrain 2nd Division" -> League.BahrainDivision2;
 			case "Cyprus 2nd Division", "Cyprus Division 2" -> League.CyprusDivision2;
-			case "Saudi Arabia Division 2" -> League.EgyptDivision2;
+			case "Saudi Arabia Division 2" -> League.SaudiDivision2;
 			case "CAF Africa Cup of Nations" -> League.AfricaCupOfNations2025InMorocco2En;
 			case "England EFL Trophy" -> League.EnglandFootballLeagueTrophy;
 			case "Spain La Liga" -> League.SpainPrimeraDivision;
@@ -497,7 +498,6 @@ public class PsBetImpl extends WsBaseBetApiImpl {
 			case "Cyprus 1st Division" -> League.CyprusDivision1;
 			case "Turkey 1st League" -> League.TurkeyTFFFirstLeague;
 			case "England Isthmian Premier League" -> League.EnglandIsthmianPremierDivision;
-			case "Egypt 2nd Division B" -> League.EgyptDivision2B;
 			case "AFC U23 Asian Cup" -> League.AFCU23AsianCup2026InSaudiArabia;
 			case "Saudi Arabia Division 1" -> League.SaudiDivision1;
 			case "Mexico Liga de Expansión MX" -> League.MexicoLigaExpansionMX;
@@ -598,6 +598,8 @@ public class PsBetImpl extends WsBaseBetApiImpl {
 			case "Brazil Capixaba" -> League.BrazilCampeonatoCapixabaSerieA;
 			case "Brazil Potiguar" -> League.BrazilCampeonatoPotiguarDivision1;
 			case "Brazil Cearense" -> League.BrazilCampeonatoCearenseSerieA;
+			case "Denmark Superliga" -> League.DenmarkSuperLeague;
+			case "Paraguay Division Profesional" -> League.ParaguayPrimeraDivision;
 
 			default -> {
 				// 提高巴西联赛的相似度匹配得分

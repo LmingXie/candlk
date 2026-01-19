@@ -28,6 +28,7 @@ import static com.bojiu.webapp.base.entity.Merchant.PLATFORM_ID;
 import static com.bojiu.webapp.user.model.MetaType.base_rate_config;
 import static com.bojiu.webapp.user.model.UserRedisKey.GAME_BETS_PERFIX;
 import static com.bojiu.webapp.user.utils.StringSimilarityUtils.similarity;
+import static com.bojiu.webapp.user.utils.StringSimilarityUtils.similarityMetaphone;
 
 @Slf4j
 @Service
@@ -125,7 +126,7 @@ public class BetMatchService {
 			if (bGames != null) {
 				// 匹配队伍名（假设同一时间，同一只队伍不能同时存在两场比赛）
 				final String teamHomeLower = aGame.teamHomeLower(), teamClientLower = aGame.teamClientLower(), leagueLower = aGame.leagueLower();
-				// if (aGame.teamHome.equals("Maranguape CE") && aGame.teamClient.equals("Floresta CE")) {
+				// if (aGame.teamHome.equals("MVV Maastricht") && aGame.teamClient.equals("Jong Utrecht")) {
 				// 	System.out.println("teamHome: " + teamHomeLower + " teamClient: " + teamClientLower);
 				// }
 				final GameDTO bGame = CollectionUtil.findFirst(bGames, b -> {
@@ -137,14 +138,13 @@ public class BetMatchService {
 					final boolean homeContains = teamHomeLower.contains(bTeamHome) || bTeamHome.contains(teamHomeLower),
 							clientContains = teamClientLower.contains(bTeamClient) || bTeamClient.contains(teamClientLower);
 
-					// 队名至少有一边重叠，否则直接剪枝
-					if (!homeContains && !clientContains) {
-						return false;
-					}
 					//  队伍名称存在包含关系，且联赛名称一致
-					if (leagueLower.equals(bLeague)) {
+					if ((homeContains || clientContains) && leagueLower.equals(bLeague)) {
 						return true;
 					}
+					// if ("Dordrecht".equalsIgnoreCase(bTeamHome)) {
+					// 	System.out.println(1111);
+					// }
 
 					final double teamHomeScore = similarity(teamHomeLower, bTeamHome), teamClientScore = similarity(teamClientLower, bTeamClient),
 							leagueScore = similarity(leagueLower, bLeague);
@@ -153,15 +153,31 @@ public class BetMatchService {
 						return true;
 					}
 					// 队伍名和联赛名 存在 包含关系 或 中等相似度
-					return (homeContains || teamHomeScore >= 0.7) && (clientContains || teamClientScore >= 0.7)
-							&& (leagueLower.contains(bLeague) || bLeague.contains(leagueLower) || leagueScore >= 0.6);
+					if (((homeContains || teamHomeScore >= 0.7) && (clientContains || teamClientScore >= 0.7)
+							// 存在单边高相似度
+							|| (teamHomeScore >= 0.8 && teamClientScore >= 0.6) || (teamHomeScore >= 0.6 && teamClientScore >= 0.8))
+							&& (leagueLower.contains(bLeague) || bLeague.contains(leagueLower) || leagueScore >= 0.6)) {
+						return true;
+					}
+					// 发音相似度算法
+					final double teamHomeScoreMetaphone = similarityMetaphone(teamHomeLower, bTeamHome), teamClientScoreMetaphone = similarityMetaphone(teamClientLower, bTeamClient),
+							leagueScoreMetaphone = similarityMetaphone(leagueLower, bLeague);
+
+					// 发音相似度比较
+					return ((homeContains || teamHomeScoreMetaphone >= 0.6) && (clientContains || teamClientScoreMetaphone >= 0.6)
+							// 存在单边高相似度
+							|| (teamHomeScoreMetaphone >= 0.65 && teamClientScoreMetaphone >= 0.55) || (teamHomeScoreMetaphone >= 0.55 && teamClientScoreMetaphone >= 0.65))
+							&& (leagueLower.contains(bLeague) || bLeague.contains(leagueLower) || leagueScoreMetaphone >= 0.6);
 				});
 				if (bGame != null) {
 					// log.debug("队伍名匹配成功：{}-{}\t{}-{}", teamHome, teamClient, bGame.teamHome, bGame.teamClient);
 					gameMapper.put(aGame, bGame);
 				} else {
 					// 匹配联赛名称（仅一场时则认为是正确的）
-					final List<GameDTO> games_ = CollectionUtil.filter(bGames, b -> leagueLower.equalsIgnoreCase(b.league));
+					final List<GameDTO> games_ = CollectionUtil.filter(bGames, b -> {
+						final String leaguedLower = b.leagueLower();
+						return leagueLower.equals(leaguedLower) || similarityMetaphone(leagueLower, leaguedLower) > 0.7 || similarityMetaphone(leagueLower, leaguedLower) > 0.7;
+					});
 					// 尝试匹配前后 2,3 个字符
 					final GameDTO bGameDTO = matchPrefixOrSuffix(games_, teamHomeLower), bGameDTO2 = matchPrefixOrSuffix(games_, teamClientLower);
 					if (bGameDTO != null && bGameDTO.equals(bGameDTO2)) {
@@ -210,7 +226,7 @@ public class BetMatchService {
 						}
 						// 前后 2,3 个字符匹配
 						return ArrayUtil.matchAny(f -> b.teamHome.contains(f), fix)
-								|| ArrayUtil.matchAny(f -> b.teamClient.contains(f), fix);
+								&& ArrayUtil.matchAny(f -> b.teamClient.contains(f), fix);
 					}
 			);
 			return gameDTOS.size() == 1 ? gameDTOS.get(0) : null;

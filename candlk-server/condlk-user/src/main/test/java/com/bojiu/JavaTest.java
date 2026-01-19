@@ -10,8 +10,7 @@ import com.bojiu.webapp.user.dto.GameDTO.OddsInfo;
 import com.bojiu.webapp.user.dto.HedgingDTO.Odds;
 import com.bojiu.webapp.user.dto.HedgingDTO.Out;
 import com.bojiu.webapp.user.model.OddsType;
-import com.bojiu.webapp.user.utils.HGOddsConverter;
-import com.bojiu.webapp.user.utils.StringSimilarityUtils;
+import com.bojiu.webapp.user.utils.*;
 import com.bojiu.webapp.user.vo.HedgingVO;
 import lombok.extern.slf4j.Slf4j;
 import org.junit.jupiter.api.Assertions;
@@ -271,7 +270,7 @@ public class JavaTest {
 	@Test
 	public void similarityTest() {
 		final GameDTO missed = Jsons.parseObject(
-				"{\"addTime\":1768645360003,\"betProvider\":0,\"id\":10396873,\"league\":\"Brazil Campeonato Cearense Serie A\",\"leagueZh\":\"巴西塞阿仁斯甲组联赛\",\"openTime\":1768687200000,\"teamClient\":\"Floresta CE\",\"teamClientZh\":\"弗罗勒斯塔CE\",\"teamHome\":\"Maranguape CE\",\"teamHomeZh\":\"马兰瓜佩CE\",\"updateTime\":1768645360003}"
+				"{\"addTime\":1768793340006,\"betProvider\":2,\"id\":5040237,\"league\":\"Egypt Division 2\",\"leagueZh\":\"埃及乙级联赛\",\"openTime\":1768825800000,\"teamClient\":\"Fayoum FC\",\"teamClientZh\":\"法尤姆\",\"teamHome\":\"Misr Lel Makasa\",\"teamHomeZh\":\"玛块夏\",\"updateTime\":1768793340006}"
 				, GameDTO.class);
 
 		final List<GameDTO> targets = Jsons.parseArray(
@@ -282,8 +281,13 @@ public class JavaTest {
 		// 		StringSimilarityUtils.match(missed.league, 0.6, CollectionUtil.toList(targets, t -> t.league));
 		// hits1.forEach(System.out::println);
 
-		System.out.println("得分：" + StringSimilarityUtils.similarity(missed.league, "Brazil Campeonato Cearense")); // Brazil Capixaba
+		// System.out.println("得分：" + StringSimilarityUtils.similarity(missed.league, "Egypt Division 2 B")); // Brazil Capixaba
 		// System.out.println("最佳得分：" + StringSimilarityUtils.matchBest(missed.league, 0.6, CollectionUtil.toSet(targets, t -> t.league)));
+
+		System.out.println("得分：" + StringSimilarityUtils.similarity("ms tamya", "tamea"));
+		System.out.println("得分：" + StringSimilarityUtils.similarity("telephonat beni suef", "tel bani swaif"));
+		System.out.println("得分：" + StringSimilarityUtils.similarityMetaphone("ms tamya", "tamea"));
+		System.out.println("得分：" + StringSimilarityUtils.similarityMetaphone("telephonat beni suef", "tel bani swaif"));
 
 	}
 

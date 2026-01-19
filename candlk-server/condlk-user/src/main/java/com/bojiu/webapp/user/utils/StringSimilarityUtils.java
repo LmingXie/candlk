@@ -2,6 +2,8 @@ package com.bojiu.webapp.user.utils;
 
 import java.util.*;
 
+import org.apache.commons.codec.language.DoubleMetaphone;
+import org.apache.commons.text.StringTokenizer;
 import org.apache.commons.text.similarity.*;
 import org.jspecify.annotations.Nullable;
 
@@ -11,12 +13,12 @@ import org.jspecify.annotations.Nullable;
  */
 public class StringSimilarityUtils {
 
-	/** 适合短文本：偏好字符顺序 + 开头更接近得分更高 */
-	private static final JaroWinklerDistance JW = new JaroWinklerDistance();
 	/** 容错拼写错误，适合找 "Premiers" vs "Premier" */
 	private static final LevenshteinDistance LD = LevenshteinDistance.getDefaultInstance();
 	/** 长文本情况下更准确，但对词序敏感 */
 	private static final CosineDistance CD = new CosineDistance();
+	/** 跨语言/口音音译 相似度算法 */
+	private static final DoubleMetaphone DM = new DoubleMetaphone();
 
 	/**
 	 * 综合相似度评分 (0.0 ~ 1.0)
@@ -34,8 +36,8 @@ public class StringSimilarityUtils {
 			return 0;
 		}
 
-		// 1）字符顺序+前缀偏好
-		final double jw = JW.apply(a, b);
+		// 1）字符顺序+前缀偏好（此种评分并不高）
+		// final double jw = JW.apply(a, b);
 
 		// 2）编辑距离容错拼写
 		final int edit = LD.apply(a, b);
@@ -45,7 +47,7 @@ public class StringSimilarityUtils {
 		final double cosine = 1 - CD.apply(a, b);
 
 		// 综合加权
-		return jw * 0.10 + levenshtein * 0.20 + cosine * 0.70;
+		return levenshtein >= 0.7 && cosine < 0.5 ? (levenshtein * 0.7 + cosine * 0.30) : (levenshtein * 0.3 + cosine * 0.70);
 	}
 
 	/**
@@ -108,6 +110,54 @@ public class StringSimilarityUtils {
 		}
 
 		return bestValue;
+	}
+
+	/**
+	 * 发音相似度（DoubleMetaphone + Tokenizer）
+	 * 不做 normalize，也不做自定义词映射
+	 *
+	 * @param s1 字符串1
+	 * @param s2 字符串2
+	 * @return 0 ~ 1 越接近越相似
+	 */
+	public static double similarityMetaphone(String s1, String s2) {
+		if (s1 == null || s2 == null) {
+			return 0;
+		}
+
+		final List<String> t1 = tokenize(s1.toLowerCase()), t2 = tokenize(s2.toLowerCase());
+
+		if (t1.isEmpty() || t2.isEmpty()) {
+			return 0;
+		}
+
+		int match = 0;
+
+		for (String a : t1) {
+			final String dmA = DM.encode(a);
+			for (String b : t2) {
+				if (dmA.equals(DM.encode(b))) {
+					match++;
+					break;
+				}
+			}
+		}
+
+		final int total = Math.max(t1.size(), t2.size());
+		return match * 1.0 / total;
+	}
+
+	/** 分词 */
+	private static List<String> tokenize(String s) {
+		if (s == null || s.isEmpty()) {
+			return Collections.emptyList();
+		}
+		final StringTokenizer tokenizer = new StringTokenizer(s);
+		final List<String> tokens = new ArrayList<>();
+		while (tokenizer.hasNext()) {
+			tokens.add(tokenizer.next());
+		}
+		return tokens;
 	}
 
 	/**

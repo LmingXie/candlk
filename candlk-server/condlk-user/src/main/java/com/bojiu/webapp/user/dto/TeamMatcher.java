@@ -30,6 +30,8 @@ public class TeamMatcher {
 			"A Ali SC,A Ali Bahrain,A'Ali",
 			"Floresta CE,Floresta",
 			"Maranguape CE,Maranguape FC",
+			"MS Tamya,Tamea",
+			"Cascada SC,Cascada",
 	};
 
 	// 预处理后的倒排索引 Map
@@ -40,7 +42,7 @@ public class TeamMatcher {
 			final String[] names = group.split(",");
 			final String standardName = names[0]; // 以第一个作为标准名
 			for (String name : names) {
-				ALIAS_MAP.put(name.trim(), standardName);
+				ALIAS_MAP.put(name, standardName);
 			}
 		}
 	}

@@ -83,12 +83,6 @@
 	</dependencyManagement>
 
 	<dependencies>
-		<!--字符串相似度算法和字符串间距离计算算法库-->
-		<dependency>
-			<groupId>org.apache.commons</groupId>
-			<artifactId>commons-text</artifactId>
-			<version>1.15.0</version>
-		</dependency>
 		<dependency>
 			<groupId>org.springframework.boot</groupId>
 			<artifactId>spring-boot-starter</artifactId>

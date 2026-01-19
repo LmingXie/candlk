@@ -146,7 +146,7 @@ public interface League {
 	/** 埃及甲组联赛 */
 	String EgyptDivision1 = "Egypt Division 1";
 	/** 沙特乙级联赛 */
-	String EgyptDivision2 = "Saudi Division 2";
+	String SaudiDivision2 = "Saudi Division 2";
 	/** 意大利丁级联赛 */
 	String ItalySerieD = "Italy Serie D";
 	/** 越南女子锦标赛U19 */
@@ -253,5 +253,11 @@ public interface League {
 	String BrazilCampeonatoPotiguarDivision1 = "Brazil Campeonato Potiguar Division 1";
 	/** 巴西塞阿仁斯甲组联赛 */
 	String BrazilCampeonatoCearenseSerieA = "Brazil Campeonato Cearense Serie A";
+	/** 丹麦超级联赛 */
+	String DenmarkSuperLeague = "Denmark Super League";
+	/** 巴拉圭甲级联赛 */
+	String ParaguayPrimeraDivision = "Paraguay Primera Division";
+	/** 埃及乙级联赛 */
+	String EgyptDivision2 = "Egypt Division 2";
 
 }
