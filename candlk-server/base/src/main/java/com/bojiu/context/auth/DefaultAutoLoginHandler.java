@@ -8,7 +8,6 @@ import java.util.concurrent.TimeUnit;
 import javax.annotation.Resource;
 import javax.servlet.http.*;
 
-import com.bojiu.common.context.Context;
 import com.bojiu.common.dao.DataSourceSelector;
 import com.bojiu.common.redis.RedisUtil;
 import com.bojiu.common.security.AES;
@@ -25,7 +24,6 @@ import com.github.benmanes.caffeine.cache.Caffeine;
 import lombok.extern.slf4j.Slf4j;
 import me.codeplayer.util.*;
 import org.apache.commons.lang3.StringUtils;
-import org.apache.dubbo.config.annotation.DubboReference;
 import org.jspecify.annotations.NonNull;
 import org.jspecify.annotations.Nullable;
 import org.springframework.beans.factory.InitializingBean;
@@ -79,9 +77,9 @@ public class DefaultAutoLoginHandler implements AutoLoginHandler, InitializingBe
 		this.autoLoginSupport = autoLoginSupport;
 	}
 
-	@Qualifier(EMP_AUTO_LOGIN_SUPPORT_BEAN_NAME)
+	@Qualifier(AutoLoginSupport.LOCAL_BEAN_NAME)
 	@Autowired(required = false)
-	public void setEmpAutoLoginSupport(AutoLoginSupport autoLoginSupport) {
+	public void setLocalAutoLoginSupport(AutoLoginSupport autoLoginSupport) {
 		this.autoLoginSupport = autoLoginSupport;
 	}
 

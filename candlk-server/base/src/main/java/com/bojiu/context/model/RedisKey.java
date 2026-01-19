@@ -62,7 +62,13 @@ public interface RedisKey {
 	 */
 	String WHITELIST_NOT_CHECK = "whitelistNotCheck";
 
-	/** 元数据配置前缀*/
+	/** 元数据配置前缀 */
 	String META_PREFIX = "meta:";
+
+	/**
+	 * 用户删除设备缓存
+	 * Hash < "loginDeviceSession", $merchantId-$userId-$sessionId, "1" >
+	 */
+	String LOGIN_DEVICE_SESSION = "loginDeviceSession";
 
 }

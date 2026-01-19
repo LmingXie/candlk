@@ -11,7 +11,6 @@ import com.bojiu.context.i18n.AdminI18nKey;
 import com.bojiu.context.model.Option;
 import com.bojiu.context.web.ProxyRequest;
 import com.bojiu.webapp.base.action.BaseAction;
-import com.bojiu.webapp.user.entity.Emp;
 import com.bojiu.webapp.user.entity.Meta;
 import com.bojiu.webapp.user.form.MetaForm;
 import com.bojiu.webapp.user.form.query.MetaQuery;
@@ -40,18 +39,17 @@ public class MetaAction extends BaseAction {
 
 	@Ready("元数据管理")
 	@GetMapping("/typeList")
-	@Permission(Permission.NONE)
+	@Permission(Permission.USER)
 	public Messager<List<Option<String>>> typeList() {
 		return Messager.exposeData(Option.toMetas(MetaType.CACHE, null));
 	}
 
 	@Ready("元数据编辑")
 	@PostMapping("/edit")
-	@Permission(Permission.NONE)
+	@Permission(Permission.USER)
 	public Messager<Meta> edit(ProxyRequest q, @Validated MetaForm form) {
-		final Emp emp = q.getSessionUser();
 		form.merchantId = PLATFORM_ID;
-		final Messager<Meta> msger = metaAdminService.addOrEdit(emp, form.copyTo(Meta::new), true);
+		final Messager<Meta> msger = metaAdminService.addOrEdit(null, form.copyTo(Meta::new), true);
 		if (msger.isOK()) {
 			GlobalCacheSyncService.refreshCache(msger.data());
 			msger.setMsg(I18N.msg(AdminI18nKey.OPERATE_SUCCESS)).setURLBack();
@@ -61,14 +59,14 @@ public class MetaAction extends BaseAction {
 
 	@Ready("单个允许访问的配置")
 	@GetMapping("/types")
-	@Permission(Permission.NONE)
+	@Permission(Permission.USER)
 	public Messager<MetaVO> types(ProxyRequest q, MetaForm form) {
 		return Messager.exposeData(MetaVO.fromItem(metaAdminService.get(q.getMerchantId(), form.getType().value, form.getName())));
 	}
 
 	@Ready("元数据列表")
 	@GetMapping("/typeItemList")
-	@Permission(Permission.NONE)
+	@Permission(Permission.USER)
 	public Messager<List<MetaVO>> typeItemList(ProxyRequest q, MetaQuery query) {
 		final List<Meta> list = metaService.find(q.getMerchantId(), query.type, query.name);
 		return Messager.exposeData(CollectionUtil.toList(list, MetaVO::from));

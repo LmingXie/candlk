@@ -39,7 +39,7 @@ public class BetAction {
 
 	@Ready(value = "推荐/存档方案列表", merchantIdRequired = false)
 	@GetMapping("/list")
-	@Permission(Permission.NONE)
+	@Permission(Permission.USER)
 	public Messager<Page<HedgingVO>> list(ProxyRequest q, HedgingQuery query) {
 		boolean searchPlan = Objects.equals(query.type, 1);
 		I18N.assertTrue(searchPlan || query.pair != null);
@@ -81,7 +81,7 @@ public class BetAction {
 
 	@Ready("保存推荐方案")
 	@PostMapping("/save")
-	@Permission(Permission.NONE)
+	@Permission(Permission.USER)
 	public Messager<Void> save(ProxyRequest q, String value) {
 		return RedisUtil.fastAttemptInLock(RedisKey.USER_OP_LOCK_PREFIX, () -> {
 			final BaseRateConifg baseRateConifg = metaService.getCachedParsedValue(PLATFORM_ID, base_rate_config, BaseRateConifg.class);
@@ -105,7 +105,7 @@ public class BetAction {
 
 	@Ready("删除存档的方案")
 	@PostMapping("/del")
-	@Permission(Permission.NONE)
+	@Permission(Permission.USER)
 	public Messager<Void> del(ProxyRequest q, String ids) {
 		I18N.assertNotNull(ids);
 		final List<Long> idList = StringUtil.splitAsLongList(ids);
@@ -122,14 +122,14 @@ public class BetAction {
 
 	@Ready("计算利润")
 	@PostMapping("/calc")
-	@Permission(Permission.NONE)
+	@Permission(Permission.USER)
 	public Messager<HedgingVO> calc(ProxyRequest q, String value) {
 		return Messager.exposeData(HedgingVO.ofAndFlush(value));
 	}
 
 	@Ready("推演赛果并保存数据")
 	@PostMapping("/calcSave")
-	@Permission(Permission.NONE)
+	@Permission(Permission.USER)
 	public Messager<HedgingVO> calcSave(ProxyRequest q, String value) {
 		I18N.assertNotNull(value);
 		final HedgingVO vo = HedgingVO.ofAndInfer(value, q.now());
@@ -145,7 +145,7 @@ public class BetAction {
 
 	@Ready("多平台收益对比")
 	@PostMapping("/compare")
-	@Permission(Permission.NONE)
+	@Permission(Permission.USER)
 	public Messager<HedgingVO> compare(ProxyRequest q, String value) {
 		I18N.assertNotNull(value);
 		return Messager.exposeData(betMatchService.calcMuti(value, q.now()));

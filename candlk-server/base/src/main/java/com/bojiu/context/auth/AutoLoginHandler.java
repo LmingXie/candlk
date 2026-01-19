@@ -54,6 +54,8 @@ public interface AutoLoginHandler {
 	 */
 	interface AutoLoginSupport<E extends Member> {
 
+		String LOCAL_BEAN_NAME = "localAutoLoginSupport";
+
 		String GROUP_USER = "user";
 		String userPwdSep = "||";
 
