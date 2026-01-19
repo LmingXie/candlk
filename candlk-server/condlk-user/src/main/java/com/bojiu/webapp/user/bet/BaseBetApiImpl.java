@@ -36,6 +36,7 @@ import me.codeplayer.util.*;
 import org.apache.commons.lang3.ArrayUtils;
 import org.apache.commons.lang3.StringUtils;
 import org.apache.commons.lang3.time.FastDateFormat;
+import org.apache.http.conn.ssl.SSLConnectionSocketFactory;
 import org.jspecify.annotations.NonNull;
 import org.jspecify.annotations.Nullable;
 import org.springframework.http.HttpMethod;
@@ -488,9 +489,9 @@ public abstract class BaseBetApiImpl extends BaseHttpUtil implements BetApi {
 	}
 
 	/** 忽略证书验证 */
-	public static HttpClient.Builder setIgnoreCertificate(HttpClient.Builder builder) {
+	public static void setIgnoreCertificate(HttpClient.Builder builder) {
 		try {
-			final SSLContext ssl = SSLContext.getInstance("TLS");
+			final SSLContext ssl = SSLContext.getInstance(SSLConnectionSocketFactory.TLS);
 			ssl.init(null, new TrustManager[] { new X509TrustManager() {
 				public void checkClientTrusted(X509Certificate[] xcs, String s) {
 				}
@@ -506,7 +507,6 @@ public abstract class BaseBetApiImpl extends BaseHttpUtil implements BetApi {
 		} catch (Exception e) {
 			LOGGER.error("SSLContext 初始化失败", e);
 		}
-		return builder;
 	}
 
 	/**
