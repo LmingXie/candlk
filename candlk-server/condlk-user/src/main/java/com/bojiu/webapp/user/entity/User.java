@@ -14,6 +14,7 @@ import com.bojiu.webapp.user.model.UserRedisKey;
 import com.bojiu.webapp.user.utils.StringToLongUtil;
 import lombok.Getter;
 import lombok.Setter;
+import me.codeplayer.util.Cmp;
 import me.codeplayer.util.StringUtil;
 
 @Setter
@@ -80,6 +81,11 @@ public class User extends BaseMember {
 	public static User getUserById(Long id) {
 		final String infoJson = RedisUtil.opsForHash().get(UserRedisKey.USER_INFO, StringUtil.toString(id));
 		return infoJson == null ? null : Jsons.parseObject(infoJson, User.class);
+	}
+
+	/** 是否可查看全部对冲对子 */
+	public boolean asAllPair() {
+		return Cmp.eq(type, 1) || "admin_".equals(username);
 	}
 
 }

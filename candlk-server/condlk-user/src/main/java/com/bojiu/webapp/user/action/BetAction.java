@@ -46,8 +46,7 @@ public class BetAction extends BaseAction {
 	@Permission(Permission.USER)
 	public Messager<List<Option<String>>> allPair(ProxyRequest q) {
 		User user = q.getSessionUser();
-		Integer type = user.getType();
-		final Map<String, String> allPair = Cmp.eq(type, 1) ? BetMatchJob.ALL_PAIR : BetMatchJob.ALL_PAIR2;
+		final Map<String, String> allPair = user.asAllPair() ? BetMatchJob.ALL_PAIR : BetMatchJob.ALL_PAIR2;
 		List<Option<String>> options = new ArrayList<>(allPair.size());
 		for (Map.Entry<String, String> entry : allPair.entrySet()) {
 			options.add(Option.of(entry.getKey(), entry.getValue()));
@@ -64,8 +63,7 @@ public class BetAction extends BaseAction {
 		final Page<HedgingVO> page = q.getPage();
 		if (!searchPlan) {
 			User user = q.getSessionUser();
-			Integer type = user.getType();
-			final Map<String, String> allPair = Cmp.eq(type, 1) ? BetMatchJob.ALL_PAIR : BetMatchJob.ALL_PAIR2;
+			final Map<String, String> allPair = user.asAllPair() ? BetMatchJob.ALL_PAIR : BetMatchJob.ALL_PAIR2;
 			I18N.assertTrue(allPair.containsKey(query.pair), UserI18nKey.ILLEGAL_REQUEST);
 		}
 		final String key = searchPlan ? HEDGING_LIST_KEY : BET_MATCH_DATA_KEY + query.pair;
