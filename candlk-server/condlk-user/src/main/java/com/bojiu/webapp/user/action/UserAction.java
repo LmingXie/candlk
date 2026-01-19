@@ -79,6 +79,7 @@ public class UserAction extends BaseAction {
 			opsForHash.put(UserRedisKey.USER_INFO, userKey, Jsons.encode(user));
 			return Messager.exposeData(JSONObject.of(
 					"username", user.getUsername(),
+					"tyoe", user.getType(),
 					"token", user.getToken()
 			));
 		});
@@ -94,7 +95,8 @@ public class UserAction extends BaseAction {
 			return Messager.error(I18N.msg(UserI18nKey.USER_404));
 		}
 		return Messager.exposeData(JSONObject.of(
-				"username", user.getUsername()
+				"username", user.getUsername(),
+				"tyoe", user.getType()
 		));
 	}
 

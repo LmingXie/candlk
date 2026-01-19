@@ -12,6 +12,7 @@ import com.bojiu.context.model.Option;
 import com.bojiu.context.web.ProxyRequest;
 import com.bojiu.webapp.base.action.BaseAction;
 import com.bojiu.webapp.user.entity.Meta;
+import com.bojiu.webapp.user.entity.User;
 import com.bojiu.webapp.user.form.MetaForm;
 import com.bojiu.webapp.user.form.query.MetaQuery;
 import com.bojiu.webapp.user.model.MetaType;
@@ -49,6 +50,8 @@ public class MetaAction extends BaseAction {
 	@Permission(Permission.USER)
 	public Messager<Meta> edit(ProxyRequest q, @Validated MetaForm form) {
 		form.merchantId = PLATFORM_ID;
+		User user = q.getSessionUser();
+		I18N.assertTrue(user.asAllPair(), AdminI18nKey.PERMISSION_DENIED);
 		final Messager<Meta> msger = metaAdminService.addOrEdit(null, form.copyTo(Meta::new), true);
 		if (msger.isOK()) {
 			GlobalCacheSyncService.refreshCache(msger.data());
