@@ -35,12 +35,21 @@ public class BetMatchJob {
 			Pair.of(KY, PS),
 			Pair.of(HG, PS)
 	);
-	public static final Map<String, String> ALL_PAIR = new TreeMap<>();
+	static final List<Pair<BetProvider, BetProvider>> matchPair2 = List.of(
+			Pair.of(HG, KY),
+			Pair.of(HG, PS),
+			Pair.of(KY, PS)
+	);
+	public static final Map<String, String> ALL_PAIR = new TreeMap<>(), ALL_PAIR2 = new TreeMap<>();
 
 	static {
 		for (Pair<BetProvider, BetProvider> pair : matchPair) {
 			final BetProvider key = pair.getKey(), value = pair.getValue();
-			ALL_PAIR.put(key.name() + "-" + value.name(), key.getLabel() + "->" + value.getLabel());
+			final String k = key.name() + "-" + value.name(), v = key.getLabel() + "->" + value.getLabel();
+			ALL_PAIR.put(k, v);
+			if (matchPair2.contains(pair)) {
+				ALL_PAIR2.put(k, v);
+			}
 		}
 	}
 

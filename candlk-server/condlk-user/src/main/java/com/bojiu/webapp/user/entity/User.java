@@ -25,6 +25,8 @@ public class User extends BaseMember {
 	public String username;
 	public String password;
 	public Long ttl;
+	/** 账号类型：1=1类；2=2类 */
+	public Integer type;
 	public Integer status;
 	/** 最后一次登录时间 */
 	protected Date lastLoginTime;

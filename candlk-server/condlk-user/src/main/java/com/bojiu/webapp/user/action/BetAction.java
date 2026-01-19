@@ -9,12 +9,16 @@ import com.bojiu.common.redis.RedisUtil;
 import com.bojiu.common.web.Page;
 import com.bojiu.common.web.Ready;
 import com.bojiu.context.auth.Permission;
-import com.bojiu.context.model.RedisKey;
+import com.bojiu.context.i18n.UserI18nKey;
+import com.bojiu.context.model.*;
 import com.bojiu.context.web.Jsons;
 import com.bojiu.context.web.ProxyRequest;
+import com.bojiu.webapp.base.action.BaseAction;
 import com.bojiu.webapp.user.dto.BaseRateConifg;
 import com.bojiu.webapp.user.dto.HedgingDTO;
+import com.bojiu.webapp.user.entity.User;
 import com.bojiu.webapp.user.form.query.HedgingQuery;
+import com.bojiu.webapp.user.job.BetMatchJob;
 import com.bojiu.webapp.user.service.BetMatchService;
 import com.bojiu.webapp.user.service.MetaService;
 import com.bojiu.webapp.user.vo.HedgingVO;
@@ -30,12 +34,26 @@ import static com.bojiu.webapp.user.model.UserRedisKey.*;
 @Slf4j
 @RestController
 @RequestMapping("/bet")
-public class BetAction {
+public class BetAction extends BaseAction {
 
 	@Resource
 	MetaService metaService;
 	@Resource
 	BetMatchService betMatchService;
+
+	@Ready(value = "全部可用对冲对子", merchantIdRequired = false)
+	@GetMapping("/allPair")
+	@Permission(Permission.USER)
+	public Messager<List<Option<String>>> allPair(ProxyRequest q) {
+		User user = q.getSessionUser();
+		Integer type = user.getType();
+		final Map<String, String> allPair = Cmp.eq(type, 1) ? BetMatchJob.ALL_PAIR : BetMatchJob.ALL_PAIR2;
+		List<Option<String>> options = new ArrayList<>(allPair.size());
+		for (Map.Entry<String, String> entry : allPair.entrySet()) {
+			options.add(Option.of(entry.getKey(), entry.getValue()));
+		}
+		return Messager.exposeData(options);
+	}
 
 	@Ready(value = "推荐/存档方案列表", merchantIdRequired = false)
 	@GetMapping("/list")
@@ -44,6 +62,12 @@ public class BetAction {
 		boolean searchPlan = Objects.equals(query.type, 1);
 		I18N.assertTrue(searchPlan || query.pair != null);
 		final Page<HedgingVO> page = q.getPage();
+		if (!searchPlan) {
+			User user = q.getSessionUser();
+			Integer type = user.getType();
+			final Map<String, String> allPair = Cmp.eq(type, 1) ? BetMatchJob.ALL_PAIR : BetMatchJob.ALL_PAIR2;
+			I18N.assertTrue(allPair.containsKey(query.pair), UserI18nKey.ILLEGAL_REQUEST);
+		}
 		final String key = searchPlan ? HEDGING_LIST_KEY : BET_MATCH_DATA_KEY + query.pair;
 		final List<Object> scores = RedisUtil.execInPipeline(redisOps -> {
 			final ZSetOperations<String, String> opsForZSet = redisOps.opsForZSet();
