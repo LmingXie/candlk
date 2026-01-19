@@ -36,7 +36,6 @@ public class UserService extends BaseServiceImpl<AdminLog, AdminLogDao, Long> {
 
 		// 最后一次登录时间
 		final HttpServletRequest request = req.getRequest();
-		final String oldSessionId = user.getSessionId();
 		final String newSessionId = request == null ? req.getSessionId() : request.getSession().getId();
 		if (newSessionId != null) {
 			user.setSessionId(newSessionId);

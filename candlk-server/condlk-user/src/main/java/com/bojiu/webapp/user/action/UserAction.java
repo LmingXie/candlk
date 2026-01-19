@@ -84,4 +84,18 @@ public class UserAction extends BaseAction {
 		});
 	}
 
+	@Ready("用户信息")
+	@GetMapping("/info")
+	@Permission(Permission.USER)
+	public Messager<Object> info(ProxyRequest q) {
+		final Long id = q.getSessionUser().getId();
+		final User user = User.getUserById(id);
+		if (user == null) {
+			return Messager.error(I18N.msg(UserI18nKey.USER_404));
+		}
+		return Messager.exposeData(JSONObject.of(
+				"username", user.getUsername()
+		));
+	}
+
 }
