@@ -16,12 +16,13 @@ import com.bojiu.webapp.user.form.MemberLoginForm;
 import com.bojiu.webapp.user.model.UserRedisKey;
 import lombok.extern.slf4j.Slf4j;
 import me.codeplayer.util.StringUtil;
-import org.apache.dubbo.config.annotation.DubboService;
 import org.jspecify.annotations.Nullable;
+import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 @Slf4j
-@DubboService(group = AutoLoginSupport.GROUP_USER)
+// @DubboService(group = AutoLoginSupport.GROUP_USER)
+@Service
 public class UserAutoLoginSupportImpl implements AutoLoginSupport<User> {
 
 	@Resource

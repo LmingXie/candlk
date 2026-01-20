@@ -11,6 +11,7 @@ import javax.servlet.http.*;
 import com.bojiu.common.dao.DataSourceSelector;
 import com.bojiu.common.redis.RedisUtil;
 import com.bojiu.common.security.AES;
+import com.bojiu.common.security.AesGcm;
 import com.bojiu.common.util.Common;
 import com.bojiu.common.web.CookieUtil;
 import com.bojiu.common.web.ServletUtil;
@@ -29,6 +30,9 @@ import org.jspecify.annotations.Nullable;
 import org.springframework.beans.factory.InitializingBean;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Qualifier;
+import org.springframework.data.redis.connection.RedisStringCommands;
+import org.springframework.data.redis.core.RedisCallback;
+import org.springframework.data.redis.core.types.Expiration;
 import org.springframework.data.redis.serializer.RedisSerializer;
 
 @Slf4j
@@ -57,7 +61,8 @@ public class DefaultAutoLoginHandler implements AutoLoginHandler, InitializingBe
 			.build();
 
 	final String key;
-	final AES aes;
+	private AES aes;
+	private AesGcm aesGcm;
 
 	@Resource
 	RedisSerializer<Object> springSessionDefaultRedisSerializer;
@@ -68,7 +73,11 @@ public class DefaultAutoLoginHandler implements AutoLoginHandler, InitializingBe
 
 	public DefaultAutoLoginHandler(String key) {
 		this.key = key;
-		aes = new AES(key);
+		if (MemberType.worker()) {
+			aesGcm = new AesGcm(key);
+		} else {
+			aes = new AES(key);
+		}
 	}
 
 	@Qualifier("userAutoLoginSupportImpl")
@@ -95,7 +104,11 @@ public class DefaultAutoLoginHandler implements AutoLoginHandler, InitializingBe
 	}
 
 	public static String memberTypeSep() {
-		return MemberType.fromEmp() ? "m" : "u";
+		return switch (MemberType.CURRENT) {
+			case USER -> "u";
+			case WORKER -> "w";
+			default -> "m";
+		};
 	}
 
 	public static String concurrentSessionUserKey(Long memberId) {
@@ -160,15 +173,17 @@ public class DefaultAutoLoginHandler implements AutoLoginHandler, InitializingBe
 				return StringUtil.isEmpty(clientId) ? null
 						: RedisUtil.loadInLock(concurrentLoginLockKey(memberId), 10_000L, () -> {
 					final String redisKey = concurrentSessionUserKey(memberId);
-					final var redisValue = RedisUtil.opsForValue();
-					String memberJson = redisValue.get(redisKey);
+					String memberJson = RedisUtil.opsForValue().get(redisKey);
 					Member m = null;
+					byte[] jsonBytes = null;
 					if (memberJson != null) {
 						if (memberJson.isEmpty()) { // 如果为空字符串，则表示用户退出登录时清空了该值，并发请求不能再自动登录
 							return null;
 						}
 						try {
-							m = (Member) springSessionDefaultRedisSerializer.deserialize(JavaUtil.getUtf8Bytes(memberJson));
+							byte[] bytes = JavaUtil.getUtf8Bytes(memberJson);
+							m = (Member) springSessionDefaultRedisSerializer.deserialize(bytes);
+							jsonBytes = bytes;
 						} catch (Exception e) {
 							log.error("【自动登录】解析用户JSON数据时出错：" + ServletUtil.getRequestURI(request) + " => " + memberJson, e);
 						}
@@ -177,8 +192,9 @@ public class DefaultAutoLoginHandler implements AutoLoginHandler, InitializingBe
 						if (!autoLoginSupport.autoLoginCallback(m, AutoLoginForm.create(request, clientId))) {
 							return null; // 禁止自动登录
 						}
-						String jsonStr = new String(springSessionDefaultRedisSerializer.serialize(m), StandardCharsets.UTF_8);
-						redisValue.set(redisKey, jsonStr, TIMEOUT);
+						final byte[] value = jsonBytes != null ? jsonBytes : springSessionDefaultRedisSerializer.serialize(m);
+						RedisUtil.template().execute((RedisCallback<Object>) conn
+								-> conn.set(JavaUtil.getUtf8Bytes(redisKey), value, Expiration.from(TIMEOUT), RedisStringCommands.SetOption.UPSERT));
 						// 如果走了自动登录，需要将数据源再切换回 默认读库
 						DataSourceSelector.reset();
 						// 配置自动退出登录
@@ -242,8 +258,11 @@ public class DefaultAutoLoginHandler implements AutoLoginHandler, InitializingBe
 
 	public Member parseMember(TokenInfo info, @Nullable String clientId) {
 		final Member user = autoLoginSupport.load(info.memberId);
-		if (user != null && user.valid() && user.asEmp() == MemberType.fromEmp() /* 前后端必须一致 */) {
-			if (!user.asEmp()) {
+		MemberType type;
+		if (user != null && user.valid() && (type = user.type()).family() == MemberType.CURRENT.family() /* 前后端必须一致 */) {
+			// User 的 password 实际存在另外一个关联表中，User 中的同名字段是 transient 的，无法跨服务传输，因此附加到 sessionId 中进行传输
+			// 获取到后，需要自行拆分还原处理
+			if (type == MemberType.USER) {
 				final String[] parts = StringUtils.splitByWholeSeparatorPreserveAllTokens(user.getSessionId(), AutoLoginSupport.userPwdSep);
 				if (parts != null) {
 					user.setSessionId(parts[0]);
@@ -311,6 +330,7 @@ public class DefaultAutoLoginHandler implements AutoLoginHandler, InitializingBe
 		return switch (memberType) {
 			case ADMIN -> "PID_rm";
 			case MERCHANT -> "MID_rm";
+			case WORKER -> "WID_rm";
 			case AGENT -> "AID_rm";
 			default -> "UID_rm";
 		};
@@ -325,7 +345,11 @@ public class DefaultAutoLoginHandler implements AutoLoginHandler, InitializingBe
 		final byte[] data = JavaUtil.getUtf8Bytes(source);
 		final byte[] encoded;
 		try {
-			encoded = aes.encrypt(data);
+			if (MemberType.worker()) {
+				encoded = aesGcm.encryptRaw(data, null);
+			} else {
+				encoded = aes.encrypt(data);
+			}
 		} catch (GeneralSecurityException e) {
 			throw new IllegalArgumentException(e);
 		}
@@ -337,7 +361,11 @@ public class DefaultAutoLoginHandler implements AutoLoginHandler, InitializingBe
 		final byte[] decoded;
 		try {
 			byte[] data = java.util.Base64.getUrlDecoder().decode(source);
-			decoded = aes.decrypt(data);
+			if (MemberType.worker()) {
+				decoded = aesGcm.decryptRaw(data, null);
+			} else {
+				decoded = aes.decrypt(data);
+			}
 		} catch (Throwable e) {
 			log.error("【自动登录】解析 Token 时出错：" + source, e);
 			return null;
