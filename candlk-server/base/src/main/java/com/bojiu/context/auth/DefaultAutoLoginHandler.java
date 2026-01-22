@@ -80,8 +80,9 @@ public class DefaultAutoLoginHandler implements AutoLoginHandler, InitializingBe
 		}
 	}
 
-	@Qualifier("userAutoLoginSupportImpl")
-	@Autowired(required = false)
+	// @Qualifier("userAutoLoginSupportImpl")
+	// @Autowired(required = false)
+	@Resource
 	public void setUserAutoLoginSupport(AutoLoginSupport autoLoginSupport) {
 		this.autoLoginSupport = autoLoginSupport;
 	}
