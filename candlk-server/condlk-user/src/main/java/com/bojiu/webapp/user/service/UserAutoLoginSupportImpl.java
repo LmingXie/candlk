@@ -18,7 +18,6 @@ import lombok.extern.slf4j.Slf4j;
 import me.codeplayer.util.StringUtil;
 import org.jspecify.annotations.Nullable;
 import org.springframework.stereotype.Service;
-import org.springframework.transaction.annotation.Transactional;
 
 @Slf4j
 // @DubboService(group = AutoLoginSupport.GROUP_USER)
@@ -39,7 +38,7 @@ public class UserAutoLoginSupportImpl implements AutoLoginSupport<User> {
 		return user;
 	}
 
-	@Transactional
+	// @Transactional TODO
 	@Override
 	public boolean autoLoginCallback(Member member, AutoLoginForm input) {
 		MemberLoginForm form = MemberLoginForm.forAutoLogin(member, input);
@@ -55,7 +54,7 @@ public class UserAutoLoginSupportImpl implements AutoLoginSupport<User> {
 		return Messager.isOK(messager);
 	}
 
-	@Transactional
+	// @Transactional TODO
 	@Override
 	public int updateSessionId(String sessionId, Long userId) {
 		// return userService.updateSessionId(sessionId, userId);
