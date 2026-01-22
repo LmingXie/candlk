@@ -397,9 +397,6 @@ public class HedgingDTO extends BaseEntity {
 	/** 根据当前的赔率估算在 B平台 对冲的每场投注金额 */
 	public double[] getHedgingCoins() {
 		if (hedgingCoins == null) {
-			if ("埃尔祖鲁姆士邦".equals(parlays[0].aGame.teamHomeZh) && "里泽士邦".equals(parlays[0].aGame.teamClientZh)) {
-				System.out.println(1111);
-			}
 			final int size = parlays.length;
 			hedgingCoins = new double[size];
 			int lastIdx = size - 1;
@@ -606,8 +603,8 @@ public class HedgingDTO extends BaseEntity {
 	@Getter
 	public double avgProfit;
 
+	/** 计算平均利润并缓存 */
 	public double calcAvgProfitAndCache(double[] bHedgingCoins) {
-		// 初始成本和产出
 		return avgProfit = calcAvgProfit(bHedgingCoins);
 	}
 

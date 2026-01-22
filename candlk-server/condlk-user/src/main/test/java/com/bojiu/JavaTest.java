@@ -27,11 +27,12 @@ public class JavaTest {
 
 	@Test
 	public void hedgingTest() {
+		final BaseRateConifg baseRateConifg = BaseRateConifg.defaultCfg();
+		baseRateConifg.aRebate = 0.02;
 		HedgingDTO dto = new HedgingDTO(new Odds[] {
-				new Odds(2.06, 1.85, 0),
-				new Odds(2.08, 1.9, 0),
-				new Odds(2, 1.82, 0)
-		}, BaseRateConifg.defaultCfg());
+				new Odds(1.69, 2.49, 0),
+				new Odds(1.58, 2.71, 0),
+		}, baseRateConifg);
 		System.out.println("综合赔率：" + dto.overallOdds());
 		System.out.println("A平台 串子投注金额：" + dto.getAInCoin());
 		System.out.println("A平台 返水金额（串子全输时）：" + dto.getARebateCoin());
