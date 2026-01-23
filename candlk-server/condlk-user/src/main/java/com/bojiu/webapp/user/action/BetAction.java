@@ -90,7 +90,7 @@ public class BetAction extends BaseAction {
 			}
 			page.fromAll(vos);
 			if (!searchPlan) { // 已存档的方案无须再进行计算
-				final BaseRateConifg baseRateConifg = metaService.getCachedParsedValue(userId, base_rate_config,  BaseRateConifg.class);
+				final BaseRateConifg baseRateConifg = metaService.getCachedParsedValue(userId, base_rate_config, BaseRateConifg.class);
 				for (HedgingVO vo : page.getList()) { // 只计算分页部分数据的利润
 					vo.flush(baseRateConifg);
 				}
@@ -177,5 +177,4 @@ public class BetAction extends BaseAction {
 		return Messager.exposeData(betMatchService.calcMuti(value, q.now()));
 	}
 
-	// TODO: 2026/1/23 调整为只拿当天的赛事组串子
 }
