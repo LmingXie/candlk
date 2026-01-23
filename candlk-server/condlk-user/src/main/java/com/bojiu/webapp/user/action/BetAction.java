@@ -61,12 +61,12 @@ public class BetAction extends BaseAction {
 		boolean searchPlan = Objects.equals(query.type, 1);
 		I18N.assertTrue(searchPlan || query.pair != null);
 		final Page<HedgingVO> page = q.getPage();
+		User user = q.getSessionUser();
 		if (!searchPlan) {
-			User user = q.getSessionUser();
 			final Map<String, String> allPair = user.asAllPair() ? BetMatchJob.ALL_PAIR : BetMatchJob.ALL_PAIR2;
 			I18N.assertTrue(allPair.containsKey(query.pair), UserI18nKey.ILLEGAL_REQUEST);
 		}
-		final String key = searchPlan ? HEDGING_LIST_KEY : BET_MATCH_DATA_KEY + query.pair;
+		final String key = searchPlan ? HEDGING_LIST_KEY + user.getId() : BET_MATCH_DATA_KEY + query.pair;
 		final List<Object> scores = RedisUtil.execInPipeline(redisOps -> {
 			final ZSetOperations<String, String> opsForZSet = redisOps.opsForZSet();
 			opsForZSet.reverseRangeByScore(key, DEFAULT_MIN_SCORE, DEFAULT_MAX_SCORE, page.offset(), 10_000);
@@ -108,18 +108,19 @@ public class BetAction extends BaseAction {
 		return RedisUtil.fastAttemptInLock(RedisKey.USER_OP_LOCK_PREFIX, () -> {
 			final BaseRateConifg baseRateConifg = metaService.getCachedParsedValue(PLATFORM_ID, base_rate_config, BaseRateConifg.class);
 			final HedgingDTO dto = HedgingVO.ofAndFlush(value, baseRateConifg);
+			final String hedgingListKey = HEDGING_LIST_KEY + q.getSessionUser().getId();
 			if (dto.hasValidId()) {
 				final Long id = dto.getId();
-				if (!RedisUtil.opsForZSet().rangeByScore(HEDGING_LIST_KEY, id, id).isEmpty()) {
+				if (!RedisUtil.opsForZSet().rangeByScore(hedgingListKey, id, id).isEmpty()) {
 					return Messager.status(Messager.ERROR, "已存档当前方案");
 				}
 				RedisUtil.doInTransaction(redisOps -> {
 					ZSetOperations<String, String> opsForZSet = redisOps.opsForZSet();
-					opsForZSet.removeRange(HEDGING_LIST_KEY, id, id); // 删除旧数据
-					opsForZSet.incrementScore(HEDGING_LIST_KEY, value, id); // 添加新数据
+					opsForZSet.removeRange(hedgingListKey, id, id); // 删除旧数据
+					opsForZSet.incrementScore(hedgingListKey, value, id); // 添加新数据
 				});
 			} else {
-				RedisUtil.opsForZSet().incrementScore(HEDGING_LIST_KEY, value, dto.getId());
+				RedisUtil.opsForZSet().incrementScore(hedgingListKey, value, dto.getId());
 			}
 			return Messager.OK();
 		});
@@ -135,7 +136,7 @@ public class BetAction extends BaseAction {
 			RedisUtil.doInTransaction(redisOps -> {
 				final ZSetOperations<String, String> opsForZSet = redisOps.opsForZSet();
 				for (Long id : idList) {
-					opsForZSet.removeRangeByScore(HEDGING_LIST_KEY, id, id);
+					opsForZSet.removeRangeByScore(HEDGING_LIST_KEY + q.getSessionUser().getId(), id, id);
 				}
 			});
 			return Messager.OK();
@@ -157,10 +158,11 @@ public class BetAction extends BaseAction {
 		final HedgingVO vo = HedgingVO.ofAndInfer(value, q.now());
 		final Long id = vo.getId();
 		final String newValue = Jsons.encode(vo);
+		final String hedgingListKey = HEDGING_LIST_KEY + q.getSessionUser().getId();
 		RedisUtil.doInTransaction(redisOps -> {
 			ZSetOperations<String, String> opsForZSet = redisOps.opsForZSet();
-			opsForZSet.removeRangeByScore(HEDGING_LIST_KEY, id, id); // 删除旧数据
-			opsForZSet.add(HEDGING_LIST_KEY, newValue, id); // 更新数据
+			opsForZSet.removeRangeByScore(hedgingListKey, id, id); // 删除旧数据
+			opsForZSet.add(hedgingListKey, newValue, id); // 更新数据
 		});
 		return Messager.exposeData(vo);
 	}
@@ -173,6 +175,8 @@ public class BetAction extends BaseAction {
 		return Messager.exposeData(betMatchService.calcMuti(value, q.now()));
 	}
 
+	// TODO: 2026/1/23 不同厂家使用不同返水配置
+	// TODO: 2026/1/23 修改返点后未同步
 	// TODO: 2026/1/23 允许修改串子赔率
 	// TODO: 2026/1/23 调整为只拿当天的赛事组串子
 }

@@ -11,6 +11,7 @@ import com.bojiu.context.web.TaskUtils;
 import com.bojiu.webapp.user.bet.BetApi;
 import com.bojiu.webapp.user.dto.*;
 import com.bojiu.webapp.user.dto.GameDTO.OddsInfo;
+import com.bojiu.webapp.user.entity.User;
 import com.bojiu.webapp.user.model.BetProvider;
 import com.bojiu.webapp.user.vo.HedgingVO;
 import lombok.extern.slf4j.Slf4j;
@@ -103,15 +104,20 @@ public class GameBetJob {
 						opsForHash.put(BET_SYNC_RELAY, providerName, Jsons.encode(begin));
 						opsForHash.put(GAME_BETS_PERFIX, providerName, Jsons.encode(gameEnBets));
 						// 查询正在进行的串子
-						opsForZSet.reverseRangeByScore(HEDGING_LIST_KEY, DEFAULT_MIN_SCORE, DEFAULT_MAX_SCORE, 0, 1000);
+						for (Long accountId : User.accountIds) {
+							opsForZSet.reverseRangeByScore(HEDGING_LIST_KEY + accountId, DEFAULT_MIN_SCORE, DEFAULT_MAX_SCORE, 0, 1000);
+						}
 					});
-					final Set<String> hedgingList = X.castType(objects.get(2));
-					if (!hedgingList.isEmpty()) {
-						try {
-							final Map<Object, ScoreResult> scoreResult = betApi.getScoreResult();
-							this.flushHedgingBet(provider, betApi, gameEnBets, hedgingList, scoreResult);
-						} catch (Throwable e) {
-							log.error("厂商【{}】刷新正在进行中的串子赔率异常", providerName, e);
+					int accountSize = User.accountIds.size();
+					for (int i = 0, startIdx = 2; startIdx < accountSize; startIdx++, i++) {
+						final Set<String> hedgingList = X.castType(objects.get(startIdx));
+						if (!hedgingList.isEmpty()) {
+							try {
+								final Map<Object, ScoreResult> scoreResult = betApi.getScoreResult();
+								this.flushHedgingBet(provider, betApi, gameEnBets, hedgingList, scoreResult, User.accountIds.get(i));
+							} catch (Throwable e) {
+								log.error("厂商【{}】刷新正在进行中的串子赔率异常", providerName, e);
+							}
 						}
 					}
 					log.info("厂商【{}】同步游戏赔率成功，数量={}，耗时：{} s", providerName, gameEnBets.size(),
@@ -125,7 +131,7 @@ public class GameBetJob {
 	/**
 	 * 刷新正在进行中的串子赔率/结算赛果
 	 */
-	public void flushHedgingBet(BetProvider provider, BetApi betApi, Set<GameDTO> gameBets, Set<String> hedgingList, Map<Object, ScoreResult> scoreResult) {
+	public void flushHedgingBet(BetProvider provider, BetApi betApi, Set<GameDTO> gameBets, Set<String> hedgingList, Map<Object, ScoreResult> scoreResult, Long accountId) {
 		Date now = new Date();
 		final Map<Long, String> updates = new HashMap<>(hedgingList.size(), 1F);
 		// 查询全部正在进行的串子
@@ -181,8 +187,9 @@ public class GameBetJob {
 				final ZSetOperations<String, String> opsForZSet = redisOps.opsForZSet();
 				for (Map.Entry<Long, String> entry : updates.entrySet()) {
 					final Long id = entry.getKey();
-					opsForZSet.removeRangeByScore(HEDGING_LIST_KEY, id, id); // 更新数据
-					opsForZSet.add(HEDGING_LIST_KEY, entry.getValue(), id); // 更新数据
+					final String key = HEDGING_LIST_KEY + accountId;
+					opsForZSet.removeRangeByScore(key, id, id); // 更新数据
+					opsForZSet.add(key, entry.getValue(), id); // 更新数据
 				}
 			});
 		}

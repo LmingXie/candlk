@@ -1,6 +1,6 @@
 package com.bojiu.webapp.user.entity;
 
-import java.util.Date;
+import java.util.*;
 
 import com.baomidou.mybatisplus.annotation.TableField;
 import com.bojiu.common.model.Status;
@@ -20,6 +20,15 @@ import me.codeplayer.util.StringUtil;
 @Setter
 @Getter
 public class User extends BaseMember {
+
+	public static final List<String> accounts = List.of("admin_", "Gqy007");
+	public static final List<Long> accountIds = new ArrayList<>(accounts.size());
+
+	static {
+		for (String account : accounts) {
+			accountIds.add(StringToLongUtil.stringToLong(account));
+		}
+	}
 
 	public Long id;
 	public String token;

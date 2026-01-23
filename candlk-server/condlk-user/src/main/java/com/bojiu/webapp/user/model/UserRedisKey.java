@@ -13,7 +13,7 @@ public interface UserRedisKey extends RedisKey {
 	/** 对冲方案自增ID（String） */
 	String HEDGING_ID_INCR_KEY = "hedgingIncr";
 	/** 存档的对冲方案 ZSet < $info, $id > */
-	String HEDGING_LIST_KEY = "hedgingList";
+	String HEDGING_LIST_KEY = "hedgingList:";
 	/**存档对冲方案的范围*/
 	Double DEFAULT_MIN_SCORE = -Double.MAX_VALUE,
 			DEFAULT_MAX_SCORE = Double.MAX_VALUE;
