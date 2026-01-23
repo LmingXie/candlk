@@ -23,12 +23,12 @@ import static com.bojiu.webapp.user.dto.HedgingDTO.Odds.*;
 @NoArgsConstructor
 public class HedgingDTO extends BaseEntity {
 
-	public Pair<BetProvider, BetProvider> pair;
+	public BetProvider[] pair;
 	/** 串子/串关 */
 	public Odds[] parlays;
 
 	public HedgingDTO(Pair<BetProvider, BetProvider> pair, Odds[] parlays, BaseRateConifg baseRateConifg) {
-		this.pair = pair;
+		this.pair = new BetProvider[] { pair.getKey(), pair.getValue() };
 		this.parlays = parlays;
 		this.baseRate = baseRateConifg;
 	}
@@ -373,16 +373,18 @@ public class HedgingDTO extends BaseEntity {
 		return aInCoin == null ? aInCoin = baseRate.aPrincipal * (1 + baseRate.aRechargeRate) : aInCoin;
 	}
 
-	transient Double aRebate;
+	public transient Double aRebate;
 
 	public double getARebate() {
-		return aRebate == null ? aRebate = baseRate.rebate.get(pair.getKey()) : aRebate;
+		return aRebate == null ? aRebate = baseRate.rebate.get(pair[0]) : aRebate;
 	}
 
-	transient Double bRebate;
+	public transient Boolean isExtOdds;
+
+	public transient Double bRebate;
 
 	public double getBRebate() {
-		return bRebate == null ? bRebate = baseRate.rebate.get(pair.getValue()) : bRebate;
+		return bRebate == null ? bRebate = baseRate.rebate.get(pair[1]) : bRebate;
 	}
 
 	transient Double aRebateCoin;
@@ -456,6 +458,11 @@ public class HedgingDTO extends BaseEntity {
 
 				// 第一场比赛未开始 || 第二场比赛未开始：计算第二场下注，若存在第三场则继续推导第三场下注额
 				if (!firstEnd || !twoEnd) {
+					// 若第一场还未开始，需要刷新拓展的对冲投注金额
+					if (isExtOdds != null && timeNow < parlays[0].gameOpenTime) {
+						hedgingCoins = null;
+						calcAvgProfitAndCache(getHedgingCoins());
+					}
 					// 计算A平台串子第一场赛果赔率（第一场赛果系数）
 					final double firstRate = parlays[0].calcAResultRate();
 					// 计算当前的净输赢，A平台串子“后两场全赢”时净结果 W_A_当前（按输赢金额算返水）：

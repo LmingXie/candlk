@@ -21,7 +21,10 @@ import me.codeplayer.util.StringUtil;
 @Getter
 public class User extends BaseMember {
 
-	public static final List<String> accounts = List.of("admin_", "Gqy007");
+	public static final List<String> accounts = List.of(
+			"admin_",
+			"Gqy007"
+	);
 	public static final List<Long> accountIds = new ArrayList<>(accounts.size());
 
 	static {

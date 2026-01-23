@@ -92,6 +92,9 @@ public class BetMatchService {
 							newVo.parlays[nextIdx].bGame = bGameDTO;
 							newVo.parlays[nextIdx].bOdds = bOdds; // 替换B平台的赔率信息
 							newVo.parlays[nextIdx].bRate = newRate;
+							newVo.bRebate = null; // 清空对冲返水
+							newVo.pair[1] = bGameDTO.betProvider;
+							newVo.isExtOdds = true;
 							newVo.calcHedgingCoinsLock(now); // 重新计算赔率信息
 							extBOdds.add(newVo);
 						}

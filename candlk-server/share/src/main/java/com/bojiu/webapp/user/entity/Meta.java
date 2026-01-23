@@ -5,7 +5,6 @@ import java.util.Date;
 import com.bojiu.common.model.State;
 import com.bojiu.common.model.Status;
 import com.bojiu.common.util.BeanUtil;
-import com.bojiu.context.ContextImpl;
 import com.bojiu.context.model.SerializedConfig;
 import com.bojiu.webapp.base.entity.Merchant;
 import com.bojiu.webapp.base.entity.TimeBasedEntity;
@@ -103,15 +102,15 @@ public class Meta extends TimeBasedEntity implements SerializedConfig {
 
 	@Override
 	public void clearIfFront(boolean canClear) {
-		if (canClear && !ContextImpl.get().fromBackstage(null)) {
-			value = null;
-			addTime = null;
-			updateTime = null;
-			type = null;
-			name = null;
-			label = null;
-			ext = null;
-		}
+		// if (canClear && !ContextImpl.get().fromBackstage(null)) { // TODO 暂时不清空缓存
+		// 	value = null;
+		// 	addTime = null;
+		// 	updateTime = null;
+		// 	type = null;
+		// 	name = null;
+		// 	label = null;
+		// 	ext = null;
+		// }
 	}
 
 	/**

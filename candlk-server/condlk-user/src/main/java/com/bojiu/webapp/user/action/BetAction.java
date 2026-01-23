@@ -177,8 +177,5 @@ public class BetAction extends BaseAction {
 		return Messager.exposeData(betMatchService.calcMuti(value, q.now()));
 	}
 
-	// TODO: 2026/1/23 不同厂家使用不同返水配置
-	// TODO: 2026/1/23 修改返点后未同步
-	// TODO: 2026/1/23 允许修改串子赔率
 	// TODO: 2026/1/23 调整为只拿当天的赛事组串子
 }

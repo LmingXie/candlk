@@ -94,7 +94,7 @@ public class MetaService /*extends BaseServiceImpl<Meta, MetaDao, Long>*/ implem
 				meta.setValue(value);
 				meta.setLabel(type.getLabel());
 			}
-			return value != null ? List.of(meta) : Collections.emptyList();
+			return meta != null ? List.of(meta) : Collections.emptyList();
 		} else {
 			final Map<String, String> map = opsForHash.entries(RedisKey.META_PREFIX + merchantId + ":" + type.value);
 			if (map.isEmpty()) {
@@ -114,15 +114,20 @@ public class MetaService /*extends BaseServiceImpl<Meta, MetaDao, Long>*/ implem
 		}
 	}
 
+	@Nullable
 	public static Meta getDefaultMeta(Long merchantId, MetaType type, String name) {
+		final String value = switch (type) {
+			case base_rate_config -> Jsons.encodeRaw(new BaseRateConifg());
+			default -> null;
+		};
+		if (value == null) {
+			return null;
+		}
 		final Meta meta = new Meta();
 		meta.setMerchantId(merchantId);
 		meta.setType(type);
 		meta.setName(name);
-		meta.setValue(switch (type) {
-			case base_rate_config -> Jsons.encodeRaw(new BaseRateConifg());
-			default -> throw new RuntimeException("MetaType not found");
-		});
+		meta.setValue(value);
 		meta.setLabel(type.getLabel());
 		return meta;
 	}
