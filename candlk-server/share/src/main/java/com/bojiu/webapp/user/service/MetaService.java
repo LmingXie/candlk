@@ -6,8 +6,10 @@ import java.util.function.Function;
 
 import com.bojiu.common.redis.RedisUtil;
 import com.bojiu.context.model.RedisKey;
+import com.bojiu.context.web.Jsons;
 import com.bojiu.webapp.base.service.CacheSyncService;
 import com.bojiu.webapp.base.service.RemoteSyncService;
+import com.bojiu.webapp.user.dto.BaseRateConifg;
 import com.bojiu.webapp.user.entity.Meta;
 import com.bojiu.webapp.user.model.MetaType;
 import com.github.benmanes.caffeine.cache.Cache;
@@ -118,7 +120,7 @@ public class MetaService /*extends BaseServiceImpl<Meta, MetaDao, Long>*/ implem
 		meta.setType(type);
 		meta.setName(name);
 		meta.setValue(switch (type) {
-			case base_rate_config -> "{\"aPrincipal\":1000,\"aRebate\":0.02,\"aRechargeRate\":0,\"bRebate\":0.025}";
+			case base_rate_config -> Jsons.encodeRaw(new BaseRateConifg());
 			default -> throw new RuntimeException("MetaType not found");
 		});
 		meta.setLabel(type.getLabel());

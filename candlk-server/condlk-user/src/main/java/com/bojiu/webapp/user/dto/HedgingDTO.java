@@ -11,6 +11,7 @@ import com.bojiu.webapp.user.vo.HedgingVO;
 import com.google.common.collect.ImmutableMap;
 import lombok.*;
 import lombok.extern.slf4j.Slf4j;
+import org.apache.commons.lang3.tuple.Pair;
 import org.jspecify.annotations.Nullable;
 
 import static com.bojiu.webapp.user.dto.HedgingDTO.Odds.*;
@@ -22,10 +23,12 @@ import static com.bojiu.webapp.user.dto.HedgingDTO.Odds.*;
 @NoArgsConstructor
 public class HedgingDTO extends BaseEntity {
 
+	public Pair<BetProvider, BetProvider> pair;
 	/** 串子/串关 */
 	public Odds[] parlays;
 
-	public HedgingDTO(Odds[] parlays, BaseRateConifg baseRateConifg) {
+	public HedgingDTO(Pair<BetProvider, BetProvider> pair, Odds[] parlays, BaseRateConifg baseRateConifg) {
+		this.pair = pair;
 		this.parlays = parlays;
 		this.baseRate = baseRateConifg;
 	}
@@ -329,13 +332,13 @@ public class HedgingDTO extends BaseEntity {
 		}
 
 		/** 计算A平台的赛果赔率 */
-		public double calcBResultRate(BaseRateConifg baseRate) {
+		public double calcBResultRate(Double bRebate) {
 			return switch (result == null ? ALL_WIN : result) { // 默认当做全赢处理
-				case ALL_WIN -> baseRate.bRebate - 1;
+				case ALL_WIN -> bRebate - 1;
 				case DRAW -> 0; // 走水
-				case WIN_HALF -> (baseRate.bRebate - 1) / 2; // 赢半
-				case LOSE_HALF -> 0.5 * (bRate - 1) * (1 + baseRate.bRebate); // 输半
-				case ALL_LOSE -> (bRate - 1) * (1 + baseRate.bRebate); // 全输
+				case WIN_HALF -> (bRebate - 1) / 2; // 赢半
+				case LOSE_HALF -> 0.5 * (bRate - 1) * (1 + bRebate); // 输半
+				case ALL_LOSE -> (bRate - 1) * (1 + bRebate); // 全输
 				default -> throw new IllegalArgumentException("Invalid result: " + result);
 			};
 		}
@@ -346,7 +349,7 @@ public class HedgingDTO extends BaseEntity {
 
 	/** B平台 输的净收益系数 */
 	public double bLossFactor() {
-		return bLossFactor == null ? bLossFactor = baseRate.bRebate - 1 : bLossFactor;
+		return bLossFactor == null ? bLossFactor = getBRebate() - 1 : bLossFactor;
 	}
 
 	transient Double overallOdds;
@@ -370,11 +373,23 @@ public class HedgingDTO extends BaseEntity {
 		return aInCoin == null ? aInCoin = baseRate.aPrincipal * (1 + baseRate.aRechargeRate) : aInCoin;
 	}
 
+	transient Double aRebate;
+
+	public double getARebate() {
+		return aRebate == null ? aRebate = baseRate.rebate.get(pair.getKey()) : aRebate;
+	}
+
+	transient Double bRebate;
+
+	public double getBRebate() {
+		return bRebate == null ? bRebate = baseRate.rebate.get(pair.getValue()) : bRebate;
+	}
+
 	transient Double aRebateCoin;
 
 	/** A平台 返水金额（串子全输时） */
 	public double getARebateCoin() {
-		return aRebateCoin == null ? aRebateCoin = getAInCoin() * baseRate.aRebate : aRebateCoin;
+		return aRebateCoin == null ? aRebateCoin = getAInCoin() * getARebate() : aRebateCoin;
 	}
 
 	transient Double loss;
@@ -397,15 +412,16 @@ public class HedgingDTO extends BaseEntity {
 	/** 根据当前的赔率估算在 B平台 对冲的每场投注金额 */
 	public double[] getHedgingCoins() {
 		if (hedgingCoins == null) {
+			final double bRebate = getBRebate();
 			final int size = parlays.length;
 			hedgingCoins = new double[size];
 			int lastIdx = size - 1;
 			double bLossFactor = bLossFactor();
 			// 计算最后一场的对冲金额
-			hedgingCoins[lastIdx] = (getWin() - getLoss()) / (parlays[lastIdx].bWinFactor(baseRate.bRebate) - bLossFactor);
+			hedgingCoins[lastIdx] = (getWin() - getLoss()) / (parlays[lastIdx].bWinFactor(bRebate) - bLossFactor);
 			// 往前推算每场需要对冲的金额
 			for (int i = lastIdx - 1; i >= 0; i--) {
-				hedgingCoins[i] = (parlays[i + 1].bWinFactor(baseRate.bRebate) * hedgingCoins[i + 1]) / (parlays[i].bWinFactor(baseRate.bRebate) - bLossFactor);
+				hedgingCoins[i] = (parlays[i + 1].bWinFactor(bRebate) * hedgingCoins[i + 1]) / (parlays[i].bWinFactor(bRebate) - bLossFactor);
 			}
 		}
 		return hedgingCoins;
@@ -436,6 +452,7 @@ public class HedgingDTO extends BaseEntity {
 				if (threeEnd == null) {
 					threeEnd = (parlays[2].lock || timeNow > parlays[2].gameOpenTime); // 第三场是否结束
 				}
+				final double bRebate = getBRebate();
 
 				// 第一场比赛未开始 || 第二场比赛未开始：计算第二场下注，若存在第三场则继续推导第三场下注额
 				if (!firstEnd || !twoEnd) {
@@ -447,21 +464,21 @@ public class HedgingDTO extends BaseEntity {
 					final double aWinLoss = getAInCoin() * ratePct + getARebateCoin() * Math.abs(ratePct - 1) - baseRate.aPrincipal;
 					final double winLossDiff = aWinLoss - getLoss();
 					// 第二场投注额：(对冲第三场赔率 - 1 + B平台返水) * (净输赢 - 串子输光损失) / (对冲第二场赔率 * 对冲第三场赔率)
-					hedgingCoins[1] = (parlays[2].bRate - 1 + baseRate.bRebate) * winLossDiff / (parlays[1].bRate * parlays[2].bRate);
+					hedgingCoins[1] = (parlays[2].bRate - 1 + bRebate) * winLossDiff / (parlays[1].bRate * parlays[2].bRate);
 
 					// 第三场投注额：(净输赢 - 串子输光损失) / 对冲第三场赔率
 					hedgingCoins[2] = winLossDiff / parlays[2].bRate;
 
 					// 第一场B平台已实现净盈亏：(B对冲第一场投注 * B平台赛果赔率)
-					final double bWin = hedgingCoins[0] * parlays[0].calcBResultRate(baseRate);
+					final double bWin = hedgingCoins[0] * parlays[0].calcBResultRate(bRebate);
 					// 计算可能的情况
 					factor1 = new Double[5];
 					// 当前第二场净赢系数：（B第二场赔率 -1）*（1+B返水）
-					factor1[0] = (parlays[1].bRate - 1) * (1 + baseRate.bRebate);
+					factor1[0] = (parlays[1].bRate - 1) * (1 + bRebate);
 					// 当前第三场净赢系数：（B第三场赔率 -1）*（1+B返水）
-					factor1[1] = (parlays[2].bRate - 1) * (1 + baseRate.bRebate);
+					factor1[1] = (parlays[2].bRate - 1) * (1 + bRebate);
 					// 当前输一注净亏系数：-1+B返水
-					factor1[2] = -1 + baseRate.bRebate;
+					factor1[2] = -1 + bRebate;
 					// 第一场B平台已实现净盈亏
 					factor1[3] = bWin;
 					// A平台串子“后两场全赢”时净结果
@@ -496,7 +513,7 @@ public class HedgingDTO extends BaseEntity {
 							default -> throw new IllegalArgumentException("Invalid result: " + parlays[2].result);
 						};
 						// 第三场B平台最终净盈亏
-						final double bThirdWinLoss = hedgingCoins[2] * parlays[2].calcBResultRate(baseRate);
+						final double bThirdWinLoss = hedgingCoins[2] * parlays[2].calcBResultRate(bRebate);
 						// 计算A平台串子前两场赛果赔率（第一场系数和第二场系数）
 						final double firstRate = parlays[0].calcAResultRate(), twoRate = parlays[1].calcAResultRate();
 						// A平台最终净结果 P_A_最终（按输赢金额算返水）
@@ -526,12 +543,12 @@ public class HedgingDTO extends BaseEntity {
 					twoOuts = new ArrayList<>(2);
 
 					// 前两场B平台已实现净盈亏
-					double firstBWin = factor1[3], twoBWin = hedgingCoins[1] * parlays[1].calcBResultRate(baseRate);
+					double firstBWin = factor1[3], twoBWin = hedgingCoins[1] * parlays[1].calcBResultRate(bRebate);
 					factor2 = new Double[6];
 					// 当前第三场净赢系数：（B第三场赔率 -1）*（1+B返水）
-					factor2[0] = (parlays[2].bRate - 1) * (1 + baseRate.bRebate);
+					factor2[0] = (parlays[2].bRate - 1) * (1 + bRebate);
 					// 当前输一注净亏系数：-1+B返水
-					factor2[1] = -1 + baseRate.bRebate;
+					factor2[1] = -1 + bRebate;
 					// A平台串子全红净结果
 					factor2[2] = aWinLoss;
 					// 第二场B平台已实现净盈亏
@@ -589,7 +606,8 @@ public class HedgingDTO extends BaseEntity {
 			for (int i = 0; i < N; i++) {
 				double bHedgingCoin = bHedgingCoins[i];
 
-				result.add(new Out("串子第" + (i + 1) + "场输", loss_ + (bLossFactor_ * sumBInCoin) + (bHedgingCoin * parlays[i].bWinFactor(baseRate.bRebate))));
+				result.add(new Out("串子第" + (i + 1) + "场输", loss_ + (bLossFactor_ * sumBInCoin)
+						+ (bHedgingCoin * parlays[i].bWinFactor(getBRebate()))));
 				sumBInCoin += bHedgingCoin;
 			}
 			// 计算 A平台 串子赢的情况
@@ -610,7 +628,7 @@ public class HedgingDTO extends BaseEntity {
 
 	public double calcAvgProfit(double[] bHedgingCoins) {
 		// 初始成本和产出
-		return getLoss() + (bHedgingCoins[0] * parlays[0].bWinFactor(baseRate.bRebate));
+		return getLoss() + (bHedgingCoins[0] * parlays[0].bWinFactor(getBRebate()));
 	}
 
 	/** 根据当前返水配置刷新方案 */

@@ -267,7 +267,7 @@ public class BetMatchService {
 	static final ThreadPoolExecutor subTaskThreadPool = TaskUtils.newThreadPool(4, 4
 			, 2048, "game-bet-match-", new ThreadPoolExecutor.AbortPolicy());
 
-	public Pair<HedgingDTO[], Long> match(Map<GameDTO, GameDTO> gameAllMapper, int parlaysSize, int topSize) {
+	public Pair<HedgingDTO[], Long> match(Map<GameDTO, GameDTO> gameAllMapper, int parlaysSize, int topSize, Pair<BetProvider, BetProvider> pair) {
 		// 目前仅支持二串一，三串一，4个以上串子所需算力过大
 		if (parlaysSize < 2 || parlaysSize > 3) {
 			throw new IllegalArgumentException("串子大小参数错误：" + parlaysSize);
@@ -317,7 +317,7 @@ public class BetMatchService {
 					// 第一层逻辑与 match 完全一致
 					final GameDTO aGame = aGames[idx];
 
-					calcPathHedgingOdds(gameMapper, aGames, new Odds[parlaysSize], 0, parlaysSize, localTop, aGame, idx, baseRateConifg);
+					calcPathHedgingOdds(gameMapper, aGames, new Odds[parlaysSize], 0, parlaysSize, localTop, aGame, idx, baseRateConifg, pair);
 					return true;
 				}));
 			}
@@ -372,12 +372,13 @@ public class BetMatchService {
 	 * @param localTop TopN 缓存
 	 */
 	private void backtrackParallel(Map<GameDTO, GameDTO> gameMapper, GameDTO[] aGames, int start,
-	                               Odds[] path, int depth, int parlaysSize, LocalTopNArray localTop, BaseRateConifg baseRateConifg) {
+	                               Odds[] path, int depth, int parlaysSize, LocalTopNArray localTop, BaseRateConifg baseRateConifg,
+	                               Pair<BetProvider, BetProvider> pair) {
 		// 递归终止条件：已达到要求的串子大小
 		if (depth == parlaysSize) {
 			// 由于 currPath 会继续进行回溯，这里进行精准拷贝（长度固定，非常快）
 			final Odds[] snapshot = Arrays.copyOf(path, parlaysSize);
-			localTop.tryAddAndCounter(new HedgingDTO(snapshot, baseRateConifg));
+			localTop.tryAddAndCounter(new HedgingDTO(pair, snapshot, baseRateConifg));
 			return;
 		}
 
@@ -388,7 +389,7 @@ public class BetMatchService {
 				continue;
 			}
 			// 计算对冲路径
-			calcPathHedgingOdds(gameMapper, aGames, path, depth, parlaysSize, localTop, nextGame, i, baseRateConifg);
+			calcPathHedgingOdds(gameMapper, aGames, path, depth, parlaysSize, localTop, nextGame, i, baseRateConifg, pair);
 		}
 	}
 
@@ -405,7 +406,8 @@ public class BetMatchService {
 	 * @param idx 当前层指针
 	 */
 	private void calcPathHedgingOdds(Map<GameDTO, GameDTO> gameMapper, GameDTO[] aGames, Odds[] path, int depth,
-	                                 int parlaysSize, LocalTopNArray localTop, GameDTO aGame, int idx, BaseRateConifg baseRateConifg) {
+	                                 int parlaysSize, LocalTopNArray localTop, GameDTO aGame, int idx, BaseRateConifg baseRateConifg,
+	                                 Pair<BetProvider, BetProvider> pair) {
 		final List<OddsInfo> aOddsList = aGame.odds;
 		for (final OddsInfo aOdd : aOddsList) {
 			if (aOdd == null || !aOdd.type.open) { // 跳过未开放的赔率盘口
@@ -438,7 +440,7 @@ public class BetMatchService {
 				path[depth] = oddsNode;
 
 				// --- 递归下一层：传递 i + 1 确保不选重复比赛 ---
-				backtrackParallel(gameMapper, aGames, idx + 1, path, depth + 1, parlaysSize, localTop, baseRateConifg);
+				backtrackParallel(gameMapper, aGames, idx + 1, path, depth + 1, parlaysSize, localTop, baseRateConifg, pair);
 
 				// DFS回溯算法：清理当前节点状态，供循环的下一个分支使用（每层只清理当前层级的节点状态）
 				// currentPath.remove(currentPath.size() - 1);

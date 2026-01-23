@@ -9,10 +9,12 @@ import com.bojiu.webapp.user.dto.*;
 import com.bojiu.webapp.user.dto.GameDTO.OddsInfo;
 import com.bojiu.webapp.user.dto.HedgingDTO.Odds;
 import com.bojiu.webapp.user.dto.HedgingDTO.Out;
+import com.bojiu.webapp.user.model.BetProvider;
 import com.bojiu.webapp.user.model.OddsType;
 import com.bojiu.webapp.user.utils.*;
 import com.bojiu.webapp.user.vo.HedgingVO;
 import lombok.extern.slf4j.Slf4j;
+import org.apache.commons.lang3.tuple.Pair;
 import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.Test;
 
@@ -28,8 +30,11 @@ public class JavaTest {
 	@Test
 	public void hedgingTest() {
 		final BaseRateConifg baseRateConifg = BaseRateConifg.defaultCfg();
-		baseRateConifg.aRebate = 0.02;
-		HedgingDTO dto = new HedgingDTO(new Odds[] {
+		BetProvider parlaysProvider = BetProvider.HG;
+		BetProvider hedgingProvider = BetProvider.PS;
+		Pair<BetProvider, BetProvider> pair = Pair.of(parlaysProvider, hedgingProvider);
+		baseRateConifg.rebate.put(parlaysProvider, 0.02);
+		HedgingDTO dto = new HedgingDTO(pair, new Odds[] {
 				new Odds(1.69, 2.49, 0),
 				new Odds(1.58, 2.71, 0),
 		}, baseRateConifg);

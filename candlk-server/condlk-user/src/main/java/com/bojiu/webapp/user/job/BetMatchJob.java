@@ -65,7 +65,7 @@ public class BetMatchJob {
 				final Map<GameDTO, GameDTO> gameMapper = betMatchService.getGameMapper(pair, true);
 				log.info("【{}】->【{}】进行赛事映射完成，总【{}】场。", parlaysProvider, hedgingProvider, gameMapper.size());
 
-				final Pair<HedgingDTO[], Long> topNPair = betMatchService.match(gameMapper, parlaysSize, 1000);
+				final Pair<HedgingDTO[], Long> topNPair = betMatchService.match(gameMapper, parlaysSize, 1000, pair);
 				final HedgingDTO[] topN = topNPair.getKey();
 				if (topN.length > 0) {
 					for (HedgingDTO dto : topN) {

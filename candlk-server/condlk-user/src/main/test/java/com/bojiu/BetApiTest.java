@@ -65,8 +65,8 @@ public class BetApiTest {
 	@Test
 	public void matchTest() {
 		int parlaysSize = 3; // 串关大小（3场比赛为一组）
-		BetProvider parlaysProvider = BetProvider.HG; // 组串子的厂家
-		BetProvider hedgingProvider = BetProvider.PS; // 组串子的厂家
+		BetProvider parlaysProvider = BetProvider.HG;
+		BetProvider hedgingProvider = BetProvider.PS;
 
 		// 以下将串关平台称为“A”，对冲平台称为“B”
 		long startTime = System.currentTimeMillis();
@@ -76,7 +76,7 @@ public class BetApiTest {
 		log.info("查询赛事映射完成，耗时：{}ms", System.currentTimeMillis() - startTime);
 
 		startTime = System.currentTimeMillis();
-		Pair<HedgingDTO[], Long> pair = betMatchService.match(gameMapper, parlaysSize, 1000);
+		Pair<HedgingDTO[], Long> pair = betMatchService.match(gameMapper, parlaysSize, 1000, Pair.of(parlaysProvider, hedgingProvider));
 		final HedgingDTO[] globalTop = pair.getKey();
 
 		final NumberFormat format = NumberFormat.getInstance();
