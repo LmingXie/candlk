@@ -21,7 +21,7 @@ import static com.bojiu.webapp.base.service.RemoteSyncService.*;
 @Getter
 public enum MetaType implements ValueProxyImpl<MetaType, Integer>, Visible {
 
-	game(0, "游戏配置", State.INTERNAL, false, true, GAME),
+	game(0, "游戏配置", State.INTERNAL, false, false, GAME),
 	/**
 	 * 游戏供应商配置
 	 *
@@ -33,7 +33,7 @@ public enum MetaType implements ValueProxyImpl<MetaType, Integer>, Visible {
 	 *
 	 * @see com.bojiu.webapp.user.dto.BaseRateConifg
 	 */
-	base_rate_config(2, "基础返点配置", State.PROTECTED, true, false, USER),
+	base_rate_config(2, "基础返点配置", State.PROTECTED, true, true, USER),
 	/** 数据库升级标记 */
 	db_upgrade(3, "全局账号配置", State.PROTECTED, true, false, USER),
 	;
@@ -47,23 +47,23 @@ public enum MetaType implements ValueProxyImpl<MetaType, Integer>, Visible {
 	public final Class<? extends MetaValue> configClazz;
 	/** 使用缓存的 微服务 名称数组（不在该数组中的微服务，调用获取缓存会直接报错） */
 	public final String[] cacheInServices;
-	/** 复制指定商户配置，默认 false=不复制，true=复制 */
-	public final boolean copySpecifiedConfig;
+	/** 是否按用户隔离 */
+	public final boolean isolationUser;
 
 	/**
 	 * @param state PUBLIC=所有商户公开可见；PROTECTED=商户级（只能看商户自己的）；INTERNAL=平台级；PRIVATE=均不可见
 	 */
-	MetaType(Integer value, String label, State state, boolean initCopyFromGlobal, boolean copySpecifiedConfig, Class<? extends MetaValue> configClazz, String... cacheInServices) {
+	MetaType(Integer value, String label, State state, boolean initCopyFromGlobal, boolean isolationUser, Class<? extends MetaValue> configClazz, String... cacheInServices) {
 		this.value = value;
 		this.initCopyFromGlobal = initCopyFromGlobal;
 		this.configClazz = configClazz;
 		this.proxy = new ValueProxy<>(this, state, value, label);
 		this.cacheInServices = cacheInServices;
-		this.copySpecifiedConfig = copySpecifiedConfig;
+		this.isolationUser = isolationUser;
 	}
 
-	MetaType(Integer value, String label, State state, boolean initCopyFromGlobal, boolean copySpecifiedConfig, String... cacheInServices) {
-		this(value, label, state, initCopyFromGlobal, copySpecifiedConfig, null, cacheInServices);
+	MetaType(Integer value, String label, State state, boolean initCopyFromGlobal, boolean isolationUser, String... cacheInServices) {
+		this(value, label, state, initCopyFromGlobal, isolationUser, null, cacheInServices);
 	}
 
 	MetaType(Integer value, String label, State state, boolean initCopyFromGlobal, String... cacheInServices) {

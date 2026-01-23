@@ -10,7 +10,8 @@ import com.bojiu.common.web.Page;
 import com.bojiu.common.web.Ready;
 import com.bojiu.context.auth.Permission;
 import com.bojiu.context.i18n.UserI18nKey;
-import com.bojiu.context.model.*;
+import com.bojiu.context.model.Option;
+import com.bojiu.context.model.RedisKey;
 import com.bojiu.context.web.Jsons;
 import com.bojiu.context.web.ProxyRequest;
 import com.bojiu.webapp.base.action.BaseAction;
@@ -27,7 +28,6 @@ import me.codeplayer.util.*;
 import org.springframework.data.redis.core.ZSetOperations;
 import org.springframework.web.bind.annotation.*;
 
-import static com.bojiu.webapp.base.entity.Merchant.PLATFORM_ID;
 import static com.bojiu.webapp.user.model.MetaType.base_rate_config;
 import static com.bojiu.webapp.user.model.UserRedisKey.*;
 
@@ -66,7 +66,8 @@ public class BetAction extends BaseAction {
 			final Map<String, String> allPair = user.asAllPair() ? BetMatchJob.ALL_PAIR : BetMatchJob.ALL_PAIR2;
 			I18N.assertTrue(allPair.containsKey(query.pair), UserI18nKey.ILLEGAL_REQUEST);
 		}
-		final String key = searchPlan ? HEDGING_LIST_KEY + user.getId() : BET_MATCH_DATA_KEY + query.pair;
+		final Long userId = user.getId();
+		final String key = searchPlan ? HEDGING_LIST_KEY + userId : BET_MATCH_DATA_KEY + query.pair;
 		final List<Object> scores = RedisUtil.execInPipeline(redisOps -> {
 			final ZSetOperations<String, String> opsForZSet = redisOps.opsForZSet();
 			opsForZSet.reverseRangeByScore(key, DEFAULT_MIN_SCORE, DEFAULT_MAX_SCORE, page.offset(), 10_000);
@@ -89,7 +90,7 @@ public class BetAction extends BaseAction {
 			}
 			page.fromAll(vos);
 			if (!searchPlan) { // 已存档的方案无须再进行计算
-				final BaseRateConifg baseRateConifg = metaService.getCachedParsedValue(PLATFORM_ID, base_rate_config, BaseRateConifg.class);
+				final BaseRateConifg baseRateConifg = metaService.getCachedParsedValue(userId, base_rate_config,  BaseRateConifg.class);
 				for (HedgingVO vo : page.getList()) { // 只计算分页部分数据的利润
 					vo.flush(baseRateConifg);
 				}
@@ -105,10 +106,11 @@ public class BetAction extends BaseAction {
 	@PostMapping("/save")
 	@Permission(Permission.USER)
 	public Messager<Void> save(ProxyRequest q, String value) {
+		final Long userId = q.getSessionUser().getId();
 		return RedisUtil.fastAttemptInLock(RedisKey.USER_OP_LOCK_PREFIX, () -> {
-			final BaseRateConifg baseRateConifg = metaService.getCachedParsedValue(PLATFORM_ID, base_rate_config, BaseRateConifg.class);
+			final BaseRateConifg baseRateConifg = metaService.getCachedParsedValue(userId, base_rate_config, BaseRateConifg.class);
 			final HedgingDTO dto = HedgingVO.ofAndFlush(value, baseRateConifg);
-			final String hedgingListKey = HEDGING_LIST_KEY + q.getSessionUser().getId();
+			final String hedgingListKey = HEDGING_LIST_KEY + userId;
 			if (dto.hasValidId()) {
 				final Long id = dto.getId();
 				if (!RedisUtil.opsForZSet().rangeByScore(hedgingListKey, id, id).isEmpty()) {

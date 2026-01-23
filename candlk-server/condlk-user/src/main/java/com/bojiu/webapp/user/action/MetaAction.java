@@ -12,7 +12,6 @@ import com.bojiu.context.model.Option;
 import com.bojiu.context.web.ProxyRequest;
 import com.bojiu.webapp.base.action.BaseAction;
 import com.bojiu.webapp.user.entity.Meta;
-import com.bojiu.webapp.user.entity.User;
 import com.bojiu.webapp.user.form.MetaForm;
 import com.bojiu.webapp.user.form.query.MetaQuery;
 import com.bojiu.webapp.user.model.MetaType;
@@ -49,9 +48,7 @@ public class MetaAction extends BaseAction {
 	@PostMapping("/edit")
 	@Permission(Permission.USER)
 	public Messager<Meta> edit(ProxyRequest q, @Validated MetaForm form) {
-		form.merchantId = PLATFORM_ID;
-		User user = q.getSessionUser();
-		I18N.assertTrue(user.asAllPair(), AdminI18nKey.PERMISSION_DENIED);
+		form.merchantId = form.type.isolationUser ? q.getSessionUser().getId() : PLATFORM_ID;
 		final Messager<Meta> msger = metaAdminService.addOrEdit(null, form.copyTo(Meta::new), true);
 		if (msger.isOK()) {
 			GlobalCacheSyncService.refreshCache(msger.data());
@@ -64,14 +61,16 @@ public class MetaAction extends BaseAction {
 	@GetMapping("/types")
 	@Permission(Permission.USER)
 	public Messager<MetaVO> types(ProxyRequest q, MetaForm form) {
-		return Messager.exposeData(MetaVO.fromItem(metaAdminService.get(q.getMerchantId(), form.getType().value, form.getName())));
+		final Long merchantId = form.type.isolationUser ? q.getSessionUser().getId() : PLATFORM_ID;
+		return Messager.exposeData(MetaVO.fromItem(metaAdminService.get(merchantId, form.getType().value, form.getName())));
 	}
 
 	@Ready("元数据列表")
 	@GetMapping("/typeItemList")
 	@Permission(Permission.USER)
 	public Messager<List<MetaVO>> typeItemList(ProxyRequest q, MetaQuery query) {
-		final List<Meta> list = metaService.find(q.getMerchantId(), query.type, query.name);
+		final Long merchantId = query.type.isolationUser ? q.getSessionUser().getId() : PLATFORM_ID;
+		final List<Meta> list = metaService.find(merchantId, query.type, query.name);
 		return Messager.exposeData(CollectionUtil.toList(list, MetaVO::from));
 	}
 

@@ -6,8 +6,8 @@ import java.util.function.Function;
 
 import com.bojiu.common.redis.RedisUtil;
 import com.bojiu.context.model.RedisKey;
-import com.bojiu.context.web.Jsons;
-import com.bojiu.webapp.base.service.*;
+import com.bojiu.webapp.base.service.CacheSyncService;
+import com.bojiu.webapp.base.service.RemoteSyncService;
 import com.bojiu.webapp.user.entity.Meta;
 import com.bojiu.webapp.user.model.MetaType;
 import com.github.benmanes.caffeine.cache.Cache;
@@ -18,7 +18,6 @@ import me.codeplayer.util.NumberUtil;
 import me.codeplayer.util.X;
 import org.jspecify.annotations.NonNull;
 import org.jspecify.annotations.Nullable;
-import org.springframework.aop.target.EmptyTargetSource;
 import org.springframework.beans.factory.InitializingBean;
 import org.springframework.data.redis.core.HashOperations;
 import org.springframework.stereotype.Service;
@@ -82,19 +81,24 @@ public class MetaService /*extends BaseServiceImpl<Meta, MetaDao, Long>*/ implem
 		final HashOperations<String, String, String> opsForHash = RedisUtil.opsForHash();
 		if (name != null) {
 			final String value = opsForHash.get(RedisKey.META_PREFIX + merchantId + ":" + type.value, name);
-			final Meta meta = new Meta();
-			meta.setMerchantId(merchantId);
-			meta.setType(type);
-			meta.setName(name);
-			meta.setValue(value);
-			meta.setLabel(type.getLabel());
+			final Meta meta;
+			if (value == null) {
+				meta = MetaService.getDefaultMeta(merchantId, type, name);
+			} else {
+				meta = new Meta();
+				meta.setMerchantId(merchantId);
+				meta.setType(type);
+				meta.setName(name);
+				meta.setValue(value);
+				meta.setLabel(type.getLabel());
+			}
 			return value != null ? List.of(meta) : Collections.emptyList();
 		} else {
 			final Map<String, String> map = opsForHash.entries(RedisKey.META_PREFIX + merchantId + ":" + type.value);
 			if (map.isEmpty()) {
 				return Collections.emptyList();
 			}
-			List<Meta> metas = new ArrayList<>(map.size());
+			final List<Meta> metas = new ArrayList<>(map.size());
 			for (Map.Entry<String, String> entry : map.entrySet()) {
 				final Meta meta = new Meta();
 				meta.setMerchantId(merchantId);
@@ -106,6 +110,19 @@ public class MetaService /*extends BaseServiceImpl<Meta, MetaDao, Long>*/ implem
 			}
 			return metas;
 		}
+	}
+
+	public static Meta getDefaultMeta(Long merchantId, MetaType type, String name) {
+		final Meta meta = new Meta();
+		meta.setMerchantId(merchantId);
+		meta.setType(type);
+		meta.setName(name);
+		meta.setValue(switch (type) {
+			case base_rate_config -> "{\"aPrincipal\":1000,\"aRebate\":0.02,\"aRechargeRate\":0,\"bRebate\":0.025}";
+			default -> throw new RuntimeException("MetaType not found");
+		});
+		meta.setLabel(type.getLabel());
+		return meta;
 	}
 
 	public List<Meta> find(Long merchantId, MetaType type) {

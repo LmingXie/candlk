@@ -1,39 +1,18 @@
 package com.bojiu.webapp.user.service;
 
-import java.math.BigDecimal;
-import java.util.*;
+import java.util.Date;
 import javax.annotation.Resource;
 
-import com.baomidou.mybatisplus.core.conditions.query.QueryWrapper;
-import com.baomidou.mybatisplus.core.conditions.update.UpdateWrapper;
-import com.bojiu.common.context.I18N;
-import com.bojiu.common.dao.MybatisUtil;
-import com.bojiu.common.dao.SmartQueryWrapper;
-import com.bojiu.common.model.*;
+import com.bojiu.common.model.Bean;
+import com.bojiu.common.model.Messager;
 import com.bojiu.common.redis.RedisUtil;
-import com.bojiu.common.util.*;
-import com.bojiu.common.web.Page;
-import com.bojiu.context.AppRegion;
-import com.bojiu.context.brand.FeatureContext;
-import com.bojiu.context.i18n.AdminI18nKey;
 import com.bojiu.context.model.RedisKey;
-import com.bojiu.context.web.Jsons;
-import com.bojiu.context.web.RequestContextImpl;
-import com.bojiu.webapp.base.dto.MerchantContext;
-import com.bojiu.webapp.base.entity.Merchant;
-import com.bojiu.webapp.base.entity.MetaValue;
-import com.bojiu.webapp.base.service.BaseServiceImpl;
-import com.bojiu.webapp.user.dao.MetaDao;
 import com.bojiu.webapp.user.entity.*;
-import com.bojiu.webapp.user.form.query.MetaQuery;
 import com.bojiu.webapp.user.model.MetaType;
 import lombok.extern.slf4j.Slf4j;
-import me.codeplayer.util.*;
-import org.jspecify.annotations.NullMarked;
+import me.codeplayer.util.Assert;
+import me.codeplayer.util.StringUtil;
 import org.springframework.stereotype.Service;
-import org.springframework.transaction.annotation.Transactional;
-
-import static com.bojiu.webapp.user.entity.Meta.*;
 
 /**
  * 元数据表 服务实现类
@@ -91,8 +70,12 @@ public class MetaAdminService /*extends BaseServiceImpl<Meta, MetaDao, Long>*/ {
 	public Meta get(Long merchantId, Integer type, String name) {
 		// var wrapper = smartQueryWrapper().eq(TYPE, type).eq(MERCHANT_ID, merchantId).eq(NAME, name);
 		// return baseDao.selectOne(wrapper);
-		MetaType metaType = MetaType.of(type);
-		return metaService.getCached(merchantId, metaType, name == null ? metaType.name() : name);
+		final MetaType metaType = MetaType.of(type);
+		Meta meta = metaService.getCached(merchantId, metaType, name == null ? metaType.name() : name);
+		if (meta == null) {
+			meta = MetaService.getDefaultMeta(merchantId, metaType, name);
+		}
+		return meta;
 	}
 
 }
