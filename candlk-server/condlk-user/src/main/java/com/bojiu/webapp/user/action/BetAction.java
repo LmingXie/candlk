@@ -173,4 +173,6 @@ public class BetAction extends BaseAction {
 		return Messager.exposeData(betMatchService.calcMuti(value, q.now()));
 	}
 
+	// TODO: 2026/1/23 允许修改串子赔率
+	// TODO: 2026/1/23 调整为只拿当天的赛事组串子
 }

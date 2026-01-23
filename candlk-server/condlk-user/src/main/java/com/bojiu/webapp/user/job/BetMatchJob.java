@@ -28,16 +28,15 @@ public class BetMatchJob {
 
 	/** 需要匹配的平台对 */
 	static final List<Pair<BetProvider, BetProvider>> matchPair = List.of(
-			Pair.of(D1CE, HG),
 			Pair.of(D1CE, KY),
-			Pair.of(HG, KY),
-			Pair.of(HG, D1CE),
-			Pair.of(KY, PS),
-			Pair.of(HG, PS)
+			Pair.of(D1CE, HG),
+			Pair.of(D1CE, PS),
+
+			Pair.of(KY, HG),
+			Pair.of(KY, PS)
 	);
 	static final List<Pair<BetProvider, BetProvider>> matchPair2 = List.of(
-			Pair.of(HG, KY),
-			Pair.of(HG, PS),
+			Pair.of(KY, HG),
 			Pair.of(KY, PS)
 	);
 	public static final Map<String, String> ALL_PAIR = new TreeMap<>(), ALL_PAIR2 = new TreeMap<>();
@@ -53,9 +52,9 @@ public class BetMatchJob {
 		}
 	}
 
-	@Scheduled(cron = "${service.cron.BetMatchJob:0 0/2 * * * ?}")
+	@Scheduled(cron = "${service.cron.BetMatchJob:0/10 * * * * ?}")
 	public void run() {
-		RedisUtil.fastAttemptInLock("bet-match-job", 30 * 1000 * 60, () -> {
+		RedisUtil.fastAttemptInLock("bet-match-job", 5 * 1000 * 60, () -> {
 			long startTime = System.currentTimeMillis();
 			final int parlaysSize = 3; // 串关大小（3场比赛为一组）
 			final NumberFormat format = NumberFormat.getInstance();
@@ -63,7 +62,7 @@ public class BetMatchJob {
 				long beginTime = System.currentTimeMillis();
 				final String parlaysProvider = pair.getKey().name(), hedgingProvider = pair.getValue().name();
 				// 获取A平台到B平台赛事的映射
-				final Map<GameDTO, GameDTO> gameMapper = betMatchService.getGameMapper(pair);
+				final Map<GameDTO, GameDTO> gameMapper = betMatchService.getGameMapper(pair, true);
 				log.info("【{}】->【{}】进行赛事映射完成，总【{}】场。", parlaysProvider, hedgingProvider, gameMapper.size());
 
 				final Pair<HedgingDTO[], Long> topNPair = betMatchService.match(gameMapper, parlaysSize, 1000);
@@ -83,8 +82,8 @@ public class BetMatchJob {
 					});
 				}
 
-				log.info("【{}】->【{}】匹配结束，共【{}】种组合，计算最佳结果：{}，耗时：{} ms", parlaysProvider, hedgingProvider,
-						format.format(topNPair.getValue()), topN.length, System.currentTimeMillis() - beginTime);
+				log.info("【{}】->【{}】匹配结束，共【{}】种组合，计算最佳结果：{}，耗时：{} s", parlaysProvider, hedgingProvider,
+						format.format(topNPair.getValue()), topN.length, (System.currentTimeMillis() - beginTime) / 1000D);
 			}
 
 			log.info("【刷新推荐串子】完成，耗时：{} s", (System.currentTimeMillis() - startTime) / 1000D);

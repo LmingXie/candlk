@@ -17,8 +17,7 @@ import com.bojiu.webapp.user.vo.HedgingVO;
 import com.github.benmanes.caffeine.cache.Cache;
 import com.github.benmanes.caffeine.cache.Caffeine;
 import lombok.extern.slf4j.Slf4j;
-import me.codeplayer.util.ArrayUtil;
-import me.codeplayer.util.CollectionUtil;
+import me.codeplayer.util.*;
 import org.apache.commons.lang3.tuple.Pair;
 import org.jspecify.annotations.NonNull;
 import org.jspecify.annotations.Nullable;
@@ -104,24 +103,38 @@ public class BetMatchService {
 		return vo;
 	}
 
-	/** 获取A平台到B平台赛事的映射 */
 	public final Map<GameDTO, GameDTO> getGameMapper(Pair<BetProvider, BetProvider> pair) {
+		return getGameMapper(pair, false);
+	}
+
+	/** 获取A平台到B平台赛事的映射 */
+	public final Map<GameDTO, GameDTO> getGameMapper(Pair<BetProvider, BetProvider> pair, boolean limieEndTime) {
 		// 查询平台上的全部赛事和赔率信息
 		final List<String> values = RedisUtil.opsForHash().multiGet(GAME_BETS_PERFIX, Arrays.asList(pair.getKey().name(), pair.getValue().name()));
 		final List<GameDTO> gameBets = Jsons.parseArray(values.get(0), GameDTO.class),
 				hedgingBets = Jsons.parseArray(values.get(1), GameDTO.class);
-		return getGameMap(gameBets, hedgingBets);
+		return getGameMap(gameBets, hedgingBets, limieEndTime);
 	}
 
 	private @NonNull Map<GameDTO, GameDTO> getGameMap(List<GameDTO> gameBets, List<GameDTO> hedgingBets) {
+		return getGameMap(gameBets, hedgingBets, false);
+	}
+
+	private @NonNull Map<GameDTO, GameDTO> getGameMap(List<GameDTO> gameBets, List<GameDTO> hedgingBets, boolean limieEndTime) {
 		// A平台赛事 与 B平台赛事 的映射
 		final Map<GameDTO, GameDTO> gameMapper = new HashMap<>(Math.max(gameBets.size(), hedgingBets.size()), 1F);
 		// 根据开赛时间分组（由于时间是更大的尺度，因此先匹配时间，再匹配队伍名称）
 		final Map<Date, List<GameDTO>> hedgingMap = CollectionUtil.groupBy(hedgingBets, GameDTO::getOpenTime);
 		final boolean isTest = Env.inTest();
 
+		// 只保留最近3天的赛事
+		final long maxEndTime = limieEndTime ? new EasyDate().beginOf(Calendar.DATE).addDay(3).getTime() : 0;
+
 		// 从 hedgingBets 过滤能在 hedgingBets 匹配的赛事
 		for (GameDTO aGame : gameBets) {
+			if (limieEndTime && aGame.openTimeMs() >= maxEndTime) {
+				continue;
+			}
 			final List<GameDTO> bGames = hedgingMap.get(aGame.getOpenTime());
 			if (bGames != null) {
 				// 匹配队伍名（假设同一时间，同一只队伍不能同时存在两场比赛）
@@ -254,16 +267,11 @@ public class BetMatchService {
 	static final ThreadPoolExecutor subTaskThreadPool = TaskUtils.newThreadPool(4, 4
 			, 2048, "game-bet-match-", new ThreadPoolExecutor.AbortPolicy());
 
-	public Pair<HedgingDTO[], Long> match(Map<GameDTO, GameDTO> gameMapper, int parlaysSize, int topSize) {
+	public Pair<HedgingDTO[], Long> match(Map<GameDTO, GameDTO> gameAllMapper, int parlaysSize, int topSize) {
 		// 目前仅支持二串一，三串一，4个以上串子所需算力过大
 		if (parlaysSize < 2 || parlaysSize > 3) {
 			throw new IllegalArgumentException("串子大小参数错误：" + parlaysSize);
 		}
-
-		final GameDTO[] aGames = gameMapper.keySet().toArray(new GameDTO[0]);
-
-		Arrays.sort(aGames, Comparator.comparingLong(GameDTO::openTimeMs));
-		log.info("开始并行匹配（仅第一层异步）：{}串1，共{}场比赛", parlaysSize, aGames.length);
 
 		// 线程级别的TopN注册表（将ThreadLocal暴露出来）
 		final ConcurrentMap<Thread, LocalTopNArray> THREAD_TOP_N_REGISTRY = new ConcurrentHashMap<>();
@@ -277,18 +285,42 @@ public class BetMatchService {
 
 		final List<Future<Boolean>> futures = new ArrayList<>();
 		final BaseRateConifg baseRateConifg = metaService.getCachedParsedValue(PLATFORM_ID, base_rate_config, BaseRateConifg.class);
-		for (int i = 0; i < aGames.length; i++) {
-			final int idx = i;
-			futures.add(subTaskThreadPool.submit(() -> {
-				// 线程私有 TopN（同线程所有任务共享）
-				final LocalTopNArray localTop = THREAD_LOCAL_TOP.get();
+		final Map<Long, Map<GameDTO, GameDTO>> splitGroup = new HashMap<>(4, 1F); // 由于过滤了最近3天的数据，因此不会存在超出的问题
+		final EasyDate d = new EasyDate();
+		for (Map.Entry<GameDTO, GameDTO> entry : gameAllMapper.entrySet()) {
+			final GameDTO gameDTO = entry.getKey();
+			final Long openTimeMs = gameDTO.openTimeMs();
+			d.setTime(openTimeMs).beginOf(Calendar.DATE).setHour(12);
 
-				// 第一层逻辑与 match 完全一致
-				final GameDTO aGame = aGames[idx];
+			// 如果在当天 12 点之前，则归到前一天的 12 点
+			if (openTimeMs < d.getTime()) {
+				d.addDay(-1);
+			}
+			final long groupBeginTime = d.getTime();
 
-				calcPathHedgingOdds(gameMapper, aGames, new Odds[parlaysSize], 0, parlaysSize, localTop, aGame, idx, baseRateConifg);
-				return true;
-			}));
+			splitGroup.computeIfAbsent(groupBeginTime, k -> new HashMap<>())
+					.put(gameDTO, entry.getValue());
+		}
+		for (Map.Entry<Long, Map<GameDTO, GameDTO>> entry : splitGroup.entrySet()) {
+			final Map<GameDTO, GameDTO> gameMapper = entry.getValue();
+			final GameDTO[] aGames = gameMapper.keySet().toArray(new GameDTO[0]);
+
+			Arrays.sort(aGames, Comparator.comparingLong(GameDTO::openTimeMs));
+			log.info("开始并行匹配【{}】：{}串1，共{}场比赛", d.setTime(entry.getKey()), parlaysSize, aGames.length);
+
+			for (int i = 0; i < aGames.length; i++) {
+				final int idx = i;
+				futures.add(subTaskThreadPool.submit(() -> {
+					// 线程私有 TopN（同线程所有任务共享）
+					final LocalTopNArray localTop = THREAD_LOCAL_TOP.get();
+
+					// 第一层逻辑与 match 完全一致
+					final GameDTO aGame = aGames[idx];
+
+					calcPathHedgingOdds(gameMapper, aGames, new Odds[parlaysSize], 0, parlaysSize, localTop, aGame, idx, baseRateConifg);
+					return true;
+				}));
+			}
 		}
 
 		// 等待全部任务完成
@@ -350,13 +382,13 @@ public class BetMatchService {
 		}
 
 		for (int i = start; i < aGames.length; i++) {
-			final GameDTO aGame = aGames[i];
+			final GameDTO nextGame = aGames[i];
 			// 时间约束剪枝
-			if (depth > 0 && isValidTimeGap(path, depth, aGame)) {
+			if (depth > 0 && !isValidTimeGap(path, depth, nextGame)) {
 				continue;
 			}
 			// 计算对冲路径
-			calcPathHedgingOdds(gameMapper, aGames, path, depth, parlaysSize, localTop, aGame, i, baseRateConifg);
+			calcPathHedgingOdds(gameMapper, aGames, path, depth, parlaysSize, localTop, nextGame, i, baseRateConifg);
 		}
 	}
 
@@ -417,14 +449,15 @@ public class BetMatchService {
 	/** 赛事最小时间间隔 */
 	static final long LIMIT_MIN = 1000 * 60 * 60 * 2,
 	/** 赛事最大时间间隔 */
-	LIMIT_MAX = 1000 * 60 * 60 * 24 * 2;
+	LIMIT_MAX = 1000 * 60 * 60 * 24;
 
-	/** 两场赛事之间的时间间隔 */
+	/** 串子赛事必须在同一天 */
 	private boolean isValidTimeGap(Odds[] path, int depth, GameDTO nextGame) {
+		final long nextOpenTime = nextGame.openTimeMs();
 		final long lastGameTime = path[depth - 1].getGameOpenTime();
-		final long diff = nextGame.openTimeMs() - lastGameTime;
-		// 2小时到2天之间
-		return diff < LIMIT_MIN || diff > LIMIT_MAX;
+
+		// 与前一场比赛间隔大于2小时，且与第一场比赛间隔不超过1天
+		return (nextOpenTime - lastGameTime) >= LIMIT_MIN/* && (nextOpenTime - path[0].getGameOpenTime()) <= LIMIT_MAX*/;
 	}
 
 }

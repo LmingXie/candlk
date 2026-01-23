@@ -193,6 +193,7 @@ public class GameDTO extends TimeBasedEntity {
 
 	}
 
+	@Getter(AccessLevel.NONE)
 	transient Long openTimeMs;
 
 	public Long openTimeMs() {
