@@ -39,8 +39,8 @@ public class JavaTest {
 				new Odds(1.58, 2.71, 0),
 		}, baseRateConifg);
 		System.out.println("综合赔率：" + dto.overallOdds());
-		System.out.println("A平台 串子投注金额：" + dto.getAInCoin());
-		System.out.println("A平台 返水金额（串子全输时）：" + dto.getARebateCoin());
+		System.out.println("A平台 串子投注金额：" + dto.aInCoin());
+		System.out.println("A平台 返水金额（串子全输时）：" + dto.aRebateCoin());
 		System.out.println("A平台 串关全输时的固定收益：" + dto.getLoss());
 		System.out.println("A平台 串关全赢时的固定收益（按输赢金额计算返水）：" + dto.getWin());
 

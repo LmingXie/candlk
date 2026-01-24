@@ -29,7 +29,7 @@ public class BaseRateConifg implements MetaValue<BaseRateConifg> {
 
 	@Override
 	public void validate() {
-		I18N.assertTrue(aPrincipal >= 1000 && aPrincipal <= 100_000_000, AdminI18nKey.VALIDATE_LE, "本金", 100_000_000);
+		I18N.assertTrue(aPrincipal >= 1 && aPrincipal <= 100_000_000, AdminI18nKey.VALIDATE_LE, "本金", 100_000_000);
 		I18N.assertTrue(aRechargeRate >= 0 && aRechargeRate < 100, AdminI18nKey.VALIDATE_LE, "平台充值返水", 100);
 		for (BetProvider provider : BetProvider.CACHE) {
 			final Double rate = rebate.get(provider);
