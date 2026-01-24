@@ -46,7 +46,7 @@ public class BetAction extends BaseAction {
 	@Permission(Permission.USER)
 	public Messager<List<Option<String>>> allPair(ProxyRequest q) {
 		User user = q.getSessionUser();
-		final Map<String, String> allPair = user.asAllPair() ? BetMatchJob.ALL_PAIR : BetMatchJob.ALL_PAIR2;
+		final Map<String, String> allPair = user.asAdmin_() ? BetMatchJob.ALL_PAIR : BetMatchJob.ALL_PAIR2;
 		List<Option<String>> options = new ArrayList<>(allPair.size());
 		for (Map.Entry<String, String> entry : allPair.entrySet()) {
 			options.add(Option.of(entry.getKey(), entry.getValue()));
@@ -63,7 +63,7 @@ public class BetAction extends BaseAction {
 		final Page<HedgingVO> page = q.getPage();
 		User user = q.getSessionUser();
 		if (!searchPlan) {
-			final Map<String, String> allPair = user.asAllPair() ? BetMatchJob.ALL_PAIR : BetMatchJob.ALL_PAIR2;
+			final Map<String, String> allPair = user.asAdmin_() ? BetMatchJob.ALL_PAIR : BetMatchJob.ALL_PAIR2;
 			I18N.assertTrue(allPair.containsKey(query.pair), UserI18nKey.ILLEGAL_REQUEST);
 		}
 		final Long userId = user.getId();
@@ -98,7 +98,7 @@ public class BetAction extends BaseAction {
 		} else {
 			page.setList(vos);
 		}
-		page.setTotal(size);
+		page.setTotal((Long) scores.get(1));
 		return Messager.exposeData(page);
 	}
 
@@ -176,8 +176,5 @@ public class BetAction extends BaseAction {
 		I18N.assertNotNull(value);
 		return Messager.exposeData(betMatchService.calcMuti(value, q.now()));
 	}
-
-	// TODO: 2026/1/24 修改本金后没有重新计算
-	// TODO: 2026/1/24 支持添加删除冻结账号
 
 }

@@ -21,15 +21,19 @@ import me.codeplayer.util.StringUtil;
 @Getter
 public class User extends BaseMember {
 
-	public static final List<String> accounts = List.of(
-			"admin_",
-			"Gqy007"
-	);
-	public static final List<Long> accountIds = new ArrayList<>(accounts.size());
+	public static List<String> accounts;
+	public static List<Long> accountIds;
 
-	static {
-		for (String account : accounts) {
-			accountIds.add(StringToLongUtil.stringToLong(account));
+	public static void initLoad() {
+		final Map<String, String> userMap = RedisUtil.opsForHash().entries(UserRedisKey.USER_INFO);
+		if (!userMap.isEmpty()) {
+			accounts = new ArrayList<>(userMap.size());
+			accountIds = new ArrayList<>(userMap.size());
+			for (String json : userMap.values()) {
+				final User user = Jsons.parseObject(json, User.class);
+				accounts.add(user.getUsername());
+				accountIds.add(user.getId());
+			}
 		}
 	}
 
@@ -57,7 +61,7 @@ public class User extends BaseMember {
 	}
 
 	public Long getId() {
-		return StringToLongUtil.stringToLong(username);
+		return this.id = StringToLongUtil.stringToLong(username);
 	}
 
 	@Override
@@ -96,7 +100,7 @@ public class User extends BaseMember {
 	}
 
 	/** 是否可查看全部对冲对子 */
-	public boolean asAllPair() {
+	public boolean asAdmin_() {
 		return Cmp.eq(type, 1) || "admin_".equals(username);
 	}
 

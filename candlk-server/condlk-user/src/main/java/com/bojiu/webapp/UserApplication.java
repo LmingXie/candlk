@@ -3,6 +3,7 @@ package com.bojiu.webapp;
 import com.bojiu.common.context.Context;
 import com.bojiu.common.context.ExtendAnnotationBeanNameGenerator;
 import com.bojiu.context.BaseApplication;
+import com.bojiu.webapp.user.entity.User;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.boot.autoconfigure.SpringBootApplication;
 import org.springframework.scheduling.annotation.EnableScheduling;
@@ -24,6 +25,7 @@ public class UserApplication extends BaseApplication {
 		System.setProperty("jdk.http.auth.proxying.disabledSchemes", "");
 		System.setProperty("jdk.http.auth.tunneling.disabledSchemes", "");
 		startup(UserApplication.class, args);
+		User.initLoad();
 	}
 
 }

@@ -1,12 +1,13 @@
 package com.bojiu.webapp.user.action;
 
-import java.util.Date;
+import java.util.*;
 import javax.annotation.Resource;
 
 import com.alibaba.fastjson2.JSONObject;
 import com.bojiu.common.context.I18N;
 import com.bojiu.common.model.Messager;
 import com.bojiu.common.redis.RedisUtil;
+import com.bojiu.common.web.Page;
 import com.bojiu.common.web.Ready;
 import com.bojiu.context.auth.AutoLoginHandler;
 import com.bojiu.context.auth.Permission;
@@ -15,6 +16,7 @@ import com.bojiu.context.model.MessagerStatus;
 import com.bojiu.context.web.*;
 import com.bojiu.webapp.base.action.BaseAction;
 import com.bojiu.webapp.user.entity.User;
+import com.bojiu.webapp.user.form.AddUserForm;
 import com.bojiu.webapp.user.form.MemberLoginForm;
 import com.bojiu.webapp.user.model.UserRedisKey;
 import com.bojiu.webapp.user.service.UserService;
@@ -26,6 +28,9 @@ import me.codeplayer.util.StringUtil;
 import org.springframework.data.redis.core.HashOperations;
 import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.annotation.*;
+
+import static com.bojiu.webapp.user.model.UserRedisKey.HEDGING_LIST_KEY;
+import static com.bojiu.webapp.user.model.UserRedisKey.USER_INFO;
 
 @Slf4j
 @RestController
@@ -48,7 +53,7 @@ public class UserAction extends BaseAction {
 		final HashOperations<String, String, String> opsForHash = RedisUtil.opsForHash();
 		long userId = StringToLongUtil.stringToLong(form.username);
 		final String userKey = StringUtil.toString(userId);
-		final String infoJson = opsForHash.get(UserRedisKey.USER_INFO, userKey);
+		final String infoJson = opsForHash.get(USER_INFO, userKey);
 		if (StringUtil.isEmpty(infoJson)) {
 			return Messager.error(I18N.msg(UserI18nKey.USER_404));
 		}
@@ -76,7 +81,7 @@ public class UserAction extends BaseAction {
 			ok.setData(user);
 			userService.loginAfter(form, ok);
 
-			opsForHash.put(UserRedisKey.USER_INFO, userKey, Jsons.encode(user));
+			opsForHash.put(USER_INFO, userKey, Jsons.encode(user));
 			return Messager.exposeData(JSONObject.of(
 					"username", user.getUsername(),
 					"type", user.getType(),
@@ -98,6 +103,73 @@ public class UserAction extends BaseAction {
 				"username", user.getUsername(),
 				"type", user.getType()
 		));
+	}
+
+	@Ready(value = "用户列表", merchantIdRequired = false)
+	@GetMapping("/list")
+	@Permission(Permission.USER)
+	public Messager<Page<User>> list(ProxyRequest q) {
+		User emp = q.getSessionUser();
+		I18N.assertTrue(emp.asAdmin_(), UserI18nKey.PERMISSION_DENIED);
+		final Page<User> page = q.getPage();
+		Map<String, String> userMap = RedisUtil.opsForHash().entries(USER_INFO);
+		int size = userMap.size();
+		final List<User> vos = new ArrayList<>(size);
+		for (String value : userMap.values()) {
+			vos.add(Jsons.parseObject(value, User.class));
+		}
+		page.setList(vos);
+		page.setTotal(size);
+		return Messager.exposeData(page);
+	}
+
+	@Ready("添加用户")
+	@PostMapping("/add")
+	@Permission(Permission.USER)
+	public Messager<Void> add(ProxyRequest q, @Validated AddUserForm form) {
+		User emp = q.getSessionUser();
+		I18N.assertTrue(emp.asAdmin_(), UserI18nKey.PERMISSION_DENIED);
+		User input = form.copyTo(User::new);
+		final String newUserId = input.getId().toString();
+		final HashOperations<String, String, String> opsForHash = RedisUtil.opsForHash();
+		I18N.assertTrue(!opsForHash.hasKey(USER_INFO, newUserId), "用户已存在");
+		input.setBizFlag(0);
+		opsForHash.put(USER_INFO, newUserId, Jsons.encodeRaw(input));
+		return Messager.OK();
+	}
+
+	@Ready("删除用户")
+	@PostMapping("/delete")
+	@Permission(Permission.USER)
+	public Messager<Void> delete(ProxyRequest q, String userId) {
+		User emp = q.getSessionUser();
+		I18N.assertTrue(emp.asAdmin_(), UserI18nKey.PERMISSION_DENIED);
+		User opUser = Jsons.parseObject(I18N.assertNotNull(RedisUtil.opsForHash()
+				.get(USER_INFO, userId), UserI18nKey.USER_404), User.class);
+		RedisUtil.execInPipeline(redisOps -> {
+			redisOps.opsForHash().delete(USER_INFO, userId);
+			redisOps.delete(HEDGING_LIST_KEY + userId);
+		});
+		RequestContextImpl.removeSession(opUser.getSessionId());
+		return Messager.OK();
+	}
+
+	@Ready("修改用户")
+	@PostMapping("/edit")
+	@Permission(Permission.USER)
+	public Messager<Void> edit(ProxyRequest q, @Validated AddUserForm form) {
+		final String opUserId = form.getId().toString();
+		I18N.assertNotNull(opUserId);
+		User emp = q.getSessionUser();
+		I18N.assertTrue(emp.asAdmin_(), UserI18nKey.PERMISSION_DENIED);
+		final HashOperations<String, String, String> opsForHash = RedisUtil.opsForHash();
+		User opUser = Jsons.parseObject(I18N.assertNotNull(opsForHash.get(USER_INFO, opUserId), UserI18nKey.USER_404), User.class);
+		opUser.setStatus(form.getStatus());
+		opUser.setUsername(form.getUsername());
+		opUser.setPassword(form.getPassword());
+		opsForHash.put(USER_INFO, opUserId, Jsons.encodeRaw(opUser));
+		RequestContextImpl.removeSession(opUser.getSessionId());
+		return Messager.OK();
 	}
 
 }
