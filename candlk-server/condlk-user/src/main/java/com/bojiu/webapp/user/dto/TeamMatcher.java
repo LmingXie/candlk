@@ -32,6 +32,8 @@ public class TeamMatcher {
 			"Maranguape CE,Maranguape FC",
 			"MS Tamya,Tamea",
 			"Cascada SC,Cascada",
+			"Ternana (W),Ternana",
+			"Inter Milan (W),Internazionale",
 	};
 
 	// 预处理后的倒排索引 Map

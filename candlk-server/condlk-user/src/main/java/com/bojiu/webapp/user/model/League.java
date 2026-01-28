@@ -259,5 +259,9 @@ public interface League {
 	String ParaguayPrimeraDivision = "Paraguay Primera Division";
 	/** 埃及乙级联赛 */
 	String EgyptDivision2 = "Egypt Division 2";
+	/** 意大利女子杯 */
+	String ItalyWomenCup = "Italy Women Cup";
+	/** 意大利丙组联赛杯 */
+	String ItalySerieCCup = "Italy Serie C Cup";
 
 }

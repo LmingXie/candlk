@@ -600,6 +600,7 @@ public class PsBetImpl extends WsBaseBetApiImpl {
 			case "Brazil Cearense" -> League.BrazilCampeonatoCearenseSerieA;
 			case "Denmark Superliga" -> League.DenmarkSuperLeague;
 			case "Paraguay Division Profesional" -> League.ParaguayPrimeraDivision;
+			case "Italy Cup Women" -> League.ItalyWomenCup;
 
 			default -> {
 				// 提高巴西联赛的相似度匹配得分
