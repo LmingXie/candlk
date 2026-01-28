@@ -450,38 +450,121 @@ public class HedgingDTO extends BaseEntity {
 				}
 			}
 			if (flag) {
-				final long timeNow = now.getTime();
-				final double bRebate = getBRebate();
-				if (X.isValid(reset)) { // 需要重新计算此前的全部赛事
-					reset();
-					calcFirstGame(timeNow, bRebate);
-					if (timeNow > parlays[0].gameOpenTime) {
-						calcTwoGame(bRebate);
-					}
-					if (timeNow > parlays[1].gameOpenTime) {
-						calcThreeGame(bRebate);
-					}
-				} else {
-					final boolean firstEnd = parlays[0].lock || timeNow > parlays[0].gameOpenTime, // 第一场是否结束
-							twoEnd = parlays[1].lock || timeNow > parlays[1].gameOpenTime; // 第二场是否结束
-					if (threeEnd == null) {
-						threeEnd = (parlays[2].lock || timeNow > parlays[2].gameOpenTime); // 第三场是否结束
-					}
-					// 第一场比赛未开始 || 第二场比赛未开始：计算第二场下注，若存在第三场则继续推导第三场下注额
-					if (!firstEnd || !twoEnd) {
-						calcFirstGame(timeNow, bRebate);
-					}
-					// 第三场比赛开始 || 手动模拟第三场赛果
-					else if (threeEnd) {
-						calcThreeGame(bRebate);
-					}
-					// 第二场比赛开始（赔率不再发生变化）
-					else {
-						calcTwoGame(bRebate);
-					}
-				}
+				calcParlay3(now, threeEnd);
 			}
 		}
+	}
+
+	/** 计算二串一 */
+	private void calcParlay2(Date now) {
+		final long timeNow = now.getTime();
+		final double bRebate = getBRebate();
+		if (X.isValid(reset)) { // 需要重新计算此前的全部赛事
+			reset();
+			// 计算第一场
+			calcFirstGame(timeNow, bRebate);
+			// 计算第二场
+			if (timeNow > parlays[0].gameOpenTime) {
+				calcTwoGame(bRebate);
+			}
+		} else {
+			final boolean firstEnd = parlays[0].lock || timeNow > parlays[0].gameOpenTime, // 第一场是否结束
+					twoEnd = parlays[1].lock || timeNow > parlays[1].gameOpenTime; // 第二场是否结束
+			// 第一场比赛未开始 || 第二场比赛未开始：计算第二场下注，若存在第三场则继续推导第三场下注额
+			if (!firstEnd || !twoEnd) {
+				calcFirstGame(timeNow, bRebate);
+			}
+			// 第二场比赛开始（赔率不再发生变化）
+			else {
+				calcTwoGame(bRebate);
+			}
+		}
+	}
+
+	/** 计算三串一 */
+	private void calcParlay3(Date now, Boolean threeEnd) {
+		final long timeNow = now.getTime();
+		final double bRebate = getBRebate();
+		if (X.isValid(reset)) { // 需要重新计算此前的全部赛事
+			reset();
+			// 计算第一场
+			calcFirstGame(timeNow, bRebate);
+			// 计算第二场
+			if (timeNow > parlays[0].gameOpenTime) {
+				calcTwoGame(bRebate);
+			}
+			// 计算第三场
+			if (timeNow > parlays[1].gameOpenTime) {
+				calcThreeGame(bRebate);
+			}
+		} else {
+			final boolean firstEnd = parlays[0].lock || timeNow > parlays[0].gameOpenTime, // 第一场是否结束
+					twoEnd = parlays[1].lock || timeNow > parlays[1].gameOpenTime; // 第二场是否结束
+			if (threeEnd == null) {
+				threeEnd = (parlays[2].lock || timeNow > parlays[2].gameOpenTime); // 第三场是否结束
+			}
+			// 第一场比赛未开始 || 第二场比赛未开始：计算第二场下注，若存在第三场则继续推导第三场下注额
+			if (!firstEnd || !twoEnd) {
+				calcFirstGame(timeNow, bRebate);
+			}
+			// 第三场比赛开始 || 手动模拟第三场赛果
+			else if (threeEnd) {
+				calcThreeGame(bRebate);
+			}
+			// 第二场比赛开始（赔率不再发生变化）
+			else {
+				calcTwoGame(bRebate);
+			}
+		}
+	}
+
+
+	/** 估算第一局收益情况 */
+	private void calcFirstGame2(long timeNow, double bRebate) {
+		// 若第一场还未开始，需要刷新拓展的对冲投注金额
+		if (reset != null && timeNow < parlays[0].gameOpenTime) {
+			reset();
+		}
+		// 计算A平台串子第一场赛果赔率（第一场赛果系数）
+		final double firstRate = parlays[0].calcAResultRate();
+		// 计算当前的净输赢，A平台串子“后两场全赢”时净结果 W_A_当前（按输赢金额算返水）：
+		//      (串子投注 * 第一场赛果赔率 * 串子第二场赔率 * 串子第三场赔率) + A平台返水金额 * abs（第一场赛果赔率 * 第二场赔率 - 1）- 本金
+		final double ratePct = firstRate * parlays[1].aRate * parlays[2].aRate;
+		final double aWinLoss = aInCoin() * ratePct + aRebateCoin() * Math.abs(ratePct - 1) - baseRate.aPrincipal;
+		final double winLossDiff = aWinLoss - getLoss();
+		// 第二场投注额：(对冲第三场赔率 - 1 + B平台返水) * (净输赢 - 串子输光损失) / (对冲第二场赔率 * 对冲第三场赔率)
+		hedgingCoins[1] = (parlays[2].bRate - 1 + bRebate) * winLossDiff / (parlays[1].bRate * parlays[2].bRate);
+
+		// 第三场投注额：(净输赢 - 串子输光损失) / 对冲第三场赔率
+		hedgingCoins[2] = winLossDiff / parlays[2].bRate;
+
+		// 第一场B平台已实现净盈亏：(B对冲第一场投注 * B平台赛果赔率)
+		final double bWin = hedgingCoins[0] * parlays[0].calcBResultRate(bRebate);
+		// 计算可能的情况
+		factor1 = new Double[5];
+		// 当前第二场净赢系数：（B第二场赔率 -1）*（1+B返水）
+		factor1[0] = (parlays[1].bRate - 1) * (1 + bRebate);
+		// 当前第三场净赢系数：（B第三场赔率 -1）*（1+B返水）
+		factor1[1] = (parlays[2].bRate - 1) * (1 + bRebate);
+		// 当前输一注净亏系数：-1+B返水
+		factor1[2] = -1 + bRebate;
+		// 第一场B平台已实现净盈亏
+		factor1[3] = bWin;
+		// A平台串子“后两场全赢”时净结果
+		factor1[4] = aWinLoss;
+
+		// 在当前赔率和下注计划下，后三种可能路径的总盈亏
+		oneOuts = new ArrayList<>(3);
+		final double sumWin = getLoss() + bWin;
+		// 串子第二场输：输光净结果 + 第一场B平台已实现净盈亏 + B平台第二场投注 * 当前第二场净赢系数
+		oneOuts.add(new Out("第二场挂", sumWin + (hedgingCoins[1] * factor1[0])));
+		// 串子第三场输：输光净结果 + 第一场B平台已实现净盈亏 + B平台第二场投注*当前输一注净亏系数 + B平台第三“场投注*当前第三场净赢系数
+		final double out = sumWin + (hedgingCoins[1] * factor1[2]) + (hedgingCoins[2] * factor1[1]);
+		oneOuts.add(new Out("第三场挂", out));
+		// 串子全赢：串子当前净输赢 + 第一场B平台已实现净盈亏 + 当前输一注净亏系数 *（B平台第二场投注 + B平台第三场投注）
+		final double out2 = aWinLoss + bWin + (factor1[2] * (hedgingCoins[1] + hedgingCoins[2]));
+		oneOuts.add(new Out("串子全赢", out2));
+		log.info("推演一期对冲方案：ID={} 第二场投注={} 第三场投注={} 串子第三场输={} 串子全赢={}", getId(), hedgingCoins[1], hedgingCoins[2], out, out2);
 	}
 
 	/** 估算第一局收益情况 */
@@ -672,6 +755,8 @@ public class HedgingDTO extends BaseEntity {
 	public HedgingDTO flush(@Nullable BaseRateConifg baseRate, double[] hedgingCoins) {
 		this.aInCoin = null;
 		this.aRebateCoin = null;
+		this.bRebate = null;
+		this.aRebate = null;
 		if (baseRate != null) {
 			this.baseRate = baseRate;
 		}
