@@ -16,7 +16,7 @@ spring:
   redis:
     host: 127.0.0.1
     password: 123456
-#    password: UMt|wrqI:?+Y]dN)J54{
+    #    password: UMt|wrqI:?+Y]dN)J54{
     database: 0
 
   ### db连接配置
