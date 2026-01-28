@@ -67,7 +67,7 @@ public class BetAction extends BaseAction {
 			I18N.assertTrue(allPair.containsKey(query.pair), UserI18nKey.ILLEGAL_REQUEST);
 		}
 		final Long userId = user.getId();
-		final String key = searchPlan ? HEDGING_LIST_KEY + userId : BET_MATCH_DATA_KEY + query.pair;
+		final String key = searchPlan ? HEDGING_LIST_KEY + userId : BET_MATCH_DATA_KEY + query.pair + "-" + query.parlaySize;
 		final List<Object> scores = RedisUtil.execInPipeline(redisOps -> {
 			final ZSetOperations<String, String> opsForZSet = redisOps.opsForZSet();
 			opsForZSet.reverseRangeByScore(key, DEFAULT_MIN_SCORE, DEFAULT_MAX_SCORE, page.offset(), 10_000);

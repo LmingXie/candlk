@@ -27,6 +27,7 @@ import org.apache.commons.lang3.tuple.Pair;
 import org.jsoup.Jsoup;
 import org.jsoup.select.Elements;
 import org.jspecify.annotations.NonNull;
+import org.jspecify.annotations.Nullable;
 import org.springframework.data.redis.core.ValueOperations;
 import org.springframework.http.HttpMethod;
 import org.springframework.stereotype.Service;
@@ -359,7 +360,10 @@ public class HgBetImpl extends LoginBaseBetApiImpl {
 		if ("Y".equals(game.getString("ISMASTER"))) {
 			return;
 		}
-		gameDTOs.add(parseGameDTO(isToday, game, openTime, now));
+		final GameDTO dto = parseGameDTO(isToday, game, openTime, now);
+		if (dto != null) {
+			gameDTOs.add(dto);
+		}
 	}
 
 	private List<GameDTO> parseGames(Messager<JSONObject> result, long startTimeThreshold, boolean isToday, Date now) {
@@ -374,7 +378,10 @@ public class HgBetImpl extends LoginBaseBetApiImpl {
 				if (openTime.getTime() >= startTimeThreshold &&
 						!"Fantasy Matches".equals(game.getString("LEAGUE")) // 排除虚拟球赛
 				) {
-					gameDTOs.add(parseGameDTO(isToday, game, openTime, now));
+					final GameDTO dto = parseGameDTO(isToday, game, openTime, now);
+					if (dto != null) {
+						gameDTOs.add(dto);
+					}
 				}
 			}
 			return gameDTOs;
@@ -382,8 +389,8 @@ public class HgBetImpl extends LoginBaseBetApiImpl {
 		return null;
 	}
 
-	private @NonNull GameDTO parseGameDTO(boolean isToday, JSONObject game, Date openTime, Date now) {
-		List<OddsInfo> odds = new ArrayList<>(OddsType.CACHE.length);
+	private @Nullable GameDTO parseGameDTO(boolean isToday, JSONObject game, Date openTime, Date now) {
+		final List<OddsInfo> odds = new ArrayList<>(OddsType.CACHE.length);
 		// 以第一只队伍为准（H表示强队与第一支队伍相同，此时 第一支队伍为 让球方 ）
 		boolean homeIsStrong = "H".equals(game.getString("STRONG")), homeIsHStrong = "H".equals(game.getString("HSTRONG"));
 		final String strongPrefix = homeIsStrong ? "-" : "+", // 全场
@@ -443,6 +450,9 @@ public class HgBetImpl extends LoginBaseBetApiImpl {
 					}
 				}
 			}
+		}
+		if (odds.isEmpty()) {
+			return null;
 		}
 		final GameDTO dto = new GameDTO(game.getLong("ECID"), getProvider(), openTime, convertLeague(game.getString("LEAGUE")),
 				game.getString("TEAM_H"), game.getString("TEAM_C"), odds, now);

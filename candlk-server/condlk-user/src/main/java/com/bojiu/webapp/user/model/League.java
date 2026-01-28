@@ -263,5 +263,11 @@ public interface League {
 	String ItalyWomenCup = "Italy Women Cup";
 	/** 意大利丙组联赛杯 */
 	String ItalySerieCCup = "Italy Serie C Cup";
+	/** 女子冠军杯(在英格兰) */
+	String WomenChampionsCupInEngland = "Women Champions Cup (In England)";
+	/** 沙特联赛U21 */
+	String SaudiEliteLeagueU21 = "Saudi Elite League U21";
+	/** 尼日利亚超级联赛 */
+	String NigeriaPremierLeague = "Nigeria Premier League";
 
 }

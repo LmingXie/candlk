@@ -313,13 +313,17 @@ public class BetMatchService {
 			for (int i = 0; i < aGames.length; i++) {
 				final int idx = i;
 				futures.add(subTaskThreadPool.submit(() -> {
-					// 线程私有 TopN（同线程所有任务共享）
-					final LocalTopNArray localTop = THREAD_LOCAL_TOP.get();
+					try {
+						// 线程私有 TopN（同线程所有任务共享）
+						final LocalTopNArray localTop = THREAD_LOCAL_TOP.get();
 
-					// 第一层逻辑与 match 完全一致
-					final GameDTO aGame = aGames[idx];
+						// 第一层逻辑与 match 完全一致
+						final GameDTO aGame = aGames[idx];
 
-					calcPathHedgingOdds(gameMapper, aGames, new Odds[parlaysSize], 0, parlaysSize, localTop, aGame, idx, baseRateConifg, pair);
+						calcPathHedgingOdds(gameMapper, aGames, new Odds[parlaysSize], 0, parlaysSize, localTop, aGame, idx, baseRateConifg, pair);
+					} catch (Exception e) {
+						log.error("计算串子时出错：", e);
+					}
 					return true;
 				}));
 			}

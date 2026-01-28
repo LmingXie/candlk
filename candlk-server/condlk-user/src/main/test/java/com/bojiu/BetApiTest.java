@@ -64,7 +64,7 @@ public class BetApiTest {
 
 	@Test
 	public void matchTest() {
-		int parlaysSize = 3; // 串关大小（3场比赛为一组）
+		int parlaysSize = 2; // 串关大小（3场比赛为一组）
 		BetProvider parlaysProvider = BetProvider.HG;
 		BetProvider hedgingProvider = BetProvider.PS;
 

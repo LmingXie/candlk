@@ -110,12 +110,14 @@ public class PsBetImpl extends WsBaseBetApiImpl {
 					// 2=主客平
 					parseM(halfOdds, oddsInfos, OddsType.HM);
 				}
-				final Long id = game.getLong(0);
-				final String teamHomeZh = parseTeamName(game.getString(1)), teamClientZh = parseTeamName(game.getString(2)),
-						teamHomeEn = parseTeamName(game.getString(24)), teamClientEn = parseTeamName(game.getString(25));
-				final Date openTime = game.getDate(4);
-				gameDTOS.add(new GameDTO(id, getProvider(), openTime, convertLeague(leagueEn), teamHomeEn, teamClientEn, oddsInfos, now)
-						.initZh(leagueZh, teamHomeZh, teamClientZh));
+				if (!oddsInfos.isEmpty()) {
+					final Long id = game.getLong(0);
+					final String teamHomeZh = parseTeamName(game.getString(1)), teamClientZh = parseTeamName(game.getString(2)),
+							teamHomeEn = parseTeamName(game.getString(24)), teamClientEn = parseTeamName(game.getString(25));
+					final Date openTime = game.getDate(4);
+					gameDTOS.add(new GameDTO(id, getProvider(), openTime, convertLeague(leagueEn), teamHomeEn, teamClientEn, oddsInfos, now)
+							.initZh(leagueZh, teamHomeZh, teamClientZh));
+				}
 			}
 		}
 	}
@@ -601,6 +603,9 @@ public class PsBetImpl extends WsBaseBetApiImpl {
 			case "Denmark Superliga" -> League.DenmarkSuperLeague;
 			case "Paraguay Division Profesional" -> League.ParaguayPrimeraDivision;
 			case "Italy Cup Women" -> League.ItalyWomenCup;
+			case "FIFA Womens Champions Cup" -> League.WomenChampionsCupInEngland;
+			case "Saudi Arabia Elite League U21" -> League.SaudiEliteLeagueU21;
+			case "Nigeria NPFL" -> League.NigeriaPremierLeague;
 
 			default -> {
 				// 提高巴西联赛的相似度匹配得分

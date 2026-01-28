@@ -34,6 +34,9 @@ public class TeamMatcher {
 			"Cascada SC,Cascada",
 			"Ternana (W),Ternana",
 			"Inter Milan (W),Internazionale",
+			"Olympic Club,El Olympi",
+			"Al Orobah Sakakah U21,Al Orubah",
+			"Al Najma Unaizah U21,Al Najma",
 	};
 
 	// 预处理后的倒排索引 Map

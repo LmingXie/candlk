@@ -686,11 +686,23 @@ public class HedgingDTO extends BaseEntity {
 
 	public void toJson() {
 		this.getId(); // 初始化ID
-		for (Odds parlay : parlays) { // 移除冗余的赔率信息
+		int len = parlays.length;
+		List<OddsInfo>[] odds = new ArrayList[len * 2];
+		for (int i = 0, j = 0; i < len; i++, j += 2) {  // 移除冗余的赔率信息
+			final Odds parlay = parlays[i];
+			odds[j] = parlay.aGame.odds;
+			odds[j + 1] = parlay.bGame.odds;
 			parlay.aGame.odds = null;
 			parlay.bGame.odds = null;
 		}
 		json = Jsons.encode(this);
+
+		// odds 引用传递，避免后续业务逻辑NPE
+		for (int i = 0, j = 0; i < len; i++, j += 2) {
+			final Odds parlay = parlays[i];
+			parlay.aGame.odds = odds[j];
+			parlay.bGame.odds = odds[j + 1];
+		}
 	}
 
 	public void reset() {
