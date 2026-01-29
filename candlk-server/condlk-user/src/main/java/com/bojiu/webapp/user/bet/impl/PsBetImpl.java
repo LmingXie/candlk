@@ -8,6 +8,7 @@ import java.util.concurrent.*;
 import com.alibaba.fastjson2.*;
 import com.bojiu.common.model.ErrorMessageException;
 import com.bojiu.common.model.Messager;
+import com.bojiu.common.util.SpringUtil;
 import com.bojiu.context.web.Jsons;
 import com.bojiu.webapp.user.bet.WsBaseBetApiImpl;
 import com.bojiu.webapp.user.dto.*;
@@ -294,15 +295,27 @@ public class PsBetImpl extends WsBaseBetApiImpl {
 		return pingMsg;
 	}
 
+	transient Integer loginErrCounter = 0;
+
 	@Override
 	protected JSONObject doLogin(String lang) {
+		if (loginErrCounter > 3) { // 失败次数过多时账号将被风控
+			SpringUtil.logError(log, () -> "【" + getProvider() + "】登录失败次数过多，请稍后再试。");
+			throw new ErrorMessageException("登录失败次数过多，请稍后再试");
+		}
 		final Map<String, Object> params = new TreeMap<>();
 		final BetApiConfig config = this.getConfig();
 		params.put("loginId", config.username);
 		params.put("password", config.password);
 		params.put("Referer", this.getConfig().endPoint + "/" + lang.toLowerCase() + "/sports/soccer");
 		final Messager<JSONObject> result = sendRequest(HttpMethod.POST, buildURI("/member-auth/v2/authenticate", lang), params);
-		return result.data().getJSONObject("tokens");
+		final JSONObject data = result.data();
+		if (!result.isOK() || data == null) {
+			loginErrCounter++;
+			throw new ErrorMessageException("登录失败");
+		}
+		loginErrCounter = 0;
+		return data.getJSONObject("tokens");
 	}
 
 	@Nullable
