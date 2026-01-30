@@ -45,6 +45,11 @@ public class TeamMatcher {
 			"Radnicki 1923,Radnicki Kragujevac",
 			"MP Mikkeli,Mikkelin Palloilijat",
 			"HJK Klubi 04,HJK Klubi 04",
+			"Real Madrid C,Real Madrid III",
+			"Elche B,Elche Ilicitano",
+			"Mjallby AIF,Mjallby",
+			"EIF Ekenas,EIF",
+			"PK 35 Helsinki,PK-35",
 	};
 
 	// 预处理后的倒排索引 Map

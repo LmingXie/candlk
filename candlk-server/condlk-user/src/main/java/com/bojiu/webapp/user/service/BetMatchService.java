@@ -39,7 +39,7 @@ public class BetMatchService {
 	static Cache<BetProvider, List<GameDTO>> cache = Caffeine.newBuilder()
 			.initialCapacity(BetProvider.CACHE.length)
 			.maximumSize(1024)
-			.expireAfterAccess(30, TimeUnit.SECONDS)
+			.expireAfterAccess(5, TimeUnit.SECONDS)
 			.build();
 	static Function<BetProvider, List<GameDTO>> findGameBuilder = k -> Jsons.parseArray(RedisUtil.opsForHash().get(GAME_BETS_PERFIX, k.name()), GameDTO.class);
 

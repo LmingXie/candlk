@@ -273,9 +273,9 @@ public interface League {
 	String VietnamVLeague1 = "Vietnam V League 1";
 	/** 塞尔维亚超级联赛 */
 	String SerbiaSuperliga = "Serbia Superliga";
-	/**  阿兰提杯(在葡萄牙) */
-	String TheAtlanticCupInPortugal = "The Atlantic Cup (In Portugal)";
 	/**  芬兰甲组联赛杯 */
 	String FinlandYkkosliigaCup = "Finland Ykkosliiga Cup";
+	/**  澳门甲级联赛 */
+	String MacauPrimeiraDivisao = "Macau Primeira Divisao";
 
 }

@@ -621,7 +621,7 @@ public class PsBetImpl extends WsBaseBetApiImpl {
 			case "Nigeria NPFL" -> League.NigeriaPremierLeague;
 			case "Vietnam V League" -> League.VietnamVLeague1;
 			case "Serbia Super Liga" -> League.SerbiaSuperliga;
-			case "Club Friendlies" -> League.TheAtlanticCupInPortugal;
+			case "The Atlantic Cup (In Portugal)" -> League.ClubFriendlies;
 			case "Finland Ykkoscup" -> League.FinlandYkkosliigaCup;
 
 			default -> {
