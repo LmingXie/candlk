@@ -619,6 +619,10 @@ public class PsBetImpl extends WsBaseBetApiImpl {
 			case "FIFA Womens Champions Cup" -> League.WomenChampionsCupInEngland;
 			case "Saudi Arabia Elite League U21" -> League.SaudiEliteLeagueU21;
 			case "Nigeria NPFL" -> League.NigeriaPremierLeague;
+			case "Vietnam V League" -> League.VietnamVLeague1;
+			case "Serbia Super Liga" -> League.SerbiaSuperliga;
+			case "Club Friendlies" -> League.TheAtlanticCupInPortugal;
+			case "Finland Ykkoscup" -> League.FinlandYkkosliigaCup;
 
 			default -> {
 				// 提高巴西联赛的相似度匹配得分

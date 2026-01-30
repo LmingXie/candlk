@@ -269,5 +269,13 @@ public interface League {
 	String SaudiEliteLeagueU21 = "Saudi Elite League U21";
 	/** 尼日利亚超级联赛 */
 	String NigeriaPremierLeague = "Nigeria Premier League";
+	/** 越南甲组联赛 */
+	String VietnamVLeague1 = "Vietnam V League 1";
+	/** 塞尔维亚超级联赛 */
+	String SerbiaSuperliga = "Serbia Superliga";
+	/**  阿兰提杯(在葡萄牙) */
+	String TheAtlanticCupInPortugal = "The Atlantic Cup (In Portugal)";
+	/**  芬兰甲组联赛杯 */
+	String FinlandYkkosliigaCup = "Finland Ykkosliiga Cup";
 
 }

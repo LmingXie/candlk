@@ -37,6 +37,14 @@ public class TeamMatcher {
 			"Olympic Club,El Olympi",
 			"Al Orobah Sakakah U21,Al Orubah",
 			"Al Najma Unaizah U21,Al Najma",
+			"Becamex Ho Chi Minh,Binh Duong",
+			"Raya Ghazl,Raya SC",
+			"El Qanah,El Qanah",
+			"Telecom Egypt,WE SC",
+			"IMT Novi Beograd,IMT",
+			"Radnicki 1923,Radnicki Kragujevac",
+			"MP Mikkeli,Mikkelin Palloilijat",
+			"HJK Klubi 04,HJK Klubi 04",
 	};
 
 	// 预处理后的倒排索引 Map
