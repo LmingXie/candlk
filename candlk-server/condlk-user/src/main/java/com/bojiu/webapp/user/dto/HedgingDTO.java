@@ -547,7 +547,7 @@ public class HedgingDTO extends BaseEntity {
 		factor1[3] = aWinLoss;
 
 		// 在当前赔率和下注计划下，后三种可能路径的总盈亏
-		oneOuts = new ArrayList<>(3);
+		oneOuts = new ArrayList<>(2);
 		final double sumWin = getLoss() + bWin;
 		// 串子第二场输：输光净结果 + 第一场B平台已实现净盈亏 + B平台第二场投注 * 当前第二场净赢系数
 		oneOuts.add(new Out("第二场挂", sumWin + (hedgingCoins[1] * factor1[0])));
@@ -596,6 +596,16 @@ public class HedgingDTO extends BaseEntity {
 
 			// 总最终盈亏
 			factor2[5] = aWinLoss + bWinLoss;
+
+			// 在当前赔率和下注计划下，可能路径的总盈亏
+			twoOuts = new ArrayList<>(2);
+			final double lossBase = getLoss() + factor1[2];
+
+			// 第二场挂
+			twoOuts.add(new Out("第二场挂", lossBase + hedgingCoins[1] * factor1[0]));
+
+			// 串子全赢
+			twoOuts.add(new Out("串子全赢", aWinLoss + factor1[2] + hedgingCoins[1] * factor1[1]));
 
 			log.info("推演二串一最终方案！ID={}，最终总盈亏={}", getId(), factor2[5]);
 		}
