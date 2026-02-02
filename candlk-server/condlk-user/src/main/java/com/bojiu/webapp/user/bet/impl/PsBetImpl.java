@@ -623,6 +623,7 @@ public class PsBetImpl extends WsBaseBetApiImpl {
 			case "Serbia Super Liga" -> League.SerbiaSuperliga;
 			case "The Atlantic Cup (In Portugal)" -> League.ClubFriendlies;
 			case "Finland Ykkoscup" -> League.FinlandYkkosliigaCup;
+			case "Qatar Reserve League" -> League.QatarOlympicLeagueU23;
 
 			default -> {
 				// 提高巴西联赛的相似度匹配得分

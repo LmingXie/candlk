@@ -277,5 +277,7 @@ public interface League {
 	String FinlandYkkosliigaCup = "Finland Ykkosliiga Cup";
 	/**  澳门甲级联赛 */
 	String MacauPrimeiraDivisao = "Macau Primeira Divisao";
+	/**  卡塔尔奥林匹克联赛U23 */
+	String QatarOlympicLeagueU23 = "Qatar Olympic League U23";
 
 }
