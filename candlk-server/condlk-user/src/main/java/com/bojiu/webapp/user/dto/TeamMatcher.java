@@ -50,6 +50,7 @@ public class TeamMatcher {
 			"Mjallby AIF,Mjallby",
 			"EIF Ekenas,EIF",
 			"PK 35 Helsinki,PK-35",
+			"DAC Dunajska Streda,DAC 1904",
 	};
 
 	// 预处理后的倒排索引 Map

@@ -279,5 +279,9 @@ public interface League {
 	String MacauPrimeiraDivisao = "Macau Primeira Divisao";
 	/**  卡塔尔奥林匹克联赛U23 */
 	String QatarOlympicLeagueU23 = "Qatar Olympic League U23";
+	/**  日本J1百年构想联赛 */
+	String JapanJ1100YearVisionLeague = "Japan J1 100 Year Vision League";
+	/**  南美自由杯 */
+	String CopaLibertadores = "Copa Libertadores";
 
 }

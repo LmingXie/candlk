@@ -11,6 +11,7 @@ import com.bojiu.webapp.user.vo.HedgingVO;
 import com.google.common.collect.ImmutableMap;
 import lombok.*;
 import lombok.extern.slf4j.Slf4j;
+import me.codeplayer.util.ArrayUtil;
 import me.codeplayer.util.X;
 import org.apache.commons.lang3.tuple.Pair;
 import org.jspecify.annotations.Nullable;
@@ -442,15 +443,13 @@ public class HedgingDTO extends BaseEntity {
 	/** 计算剩余场次的对冲金额 */
 	public void calcHedgingCoinsLock(Date now, Boolean threeEnd) {
 		if (hedgingCoins != null) {
-			boolean flag = false; // 全部锁住时不更新对冲金额
-			for (Odds parlay : parlays) {
-				if (!parlay.lock) {
-					flag = true;
-					break;
+			// 全部锁住时不更新对冲金额
+			if (ArrayUtil.matchAny(p -> !p.lock, parlays)) {
+				if (parlays.length == 2) { // 二串一
+					calcParlay2(now);
+				} else { // 三串一
+					calcParlay3(now, threeEnd);
 				}
-			}
-			if (flag) {
-				calcParlay3(now, threeEnd);
 			}
 		}
 	}
@@ -517,7 +516,6 @@ public class HedgingDTO extends BaseEntity {
 			}
 		}
 	}
-
 
 	/** 估算第一局收益情况 */
 	private void calcFirstGame2(long timeNow, double bRebate) {
