@@ -28,6 +28,12 @@ public enum Module {
 	RISK_CONTROL("风控中心", false),
 	/** 抽成模式 */
 	COMMISSION_MODE("抽成模式", true),
+	/** 代打平台 */
+	WORK_PLATFORM("代打平台", true),
+	/** CDN节点（前台） */
+	DNS_PROVIDER("CDN节点（前台）", true),
+	/** CDN节点（后台） */
+	BACK_DNS_PROVIDER("CDN节点（后台）", true),
 	//
 	;
 

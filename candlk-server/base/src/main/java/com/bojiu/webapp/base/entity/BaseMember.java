@@ -1,23 +1,28 @@
 package com.bojiu.webapp.base.entity;
 
-import java.util.Date;
+import java.util.*;
+import java.util.concurrent.ThreadLocalRandom;
 
 import com.alibaba.fastjson2.annotation.JSONField;
 import com.bojiu.common.model.BizFlag;
 import com.bojiu.common.model.Status;
+import com.bojiu.common.util.Common;
 import com.bojiu.common.util.Formats;
-import com.bojiu.context.model.Gender;
-import com.bojiu.context.model.Member;
+import com.bojiu.context.model.*;
 import jodd.util.Base32;
 import lombok.Getter;
 import lombok.Setter;
 import me.codeplayer.util.*;
-import org.apache.commons.lang3.StringUtils;
+import org.apache.commons.lang3.tuple.Pair;
+import org.jspecify.annotations.NonNull;
 import org.jspecify.annotations.Nullable;
 
 @Setter
 @Getter
 public abstract class BaseMember extends BizEntity implements Member {
+
+	protected static final String letterChars = "abcdefghijklmnopqrstuvwxyz", digitChars = "0123456789";
+	public static final long BASE_MS = new EasyDate(2026, 1, 1).getTime();
 
 	/** 手机号码已认证 1 */
 	public static final int PHONE_VERIFIED = 1;
@@ -134,11 +139,19 @@ public abstract class BaseMember extends BizEntity implements Member {
 
 	static final String PASSWORD_SALT = "C?J+kY9z?o3_dBxT*Wk66i.Ah5ph#y99xk";
 
-	public static String encryptPassword(String username, String password, Date addTime) {
+	public static String encryptPassword(String username, String password, Date addTime, boolean worker) {
 		Assert.notEmpty(username, "username is required");
 		Assert.notNull(addTime, "addTime is required");
 		final String str = username + '@' + password + '@' + PASSWORD_SALT + '@' + Formats.formatDate_D(addTime);
+		if (worker || MemberType.worker()) { // 代打平台 使用 Base64 编码以缩短字符长度
+			byte[] encoded = Encrypter.encode(JavaUtil.getUtf8Bytes(str), "SHA-224");
+			return Common.base64ToString(encoded, true);
+		}
 		return Encrypter.encode(str, "SHA-224");
+	}
+
+	public static String encryptPassword(String username, String password, Date addTime) {
+		return encryptPassword(username, password, addTime, false);
 	}
 
 	public static String encryptGoogleSecretKey(String username, Date addTime) {
@@ -152,7 +165,7 @@ public abstract class BaseMember extends BizEntity implements Member {
 	/** 根据用户ID */
 	public static String generateInviteCode(Long memberId) {
 		final String code = Long.toString(memberId, 36).toUpperCase();
-		return code + checkDigit(memberId);
+		return "u" + code + checkDigit(memberId);
 	}
 
 	/** 校验位算法 */
@@ -162,11 +175,20 @@ public abstract class BaseMember extends BizEntity implements Member {
 	}
 
 	public static Long parseMemberId(String inviteCode) {
-		inviteCode = StringUtils.substringBefore(inviteCode, "_");
-		if (StringUtil.isEmpty(inviteCode)) {
+		// 由于前端传进来的参数可能是一个用户ID，也可能是一个邀请码，有可能混淆解析
+		// 因此，新生成的邀请码必须以小写字母 "u" 开头，如果传进来的参数不以 "u" 开头，且是纯数字的，则认为是用户ID
+		if (inviteCode == null) {
 			return null;
 		}
-		inviteCode = inviteCode.toLowerCase();
+		boolean prefix = inviteCode.startsWith("u");
+		if (!prefix && (inviteCode.isEmpty() || NumberUtil.isNumber(inviteCode))) {
+			return null;
+		}
+		int pos = inviteCode.lastIndexOf('_');
+		if (pos == 1) { // "u_"
+			return null;
+		}
+		inviteCode = inviteCode.substring(prefix ? 1 : 0, pos == -1 ? inviteCode.length() : pos).toLowerCase();
 		final int endIndex = inviteCode.length() - 1;
 		final long memberId = Long.parseLong(inviteCode, 0, endIndex, 36);
 		return memberId > 0 && checkDigit(memberId) == Character.digit(inviteCode.charAt(endIndex), 10) ? memberId : null;
@@ -231,7 +253,149 @@ public abstract class BaseMember extends BizEntity implements Member {
 		return targetPassword.equals(inputPassword);
 	}
 
-	public static final String STATUS_LOGIN_ERROR = "invalid";
+	/**
+	 * 生成随机个数头像ID列表
+	 */
+	public static @NonNull List<Integer> batchGenerateRandomAvatars(int size) {
+		final int start = 10001, end = 10013;
+		final int totalAvailable = end - start;
+		// 构造头像ID列表
+		final List<Integer> allAvatars = new ArrayList<>(totalAvailable);
+		for (int i = start; i < end; i++) {
+			allAvatars.add(i);
+		}
+		// 打乱列表
+		Collections.shuffle(allAvatars, ThreadLocalRandom.current());
+		if (size <= totalAvailable) {
+			return allAvatars.subList(0, size);
+		}
+		List<Integer> result = new ArrayList<>(size);
+		for (int i = 0; i < size; i++) {
+			result.add(allAvatars.get(i % totalAvailable));
+		}
+		return result;
+	}
+
+	/** 生成随机个数的用户名 */
+	public static @NonNull List<String> batchGenerateRandomUsernames(int size, int maxLength) {
+		final Random random = ThreadLocalRandom.current();
+		final List<String> names = new ArrayList<>(size);
+		for (int i = 0; i < size; i++) {
+			names.add(generateUsername(random, 4, maxLength, false));
+		}
+		return names;
+	}
+
+	/**
+	 * 生成指定个数的随机用户名
+	 *
+	 * @see #generateUsername(int, int, boolean)
+	 */
+	public static List<String> batchGenerateRandomUsernames(int size) {
+		return batchGenerateRandomUsernames(size, 8);
+	}
+
+	public static final String CHAR_POOL = "abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789";
+
+	/** 随机生成密码 */
+	public static String generatePwd(final Random random, int minLength, int maxLength) {
+		if (minLength < 4) {
+			throw new IllegalArgumentException();
+		}
+		final byte[] charPool = JavaUtil.STRING_VALUE.apply(CHAR_POOL);
+		final byte firstChar = charPool[random.nextInt(letterChars.length())];
+		final int poolLength = charPool.length;
+		final int charNum = minLength == maxLength ? minLength : random.nextInt(minLength, maxLength + 1);
+		final byte[] chars = new byte[charNum];
+		chars[0] = firstChar;
+		for (int i = 1; i < charNum; i++) {
+			chars[i] = charPool[random.nextInt(poolLength)];
+		}
+		return JavaUtil.STRING_CREATOR_JDK11.apply(chars, JavaUtil.LATIN1);
+	}
+
+	/**
+	 * 随机生成用户名 规则如下：
+	 * <p> 1、以随机字母开头
+	 * <p> 2、<code> [ minLength, maxLength ] </code> 个随机字母/数字
+	 *
+	 * @param anonymous 是否模糊化处理，如 "12***67"
+	 */
+	public static String generateUsername(final Random random, int minLength, int maxLength, boolean anonymous) {
+		if (minLength < 4) {
+			throw new IllegalArgumentException();
+		}
+		final byte[] charPool = JavaUtil.STRING_VALUE.apply(letterChars + digitChars);
+		final byte firstChar = charPool[random.nextInt(letterChars.length())];
+		final int poolLength = charPool.length;
+		final byte[] chars;
+		if (anonymous) { // 模糊化形式为 "12***67"
+			chars = new byte[] { firstChar, charPool[random.nextInt(poolLength)],
+					(byte) '*', (byte) '*', (byte) '*',
+					charPool[random.nextInt(poolLength)], charPool[random.nextInt(poolLength)]
+			};
+		} else {
+			final int charNum = minLength == maxLength ? minLength : random.nextInt(minLength, maxLength + 1);
+			chars = new byte[charNum];
+			chars[0] = firstChar;
+			for (int i = 1; i < charNum; i++) {
+				chars[i] = charPool[random.nextInt(poolLength)];
+			}
+		}
+		return JavaUtil.STRING_CREATOR_JDK11.apply(chars, JavaUtil.LATIN1);
+	}
+
+	/**
+	 * 随机生成用户名 规则如下：
+	 * <p> 1、以随机字母开头
+	 * <p> 2、<code> [ minLength, maxLength ] </code> 个随机字母/数字
+	 *
+	 * @param anonymous 是否模糊化处理，如 "12***67"
+	 */
+	public static String generateUsername(int minLength, int maxLength, boolean anonymous) {
+		return generateUsername(ThreadLocalRandom.current(), minLength, maxLength, anonymous);
+	}
+
+	/**
+	 * 随机生成用户名 规则如下：
+	 * <p> 1、以随机字母开头
+	 * <p> 2、随机 4~16 个字母/数字
+	 *
+	 * @param anonymous 是否模糊化处理，如 "12***67"
+	 */
+	public static String generateUsername(final Random random, boolean anonymous) {
+		return generateUsername(random, 4, 16, anonymous);
+	}
+
+	/**
+	 * 随机生成用户名 规则如下：
+	 * <p> 1、以随机字母开头
+	 * <p> 2、随机 4~16 个字母/数字
+	 *
+	 * @param anonymous 是否模糊化处理，如 "12***67"
+	 */
+	public static String generateUsername(boolean anonymous) {
+		return generateUsername(ThreadLocalRandom.current(), anonymous);
+	}
+
+	public static @NonNull List<Pair<Integer, String>> generateRobot(int size) {
+		List<Pair<Integer, String>> list = new ArrayList<>(size);
+		final List<String> usernames = batchGenerateRandomUsernames(size, 13);
+		final List<Integer> avatars = batchGenerateRandomAvatars(size);
+		int i = 0;
+		for (Integer integer : avatars) {
+			list.add(Pair.of(integer, usernames.get(i++)));
+		}
+		return list;
+	}
+
+	/**
+	 * 随机生成用户名
+	 */
+	public static String generateUsername() {
+		long l = (System.currentTimeMillis() - BASE_MS) * 1000 + RandomUtil.nextInt(0, 999);
+		return Member.idPrefix() + Long.toString(l, 36);
+	}
 
 	public static final String USERNAME = "username";
 	public static final String PHONE = "phone";

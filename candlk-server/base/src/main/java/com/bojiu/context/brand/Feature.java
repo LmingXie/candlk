@@ -13,7 +13,7 @@ import static com.bojiu.context.brand.FeatureConfigHandler.*;
 public enum Feature {
 
 	/**
-	 * 后台皮肤
+	 * 0-后台皮肤
 	 * <p> 存储数据结构：由前端自定义
 	 *
 	 * @see com.bojiu.webapp.user.model.MetaType#attach_config
@@ -39,7 +39,7 @@ public enum Feature {
 	 */
 	// Currency("货币", Module.LANGUAGE, 1, 0, null),
 	/**
-	 * 厂商游戏：< 货币 x 厂商 x 游戏类型 , 分成比例 >
+	 * 1-厂商游戏：< 货币 x 厂商 x 游戏类型 , 分成比例 >
 	 * <p>
 	 * 存储数据结构：<pre><code>
 	 *  {
@@ -71,7 +71,7 @@ public enum Feature {
 	 */
 	Game("厂商游戏", Module.GAME, 1, 0, null),
 	/**
-	 * 创建子站点 - 创建数量
+	 * 2-创建子站点 - 创建数量
 	 * <p> 存储数据结构：<code> "1" </code>
 	 *
 	 * @see FeatureContext#siteNum()
@@ -79,7 +79,7 @@ public enum Feature {
 	 */
 	Site("创建子站点", Module.SITE_CONFIG, 0, 0, forInteger()),
 	/**
-	 * 前台皮肤仓库 - "亚洲经典 2/5"
+	 * 3-前台皮肤仓库 - "亚洲经典 2/5"
 	 *
 	 * @see com.bojiu.context.model.TemplateType
 	 * @see com.bojiu.webapp.user.model.MetaType#attach_config
@@ -87,7 +87,7 @@ public enum Feature {
 	 */
 	Skin("皮肤仓库", Module.SITE_CONFIG, 1, 0, forFront()),
 	/**
-	 * 注册登录
+	 * 4-注册登录
 	 * 存储数据结构：<pre><code>
 	 * {
 	 *     "popUp": [ "0", "1", "2" ],
@@ -106,7 +106,7 @@ public enum Feature {
 	 */
 	Auth("注册登录", Module.SITE_CONFIG, 1, 0, forNestedMultiValues(FeatureItem.AuthOption.CACHE)),
 	/**
-	 * 顶部下载条
+	 * 5-顶部下载条
 	 *
 	 * @see FeatureContext#downloadBar()
 	 * @see com.bojiu.webapp.user.vo.DownloadBarSegment
@@ -114,14 +114,14 @@ public enum Feature {
 	 */
 	DownloadBar("顶部下载条", Module.SITE_CONFIG, 0, 0, forBoolean()),
 	/**
-	 * 活动
+	 * 6-活动
 	 *
 	 * @see com.bojiu.context.model.PromotionType#loadFeatures(FeatureContext)
 	 * @see com.bojiu.webapp.user.entity.Promotion
 	 */
 	Activity("活动", Module.OPERATION, 1, 0, forMultiValues(com.bojiu.context.model.PromotionType.CACHE_SHOW)),
 	/**
-	 * VIP等级管理
+	 * 7-VIP等级管理
 	 * <ul>
 	 *
 	 * <li>VIP</li>
@@ -140,7 +140,7 @@ public enum Feature {
 	 */
 	Vip("VIP等级管理", Module.OPERATION, 1, 0, forMultiValues(FeatureItem.VipOption.CACHE)),
 	/**
-	 * 公积金
+	 * 8-公积金
 	 *
 	 * @see FeatureContext#deposit()
 	 * @see com.bojiu.context.model.PromotionType#DEPOSIT_POOL
@@ -148,66 +148,66 @@ public enum Feature {
 	 */
 	Deposit("公积金", Module.OPERATION, 0, 0, forBoolean()),
 	/**
-	 * 利息宝
+	 * 9-利息宝
 	 *
 	 * @see FeatureContext#incomeBox()
 	 * @see com.bojiu.webapp.trade.entity.UserIncomeRule
 	 */
 	IncomeBox("利息宝", Module.OPERATION, 0, 0, forBoolean()),
 	/**
-	 * 网红博主
+	 * 10-网红博主
 	 *
 	 * @see FeatureContext#blogger()
 	 */
 	Blogger("网红博主", Module.OPERATION, 0, 0, forBoolean()),
 	/**
-	 * 任务中心
+	 * 11-任务中心
 	 *
 	 * @see com.bojiu.context.model.TaskType#loadFeatures(FeatureContext)
 	 */
 	Task("任务中心", Module.OPERATION, 0, 0, forMultiValues(com.bojiu.context.model.TaskType.CACHE_SHOW)),
 	/**
-	 * 会员上传头像
+	 * 12-会员上传头像
 	 *
 	 * @see FeatureContext#userUploadAvatar()
 	 */
 	UserUploadAvatar("会员上传头像", Module.OPERATION, 0, 0, forBoolean()),
 	/**
-	 * 分享链接预览
+	 * 13-分享链接预览
 	 *
 	 * @see FeatureContext#sharePreview()
 	 */
 	SharePreview("分享链接预览", Module.OPERATION, 0, 0, forBoolean()),
 	/**
-	 * 主播试玩账号
+	 * 14-主播试玩账号
 	 *
 	 * @see FeatureContext#gameTrialAccount()
 	 */
 	GameTrialAccount("主播试玩账号", Module.USER, 0, 0, forBoolean()),
 	/**
-	 * 会员提现免首充
+	 * 15-会员提现免首充
 	 *
 	 * @see FeatureContext#cashWithoutRecharge()
 	 */
 	CashWithoutRecharge("会员提现免首充", Module.USER, 0, 0, forBoolean()),
 	/**
-	 * 代理模式
+	 * 16-代理模式
 	 *
 	 * @see com.bojiu.webapp.user.model.AgentModelType#loadFeatures(FeatureContext)
 	 */
 	AgentMode("代理模式", Module.AGENT, 0, 0, null),
 	/**
-	 * 代理前端样式
+	 * 17-代理前端样式
 	 */
 	AgentSkin("代理前端样式", Module.AGENT, 0, 0, forFront()),
 	/**
-	 * 更改上级代理
+	 * 18-更改上级代理
 	 *
 	 * @see FeatureContext#changeParentAgent()
 	 */
 	ChangeParentAgent("更改上级代理", Module.AGENT, 0, 0, forBoolean()),
 	/**
-	 * 支付配置
+	 * 19-支付配置
 	 * 存储数据结构：<pre><code>
 	 * {
 	 *     "BRL": [ "GlobalPay", "PixPay" ],
@@ -219,13 +219,13 @@ public enum Feature {
 	 */
 	Payment("支付配置", Module.FINANCIAL, 1, 0, null),
 	/**
-	 * 会员稽核管理
+	 * 20-会员稽核管理
 	 *
 	 * @see FeatureContext#userAudit()
 	 */
 	UserAudit("会员稽核管理", Module.FINANCIAL, 0, 0, forBoolean()),
 	/**
-	 * 风控中心
+	 * 21-风控中心
 	 * <p>存储数据结构：<pre><code>
 	 * {
 	 *      "rtpControl":[ "PGC", "BPG", "BGT" ],
@@ -242,7 +242,7 @@ public enum Feature {
 	 */
 	RiskControl("风控中心", Module.RISK_CONTROL, 0, 0, null),
 	/**
-	 * 抽成模式
+	 * 22-抽成模式
 	 *
 	 * @see com.bojiu.webapp.game.model.CommissionMode
 	 * <p>存储数据结构：<pre><code>
@@ -254,6 +254,22 @@ public enum Feature {
 	 * </code></pre>
 	 */
 	CommissionMode("抽成模式", Module.COMMISSION_MODE, 1, 0, null),
+	/**
+	 * 23-代打平台
+	 */
+	WorkPlatform("代打平台", Module.WORK_PLATFORM, 0, 0, forBoolean()),
+	/**
+	 * 24-CDN节点（前台）
+	 *
+	 * @see com.bojiu.context.model.DnsProvider#loadFeatures(FeatureContext)
+	 */
+	DnsProvider("CDN节点（前台）", Module.DNS_PROVIDER, 1, 0, forMultiValues(com.bojiu.context.model.DnsProvider.CACHE)),
+	/**
+	 * 25-CDN节点（后台）
+	 *
+	 * @see com.bojiu.context.model.DnsProvider#loadFeaturesBack(FeatureContext)
+	 */
+	BackDnsProvider("CDN节点（后台）", Module.BACK_DNS_PROVIDER, 1, 0, forMultiValues(com.bojiu.context.model.DnsProvider.CACHE)),
 	;
 
 	/** 功能 & 特性 名称 */

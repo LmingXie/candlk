@@ -44,15 +44,15 @@ public class ResponseDataHandler {
 	public static void handleResultIfNeeded(HttpServletRequest request, Object result) {
 		// 如果是后台 数据量 较多的分页列表，则可以酌情缓存总记录数
 		if ((result instanceof Messager<?> msger && msger.data() instanceof Page<?> page) && page.getTotal() >= totalCacheThreshold) {
+			Boolean allow = getAllowCacheTotal(request);
+			if (allow != null && !allow) {
+				return;
+			}
 			Member emp = RequestContextImpl.getSessionUser(request);
 			if (emp == null) {
 				return;
 			}
 			final long[] maxTotalRef = merchantCacheWhitelist.computeIfAbsent(Pair.of(emp.getMerchantId(), request.getRequestURI()), k -> new long[1]);
-			Boolean allow = getAllowCacheTotal(request);
-			if (allow != null && !allow) {
-				return;
-			}
 			final String key = paramsAsKey(request);
 			Long total = page.getTotal();
 			SpringUtil.log.debug("【totalCount 缓存】存入：key={}，总数={}", key, total);
@@ -106,14 +106,14 @@ public class ResponseDataHandler {
 	 */
 	public static long getCachedTotalCount(HttpServletRequest request) {
 		Member emp = RequestContextImpl.getSessionUser(request);
-		final long[] maxtotalRef;
-		if (emp == null || (maxtotalRef = merchantCacheWhitelist.get(Pair.of(emp.getMerchantId(), request.getRequestURI()))) == null) {
+		final long[] maxTotalRef;
+		if (emp == null || (maxTotalRef = merchantCacheWhitelist.get(Pair.of(emp.getMerchantId(), request.getRequestURI()))) == null) {
 			return 0L;
 		}
 		final String key = paramsAsKey(request);
 		Long totalCount = totalCache.getIfPresent(Pair.of(emp.getId(), key));
 		SpringUtil.log.debug("【totalCount 缓存】获取：key={}，总数={}", key, totalCount);
-		return totalCount != null ? totalCount : -maxtotalRef[0];
+		return totalCount != null ? totalCount : -maxTotalRef[0];
 	}
 
 	public static String paramsAsKey(HttpServletRequest request) {

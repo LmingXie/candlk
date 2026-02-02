@@ -70,6 +70,13 @@ public class FeatureContext {
 	}
 
 	/**
+	 * 是否启用【代打平台】功能
+	 */
+	public boolean workPlatform() {
+		return enabled(Feature.WorkPlatform);
+	}
+
+	/**
 	 * 是否启用【公积金】功能
 	 */
 	public boolean deposit() {
@@ -187,16 +194,21 @@ public class FeatureContext {
 	}
 
 	static boolean asBoolean(Object val) {
-		if (val == null) {
-			return false;
-		} else if (val instanceof Boolean b) {
-			return b;
-		}
-		if (val instanceof List<?> list) {
-			if (list.isEmpty()) {
+		switch (val) {
+			case null -> {
 				return false;
 			}
-			val = list.get(0);
+			case Boolean b -> {
+				return b;
+			}
+			case List<?> list -> {
+				if (list.isEmpty()) {
+					return false;
+				}
+				val = list.get(0);
+			}
+			default -> {
+			}
 		}
 		if (val instanceof String s) {
 			return !s.isEmpty() && !"false".equals(s); // 禁用其实不应该存储，"0" 可能表示选项
@@ -263,7 +275,7 @@ public class FeatureContext {
 		if (cache == null) {
 			featuredMenuCache = cache = new ConcurrentHashMap<>();
 		}
-		List<String> keys = Common.splitAsStringList(featureCode);
+		List<String> keys = StringUtil.splitAsStringList(featureCode);
 		for (String key : keys) {
 			if (!cache.computeIfAbsent(key, this::doHasMenu)) {
 				return false;
@@ -280,20 +292,15 @@ public class FeatureContext {
 		if (config == null) {
 			return false;
 		} else if (pos == -1) {
-			return true;
+			return feature.handler instanceof FeatureConfigHandler.BooleanHandler && getParsedValue(config) instanceof Boolean b ? b : true;
 		}
+
 		String subFeature = featureCode.substring(pos + 1);
 		final BiPredicate<FeatureConfig, String> custom = feature.customHasMenu;
 		if (custom != null) { // 存在自定义的菜单权限判断，就用自定义的
 			return custom.test(config, subFeature);
 		}
-		Object parsed = config.parsed;
-		if (parsed == null) {
-			parsed = config.getParsedValue(Object.class, null, TransientParsed::new, false);
-		}
-		if (parsed instanceof TransientParsed t) {
-			parsed = t.value;
-		}
+		Object parsed = getParsedValue(config);
 		if (parsed instanceof EnumMap<?, ?> m) {
 			Enum<?> firstKey = m.keySet().iterator().next();
 			Enum<?> target = Enum.valueOf(firstKey.getDeclaringClass(), subFeature);
@@ -317,6 +324,17 @@ public class FeatureContext {
 			}
 		}
 		throw unsupportedEx(featureCode, config.rawConfig());
+	}
+
+	private static Object getParsedValue(FeatureConfig config) {
+		Object parsed = config.parsed;
+		if (parsed == null) {
+			parsed = config.getParsedValue(Object.class, null, TransientParsed::new, false);
+		}
+		if (parsed instanceof TransientParsed(Object value)) {
+			parsed = value;
+		}
+		return parsed;
 	}
 
 	static UnsupportedOperationException unsupportedEx(String featureCode, @Nullable String config) {

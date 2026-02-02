@@ -39,6 +39,8 @@ public class ContextImpl extends Context implements ServletContextAware, CacheSy
 
 	/** 测试环境 前台默认域名 */
 	public static final String testDomain = AppRegion.inAsia() ? "hnb2test.com" : "hnb1test.com";
+	/** 测试环境 代打前台默认域名 */
+	public static final String testWorkDomain = "work." + testDomain;
 	/** 前台默认域名 */
 	public static final String frontDomain = AppRegion.inAsia() ? "hnb2user.com" : "hnb1user.com";
 	/** 后台默认域名 */
@@ -83,8 +85,7 @@ public class ContextImpl extends Context implements ServletContextAware, CacheSy
 	/** 本服务节点（内网）IP */
 	public static String getNodeIP() {
 		if (nodeIP == null) {
-			// TODO: 2025/11/8 暂时不支持多服务
-			nodeIP = /*get().getApplicationContext().getBean(NacosDiscoveryProperties.class).getIp();*/ "127.0.0.1";
+			nodeIP = get().getApplicationContext().getBean(NacosDiscoveryProperties.class).getIp();
 		}
 		return nodeIP;
 	}
@@ -144,7 +145,11 @@ public class ContextImpl extends Context implements ServletContextAware, CacheSy
 				RequestContextImpl.setMerchantIdParser(request -> {
 					final String domain = DomainUtils.doGetDomain(request);
 					final String subDomain = DomainUtils.extractSubDomain(domain);
-					String mid = StringUtils.removeStart(subDomain, DomainUtils.uatPrefix);
+					final String prefix = DomainUtils.uatPrefix, workPrefix = prefix + "work-";
+					String mid = subDomain.startsWith(workPrefix)
+							? subDomain.substring(workPrefix.length())
+							: subDomain.startsWith(prefix) ? subDomain.substring(prefix.length())
+							: subDomain;
 					try {
 						return Long.valueOf(mid);
 					} catch (NumberFormatException e) {
@@ -163,12 +168,16 @@ public class ContextImpl extends Context implements ServletContextAware, CacheSy
 		return domain.endsWith("." + backstageDomain) || domain.endsWith("." + oldBackstageDomain);
 	}
 
-	/** 解析 g-*.opkuser.com */
+	/** 解析 "g-*.opkuser.com"、"g-work-*.opkuser.com" 中的商户ID */
 	@Nullable
 	public static Long parseInternalFront(String domain) {
-		if (domain.startsWith("g-") && isDefaultFrontDomain(domain)) {
+		final String prefix = DomainUtils.prodPrefix;
+		if (domain.startsWith(prefix) && isDefaultFrontDomain(domain)) {
 			final String subDomain = DomainUtils.extractSubDomain(domain);
-			String mid = StringUtils.removeStart(subDomain, "g-");
+			final String workPrefix = prefix + "work-";
+			String mid = subDomain.startsWith(workPrefix)
+					? subDomain.substring(workPrefix.length())
+					: subDomain.substring(prefix.length());
 			try {
 				return Long.valueOf(mid);
 			} catch (NumberFormatException e) {
