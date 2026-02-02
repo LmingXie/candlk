@@ -561,13 +561,13 @@ public class HedgingDTO extends BaseEntity {
 	private void calcTwoGame2(double bRebate) {
 
 		if (factor1 != null) { // 避免已过期赛事导致的影响
-			factor2 = new Double[6];
+			factor3 = new Double[6];
 
 			// 第二场A结果系数
-			factor2[0] = parlays[1].calcAResultRate();
+			factor3[0] = parlays[1].calcAResultRate();
 
 			// 第二场B结果系数
-			factor2[1] = switch (parlays[1].result == null ? ALL_WIN : parlays[1].result) {
+			factor3[1] = switch (parlays[1].result == null ? ALL_WIN : parlays[1].result) {
 				case ALL_WIN -> 0.0;
 				case DRAW -> 1.0;
 				case WIN_HALF -> 0.5;
@@ -582,32 +582,38 @@ public class HedgingDTO extends BaseEntity {
 			// 第一场A结果系数
 			final double firstRate = parlays[0].calcAResultRate();
 
-			// A平台最终净结果
-			final double aWinLoss = aInCoin() * firstRate * factor2[0]
-					+ aRebateCoin() * Math.abs(firstRate * factor2[0] - 1)
+			// A平台最终输光净结果
+			final double aWinLoss = aInCoin() * firstRate * factor3[0]
+					+ aRebateCoin() * Math.abs(firstRate * factor3[0] - 1)
 					- baseRate.aPrincipal;
 
+			// 第一场B平台已实现净盈亏
+			final Double bWin = factor1[2];
 			// B平台最终净结果（第一场 + 第二场）
-			final double bWinLoss = factor1[2] + bSecondWinLoss;
+			final double bWinLoss = bWin + bSecondWinLoss;
 
-			factor2[2] = bSecondWinLoss;
-			factor2[3] = aWinLoss;
-			factor2[4] = bWinLoss;
+			factor3[2] = bSecondWinLoss;
+			factor3[3] = aWinLoss;
+			factor3[4] = bWinLoss;
 
 			// 总最终盈亏
-			factor2[5] = aWinLoss + bWinLoss;
+			factor3[5] = aWinLoss + bWinLoss;
 
 			// 在当前赔率和下注计划下，可能路径的总盈亏
 			twoOuts = new ArrayList<>(2);
-			final double lossBase = getLoss() + factor1[2];
+			final double lossBase = getLoss() + bWin;
 
 			// 第二场挂
 			twoOuts.add(new Out("第二场挂", lossBase + hedgingCoins[1] * factor1[0]));
 
+			// A平台串子“全赢”时净结果
+			final Double aWin = factor1[3];
 			// 串子全赢
-			twoOuts.add(new Out("串子全赢", aWinLoss + factor1[2] + hedgingCoins[1] * factor1[1]));
+			twoOuts.add(new Out("串子全赢", aWin
+					+ bWin/*B第一场投注成本（负数）*/
+					+ (hedgingCoins[1] * factor1[1])/*B平台第二场投注成本（负数）*/));
 
-			log.info("推演二串一最终方案！ID={}，最终总盈亏={}", getId(), factor2[5]);
+			log.info("推演二串一最终方案！ID={}，最终总盈亏={}", getId(), factor3[5]);
 		}
 	}
 
