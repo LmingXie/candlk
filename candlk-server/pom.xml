@@ -209,25 +209,51 @@
 		<dependency>
 			<groupId>com.fasterxml.jackson.core</groupId>
 			<artifactId>jackson-annotations</artifactId>
-			<version>2.20</version>
 		</dependency>
 
 		<dependency>
 			<groupId>com.fasterxml.jackson.core</groupId>
 			<artifactId>jackson-core</artifactId>
-			<version>${jackson.version}</version>
-		</dependency>
-
-		<dependency>
-			<groupId>com.fasterxml.jackson.datatype</groupId>
-			<artifactId>jackson-datatype-jsr310</artifactId>
-			<version>${jackson.version}</version>
 		</dependency>
 
 		<dependency>
 			<groupId>org.apache.dubbo</groupId>
 			<artifactId>dubbo-spring-boot-starter</artifactId>
 		</dependency>
+
+		<!-- Dubbo 集成 kryo 序列化协议 -->
+		<!--
+		<dependency>
+			<groupId>org.apache.dubbo</groupId>
+			<artifactId>dubbo-serialization-api</artifactId>
+			<version>${dubbo.version}</version>
+		</dependency>
+
+		<dependency>
+			<groupId>com.esotericsoftware</groupId>
+			<artifactId>kryo</artifactId>
+			<version>5.6.2</version>
+		</dependency>
+
+		<dependency>
+			<groupId>de.javakaffee</groupId>
+			<artifactId>kryo-serializers</artifactId>
+			<version>0.45</version>
+		</dependency>
+
+		<dependency>
+			<groupId>org.apache.dubbo</groupId>
+			<artifactId>dubbo-serialization-kryo</artifactId>
+			<version>2.7.23</version>
+		</dependency>
+		-->
+
+		<!--
+		<dependency>
+			<groupId>com.alibaba.cloud</groupId>
+			<artifactId>spring-cloud-starter-dubbo</artifactId>
+		</dependency>
+		-->
 
 		<dependency>
 			<groupId>org.springframework.boot</groupId>
@@ -238,8 +264,108 @@
 		<dependency>
 			<groupId>io.micrometer</groupId>
 			<artifactId>micrometer-registry-prometheus</artifactId>
-			<version>1.11.4</version>
+			<!-- 不能升级到 1.13.0，否则因为不兼容将响应 404 -->
+			<version>1.12.13</version>
 		</dependency>
+
+		<!--
+		<dependency>
+			<groupId>io.netty</groupId>
+			<artifactId>netty-all</artifactId>
+			<version>${netty.version}</version>
+		</dependency>
+
+		<dependency>
+			<groupId>io.netty</groupId>
+			<artifactId>netty-handler</artifactId>
+			<version>${netty.version}</version>
+		</dependency>
+		-->
+
+		<!--
+		java - -add-opens java.base/java.lang=ALL-UNNAMED -Dserver.port=8080 -Dcsp.sentinel.dashboard.server=localhost:8080 -Dproject.name=sentinel-dashboard -jar .\sentinel-dashboard-1.8.3.jar
+		-->
+		<!--
+		<dependency>
+			<groupId>com.alibaba.cloud</groupId>
+			<artifactId>spring-cloud-starter-alibaba-sentinel</artifactId>
+		</dependency>
+		-->
+
+		<!--
+		<dependency>
+			<groupId>org.springframework.cloud</groupId>
+			<artifactId>spring-cloud-starter-sleuth</artifactId>
+		</dependency>
+
+		<dependency>
+			<groupId>org.springframework.cloud</groupId>
+			<artifactId>spring-cloud-sleuth-zipkin</artifactId>
+		</dependency>
+		-->
+
+		<!-- 显式覆盖 rocketmq-spring-boot-starter 依赖的 5.1.0 版本-->
+		<!--
+		<dependency>
+			<groupId>org.springframework</groupId>
+			<artifactId>spring-messaging</artifactId>
+			<version>${spring.version}</version>
+		</dependency>
+		-->
+
+		<!-- https://mirrors.bfsu.edu.cn/apache/rocketmq/4.9.2/rocketmq-all-4.9.2-bin-release.zip -->
+
+		<!-- spring-cloud-loadbalancer 中已存在更高的 2.3.12 RELEASE 版本（排除此处依赖的 2.0.5.RELEASE 版本）-->
+		<!--
+		<dependency>
+			<groupId>org.apache.rocketmq</groupId>
+			<artifactId>rocketmq-spring-boot-starter</artifactId>
+			<version>2.2.1</version>
+			<exclusions>
+				<exclusion>
+					<groupId>org.springframework.boot</groupId>
+					<artifactId>spring-boot-starter-validation</artifactId>
+				</exclusion>
+			</exclusions>
+		</dependency>
+		-->
+
+		<!-- seata 依赖 cglib，覆盖至最新版本 -->
+		<!--
+		<dependency>
+			<groupId>cglib</groupId>
+			<artifactId>cglib</artifactId>
+			<version>3.3.0</version>
+		</dependency>
+		-->
+
+		<!-- .\seata-server.bat -p 8091 -h 127.0.0.1 -m file -->
+		<!--
+		<dependency>
+			<groupId>io.seata</groupId>
+			<artifactId>seata-spring-boot-starter</artifactId>
+			<version>1.4.2</version>
+			<exclusions>
+				<exclusion>
+					<artifactId>druid</artifactId>
+					<groupId>com.alibaba</groupId>
+				</exclusion>
+			</exclusions>
+		</dependency>
+		-->
+
+		<!--
+		<dependency>
+			<groupId>com.alibaba.cloud</groupId>
+			<artifactId>spring-cloud-starter-alibaba-seata</artifactId>
+			<exclusions>
+				<exclusion>
+					<groupId>io.seata</groupId>
+					<artifactId>seata-spring-boot-starter</artifactId>
+				</exclusion>
+			</exclusions>
+		</dependency>
+		-->
 
 		<dependency>
 			<groupId>org.springframework.boot</groupId>

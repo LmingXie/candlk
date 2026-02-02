@@ -85,7 +85,8 @@ public class ContextImpl extends Context implements ServletContextAware, CacheSy
 	/** 本服务节点（内网）IP */
 	public static String getNodeIP() {
 		if (nodeIP == null) {
-			nodeIP = get().getApplicationContext().getBean(NacosDiscoveryProperties.class).getIp();
+			// TODO: 2025/11/8 暂时不支持多服务
+			nodeIP = /*get().getApplicationContext().getBean(NacosDiscoveryProperties.class).getIp();*/ "127.0.0.1";
 		}
 		return nodeIP;
 	}
