@@ -462,7 +462,7 @@ public class HedgingDTO extends BaseEntity {
 		if (X.isValid(reset)) { // 需要重新计算此前的全部赛事
 			reset();
 			// 计算第一场
-			calcFirstGame(timeNow, bRebate);
+			calcFirstGame2(timeNow, bRebate);
 			// 计算第二场
 			if (timeNow > parlays[0].gameOpenTime) {
 				calcTwoGame(bRebate);

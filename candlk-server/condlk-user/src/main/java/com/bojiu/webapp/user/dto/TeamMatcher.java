@@ -86,7 +86,7 @@ public class TeamMatcher {
 		return null;
 	}
 
-	/** 团队与联赛名的英中文映射（） */
+	/** 团队与联赛名的英中文映射 */
 	private static final Map<BetProvider, Map<String, String>> enToZhCache = new ConcurrentHashMap<>(BetProvider.CACHE.length, 1F);
 
 	public static Map<String, String> getEnToZhCacheMap(BetProvider betProvider, Set<GameDTO> gameEnDTOs) {
