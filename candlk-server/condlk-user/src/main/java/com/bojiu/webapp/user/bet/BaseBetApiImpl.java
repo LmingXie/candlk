@@ -475,7 +475,7 @@ public abstract class BaseBetApiImpl extends BaseHttpUtil implements BetApi {
 	static final int allowMaxByteSize = 100_0000;
 
 	static boolean shouldSplit(String text) {
-		if (text.length() < allowMaxByteSize - 1000) {
+		if (StringUtil.length(text) < allowMaxByteSize - 1000) {
 			return false;
 		}
 		byte[] bytes;
