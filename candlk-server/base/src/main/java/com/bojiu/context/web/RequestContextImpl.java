@@ -15,6 +15,7 @@ import com.bojiu.context.ContextImpl;
 import com.bojiu.context.SessionContext;
 import com.bojiu.context.auth.DefaultAutoLoginHandler;
 import com.bojiu.context.model.*;
+import com.bojiu.webapp.base.dto.MerchantContext;
 import lombok.Setter;
 import me.codeplayer.util.*;
 import org.jspecify.annotations.NonNull;
@@ -233,17 +234,24 @@ public class RequestContextImpl extends RequestContext {
 		return (Long) val;
 	}
 
+	/** 对 【代打平台】相关的后台请求进行特殊标记的 attributeName */
+	public static final String ATTR_FOR_WORK = "__forWork";
 	@Setter
 	private static Function<HttpServletRequest, Long> merchantIdParser;
 
 	public static Long doGetMerchantIdByEnv(HttpServletRequest request, boolean fromEmpFirst) {
+		final Long mid = doGetMerchantIdByEnvInternal(request, fromEmpFirst);
+		// 【代打平台】 不需要站点ID，只需要 商户ID 即可
+		if (mid != null && (MemberType.worker() || request.getAttribute(ATTR_FOR_WORK) != null)) {
+			MerchantContext context = MerchantContext.get(mid);
+			return context == null ? null : context.getGroupId();
+		}
+		return mid;
+	}
+
+	private static Long doGetMerchantIdByEnvInternal(HttpServletRequest request, boolean fromEmpFirst) {
 		if (Env.outer()) {
 			return merchantIdParser.apply(request);
-		}
-		if (Env.inTest()) {
-			if ("brl.tbgopen.com".equals(request.getServerName())) {
-				return 1L; /* 供演示使用的商户站点ID */
-			}
 		}
 		if (fromEmpFirst && MemberType.fromBackstage()) { // 后台直接返回当前员工所属的商户ID
 			Member emp = getSessionUser(request);

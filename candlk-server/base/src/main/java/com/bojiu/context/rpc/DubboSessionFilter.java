@@ -6,10 +6,12 @@ import javax.servlet.http.HttpSession;
 
 import com.bojiu.common.context.Env;
 import com.bojiu.context.ContextImpl;
+import com.bojiu.context.model.MemberType;
 import com.bojiu.context.web.RequestContextImpl;
+import com.bojiu.webapp.base.dto.MerchantContext;
+import com.bojiu.webapp.base.entity.Merchant;
 import lombok.extern.slf4j.Slf4j;
-import me.codeplayer.util.NumberUtil;
-import me.codeplayer.util.StringUtil;
+import me.codeplayer.util.*;
 import org.apache.dubbo.common.URL;
 import org.apache.dubbo.common.constants.CommonConstants;
 import org.apache.dubbo.common.extension.Activate;
@@ -38,7 +40,7 @@ public class DubboSessionFilter implements Filter {
 		final RpcContext context = RpcContext.getServiceContext();
 		final RequestContextImpl req = RequestContextImpl.get();
 		final boolean isConsumer = uri.getSide(CommonConstants.PROVIDER_SIDE).equals(CommonConstants.CONSUMER_SIDE); // 消费者端
-		final Long merchantId;
+		Long merchantId;
 		// 并不要求完全唯一，只要能够方便定位即可
 		String invokeId;
 		if (isConsumer) { // context.isConsumerSide() 在某些 dubbo 版本可能有 NPE 问题
@@ -61,10 +63,14 @@ public class DubboSessionFilter implements Filter {
 		} else { // 服务提供者
 			String sessionId = context.getAttachment(SESSION_ID);
 			merchantId = NumberUtil.getLong(context.getAttachment(MERCHANT_ID), null);
+			req.tryClean(); // 保证初始化数据是干净的
 			if (merchantId != null) {
+				// 一定要放在 req.tryClean() 后面，因为其内部会调用 ContextImpl.removeCurrentMerchantId()，导致 merchantId 失效
+				if (MemberType.worker() && !Merchant.isPlatform(merchantId)) { // work 服务只需要 groupId
+					merchantId = Assert.notNull(MerchantContext.get(merchantId).getGroupId());
+				}
 				ContextImpl.currentMerchantId(merchantId);
 			}
-			req.tryClean(); // 保证初始化数据是干净的
 			req.setSessionId(sessionId);
 			invokeId = context.getAttachment(INVOKE_ID);
 			if (Env.inner()) {

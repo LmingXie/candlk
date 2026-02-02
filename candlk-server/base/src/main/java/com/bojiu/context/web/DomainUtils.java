@@ -60,7 +60,7 @@ public abstract class DomainUtils {
 	}
 
 	private static final long prodMerchantIdOffset = 10000L;
-	public static final String uatPrefix = "u-";
+	public static final String uatPrefix = "u-", prodPrefix = "g-";
 
 	/**
 	 * 【仅限 UAT、PROD 环境使用 】
@@ -139,6 +139,37 @@ public abstract class DomainUtils {
 		} catch (NumberFormatException e) {
 			throw new DomainException(originSubDomain, e);
 		}
+	}
+
+	public static String addProtocol(String domain) {
+		return "https://" + domain;
+	}
+
+	/**
+	 * 获取域名的根域名（私有域名，如 www.baidu.com → baidu.com；a.b.example.co.uk → example.co.uk）
+	 *
+	 * @param host 任意主机名（支持带/不带子域名、特殊后缀域名）
+	 */
+	public static String resolveRootDomain(String host, String defaultVal) {
+		InternetDomainName domain;
+		try {
+			domain = InternetDomainName.from(host.trim());
+		} catch (IllegalArgumentException e) {
+			return defaultVal;
+		}
+		if (domain.isUnderRegistrySuffix()) { // 必须是 ICANN 注册局的有效域名后缀
+			return domain.topDomainUnderRegistrySuffix().toString();
+		}
+		return defaultVal;
+	}
+
+	/**
+	 * 获取域名的根域名（私有域名，如 www.baidu.com → baidu.com；a.b.example.co.uk → example.co.uk）
+	 *
+	 * @param domain 任意域名（支持带/不带子域名、特殊后缀域名）
+	 */
+	public static String resolveRootDomain(String domain) {
+		return resolveRootDomain(domain, domain);
 	}
 
 }

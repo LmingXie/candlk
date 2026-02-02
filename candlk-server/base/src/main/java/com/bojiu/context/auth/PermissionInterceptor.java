@@ -52,6 +52,9 @@ public class PermissionInterceptor implements HandlerInterceptor {
 	@Override
 	public boolean preHandle(HttpServletRequest request, HttpServletResponse response, Object handler) throws IOException {
 		if (handler instanceof HandlerMethod handlerMethod) {
+			if (MemberType.fromBackstage() && handlerMethod.getBeanType().getPackageName().startsWith("com.bojiu.webapp.work.")) {
+				request.setAttribute(RequestContextImpl.ATTR_FOR_WORK, Boolean.TRUE);
+			}
 			/* TODO 等前端适配完成并上线后，再启用 CSRF 攻击防御
 			if (directDenyAccess(request, response)) {
 				return false;

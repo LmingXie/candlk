@@ -21,6 +21,8 @@ public enum MemberType {
 	ANY,
 	/** 用户 */
 	USER,
+	/** 【代打平台】用户 */
+	WORKER,
 	/** 员工（商户 或 管理员） */
 	EMP,
 	/** 经销商（商户经销商成员） */
@@ -49,6 +51,9 @@ public enum MemberType {
 			}
 			if (appName.endsWith(Permission.DEALER)) {
 				return DEALER;
+			}
+			if (appName.endsWith("work")) {
+				return WORKER;
 			}
 			if (appName.endsWith(Permission.ADMIN)) {
 				return ADMIN;
@@ -92,11 +97,25 @@ public enum MemberType {
 			}
 			return MERCHANT;
 		}
-		return USER;
+		return CURRENT;
+	}
+
+	/** 返回当前用户类型所归属的终端家族：前台游戏用户（ USER ）、代打平台用户（ WORKER ）、后台用户（ ADMIN ） */
+	public final MemberType family() {
+		return switch (this) {
+			case USER -> USER;
+			case WORKER -> WORKER;
+			default -> ADMIN;
+		};
 	}
 
 	public static boolean fromBackstage() {
 		return CURRENT == ADMIN;
+	}
+
+	/** 是否是 【代打平台】服务 */
+	public static boolean worker() {
+		return CURRENT == WORKER;
 	}
 
 	public static final MemberType[] CACHE = values();

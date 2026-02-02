@@ -20,6 +20,8 @@ public @interface Permission {
 	String NONE = "none";
 	/** 权限码：普通用户(任意用户登录即可访问) */
 	String USER = "user";
+	/** 权限码：（代打平台）用户(任意代打平台用户登录即可访问) */
+	String WORKER = "worker";
 	/** 权限码：商户 + 平台(员工登录即可访问) */
 	String EMP = "emp";
 	/** 权限码：经销商(经销商用户登录即可访问) */
