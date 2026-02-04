@@ -6,10 +6,8 @@ import java.util.function.Function;
 
 import com.bojiu.common.redis.RedisUtil;
 import com.bojiu.context.model.RedisKey;
-import com.bojiu.context.web.Jsons;
 import com.bojiu.webapp.base.service.CacheSyncService;
 import com.bojiu.webapp.base.service.RemoteSyncService;
-import com.bojiu.webapp.user.dto.BaseRateConifg;
 import com.bojiu.webapp.user.entity.Meta;
 import com.bojiu.webapp.user.model.MetaType;
 import com.github.benmanes.caffeine.cache.Cache;
@@ -117,7 +115,7 @@ public class MetaService /*extends BaseServiceImpl<Meta, MetaDao, Long>*/ implem
 	@Nullable
 	public static Meta getDefaultMeta(Long merchantId, MetaType type, String name) {
 		final String value = switch (type) {
-			case base_rate_config -> Jsons.encodeRaw(new BaseRateConifg());
+			case game -> "";
 			default -> null;
 		};
 		if (value == null) {

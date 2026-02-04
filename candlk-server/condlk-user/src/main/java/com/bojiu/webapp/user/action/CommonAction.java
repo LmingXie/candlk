@@ -13,8 +13,6 @@ import com.bojiu.context.model.*;
 import com.bojiu.context.web.ProxyRequest;
 import com.bojiu.webapp.base.action.BaseAction;
 import com.bojiu.webapp.base.dto.MerchantContext;
-import com.bojiu.webapp.user.dto.HedgingDTO;
-import com.bojiu.webapp.user.job.BetMatchJob;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.web.bind.annotation.*;
 
@@ -35,9 +33,6 @@ public class CommonAction extends BaseAction {
 			};
 			putMetaRaw(language, "merLanguage", langOptions);
 			putMeta(language, "language", null, Language.CACHE);
-			putMeta(language, "allPair", BetMatchJob.ALL_PAIR);
-			putMeta(language, "allResult", HedgingDTO.Odds.ALL_RESULT);
-
 		}
 	}
 

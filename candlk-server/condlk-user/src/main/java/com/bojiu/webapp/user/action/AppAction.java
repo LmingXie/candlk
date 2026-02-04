@@ -1,12 +1,9 @@
 package com.bojiu.webapp.user.action;
 
-import javax.annotation.Resource;
-
 import com.alibaba.fastjson2.JSONObject;
 import com.bojiu.common.model.Messager;
 import com.bojiu.context.auth.Permission;
 import com.bojiu.context.web.ProxyRequest;
-import com.bojiu.webapp.user.service.MetaService;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.web.bind.annotation.*;
 
@@ -14,9 +11,6 @@ import org.springframework.web.bind.annotation.*;
 @RestController
 @RequestMapping("/app")
 public class AppAction {
-
-	@Resource
-	MetaService metaService;
 
 	@GetMapping("/layout")
 	@Permission(Permission.NONE)

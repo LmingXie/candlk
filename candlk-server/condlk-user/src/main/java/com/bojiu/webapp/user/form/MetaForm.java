@@ -8,8 +8,6 @@ import com.bojiu.context.i18n.AdminI18nKey;
 import com.bojiu.context.web.Jsons;
 import com.bojiu.webapp.base.entity.MetaValue;
 import com.bojiu.webapp.base.form.BaseForm;
-import com.bojiu.webapp.user.dto.BaseRateConifg;
-import com.bojiu.webapp.user.dto.BetApiConfig;
 import com.bojiu.webapp.user.entity.Meta;
 import com.bojiu.webapp.user.model.MetaType;
 import lombok.*;
@@ -63,8 +61,6 @@ public class MetaForm extends BaseForm<Meta> {
 	public void validate() {
 		if (StringUtil.notEmpty(config)) {
 			switch (type) {
-				case bet_config -> ruleConfig = Jsons.parseObject(config, BetApiConfig.class);
-				case base_rate_config -> ruleConfig = Jsons.parseObject(config, BaseRateConifg.class);
 				default -> ruleConfig = type.deserialize(config);
 			}
 		}
