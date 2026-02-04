@@ -92,3 +92,50 @@ management:
 warn:
   service:
     url: https://qyapi.weixin.qq.com/cgi-bin/webhook/send?key=c686c253-e82e-4a6a-ae9c-0859084a9298
+
+service:
+  proxy:
+    host: 127.0.0.1
+    port: 10808
+  cron:
+    StatProfitJob: "0/3 * * * * ?"
+  user:
+    dingTalkBotUrl: https://oapi.dingtalk.com/robot/send?access_token=0699ae605b56910e521bf8fea6104d028a1e724d068f8261a6271b2a877c783f
+    tgMsgHookUrl: https://api.telegram.org/bot7098739919:AAG7V8jhpmhehF9Z5ZHL6YgA9qmmpkwV3Zg/sendMessage
+    tgChatId: -1002081472730
+    rankTgChatId: -1002219755471
+
+    web3jUrl:
+      url: https://bsc-mainnet.public.blastapi.io/
+      referer: https://four.meme/
+      origin: https://four.meme
+
+    web3jUrlPool:
+      - url: https://four.rpc.48.club
+        referer: https://four.meme/
+        origin: https://four.meme
+      - url: https://bsc.blockrazor.xyz/
+        referer: https://four.meme/
+        origin: https://four.meme
+      - url: https://bsc.api.pocket.network
+      - url: https://bsc-dataseed.bnbchain.org
+      - url: https://binance.llamarpc.com
+      - url: https://bsc-dataseed1.defibit.io
+      - url: https://bsc-dataseed1.ninicoin.io
+      - url: https://bsc-dataseed2.defibit.io
+      - url: https://bsc-dataseed3.defibit.io
+      - url: https://bsc-dataseed4.defibit.io
+      - url: https://bsc-dataseed1.bnbchain.org
+      - url: https://bsc-dataseed2.bnbchain.org
+      - url: https://bsc-dataseed3.bnbchain.org
+      - url: https://bsc-dataseed4.bnbchain.org
+      - url: https://binance-smart-chain-public.nodies.app
+        referer: https://four.meme/
+        origin: https://four.meme
+      - url: https://bsc-dataseed1.binance.org
+        referer: https://four.meme/
+        origin: https://four.meme
+      - url: https://bsc-dataseed.nariox.org
+        referer: https://four.meme/
+        origin: https://four.meme
+    lastBlock: 79252483
