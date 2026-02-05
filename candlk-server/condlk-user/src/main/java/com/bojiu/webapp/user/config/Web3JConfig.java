@@ -4,6 +4,7 @@ import java.math.BigInteger;
 import java.net.InetSocketAddress;
 import java.net.Proxy;
 import java.util.*;
+import java.util.function.Consumer;
 import javax.annotation.PostConstruct;
 
 import lombok.Getter;
@@ -41,6 +42,10 @@ public class Web3JConfig {
 
 	public volatile BigInteger lastBlock = BigInteger.valueOf(203584844);
 
+	public synchronized BigInteger incrLastBlock() {
+		return this.lastBlock = this.lastBlock.add(BigInteger.ONE);
+	}
+
 	@Value("${service.proxy.host}")
 	private String host;
 	@Value("${service.proxy.port}")
@@ -55,10 +60,6 @@ public class Web3JConfig {
 
 	private static final RestTemplate restTemplate;
 	public RestTemplate proxyRestTemplate;
-
-	public synchronized BigInteger incrLastBlock() {
-		return this.lastBlock = this.lastBlock.add(BigInteger.ONE);
-	}
 
 	static {
 		final SimpleClientHttpRequestFactory httpRequestFactory = new SimpleClientHttpRequestFactory();
@@ -84,12 +85,32 @@ public class Web3JConfig {
 		proxyRestTemplate.setRequestFactory(factory);
 	}
 
+	public void exec(int retry, Consumer<Web3j> task) {
+		final Object[] objs = pollGetWeb3j();
+		final Web3j web3j = (Web3j) objs[0];   // 移到里面来！
+
+		try {
+			task.accept(web3j);
+		} catch (Exception e) {
+			log.info("接口被限制，进行重试，剩余：{} -> {}", retry, web3jUrlPool.get(offset).url);
+			if (retry > 0) {
+				exec(retry - 1, task);
+			} else {
+				throw new RuntimeException("重试次数已用尽", e);
+			}
+		}
+	}
+
 	public synchronized Web3j pollingGetWeb3j() {
-		final Web3j result = web3jPool.get(offset);
+		return (Web3j) pollGetWeb3j()[0];
+	}
+
+	public synchronized Object[] pollGetWeb3j() {
+		final Web3j web3j = web3jPool.get(offset);
 		if (offset++ >= maxOffset) {
 			offset = 0;
 		}
-		return result;
+		return new Object[] { web3j, offset };
 	}
 
 	private transient Web3j web3jCache;

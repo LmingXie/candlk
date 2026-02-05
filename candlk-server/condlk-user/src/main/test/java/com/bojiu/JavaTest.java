@@ -135,11 +135,11 @@ public class JavaTest {
 
 	@Test
 	public void filterLogTest() throws IOException {
-		final HttpService service = new HttpService("https://bsc-mainnet.public.blastapi.io/");
-		service.addHeader("referer", "https://four.meme/");
-		service.addHeader("origin", "https://four.meme");
-		BigInteger fromBlock = BigInteger.valueOf(79368920);
-		BigInteger toBlock = BigInteger.valueOf(79368921);
+		final HttpService service = new HttpService("https://rpc.ankr.com/eth");
+		service.addHeader("referer", "https://app.openocean.finance");
+		service.addHeader("origin", "https://app.openocean.finance");
+		BigInteger fromBlock = BigInteger.valueOf(79425971);
+		BigInteger toBlock = BigInteger.valueOf(79425973);
 		final List<String> values = new ArrayList<>(StatProfitJob.tokenMap.values());
 		EthFilter filter = new EthFilter(
 				new DefaultBlockParameterNumber(fromBlock),
@@ -150,6 +150,10 @@ public class JavaTest {
 		Web3j web3j = Web3j.build(service);
 		// 2. 获取日志
 		EthLog ethLog = web3j.ethGetLogs(filter).send();
+		if (ethLog.hasError()) {
+			log.error("Error: {}", ethLog.getError().getMessage());
+			return;
+		}
 		List<EthLog.LogResult> logs = ethLog.getLogs();
 		for (EthLog.LogResult logResult : logs) {
 			final Log l = (Log) logResult.get();

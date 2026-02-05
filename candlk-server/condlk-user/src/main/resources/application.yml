@@ -118,17 +118,21 @@ service:
         referer: https://four.meme/
         origin: https://four.meme
       - url: https://bsc.api.pocket.network
-      - url: https://bsc-dataseed.bnbchain.org
       - url: https://binance.llamarpc.com
       - url: https://bsc-dataseed1.defibit.io
+      - url: https://56.rpc.thirdweb.com
       - url: https://bsc-dataseed1.ninicoin.io
+      - url: https://rpc-bsc.48.club
       - url: https://bsc-dataseed2.defibit.io
-      - url: https://bsc-dataseed3.defibit.io
-      - url: https://bsc-dataseed4.defibit.io
       - url: https://bsc-dataseed1.bnbchain.org
+      - url: https://0.48.club
+      - url: https://bsc-dataseed4.ninicoin.io
+      - url: https://bsc-rpc.publicnode.com
+      - url: https://binance.nodereal.io
+      - url: https://bsc.blockrazor.xyz
       - url: https://bsc-dataseed2.bnbchain.org
+      - url: https://bsc.drpc.org
       - url: https://bsc-dataseed3.bnbchain.org
-      - url: https://bsc-dataseed4.bnbchain.org
       - url: https://binance-smart-chain-public.nodies.app
         referer: https://four.meme/
         origin: https://four.meme
@@ -138,4 +142,5 @@ service:
       - url: https://bsc-dataseed.nariox.org
         referer: https://four.meme/
         origin: https://four.meme
-    lastBlock: 79252483
+      - url: https://bsc-dataseed.bnbchain.org
+    lastBlock: 79435296
