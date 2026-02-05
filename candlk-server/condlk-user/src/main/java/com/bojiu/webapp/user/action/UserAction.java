@@ -29,7 +29,6 @@ import org.springframework.data.redis.core.HashOperations;
 import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.annotation.*;
 
-import static com.bojiu.webapp.user.model.UserRedisKey.HEDGING_LIST_KEY;
 import static com.bojiu.webapp.user.model.UserRedisKey.USER_INFO;
 
 @Slf4j
@@ -148,7 +147,6 @@ public class UserAction extends BaseAction {
 				.get(USER_INFO, userId), UserI18nKey.USER_404), User.class);
 		RedisUtil.execInPipeline(redisOps -> {
 			redisOps.opsForHash().delete(USER_INFO, userId);
-			redisOps.delete(HEDGING_LIST_KEY + userId);
 		});
 		RequestContextImpl.removeSession(opUser.getSessionId());
 		return Messager.OK();

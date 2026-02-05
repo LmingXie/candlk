@@ -17,7 +17,7 @@ spring:
     host: 127.0.0.1
     password: 123456
     #    password: UMt|wrqI:?+Y]dN)J54{
-    database: 0
+    database: 1
 
   ### db连接配置
   shardingsphere: # https://shardingsphere.apache.org/document/current/cn/user-manual/shardingsphere-jdbc/usage/sharding/spring-boot-starter/

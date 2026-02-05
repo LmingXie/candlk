@@ -1,9 +1,12 @@
 package com.bojiu;
 
+import java.io.IOException;
+import java.math.BigDecimal;
 import java.math.BigInteger;
 import java.util.*;
 
 import com.baomidou.mybatisplus.core.toolkit.CollectionUtils;
+import com.bojiu.webapp.user.job.StatProfitJob;
 import lombok.extern.slf4j.Slf4j;
 import me.codeplayer.util.CollectionUtil;
 import org.junit.jupiter.api.Test;
@@ -13,10 +16,12 @@ import org.web3j.abi.datatypes.*;
 import org.web3j.abi.datatypes.generated.Uint256;
 import org.web3j.protocol.Web3j;
 import org.web3j.protocol.core.DefaultBlockParameterNumber;
-import org.web3j.protocol.core.methods.response.EthBlock;
+import org.web3j.protocol.core.methods.request.EthFilter;
+import org.web3j.protocol.core.methods.response.*;
 import org.web3j.protocol.core.methods.response.EthBlock.TransactionObject;
 import org.web3j.protocol.core.methods.response.EthBlock.TransactionResult;
 import org.web3j.protocol.http.HttpService;
+import org.web3j.utils.Convert;
 
 @Slf4j
 public class JavaTest {
@@ -125,6 +130,40 @@ public class JavaTest {
 			}
 		} catch (Exception e) {
 			log.error("Error: ", e);
+		}
+	}
+
+	@Test
+	public void filterLogTest() throws IOException {
+		final HttpService service = new HttpService("https://bsc-mainnet.public.blastapi.io/");
+		service.addHeader("referer", "https://four.meme/");
+		service.addHeader("origin", "https://four.meme");
+		BigInteger fromBlock = BigInteger.valueOf(79368920);
+		BigInteger toBlock = BigInteger.valueOf(79368921);
+		final List<String> values = new ArrayList<>(StatProfitJob.tokenMap.values());
+		EthFilter filter = new EthFilter(
+				new DefaultBlockParameterNumber(fromBlock),
+				new DefaultBlockParameterNumber(toBlock),
+				values
+		);
+		filter.addSingleTopic("0xddf252ad1be2c89b69c2b068fc378daa952ba7f163c4a11628f55a4df523b3ef");
+		Web3j web3j = Web3j.build(service);
+		// 2. 获取日志
+		EthLog ethLog = web3j.ethGetLogs(filter).send();
+		List<EthLog.LogResult> logs = ethLog.getLogs();
+		for (EthLog.LogResult logResult : logs) {
+			final Log l = (Log) logResult.get();
+			// 解析 Topic2 (indexed to)
+			final List<String> topics = l.getTopics();
+			final int size = topics.size();
+			if (size == 3) {
+				BigDecimal rawAmount = new BigDecimal(new BigInteger(l.getData().substring(2), 16));
+				BigDecimal amount = Convert.fromWei(rawAmount, Convert.Unit.ETHER);
+				final String toAddress = "0x" + topics.get(2).substring(26);
+				log.info("转账：To: {} ,amount: {} ,block: {}, Hash: {}", toAddress, amount, l.getBlockNumber(), l.getTransactionHash());
+			} else {
+				log.info("跳过：Size: {}, Topics: {}, Hash: {}", size, topics, l.getTransactionHash());
+			}
 		}
 	}
 
