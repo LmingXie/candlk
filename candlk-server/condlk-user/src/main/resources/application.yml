@@ -143,4 +143,4 @@ service:
         referer: https://four.meme/
         origin: https://four.meme
       - url: https://bsc-dataseed.bnbchain.org
-    lastBlock: 79435296
+    lastBlock: 79556707

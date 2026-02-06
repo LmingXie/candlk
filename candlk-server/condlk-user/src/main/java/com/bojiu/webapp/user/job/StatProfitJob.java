@@ -96,12 +96,13 @@ public class StatProfitJob {
 		});
 	}
 
-	final String INCR_IF_EXISTS_LUA =
-			"if redis.call('ZSCORE', KEYS[1], ARGV[2]) then " +
-					"   return redis.call('ZINCRBY', KEYS[1], ARGV[1], ARGV[2]) " +
-					"else " +
-					"   return nil " +
-					"end";
+	public static final String INCR_BAKANCE_LUA = """
+			if redis.call('ZSCORE', KEYS[1], ARGV[2]) then
+			   return redis.call('ZINCRBY', KEYS[1], ARGV[1], ARGV[2])
+			else
+			   return nil
+			end
+			""";
 
 	private void transferStatLogs(BigInteger fromBlock, BigInteger toBlock, Web3j newWeb3j) {
 		try {
@@ -148,19 +149,26 @@ public class StatProfitJob {
 					if (tokenAddress != null) {
 						final Map<String, BigDecimal> addressAmountMap = entry.getValue();
 						final String redisKey = UserRedisKey.ADDRESS_BALANCE_STAT_PERIFX + tokenAddress;
+						final Map.Entry<String, BigDecimal>[] entrySet = addressAmountMap.entrySet().toArray(new Map.Entry[0]);
 
-						RedisUtil.doInTransaction(redisOps -> {
-							for (Map.Entry<String, BigDecimal> addressAmountEntry : addressAmountMap.entrySet()) {
+						final List<Object> results = RedisUtil.execInTransaction(redisOps -> {
+							for (Map.Entry<String, BigDecimal> addressAmountEntry : entrySet) {
 								final String address = addressAmountEntry.getKey();
 								final BigDecimal amount = addressAmountEntry.getValue();
 
-								redisOps.execute(new DefaultRedisScript<>(INCR_IF_EXISTS_LUA, Double.class),
+								redisOps.execute(new DefaultRedisScript<>(INCR_BAKANCE_LUA, Double.class),
 										Collections.singletonList(redisKey),
 										amount.setScale(6, RoundingMode.HALF_UP).toPlainString(),
 										address
 								);
 							}
 						});
+						for (int i = 0, size = entrySet.length; i < size; i++) {
+							final Object result = results.get(i);
+							if (result != null) {
+								log.warn("检测到地址余额变化: {}, 新余额: {}", entrySet[i].getKey(), result);
+							}
+						}
 					}
 				}
 			}
