@@ -135,11 +135,12 @@ public class JavaTest {
 
 	@Test
 	public void filterLogTest() throws IOException {
-		final HttpService service = new HttpService("https://rpc.ankr.com/eth");
-		service.addHeader("referer", "https://app.openocean.finance");
-		service.addHeader("origin", "https://app.openocean.finance");
-		BigInteger fromBlock = BigInteger.valueOf(79425971);
-		BigInteger toBlock = BigInteger.valueOf(79425973);
+		final HttpService service = new HttpService("https://rpc.sentio.xyz/bsc");
+		// service.addHeader("referer", "https://swap.transit.finance/");
+		// service.addHeader("origin", "https://swap.transit.finance");
+		// service.addHeader("user-agent", "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/144.0.0.0 Safari/537.36");
+		BigInteger fromBlock = BigInteger.valueOf(79559448);
+		BigInteger toBlock = BigInteger.valueOf(79559449);
 		final List<String> values = new ArrayList<>(StatProfitJob.tokenMap.values());
 		EthFilter filter = new EthFilter(
 				new DefaultBlockParameterNumber(fromBlock),
