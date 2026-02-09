@@ -28,6 +28,8 @@ import org.web3j.protocol.core.methods.response.*;
 import org.web3j.protocol.core.methods.response.EthBlock.TransactionResult;
 import org.web3j.utils.Convert;
 
+import static com.bojiu.webapp.user.model.UserRedisKey.LAST_BLOCK_KEY;
+
 @Slf4j
 @Configuration
 public class StatProfitJob {
@@ -79,13 +81,15 @@ public class StatProfitJob {
 		RedisUtil.fastAttemptInLock("statProfitJob", 30 * 60 * 1000, () -> {
 			try {
 				final ValueOperations<String, String> opsForValue = RedisUtil.opsForValue();
-				final BigInteger fromBlock = new BigInteger(opsForValue.get(UserRedisKey.LAST_BLOCK_KEY)),
+				final BigInteger fromBlock = new BigInteger(opsForValue.get(LAST_BLOCK_KEY)),
 						toBlock = web3j.ethBlockNumber().send().getBlockNumber();
 				log.warn("初始区块：{} -> {}", fromBlock, toBlock);
-				final long toBlockLong = toBlock.longValue();
+				final long toBlockLong = toBlock.longValue() + 1;
 				while (true) {
-					final Long curr = opsForValue.increment(UserRedisKey.LAST_BLOCK_KEY, 1);
+					final Long curr = opsForValue.increment(LAST_BLOCK_KEY);
 					if (curr > toBlockLong) { // 已经超过目标高度
+						// 【关键步】既然没处理，要把多加的 1 减回去，否则 Redis 会一直虚高
+						opsForValue.decrement(LAST_BLOCK_KEY);
 						break;
 					}
 					final BigInteger lastBlock = BigInteger.valueOf(curr);
@@ -111,7 +115,6 @@ public class StatProfitJob {
 
 	private void transferStatLogs(BigInteger fromBlock, BigInteger toBlock, Web3j newWeb3j) {
 		try {
-			fromBlock = fromBlock.add(BigInteger.ONE);
 			final EthFilter filter = new EthFilter(
 					new DefaultBlockParameterNumber(fromBlock),
 					new DefaultBlockParameterNumber(toBlock),
@@ -199,7 +202,7 @@ public class StatProfitJob {
 				return;
 			}
 
-			log.info("正在执行扫描区块：{}", blockNumber);
+			log.debug("正在执行扫描区块：{}", blockNumber);
 			for (TransactionResult txR : txs) {
 				final EthBlock.TransactionObject tx = (EthBlock.TransactionObject) txR.get();
 				final String txTo = tx.getTo();

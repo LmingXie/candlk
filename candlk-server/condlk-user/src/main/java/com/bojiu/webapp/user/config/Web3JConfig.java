@@ -85,7 +85,7 @@ public class Web3JConfig {
 		try {
 			task.accept(web3j);
 		} catch (Exception e) {
-			log.info("接口被限制，进行重试，当前：{} -> {}", retry, web3jUrlPool.get(offset).url);
+			// log.debug("接口被限制，进行重试，当前：{} -> {}", retry, web3jUrlPool.get(offset).url);
 			if (retry > 0) {
 				exec(retry - 1, task);
 			} else {
