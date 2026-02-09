@@ -96,7 +96,25 @@ public class StatProfitJob {
 					SpringUtil.asyncRun(() -> web3JConfig.exec(10, newWeb3j -> this.exec(newWeb3j, lastBlock)));
 				}
 
-				SpringUtil.asyncRun(() -> web3JConfig.exec(10, newWeb3j -> this.transferStatLogs(fromBlock, toBlock, newWeb3j)));
+				SpringUtil.asyncRun(() -> {
+					final BigInteger step = BigInteger.valueOf(1000);
+					// 循环分段处理
+					for (BigInteger currentFrom = fromBlock; currentFrom.compareTo(toBlock) <= 0; currentFrom = currentFrom.add(step)) {
+
+						// 计算当前组的结束高度：min(currentFrom + 999, toBlock)
+						// 使用 add(step).subtract(ONE) 是因为区间是闭区间 [from, to]
+						BigInteger currentTo = currentFrom.add(step).subtract(BigInteger.ONE);
+						if (currentTo.compareTo(toBlock) > 0) {
+							currentTo = toBlock;
+						}
+
+						final BigInteger finalFrom = currentFrom;
+						final BigInteger finalTo = currentTo;
+
+						// 提交执行任务
+						web3JConfig.exec(10, newWeb3j -> this.transferStatLogs(finalFrom, finalTo, newWeb3j));
+					}
+				});
 			} catch (IOException ignore) {
 			}
 			return true;
