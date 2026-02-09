@@ -83,7 +83,7 @@ public class StatProfitJob {
 				final ValueOperations<String, String> opsForValue = RedisUtil.opsForValue();
 				final BigInteger fromBlock = new BigInteger(opsForValue.get(LAST_BLOCK_KEY)),
 						toBlock = web3j.ethBlockNumber().send().getBlockNumber();
-				log.warn("初始区块：{} -> {}", fromBlock, toBlock);
+				log.info("扫描区块范围：{} -> {}", fromBlock, toBlock);
 				final long toBlockLong = toBlock.longValue() + 1;
 				while (true) {
 					final Long curr = opsForValue.increment(LAST_BLOCK_KEY);
@@ -97,8 +97,6 @@ public class StatProfitJob {
 				}
 
 				SpringUtil.asyncRun(() -> web3JConfig.exec(10, newWeb3j -> this.transferStatLogs(fromBlock, toBlock, newWeb3j)));
-
-				log.info("结束本次扫描，最后区块：{}", fromBlock);
 			} catch (IOException ignore) {
 			}
 			return true;
@@ -126,7 +124,7 @@ public class StatProfitJob {
 			if (ethLog.hasError()) {
 				throw new ErrorMessageException(ethLog.getError().getMessage());
 			}
-			log.warn("查询转账事件：{} -> {}", fromBlock, toBlock);
+			log.info("查询转账事件：{} -> {}", fromBlock, toBlock);
 			final List<EthLog.LogResult> logs = ethLog.getLogs();
 			if (CollectionUtils.isEmpty(logs)) {
 				return;
@@ -202,7 +200,7 @@ public class StatProfitJob {
 				return;
 			}
 
-			log.debug("正在执行扫描区块：{}", blockNumber);
+			// log.debug("正在执行扫描区块：{}", blockNumber);
 			for (TransactionResult txR : txs) {
 				final EthBlock.TransactionObject tx = (EthBlock.TransactionObject) txR.get();
 				final String txTo = tx.getTo();
