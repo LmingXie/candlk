@@ -144,9 +144,7 @@ service:
       - url: https://bnb.api.onfinality.io/public
         referer: https://four.meme/
         origin: https://four.meme
-      - url: https://bsc-dataseed.bnbchain.org
       - url: https://bsc-mainnet.rpcfast.com?api_key=xbhWBI1Wkguk8SNMu1bvvLurPGLXmgwYeC4S6g2H7WdwFigZSmPWVZRxrskEQwIf
       - url: https://1rpc.io/bnb
       - url: https://public-bsc-mainnet.fastnode.io
       - url: https://rpc.sentio.xyz/bsc
-    lastBlock: 79566276

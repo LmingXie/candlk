@@ -11,5 +11,7 @@ public interface UserRedisKey extends RedisKey {
 
 	/** 用户转账记录 From -> To ZSet < $address, $score > */
 	String TRANSFER_KEY = "transfer:";
+	/** 最后块高度 */
+	String LAST_BLOCK_KEY = "lastBlock";
 
 }

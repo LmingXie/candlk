@@ -1,6 +1,5 @@
 package com.bojiu.webapp.user.config;
 
-import java.math.BigInteger;
 import java.net.InetSocketAddress;
 import java.net.Proxy;
 import java.util.*;
@@ -39,12 +38,6 @@ public class Web3JConfig {
 	public Web3jUrl web3jUrl;
 
 	public List<Web3jUrl> web3jUrlPool = new ArrayList<>();
-
-	public volatile BigInteger lastBlock = BigInteger.valueOf(203584844);
-
-	public synchronized BigInteger incrLastBlock() {
-		return this.lastBlock = this.lastBlock.add(BigInteger.ONE);
-	}
 
 	@Value("${service.proxy.host}")
 	private String host;

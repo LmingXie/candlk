@@ -14,8 +14,7 @@ import com.bojiu.webapp.user.model.UserRedisKey;
 import lombok.extern.slf4j.Slf4j;
 import me.codeplayer.util.CollectionUtil;
 import org.springframework.context.annotation.Configuration;
-import org.springframework.data.redis.core.HashOperations;
-import org.springframework.data.redis.core.ZSetOperations;
+import org.springframework.data.redis.core.*;
 import org.springframework.data.redis.core.script.DefaultRedisScript;
 import org.springframework.scheduling.annotation.Scheduled;
 import org.web3j.abi.FunctionReturnDecoder;
@@ -79,12 +78,18 @@ public class StatProfitJob {
 	public void run() {
 		RedisUtil.fastAttemptInLock("statProfitJob", 30 * 60 * 1000, () -> {
 			try {
-				final BigInteger fromBlock = web3JConfig.lastBlock,
+				final ValueOperations<String, String> opsForValue = RedisUtil.opsForValue();
+				final BigInteger fromBlock = new BigInteger(opsForValue.get(UserRedisKey.LAST_BLOCK_KEY)),
 						toBlock = web3j.ethBlockNumber().send().getBlockNumber();
 				log.warn("初始区块：{} -> {}", fromBlock, toBlock);
-				while (toBlock.compareTo(web3JConfig.lastBlock) > 0) {
-					final BigInteger blockNumber = web3JConfig.incrLastBlock();
-					SpringUtil.asyncRun(() -> web3JConfig.exec(10, newWeb3j -> this.exec(newWeb3j, blockNumber)));
+				final long toBlockLong = toBlock.longValue();
+				while (true) {
+					final Long curr = opsForValue.increment(UserRedisKey.LAST_BLOCK_KEY, 1);
+					if (curr > toBlockLong) { // 已经超过目标高度
+						break;
+					}
+					final BigInteger lastBlock = BigInteger.valueOf(curr);
+					SpringUtil.asyncRun(() -> web3JConfig.exec(10, newWeb3j -> this.exec(newWeb3j, lastBlock)));
 				}
 
 				SpringUtil.asyncRun(() -> web3JConfig.exec(10, newWeb3j -> this.transferStatLogs(fromBlock, toBlock, newWeb3j)));
@@ -183,7 +188,7 @@ public class StatProfitJob {
 
 	private void exec(Web3j newWeb3j, BigInteger blockNumber) {
 		try {
-			EthBlock ethBlock = newWeb3j.ethGetBlockByNumber(new DefaultBlockParameterNumber(blockNumber), true).send();
+			final EthBlock ethBlock = newWeb3j.ethGetBlockByNumber(new DefaultBlockParameterNumber(blockNumber), true).send();
 			if (ethBlock.hasError()) {
 				throw new ErrorMessageException(ethBlock.getError().getMessage());
 			}
