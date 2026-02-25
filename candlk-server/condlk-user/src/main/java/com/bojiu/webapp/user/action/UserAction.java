@@ -9,7 +9,7 @@ import com.bojiu.context.auth.Permission;
 import com.bojiu.webapp.base.action.BaseAction;
 import com.bojiu.webapp.base.service.RemoteSyncService;
 import com.bojiu.webapp.user.api.CockpitXApi;
-import com.bojiu.webapp.user.entity.User;
+import com.bojiu.webapp.user.entity.TgUser;
 import com.bojiu.webapp.user.handler.DefaultUpdateHandler;
 import com.bojiu.webapp.user.service.*;
 import lombok.extern.slf4j.Slf4j;
@@ -37,9 +37,9 @@ public class UserAction extends BaseAction {
 	@Permission(Permission.NONE)
 	public Messager<String> sync() {
 		// 查询全部账号
-		List<User> allUser = userService.findAllNormal();
+		List<TgUser> allUser = userService.findAllNormal();
 		if (!allUser.isEmpty()) {
-			for (User user : allUser) {
+			for (TgUser user : allUser) {
 				if (!user.getPhone().equals("66953918358")) {
 					continue; // TODO: 2025/11/28 测试
 				}
@@ -54,7 +54,7 @@ public class UserAction extends BaseAction {
 				}
 				// });
 			}
-			GlobalCacheSyncService.user().flushCache(RemoteSyncService.UserService, (Object[]) ArrayUtil.toArray(allUser, Long.class, User::getUserId));
+			GlobalCacheSyncService.user().flushCache(RemoteSyncService.UserService, (Object[]) ArrayUtil.toArray(allUser, Long.class, TgUser::getUserId));
 		}
 		return Messager.OK();
 	}

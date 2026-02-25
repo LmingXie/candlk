@@ -1,7 +1,7 @@
 package com.bojiu.webapp.user.dao;
 
 import com.bojiu.webapp.base.dao.BaseDao;
-import com.bojiu.webapp.user.entity.Chat;
+import com.bojiu.webapp.user.entity.TgChat;
 
 /**
  * 账号对话表 Mapper 接口
@@ -9,6 +9,6 @@ import com.bojiu.webapp.user.entity.Chat;
  * @author 
  * @since 2025-11-27
  */
-public interface ChatDao extends BaseDao<Chat> {
+public interface ChatDao extends BaseDao<TgChat> {
 
 }

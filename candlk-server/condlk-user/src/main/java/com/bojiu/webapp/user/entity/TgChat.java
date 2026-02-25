@@ -1,5 +1,6 @@
 package com.bojiu.webapp.user.entity;
 
+import com.baomidou.mybatisplus.annotation.TableName;
 import com.bojiu.webapp.base.entity.TimeBasedEntity;
 import lombok.Getter;
 import lombok.Setter;
@@ -12,7 +13,8 @@ import lombok.Setter;
  */
 @Setter
 @Getter
-public class Chat extends TimeBasedEntity {
+@TableName("tg_chat")
+public class TgChat extends TimeBasedEntity {
 
 	/** 对话类型：0=私聊；1=群组；2=频道；4=加密私聊（暂时不区别） */
 	Integer type;

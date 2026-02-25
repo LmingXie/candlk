@@ -1,5 +1,6 @@
 package com.bojiu.webapp.user.entity;
 
+import com.baomidou.mybatisplus.annotation.TableName;
 import com.bojiu.webapp.base.entity.TimeBasedEntity;
 import lombok.Getter;
 import lombok.Setter;
@@ -12,7 +13,8 @@ import lombok.Setter;
  */
 @Setter
 @Getter
-public class Proxy extends TimeBasedEntity {
+@TableName("tg_proxy")
+public class TgProxy extends TimeBasedEntity {
 
 	/** 代理类型：0=HTTP；1=HTTPS；2=SOCKS5；3=SOCKS4 */
 	Integer type;

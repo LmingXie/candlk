@@ -2,7 +2,7 @@ package com.bojiu.webapp.user.entity;
 
 import java.util.Date;
 
-
+import com.baomidou.mybatisplus.annotation.TableName;
 import com.bojiu.context.web.Jsons;
 import com.bojiu.webapp.base.entity.BaseEntity;
 import com.bojiu.webapp.user.dto.JsonInfo;
@@ -14,7 +14,8 @@ import org.jspecify.annotations.Nullable;
  */
 @Setter
 @Getter
-public class User extends BaseEntity {
+@TableName("tg_user")
+public class TgUser extends BaseEntity {
 
 	/** 用户ID */
 	Long userId;

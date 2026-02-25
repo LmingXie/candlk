@@ -8,7 +8,7 @@ import com.bojiu.common.util.SpringUtil;
 import com.bojiu.context.web.Jsons;
 import com.bojiu.webapp.user.config.UserConfig;
 import com.bojiu.webapp.user.dto.JsonInfo;
-import com.bojiu.webapp.user.entity.User;
+import com.bojiu.webapp.user.entity.TgUser;
 import com.bojiu.webapp.user.service.UserService;
 import com.github.benmanes.caffeine.cache.Cache;
 import com.github.benmanes.caffeine.cache.Caffeine;
@@ -25,7 +25,7 @@ public class DefaultUpdateHandler implements Client.ResultHandler {
 
 	/** 初始化时设置 */
 	public Client client;
-	public User user;
+	public TgUser user;
 	private TdApi.AuthorizationState authorizationState = null;
 	/** 是否已完成授权 */
 	private static volatile boolean haveAuthorization = false;
@@ -37,7 +37,7 @@ public class DefaultUpdateHandler implements Client.ResultHandler {
 			.expireAfterWrite(10, TimeUnit.MINUTES)
 			.build();
 
-	public DefaultUpdateHandler(User user) {
+	public DefaultUpdateHandler(TgUser user) {
 		this.user = user;
 	}
 

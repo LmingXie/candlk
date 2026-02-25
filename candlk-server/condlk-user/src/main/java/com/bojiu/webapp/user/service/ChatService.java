@@ -2,7 +2,7 @@ package com.bojiu.webapp.user.service;
 
 import com.bojiu.webapp.base.service.BaseServiceImpl;
 import com.bojiu.webapp.user.dao.ChatDao;
-import com.bojiu.webapp.user.entity.Chat;
+import com.bojiu.webapp.user.entity.TgChat;
 import org.springframework.stereotype.Service;
 
 /**
@@ -12,6 +12,6 @@ import org.springframework.stereotype.Service;
  * @since 2025-11-27
  */
 @Service
-public class ChatService extends BaseServiceImpl<Chat, ChatDao, Long> {
+public class ChatService extends BaseServiceImpl<TgChat, ChatDao, Long> {
 
 }

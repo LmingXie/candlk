@@ -13,8 +13,8 @@ import com.bojiu.context.web.TaskUtils;
 import com.bojiu.webapp.base.service.*;
 import com.bojiu.webapp.base.util.LocalScheduler;
 import com.bojiu.webapp.user.dao.UserDao;
-import com.bojiu.webapp.user.entity.Message;
-import com.bojiu.webapp.user.entity.User;
+import com.bojiu.webapp.user.entity.TgMsg;
+import com.bojiu.webapp.user.entity.TgUser;
 import com.bojiu.webapp.user.handler.DefaultUpdateHandler;
 import com.bojiu.webapp.user.model.UserType;
 import com.github.benmanes.caffeine.cache.Cache;
@@ -33,12 +33,12 @@ import org.springframework.transaction.annotation.Transactional;
 /** 账号表 服务实现类 */
 @Slf4j
 @Service
-public class UserService extends BaseServiceImpl<User, UserDao, Long> implements CacheSyncService {
+public class UserService extends BaseServiceImpl<TgUser, UserDao, Long> implements CacheSyncService {
 
 	@Resource
 	MessageService messageService;
 	/** 缓存：$userId -> $user */
-	static final Cache<Long, User> cache = Caffeine.newBuilder()
+	static final Cache<Long, TgUser> cache = Caffeine.newBuilder()
 			.initialCapacity(100)
 			.maximumSize(1024)
 			.expireAfterWrite(1, TimeUnit.DAYS)
@@ -50,42 +50,42 @@ public class UserService extends BaseServiceImpl<User, UserDao, Long> implements
 	@Transactional
 	public void putClient(Long userId, Client client) {
 		update(updateWrapper()
-				.set(User.TYPE, UserType.TD_LIB.value)
-				.set(User.UPDATE_TIME, new Date())
-				.ne(User.TYPE, UserType.TD_LIB.value)
+				.set(TgUser.TYPE, UserType.TD_LIB.value)
+				.set(TgUser.UPDATE_TIME, new Date())
+				.ne(TgUser.TYPE, UserType.TD_LIB.value)
 
-				.eq(User.USER_ID, userId)
+				.eq(TgUser.USER_ID, userId)
 		);
 		clientMap.put(userId, client);
 	}
 
-	public Collection<User> getCacheByIds(Long... ids) {
+	public Collection<TgUser> getCacheByIds(Long... ids) {
 		final Function<Long, Long> converter = c -> c;
-		Map<Long, @NonNull User> all = cache.getAll(ArrayUtil.toList(converter, ids),
-				ids_ -> CollectionUtil.toHashMap(findByIds(ids), User::getUserId));
+		Map<Long, @NonNull TgUser> all = cache.getAll(ArrayUtil.toList(converter, ids),
+				ids_ -> CollectionUtil.toHashMap(findByIds(ids), TgUser::getUserId));
 		return all.values();
 	}
 
-	public User getCache(Long userId) {
+	public TgUser getCache(Long userId) {
 		return cache.get(userId, this::get);
 	}
 
-	public Collection<User> getCacheAll() {
+	public Collection<TgUser> getCacheAll() {
 		return cache.asMap().values();
 	}
 
 	/** 查询全部正常的账号 */
-	public List<User> findAllNormal() {
+	public List<TgUser> findAllNormal() {
 		return findAll(null);
 	}
 
 	/** 查询全部TDLib账号 */
-	public List<User> findAll(@Nullable UserType type) {
-		List<User> users = selectList(smartEq(User.STATUS, Status.YES.value)
-				.eq(User.TYPE, type == null ? null : type.value)
+	public List<TgUser> findAll(@Nullable UserType type) {
+		List<TgUser> users = selectList(smartEq(TgUser.STATUS, Status.YES.value)
+				.eq(TgUser.TYPE, type == null ? null : type.value)
 		);
 		if (!users.isEmpty()) {
-			for (User user : users) {
+			for (TgUser user : users) {
 				cache.put(user.getUserId(), user);
 			}
 		}
@@ -96,10 +96,10 @@ public class UserService extends BaseServiceImpl<User, UserDao, Long> implements
 
 	@PostConstruct
 	public void init() {
-		List<User> tdUsers = findAll(UserType.TD_LIB);
+		List<TgUser> tdUsers = findAll(UserType.TD_LIB);
 		if (!tdUsers.isEmpty()) {
 			// 加载全部TDLib账号
-			for (User user : tdUsers) {
+			for (TgUser user : tdUsers) {
 				loadTaskThreadPool.execute(() -> {
 					Client.create(new DefaultUpdateHandler(user));
 				});
@@ -144,7 +144,7 @@ public class UserService extends BaseServiceImpl<User, UserDao, Long> implements
 							// SpringUtil.asyncRun(() -> {
 							Long userId_ = entry.getKey();
 							DefaultUpdateHandler updateHandler = entry.getValue();
-							List<Message> authMsg = messageService.getAuthMsg(userId_, updateHandler.beginTime);
+							List<TgMsg> authMsg = messageService.getAuthMsg(userId_, updateHandler.beginTime);
 							if (checkAuthCode(authMsg, updateHandler) || System.currentTimeMillis() > updateHandler.beginTime.getTime() + authTimeout) {
 								authWaitHandlerMap.remove(userId_);
 							}
@@ -158,7 +158,7 @@ public class UserService extends BaseServiceImpl<User, UserDao, Long> implements
 		}
 	}
 
-	private static boolean checkAuthCode(List<Message> authMsg, DefaultUpdateHandler updateHandler) {
+	private static boolean checkAuthCode(List<TgMsg> authMsg, DefaultUpdateHandler updateHandler) {
 		if (authMsg.isEmpty()) {
 			return false;
 		}

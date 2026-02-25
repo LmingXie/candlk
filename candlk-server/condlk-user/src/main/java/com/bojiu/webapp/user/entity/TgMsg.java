@@ -1,5 +1,6 @@
 package com.bojiu.webapp.user.entity;
 
+import com.baomidou.mybatisplus.annotation.TableName;
 import com.bojiu.webapp.base.entity.TimeBasedEntity;
 import lombok.Getter;
 import lombok.Setter;
@@ -12,7 +13,8 @@ import lombok.Setter;
  */
 @Setter
 @Getter
-public class Message extends TimeBasedEntity {
+@TableName("tg_message")
+public class TgMsg extends TimeBasedEntity {
 
 	/** 用户ID */
 	Long userId;

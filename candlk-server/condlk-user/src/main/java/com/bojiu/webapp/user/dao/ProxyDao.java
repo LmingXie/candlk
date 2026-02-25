@@ -1,7 +1,7 @@
 package com.bojiu.webapp.user.dao;
 
 import com.bojiu.webapp.base.dao.BaseDao;
-import com.bojiu.webapp.user.entity.Proxy;
+import com.bojiu.webapp.user.entity.TgProxy;
 
 /**
  * 代理表 Mapper 接口
@@ -9,6 +9,6 @@ import com.bojiu.webapp.user.entity.Proxy;
  * @author 
  * @since 2025-11-27
  */
-public interface ProxyDao extends BaseDao<Proxy> {
+public interface ProxyDao extends BaseDao<TgProxy> {
 
 }

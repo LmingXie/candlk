@@ -2,7 +2,7 @@ package com.bojiu.webapp.user.service;
 
 import com.bojiu.webapp.base.service.BaseServiceImpl;
 import com.bojiu.webapp.user.dao.ProxyDao;
-import com.bojiu.webapp.user.entity.Proxy;
+import com.bojiu.webapp.user.entity.TgProxy;
 import org.springframework.stereotype.Service;
 
 /**
@@ -12,6 +12,6 @@ import org.springframework.stereotype.Service;
  * @since 2025-11-27
  */
 @Service
-public class ProxyService extends BaseServiceImpl<Proxy, ProxyDao, Long> {
+public class ProxyService extends BaseServiceImpl<TgProxy, ProxyDao, Long> {
 
 }
