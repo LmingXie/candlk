@@ -34,6 +34,7 @@ public interface RemoteSyncService {
 	String MerchantLayerConfigService = "MerchantLayerConfigService";
 	String MerchantGroupService = "MerchantGroupService";
 	String FeedbackConfigService = "FeedbackConfigService";
+	String UserService = "UserService";
 	/** 用于域名缓存刷新 */
 	String ContextImpl = "ContextImpl";
 	String TicketGrantService = "TicketGrantService";
