@@ -1,14 +1,20 @@
 package com.bojiu.webapp.user.handler;
 
+import java.io.IOException;
+import java.nio.file.Files;
+import java.nio.file.Paths;
 import java.util.Date;
 import java.util.List;
 import java.util.concurrent.TimeUnit;
 
+import com.alibaba.fastjson2.JSONArray;
 import com.bojiu.common.util.SpringUtil;
 import com.bojiu.context.web.Jsons;
 import com.bojiu.webapp.user.config.UserConfig;
 import com.bojiu.webapp.user.dto.JsonInfo;
-import com.bojiu.webapp.user.entity.TgUser;
+import com.bojiu.webapp.user.entity.*;
+import com.bojiu.webapp.user.model.MsgType;
+import com.bojiu.webapp.user.service.ChatService;
 import com.bojiu.webapp.user.service.UserService;
 import com.github.benmanes.caffeine.cache.Cache;
 import com.github.benmanes.caffeine.cache.Caffeine;
@@ -18,6 +24,8 @@ import me.codeplayer.util.EasyDate;
 import me.codeplayer.util.X;
 import org.drinkless.tdlib.Client;
 import org.drinkless.tdlib.TdApi;
+
+import static java.nio.file.StandardCopyOption.REPLACE_EXISTING;
 
 @Slf4j
 @Setter
@@ -43,7 +51,8 @@ public class DefaultUpdateHandler implements Client.ResultHandler {
 
 	@Override
 	public void onResult(TdApi.Object object) {
-		switch (object.getConstructor()) {
+		final int msgConstructor = object.getConstructor();
+		switch (msgConstructor) {
 			case TdApi.UpdateNewChat.CONSTRUCTOR -> { // 添加新对话
 				TdApi.UpdateNewChat updateNewChat = (TdApi.UpdateNewChat) object;
 				TdApi.Chat chat = updateNewChat.chat;
@@ -121,43 +130,123 @@ public class DefaultUpdateHandler implements Client.ResultHandler {
 			case TdApi.UpdateNewMessage.CONSTRUCTOR -> {
 				TdApi.UpdateNewMessage newMsg = (TdApi.UpdateNewMessage) object;
 				TdApi.Message msg = newMsg.message;
-				log.info("收到新消息：{}->{}", object.getConstructor(), Jsons.encode(object));
-				long chatId = msg.chatId;
-				TdApi.MessageContent content = msg.content;
-				if (content instanceof TdApi.MessageText text) {
-					TdApi.FormattedText txt = text.text;
-					String textStr = txt.text;
-					TdApi.TextEntity[] entities = txt.entities;
-				} else if (content instanceof TdApi.MessagePhoto photo) {
-					TdApi.Photo photo1 = photo.photo;
-				} else if (content instanceof TdApi.MessageAnimation animation) {
-					TdApi.Animation animation1 = animation.animation;
-				} else if (content instanceof TdApi.MessageDocument document) {
-					TdApi.Document document1 = document.document;
-				} else if (content instanceof TdApi.MessageSticker sticker) {
-					TdApi.Sticker sticker1 = sticker.sticker;
-				} else if (content instanceof TdApi.MessageAudio audio) {
-					TdApi.Audio audio1 = audio.audio;
-				}
-				long mediaAlbumId = msg.mediaAlbumId;
-
-				long msgId = msg.id;
+				log.info("收到新消息：{}->{}", msgConstructor, Jsons.encode(object));
+				final long chatId = msg.chatId, msgId = msg.id;
 				TdApi.MessageSender sender = msg.senderId;
-				long senderId = switch (sender.getConstructor()) {
+
+				MsgType msgType = MsgType.MSG;
+				if (msg.replyTo != null) {
+					msgType = MsgType.REPLY;
+				} else if (msg.forwardInfo != null) {
+					msgType = MsgType.FORWARD;
+				}
+
+				final long fromId = switch (sender.getConstructor()) {
 					case TdApi.MessageSenderUser.CONSTRUCTOR -> ((TdApi.MessageSenderUser) sender).userId;
 					case TdApi.MessageSenderChat.CONSTRUCTOR -> ((TdApi.MessageSenderChat) sender).chatId;
 					default -> throw new IllegalStateException("Unexpected value: " + sender.getConstructor());
 				};
+				final TdApi.MessageContent content = msg.content;
+				final TgMsg tgMsg = new TgMsg().setUserId(user.getUserId())
+						.setType(msgType).setMsgId(msg.id).setGroupId(String.valueOf(msg.mediaAlbumId))
+						.setChatId(chatId)
+						.setPeerId(TgMsg.toPeerId(chatId))
+						.setFromId(fromId)
+						.setRaw(Jsons.encode(msg));
+				tgMsg.initTime(new Date(msg.date));
+				final boolean userMsg = tgMsg.asUserMsg();
+				final int contentConstructor = content.getConstructor();
+				switch (contentConstructor) {
+					case TdApi.MessageText.CONSTRUCTOR -> {
+						TdApi.MessageText textMsg = (TdApi.MessageText) content;
+						TdApi.FormattedText txt = textMsg.text;
+						tgMsg.setMessage(txt.text).setEntities(Jsons.encode(txt.entities));
+					}
+					case TdApi.MessagePhoto.CONSTRUCTOR -> {
+						TdApi.MessagePhoto msgPhoto = (TdApi.MessagePhoto) content;
+						tgMsg.setMessage(msgPhoto.caption.text);
+						if (userMsg) { // 仅存档私聊消息的图片
+							final TdApi.Photo photo = msgPhoto.photo;
+							final TdApi.PhotoSize largest = photo.sizes[photo.sizes.length - 1];
+							final TdApi.File file = largest.photo;
 
-				// 查询用户信息
-				TdApi.User senderInfo = client.sendSync(new TdApi.GetUser(senderId), 10, TimeUnit.SECONDS);
-				TdApi.UserStatus status = senderInfo.status;
-				TdApi.UserType type = senderInfo.type;
+							// 下载原图
+							final TdApi.File downloaded = client.sendSync(new TdApi.DownloadFile(file.id, 1, 0, 0, true), 60, TimeUnit.SECONDS);
+							if (downloaded.local.isDownloadingCompleted) {
+								final String img = getUserConfig().imgPath + "\\" + file.remote.uniqueId + ".jpg";
+								try {
+									Files.copy(Paths.get(downloaded.local.path), Paths.get(img), REPLACE_EXISTING);
+									tgMsg.setMedias(Jsons.encode(JSONArray.of("img:" + file.remote.uniqueId)));
+								} catch (IOException ignore) {
+								}
+							}
+						}
+					}
+					case TdApi.MessageDocument.CONSTRUCTOR -> { // 其他文件消息
+						final TdApi.MessageDocument docMsg = (TdApi.MessageDocument) content;
+						tgMsg.setMessage(docMsg.caption.text);
 
-				// 引用回复
-				TdApi.MessageReplyTo replyTo = msg.replyTo;
-				// 转发信息
-				TdApi.MessageForwardInfo forwardInfo = msg.forwardInfo;
+						if (userMsg) {
+							TdApi.Document doc = docMsg.document;
+							// 下载原文件
+							final TdApi.File downloaded = client.sendSync(new TdApi.DownloadFile(doc.document.id, 1, 0, 0, true), 60, TimeUnit.MINUTES);
+							if (downloaded.local.isDownloadingCompleted) {
+								final String url = getUserConfig().filePath + "\\" + doc.document.remote.uniqueId;
+								try {
+									Files.copy(Paths.get(downloaded.local.path), Paths.get(url), REPLACE_EXISTING);
+									tgMsg.setMedias(Jsons.encode(JSONArray.of("file:" + doc.document.remote.uniqueId
+											+ ":" + doc.fileName + ":" + TgMsg.convertSize(doc.document.size))));
+								} catch (IOException ignore) {
+								}
+							}
+						}
+					}
+					case TdApi.MessageAnimation.CONSTRUCTOR, TdApi.MessageAudio.CONSTRUCTOR -> { // 动图 或 视频
+						if (userMsg) {
+							final String uniqueId;
+							final int fileId;
+							if (contentConstructor == TdApi.MessageAnimation.CONSTRUCTOR) {
+								TdApi.MessageAnimation animationMsg = (TdApi.MessageAnimation) content;
+								tgMsg.setMessage(animationMsg.caption.text);
+								TdApi.Animation animation = animationMsg.animation;
+								fileId = animation.animation.id;
+								uniqueId = animation.animation.remote.uniqueId;
+							} else {
+								TdApi.MessageAudio audioMsg = (TdApi.MessageAudio) content;
+								tgMsg.setMessage(audioMsg.caption.text);
+								TdApi.Audio audio = audioMsg.audio;
+								fileId = audio.audio.id;
+								uniqueId = audio.audio.remote.uniqueId;
+							}
+
+							final TdApi.File downloaded = client.sendSync(new TdApi.DownloadFile(fileId, 1, 0, 0, true), 60, TimeUnit.MINUTES);
+							if (downloaded.local.isDownloadingCompleted) {
+								final String url = getUserConfig().videoPath + "\\" + uniqueId;
+								try {
+									Files.copy(Paths.get(downloaded.local.path), Paths.get(url), REPLACE_EXISTING);
+									tgMsg.setMedias(Jsons.encode(JSONArray.of("video:" + uniqueId)));
+								} catch (IOException ignore) {
+								}
+							}
+						}
+					}
+					default -> {
+					}
+				}
+
+				log.info("新消息入库：{}", Jsons.encode(tgMsg));
+
+				if (userMsg) {
+					// 检查是否已存在对话记录
+					final TgChat chat = getChatService().getCache(user.getUserId(), tgMsg.getPeerId());
+					if (chat == null) {
+						// 查询用户信息
+						TdApi.User senderInfo = client.sendSync(new TdApi.GetUser(fromId), 10, TimeUnit.SECONDS);
+						TdApi.UserStatus status = senderInfo.status;
+						TdApi.UserType type = senderInfo.type;
+						// TODO: 2026/2/25 新增对话记录
+					}
+				}
 			}
 			case TdApi.UpdateAuthorizationState.CONSTRUCTOR -> // 更新授权状态
 					onAuthorizationStateUpdated(((TdApi.UpdateAuthorizationState) object).authorizationState);
@@ -504,6 +593,12 @@ public class DefaultUpdateHandler implements Client.ResultHandler {
 
 	public UserService getUserService() {
 		return userService == null ? userService = SpringUtil.getBean(UserService.class) : userService;
+	}
+
+	transient ChatService chatService;
+
+	public ChatService getChatService() {
+		return chatService == null ? chatService = SpringUtil.getBean(ChatService.class) : chatService;
 	}
 
 }

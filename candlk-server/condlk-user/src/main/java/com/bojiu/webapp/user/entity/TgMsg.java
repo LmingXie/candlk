@@ -2,17 +2,19 @@ package com.bojiu.webapp.user.entity;
 
 import com.baomidou.mybatisplus.annotation.TableName;
 import com.bojiu.webapp.base.entity.TimeBasedEntity;
+import com.bojiu.webapp.user.model.MsgType;
 import lombok.Getter;
 import lombok.Setter;
+import lombok.experimental.Accessors;
 
 /**
  * 消息记录表
  *
- * @author
  * @since 2025-11-27
  */
 @Setter
 @Getter
+@Accessors(chain = true)
 @TableName("tg_message")
 public class TgMsg extends TimeBasedEntity {
 
@@ -21,7 +23,7 @@ public class TgMsg extends TimeBasedEntity {
 	/** 对话ID（群组-100开头） */
 	Long chatId;
 	/** 消息类型：0=消息；1=引用回复；2=转发 */
-	Integer type;
+	MsgType type;
 	/** 对话中的消息ID */
 	Long msgId;
 	/** 分组ID（收到多个媒体文件时会自动分组拆分） */
@@ -32,7 +34,7 @@ public class TgMsg extends TimeBasedEntity {
 	Long fromId;
 	/** 消息内容 */
 	String message;
-	/** 媒体资源JOSN数组（图片=img:url；视频=video:url；其他文件=file:<url>:<filename>:<size>l；） */
+	/** 媒体资源JOSN数组（图片=img:url；视频=video:url；其他文件=file:<url>:<filename>:<size>；） */
 	String medias;
 	/** web页预览JSON（预览图photo=url） */
 	String webpage;
@@ -46,6 +48,39 @@ public class TgMsg extends TimeBasedEntity {
 	Boolean isBot;
 	/** 发送人是否为内部账号 */
 	Boolean isInner;
+
+	/** 用户私聊消息 */
+	public boolean asUserMsg() {
+		return peerId.equals(fromId);
+	}
+
+	/// ### ChatId 数值区间
+	/// | 类型             | chatId 数值范围          | 例子               | peerId 获取方式               |
+	/// | -------------- | -------------------- | ---------------- | ------------------------- |
+	/// | 👤 用户私聊        | `> 0`                | `7586662663`     | `peerId = chatId`         |
+	/// | 👥 basic group | `-1 … -999999999999` | `-123456789`     | `peerId = -chatId`        |
+	/// | 📢 supergroup  | `≤ -1000000000000`   | `-1002535681520` | `peerId = -chatId - 1e12` |
+	/// | 📡 channel     | 同 supergroup         | `-1009876543210` | 同上                        |
+	/// ### PeerId / ChatId / UserId 关系
+	/// | 场景          | chatId                | peerId  | fromId     |
+	/// | ----------- | --------------------- | ------- | ---------- |
+	/// | 私聊          | userId                | userId  | userId     |
+	/// | basic group | -groupId              | groupId | 发送者 userId |
+	/// | supergroup  | -1000000000000 - sgId | sgId    | 发送者 userId |
+	/// | channel 帖子  | 同上                    | sgId    | channelId  |
+	public static long toPeerId(long chatId) {
+		if (chatId <= -1_000_000_000_000L) {
+			return -chatId - 1_000_000_000_000L;
+		}
+		return chatId;
+	}
+
+	/** 转换文件大小为MB或KB */
+	public static String convertSize(long sizeBytes) {
+		return sizeBytes >= 1024 * 1024
+				? String.format("%.2f MB", sizeBytes / (1024.0 * 1024))
+				: String.format("%.2f KB", sizeBytes / 1024.0);
+	}
 
 	public static final String USER_ID = "user_id";
 	public static final String CHAT_ID = "chat_id";
