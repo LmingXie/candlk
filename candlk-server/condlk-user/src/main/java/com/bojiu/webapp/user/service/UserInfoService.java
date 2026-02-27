@@ -4,11 +4,17 @@ import com.bojiu.webapp.base.service.BaseServiceImpl;
 import com.bojiu.webapp.user.dao.UserInfoDao;
 import com.bojiu.webapp.user.entity.UserInfo;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 
 /**
  * Telegram用户基础信息表 服务实现类
  */
 @Service
 public class UserInfoService extends BaseServiceImpl<UserInfo, UserInfoDao, Long> {
+
+	@Transactional
+	public void saveOrEdit(UserInfo userInfo) {
+		baseDao.updateUserInfo(userInfo);
+	}
 
 }

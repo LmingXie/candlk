@@ -29,6 +29,7 @@ public class UserConfig {
 			videoPath = basePath + "\\video",
 			avatarPath = basePath + "\\avatar",
 			filePath = basePath + "\\file";
+	public static final String IMG_SUFFIX = ".jpg";
 
 	@PostConstruct
 	public void init() {

@@ -2,19 +2,18 @@ package com.bojiu.webapp.user.entity;
 
 import java.util.Date;
 
-import com.bojiu.webapp.base.entity.BaseEntity;
+import com.bojiu.webapp.base.entity.TimeBasedEntity;
 import lombok.Getter;
 import lombok.Setter;
 
 /**
  * Telegram用户基础信息表
  *
- * @author
  * @since 2025-11-27
  */
 @Setter
 @Getter
-public class UserInfo extends BaseEntity {
+public class UserInfo extends TimeBasedEntity {
 
 	/** 用户ID */
 	Long userId;
@@ -28,14 +27,26 @@ public class UserInfo extends BaseEntity {
 	String avatar;
 	/** to_json结果（User, Chat, Channel类型） */
 	String jsonEntity;
-	/** 创建时间 */
-	Date addTime;
-	/** 最后对话时间 */
-	Date updateTime;
 	/** 业务标识（FLAG_BOT=机器人） */
 	Integer bizFlag;
 	/** 是否为机器人 */
 	Integer isBot;
+
+	public static UserInfo of(Long userId, String phone, String username, String nickname, String avatar, String jsonEntity, Date now, Integer isBot) {
+		UserInfo info = new UserInfo();
+		info.setUserId(userId);
+		info.setPhone(phone);
+		info.setUsername(username);
+		info.setNickname(nickname);
+		info.setAvatar(avatar);
+		info.setJsonEntity(jsonEntity);
+		info.setAddTime(now);
+		info.setUpdateTime(now);
+		info.setBizFlag(0);
+		info.setIsBot(isBot);
+		info.initTime(now);
+		return info;
+	}
 
 	public static final String USER_ID = "user_id";
 	public static final String PHONE = "phone";

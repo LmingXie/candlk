@@ -6,6 +6,8 @@ import java.nio.file.Paths;
 import java.util.Date;
 import java.util.List;
 import java.util.concurrent.TimeUnit;
+import java.util.function.Consumer;
+import java.util.function.Supplier;
 
 import com.alibaba.fastjson2.JSONArray;
 import com.bojiu.common.util.SpringUtil;
@@ -13,6 +15,7 @@ import com.bojiu.context.web.Jsons;
 import com.bojiu.webapp.user.config.UserConfig;
 import com.bojiu.webapp.user.dto.JsonInfo;
 import com.bojiu.webapp.user.entity.*;
+import com.bojiu.webapp.user.model.ChatType;
 import com.bojiu.webapp.user.model.MsgType;
 import com.bojiu.webapp.user.service.ChatService;
 import com.bojiu.webapp.user.service.UserService;
@@ -20,11 +23,12 @@ import com.github.benmanes.caffeine.cache.Cache;
 import com.github.benmanes.caffeine.cache.Caffeine;
 import lombok.Setter;
 import lombok.extern.slf4j.Slf4j;
-import me.codeplayer.util.EasyDate;
-import me.codeplayer.util.X;
+import me.codeplayer.util.*;
 import org.drinkless.tdlib.Client;
 import org.drinkless.tdlib.TdApi;
+import org.jspecify.annotations.Nullable;
 
+import static com.bojiu.webapp.user.config.UserConfig.IMG_SUFFIX;
 import static java.nio.file.StandardCopyOption.REPLACE_EXISTING;
 
 @Slf4j
@@ -171,15 +175,8 @@ public class DefaultUpdateHandler implements Client.ResultHandler {
 							final TdApi.File file = largest.photo;
 
 							// 下载原图
-							final TdApi.File downloaded = client.sendSync(new TdApi.DownloadFile(file.id, 1, 0, 0, true), 60, TimeUnit.SECONDS);
-							if (downloaded.local.isDownloadingCompleted) {
-								final String img = getUserConfig().imgPath + "\\" + file.remote.uniqueId + ".jpg";
-								try {
-									Files.copy(Paths.get(downloaded.local.path), Paths.get(img), REPLACE_EXISTING);
-									tgMsg.setMedias(Jsons.encode(JSONArray.of("img:" + file.remote.uniqueId)));
-								} catch (IOException ignore) {
-								}
-							}
+							downloadFile(client, file.id, () -> getUserConfig().imgPath + "\\" + file.remote.uniqueId + IMG_SUFFIX,
+									f -> tgMsg.setMedias(Jsons.encode(JSONArray.of("img:" + file.remote.uniqueId))));
 						}
 					}
 					case TdApi.MessageDocument.CONSTRUCTOR -> { // 其他文件消息
@@ -187,18 +184,11 @@ public class DefaultUpdateHandler implements Client.ResultHandler {
 						tgMsg.setMessage(docMsg.caption.text);
 
 						if (userMsg) {
-							TdApi.Document doc = docMsg.document;
+							final TdApi.Document doc = docMsg.document;
 							// 下载原文件
-							final TdApi.File downloaded = client.sendSync(new TdApi.DownloadFile(doc.document.id, 1, 0, 0, true), 60, TimeUnit.MINUTES);
-							if (downloaded.local.isDownloadingCompleted) {
-								final String url = getUserConfig().filePath + "\\" + doc.document.remote.uniqueId;
-								try {
-									Files.copy(Paths.get(downloaded.local.path), Paths.get(url), REPLACE_EXISTING);
-									tgMsg.setMedias(Jsons.encode(JSONArray.of("file:" + doc.document.remote.uniqueId
-											+ ":" + doc.fileName + ":" + TgMsg.convertSize(doc.document.size))));
-								} catch (IOException ignore) {
-								}
-							}
+							downloadFile(client, doc.document.id, () -> getUserConfig().filePath + "\\" + doc.document.remote.uniqueId,
+									f -> tgMsg.setMedias(Jsons.encode(JSONArray.of("file:" + doc.document.remote.uniqueId
+											+ ":" + doc.fileName + ":" + TgMsg.convertSize(doc.document.size)))));
 						}
 					}
 					case TdApi.MessageAnimation.CONSTRUCTOR, TdApi.MessageAudio.CONSTRUCTOR -> { // 动图 或 视频
@@ -219,15 +209,8 @@ public class DefaultUpdateHandler implements Client.ResultHandler {
 								uniqueId = audio.audio.remote.uniqueId;
 							}
 
-							final TdApi.File downloaded = client.sendSync(new TdApi.DownloadFile(fileId, 1, 0, 0, true), 60, TimeUnit.MINUTES);
-							if (downloaded.local.isDownloadingCompleted) {
-								final String url = getUserConfig().videoPath + "\\" + uniqueId;
-								try {
-									Files.copy(Paths.get(downloaded.local.path), Paths.get(url), REPLACE_EXISTING);
-									tgMsg.setMedias(Jsons.encode(JSONArray.of("video:" + uniqueId)));
-								} catch (IOException ignore) {
-								}
-							}
+							downloadFile(client, fileId, () -> getUserConfig().videoPath + "\\" + uniqueId,
+									f -> tgMsg.setMedias(Jsons.encode(JSONArray.of("video:" + uniqueId))));
 						}
 					}
 					default -> {
@@ -238,13 +221,29 @@ public class DefaultUpdateHandler implements Client.ResultHandler {
 
 				if (userMsg) {
 					// 检查是否已存在对话记录
-					final TgChat chat = getChatService().getCache(user.getUserId(), tgMsg.getPeerId());
+					final Long peerId = tgMsg.getPeerId();
+					final ChatService chatService = getChatService();
+					final TgChat chat = chatService.getCache(user.getUserId(), peerId);
 					if (chat == null) {
 						// 查询用户信息
-						TdApi.User senderInfo = client.sendSync(new TdApi.GetUser(fromId), 10, TimeUnit.SECONDS);
-						TdApi.UserStatus status = senderInfo.status;
-						TdApi.UserType type = senderInfo.type;
-						// TODO: 2026/2/25 新增对话记录
+						final TdApi.User peerInfo = client.sendSync(new TdApi.GetUser(peerId));
+
+						final Date now = new Date();
+						final TgChat tgChat = new TgChat()
+								.setType(ChatType.PRIVATE)
+								.setChatId(chatId)
+								.setUserId(user.getUserId())
+								.setPeerId(peerId)
+								.setTitle(peerInfo.firstName + " " + peerInfo.lastName)
+								.setJsonEntity(Jsons.encode(peerInfo));
+						final TdApi.ProfilePhoto photo = peerInfo.profilePhoto;
+						if (photo != null) {
+							downloadFile(client, photo.big.id, () -> getUserConfig().avatarPath + "\\" + photo.big.remote.uniqueId + IMG_SUFFIX,
+									f -> tgChat.setAvatar("avatar/" + photo.big.remote.uniqueId + IMG_SUFFIX));
+						}
+						final UserInfo peer = UserInfo.of(peerId, peerInfo.phoneNumber, parseUsername(peerInfo), parseNickname(peerInfo),
+								tgChat.getAvatar(), tgChat.getJsonEntity(), now, peerInfo.type.getConstructor() == TdApi.UserTypeBot.CONSTRUCTOR ? 1 : 0);
+						chatService.add(tgChat, peer);
 					}
 				}
 			}
@@ -583,22 +582,55 @@ public class DefaultUpdateHandler implements Client.ResultHandler {
 		}
 	}
 
-	transient UserConfig userConfig;
+	public static TdApi.File downloadFile(Client client, int fileId, Supplier<String> path, @Nullable Consumer<TdApi.File> fileConsumer) {
+		final TdApi.File downloaded = client.sendSync(new TdApi.DownloadFile(fileId, 1, 0, 0, true));
+		if (downloaded.local.isDownloadingCompleted) {
+			try {
+				Files.copy(Paths.get(downloaded.local.path), Paths.get(path.get()), REPLACE_EXISTING);
+				if (fileConsumer != null) {
+					fileConsumer.accept(downloaded);
+				}
+				return downloaded;
+			} catch (IOException ignore) {
+			}
+		}
+		return null;
+	}
+
+	/** 解析用户名 */
+	public static String parseUsername(TdApi.User userInfo) {
+		if (userInfo.usernames != null && userInfo.usernames.activeUsernames.length > 0) {
+			return userInfo.usernames.activeUsernames[0];
+		}
+		return null;
+	}
+
+	/** 解析用户昵称 */
+	public static String parseNickname(TdApi.User userInfo) {
+		if (StringUtil.notBlank(userInfo.firstName) || StringUtil.notBlank(userInfo.lastName)) {
+			return userInfo.firstName + " " + userInfo.lastName;
+		} else if (userInfo.usernames != null && userInfo.usernames.activeUsernames.length > 0) {
+			return userInfo.usernames.activeUsernames[0];
+		}
+		return "user_" + userInfo.id;
+	}
+
+	transient UserConfig _userConfig;
 
 	public UserConfig getUserConfig() {
-		return userConfig == null ? userConfig = SpringUtil.getBean(UserConfig.class) : userConfig;
+		return _userConfig == null ? _userConfig = SpringUtil.getBean(UserConfig.class) : _userConfig;
 	}
 
-	transient UserService userService;
+	transient UserService _userService;
 
 	public UserService getUserService() {
-		return userService == null ? userService = SpringUtil.getBean(UserService.class) : userService;
+		return _userService == null ? _userService = SpringUtil.getBean(UserService.class) : _userService;
 	}
 
-	transient ChatService chatService;
+	transient ChatService _chatService;
 
 	public ChatService getChatService() {
-		return chatService == null ? chatService = SpringUtil.getBean(ChatService.class) : chatService;
+		return _chatService == null ? _chatService = SpringUtil.getBean(ChatService.class) : _chatService;
 	}
 
 }

@@ -126,6 +126,10 @@ public final class Client {
 		return sendSync(query, timeoutMillis, TimeUnit.MILLISECONDS);
 	}
 
+	public <T extends TdApi.Object> T sendSync(TdApi.Function query) {
+		return sendSync(query, 60, TimeUnit.SECONDS);
+	}
+
 	@SuppressWarnings("unchecked")
 	public <T extends TdApi.Object> T sendSync(TdApi.Function query, long timeout, TimeUnit unit) {
 		CompletableFuture<TdApi.Object> future = new CompletableFuture<>();
