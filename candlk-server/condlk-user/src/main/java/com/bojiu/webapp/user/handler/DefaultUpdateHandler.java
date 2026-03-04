@@ -17,8 +17,7 @@ import com.bojiu.webapp.user.dto.JsonInfo;
 import com.bojiu.webapp.user.entity.*;
 import com.bojiu.webapp.user.model.ChatType;
 import com.bojiu.webapp.user.model.MsgType;
-import com.bojiu.webapp.user.service.ChatService;
-import com.bojiu.webapp.user.service.UserService;
+import com.bojiu.webapp.user.service.*;
 import com.github.benmanes.caffeine.cache.Cache;
 import com.github.benmanes.caffeine.cache.Caffeine;
 import lombok.Setter;
@@ -217,6 +216,7 @@ public class DefaultUpdateHandler implements Client.ResultHandler {
 					}
 				}
 
+				getMessageService().addMsg(tgMsg);
 				log.info("新消息入库：{}", Jsons.encode(tgMsg));
 
 				if (userMsg) {
@@ -631,6 +631,12 @@ public class DefaultUpdateHandler implements Client.ResultHandler {
 
 	public ChatService getChatService() {
 		return _chatService == null ? _chatService = SpringUtil.getBean(ChatService.class) : _chatService;
+	}
+
+	transient MessageService _messageService;
+
+	public MessageService getMessageService() {
+		return _messageService == null ? _messageService = SpringUtil.getBean(MessageService.class) : _messageService;
 	}
 
 }

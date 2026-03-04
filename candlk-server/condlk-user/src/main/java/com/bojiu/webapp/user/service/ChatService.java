@@ -24,6 +24,7 @@ public class ChatService extends BaseServiceImpl<TgChat, ChatDao, Long> {
 
 	@Resource
 	UserInfoService userInfoService;
+
 	/** 缓存：<用户ID, 对话ID> -> $chat */
 	static final Cache<Pair<Long, Long>, TgChat> cache = Caffeine.newBuilder()
 			.initialCapacity(100)

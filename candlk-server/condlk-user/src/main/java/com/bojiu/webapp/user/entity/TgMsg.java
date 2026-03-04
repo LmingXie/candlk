@@ -1,5 +1,7 @@
 package com.bojiu.webapp.user.entity;
 
+import java.util.Objects;
+
 import com.baomidou.mybatisplus.annotation.TableName;
 import com.bojiu.webapp.base.entity.TimeBasedEntity;
 import com.bojiu.webapp.user.model.MsgType;
@@ -80,6 +82,20 @@ public class TgMsg extends TimeBasedEntity {
 		return sizeBytes >= 1024 * 1024
 				? String.format("%.2f MB", sizeBytes / (1024.0 * 1024))
 				: String.format("%.2f KB", sizeBytes / 1024.0);
+	}
+
+	@Override
+	public boolean equals(Object o) {
+		if (o == null || getClass() != o.getClass()) {
+			return false;
+		}
+		final TgMsg tgMsg = (TgMsg) o;
+		return Objects.equals(getChatId(), tgMsg.getChatId()) && Objects.equals(getMsgId(), tgMsg.getMsgId());
+	}
+
+	@Override
+	public int hashCode() {
+		return Objects.hash(getChatId(), getMsgId());
 	}
 
 	public static final String USER_ID = "user_id";
