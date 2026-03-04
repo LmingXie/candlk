@@ -8,6 +8,7 @@ import com.bojiu.webapp.base.service.BaseServiceImpl;
 import com.bojiu.webapp.user.dao.MessageDao;
 import com.bojiu.webapp.user.entity.TgMsg;
 import org.apache.dubbo.common.utils.ConcurrentHashSet;
+import org.apache.dubbo.common.utils.Pair;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -50,7 +51,21 @@ public class MessageService extends BaseServiceImpl<TgMsg, MessageDao, Long> {
 	@Transactional
 	public void saveCacheMsg() {
 		if (!cachedMsgs.isEmpty()) {
+			final Map<Pair<Long, Long>, Long> statMaxMsgId = new HashMap<>();
+			for (TgMsg msg : cachedMsgs) {
+				statMaxMsgId.merge(Pair.of(msg.getUserId(), msg.getChatId()), msg.getMsgId(), Long::max);
+			}
+
 			saveBatch(cachedMsgs, 2048);
+
+			// 更新未读消息数
+			if (!statMaxMsgId.isEmpty()) {
+				for (Map.Entry<Pair<Long, Long>, Long> entry : statMaxMsgId.entrySet()) {
+					final Pair<Long, Long> pair = entry.getKey();
+					final Long msgId = entry.getValue();
+					baseDao.updateReadState(pair.getLeft(), pair.getRight(), msgId, msgId);
+				}
+			}
 			cachedMsgs.clear();
 		}
 	}
