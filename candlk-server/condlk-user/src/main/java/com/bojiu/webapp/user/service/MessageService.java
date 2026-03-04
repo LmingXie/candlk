@@ -2,6 +2,8 @@ package com.bojiu.webapp.user.service;
 
 import java.util.*;
 
+import com.bojiu.common.redis.RedisUtil;
+import com.bojiu.context.model.RedisKey;
 import com.bojiu.webapp.base.service.BaseServiceImpl;
 import com.bojiu.webapp.user.dao.MessageDao;
 import com.bojiu.webapp.user.entity.TgMsg;
@@ -38,15 +40,25 @@ public class MessageService extends BaseServiceImpl<TgMsg, MessageDao, Long> {
 	private final Set<TgMsg> cachedMsgs = new ConcurrentHashSet<>(4096);
 
 	public void addMsg(TgMsg msg) {
-		cachedMsgs.add(msg);
+		// 进行消息去重）
+		if (RedisUtil.opsForZSet().add(RedisKey.MSG_DEDUP_KEY, msg.getChatId() + "-" + msg.getMsgId(), msg.getAddTime().getTime())) {
+			cachedMsgs.add(msg);
+		}
 	}
 
+	/** 保存缓存消息 */
 	@Transactional
-	public void saveHistoryMsg() {
+	public void saveCacheMsg() {
 		if (!cachedMsgs.isEmpty()) {
 			saveBatch(cachedMsgs, 2048);
 			cachedMsgs.clear();
 		}
+	}
+
+	/** 删除N天以前的历史消息 */
+	@Transactional
+	public void clearHistoryMsg(Date endTime) {
+		delete(updateWrapper().lt(ADD_TIME, endTime));
 	}
 
 }

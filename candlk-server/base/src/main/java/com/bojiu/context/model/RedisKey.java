@@ -938,4 +938,11 @@ public interface RedisKey {
 	 * Set< mysteryPrize:$merchantId, $userId >
 	 */
 	String MYSTERY_PRIZE_USER_PREFIX = "mysteryPrize";
+
+	/**
+	 * 消息去重
+	 * ZSet < "msgDedup", $chatId-$msgId, 时间戳 >
+	 */
+	String MSG_DEDUP_KEY = "msgDedup";
+
 }
