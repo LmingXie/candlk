@@ -24,20 +24,22 @@ public class UserInfoService extends BaseServiceImpl<UserInfo, UserInfoDao, Long
 	}
 
 	transient List<Long> botIds, innerIds;
-	transient long lastUpdateTime = 0;
+	transient long[] lastUpdateTime = { 0, 0 };
 	/** 缓存60秒 */
 	final long timeout = 60 * 1000;
 
 	public List<Long> getBotIds() {
-		if (botIds == null || System.currentTimeMillis() - lastUpdateTime > timeout) {
+		if (botIds == null || System.currentTimeMillis() - lastUpdateTime[0] > timeout) {
 			botIds = baseDao.findAllBotIds();
+			lastUpdateTime[0] = System.currentTimeMillis();
 		}
 		return botIds;
 	}
 
 	public List<Long> getInnerIds() {
-		if (innerIds == null || System.currentTimeMillis() - lastUpdateTime > timeout) {
+		if (innerIds == null || System.currentTimeMillis() - lastUpdateTime[1] > timeout) {
 			innerIds = userService.findAllUserId();
+			lastUpdateTime[1] = System.currentTimeMillis();
 		}
 		return innerIds;
 	}
