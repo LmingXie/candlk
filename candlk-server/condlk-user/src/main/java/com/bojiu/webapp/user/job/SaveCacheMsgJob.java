@@ -17,6 +17,8 @@ public class SaveCacheMsgJob {
 	@Resource
 	MessageService messageService;
 
+	transient long lastClearTime = 0;
+
 	/** 持久化缓存消息（每2秒执行一次） */
 	@Scheduled(cron = "${webapp.job.cron.SaveCacheMsgJob:0/2 * * * * ?}")
 	public void run() {
@@ -25,7 +27,11 @@ public class SaveCacheMsgJob {
 			messageService.saveCacheMsg();
 
 			// 删除1个小时以前的去重消息
-			RedisUtil.opsForZSet().removeRangeByScore(RedisKey.MSG_DEDUP_KEY, 0, System.currentTimeMillis() - 1000 * 60 * 60);
+			final long now = System.currentTimeMillis();
+			if (now - lastClearTime > 1000 * 60 * 2) {
+				RedisUtil.opsForZSet().removeRangeByScore(RedisKey.MSG_DEDUP_KEY, 0, now - 1000 * 60 * 60);
+				lastClearTime = now;
+			}
 			return true;
 		});
 	}

@@ -52,7 +52,7 @@ public class MessageService extends BaseServiceImpl<TgMsg, MessageDao, Long> {
 		}
 	}
 
-	/** 保存缓存消息 */
+	/** 保存缓存消息（外层务必保证原子调用！） */
 	@Transactional
 	public void saveCacheMsg() {
 		if (!cachedMsgs.isEmpty()) {
@@ -70,6 +70,7 @@ public class MessageService extends BaseServiceImpl<TgMsg, MessageDao, Long> {
 				for (Map.Entry<Pair<Long, Long>, Long> entry : statMaxMsgId.entrySet()) {
 					final Pair<Long, Long> pair = entry.getKey();
 					final Long msgId = entry.getValue();
+					// TODO: 2026/3/5 可能与已读标记存在数据库锁竞争问题
 					baseDao.updateReadState(pair.getLeft(), pair.getRight(), msgId, msgId);
 				}
 			}
