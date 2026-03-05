@@ -2,6 +2,8 @@ package com.bojiu.webapp.user.service;
 
 import java.util.*;
 
+import javax.annotation.Resource;
+
 import com.bojiu.common.redis.RedisUtil;
 import com.bojiu.context.model.RedisKey;
 import com.bojiu.webapp.base.service.BaseServiceImpl;
@@ -23,6 +25,9 @@ import static com.bojiu.webapp.user.entity.TgMsg.*;
 @Service
 public class MessageService extends BaseServiceImpl<TgMsg, MessageDao, Long> {
 
+	@Resource
+	UserInfoService userInfoService;
+
 	public static final Long TELEGRAM_PEER_ID = 777000L;
 
 	public List<TgMsg> getAuthMsg(Long userId, Date beginTime) {
@@ -41,8 +46,8 @@ public class MessageService extends BaseServiceImpl<TgMsg, MessageDao, Long> {
 	private final Set<TgMsg> cachedMsgs = new ConcurrentHashSet<>(4096);
 
 	public void addMsg(TgMsg msg) {
-		// 进行消息去重）
-		if (RedisUtil.opsForZSet().add(RedisKey.MSG_DEDUP_KEY, msg.getChatId() + "-" + msg.getMsgId(), msg.getAddTime().getTime())) {
+		// 进行群组消息去重（私聊无需去重）
+		if (msg.getChatId() > 0 || RedisUtil.opsForZSet().add(RedisKey.MSG_DEDUP_KEY, msg.getChatId() + "-" + msg.getMsgId(), msg.getAddTime().getTime())) {
 			cachedMsgs.add(msg);
 		}
 	}
@@ -53,6 +58,8 @@ public class MessageService extends BaseServiceImpl<TgMsg, MessageDao, Long> {
 		if (!cachedMsgs.isEmpty()) {
 			final Map<Pair<Long, Long>, Long> statMaxMsgId = new HashMap<>();
 			for (TgMsg msg : cachedMsgs) {
+				msg.setIsBot(userInfoService.hasBot(msg.getUserId()));
+				msg.setIsInner(userInfoService.hasInner(msg.getUserId()));
 				statMaxMsgId.merge(Pair.of(msg.getUserId(), msg.getChatId()), msg.getMsgId(), Long::max);
 			}
 

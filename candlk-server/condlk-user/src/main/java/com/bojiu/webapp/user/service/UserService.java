@@ -5,7 +5,8 @@ import java.util.concurrent.*;
 import java.util.function.Function;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
-import javax.annotation.*;
+import javax.annotation.PostConstruct;
+import javax.annotation.Resource;
 
 import com.bojiu.common.model.Status;
 import com.bojiu.context.web.Jsons;
@@ -90,6 +91,10 @@ public class UserService extends BaseServiceImpl<TgUser, UserDao, Long> implemen
 			}
 		}
 		return users;
+	}
+
+	public List<Long> findAllUserId() {
+		return CollectionUtil.toList(selectList(smartQueryWrapper().select(TgUser.USER_ID)), TgUser::getUserId);
 	}
 
 	public static final ThreadPoolExecutor loadTaskThreadPool = TaskUtils.newThreadPool(4, 20, 1024, "user-load-");

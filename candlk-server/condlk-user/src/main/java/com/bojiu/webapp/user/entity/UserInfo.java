@@ -48,6 +48,9 @@ public class UserInfo extends TimeBasedEntity {
 		return info;
 	}
 
+	/** 业务标记：是否为机器人 */
+	public static final int BIZ_FLAG_BOT = 1;
+
 	public static final String USER_ID = "user_id";
 	public static final String PHONE = "phone";
 	public static final String USERNAME = "username";

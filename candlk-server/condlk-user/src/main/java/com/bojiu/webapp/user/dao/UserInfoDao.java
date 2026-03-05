@@ -1,9 +1,10 @@
 package com.bojiu.webapp.user.dao;
 
+import java.util.List;
+
 import com.bojiu.webapp.base.dao.BaseDao;
 import com.bojiu.webapp.user.entity.UserInfo;
-import org.apache.ibatis.annotations.Param;
-import org.apache.ibatis.annotations.Update;
+import org.apache.ibatis.annotations.*;
 
 /**
  * Telegram用户基础信息表 Mapper 接口
@@ -26,4 +27,6 @@ public interface UserInfoDao extends BaseDao<UserInfo> {
 			""")
 	void updateUserInfo(@Param("user") UserInfo userInfo);
 
+	@Select("SELECT user_id FROM tg_user_info WHERE is_bot = 1")
+	List<Long> findAllBotIds();
 }
