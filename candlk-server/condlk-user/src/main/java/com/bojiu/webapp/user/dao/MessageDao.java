@@ -3,6 +3,7 @@ package com.bojiu.webapp.user.dao;
 import com.baomidou.mybatisplus.annotation.InterceptorIgnore;
 import com.bojiu.webapp.base.dao.BaseDao;
 import com.bojiu.webapp.user.entity.TgMsg;
+import org.apache.ibatis.annotations.Param;
 import org.apache.ibatis.annotations.Update;
 
 /**
@@ -21,6 +22,6 @@ public interface MessageDao extends BaseDao<TgMsg> {
 				update_time = NOW()
 			""")
 	@InterceptorIgnore(tenantLine = "1")
-	Integer updateReadState(Long userId, Long peerId, Long lastReadMsgId, Long maxMsgId);
+	Integer updateReadState(@Param("userId") Long userId, @Param("peerId") Long peerId, @Param("lastReadMsgId") Long lastReadMsgId, @Param("maxMsgId") Long maxMsgId);
 
 }

@@ -33,7 +33,7 @@ public class UserInfo extends TimeBasedEntity {
 	Integer isBot;
 
 	public static UserInfo of(Long userId, String phone, String username, String nickname, String avatar, String jsonEntity, Date now, Integer isBot) {
-		UserInfo info = new UserInfo();
+		final UserInfo info = new UserInfo();
 		info.setUserId(userId);
 		info.setPhone(phone);
 		info.setUsername(username);

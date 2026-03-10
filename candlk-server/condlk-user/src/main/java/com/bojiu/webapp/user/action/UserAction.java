@@ -40,23 +40,39 @@ public class UserAction extends BaseAction {
 		List<TgUser> allUser = userService.findAllNormal();
 		if (!allUser.isEmpty()) {
 			for (TgUser user : allUser) {
-				if (!user.getPhone().equals("66953918358")) {
-					continue; // TODO: 2025/11/28 测试
-				}
-				// loadTaskThreadPool.execute(() -> {
-				Long userId = user.getUserId();
-				// 通知启动py客户端，收录消息 TODO 超时时提醒应该先启动TG
-				Messager<String> msg = cockpitXApi.load(userId);
-				if (msg.isOK()) {
-					Client.create(new DefaultUpdateHandler(user));
-				} else {
-					log.error("加载账号失败：" + userId);
-				}
-				// });
+				UserService.loadTaskThreadPool.execute(() -> {
+					Long userId = user.getUserId();
+					// 通知启动py客户端，收录消息 TODO 超时时提醒应该先启动TG
+					Messager<String> msg = cockpitXApi.load(userId);
+					if (msg.isOK()) {
+						Client.create(new DefaultUpdateHandler(user));
+					} else {
+						log.error("加载账号失败：" + userId);
+					}
+				});
 			}
 			GlobalCacheSyncService.user().flushCache(RemoteSyncService.UserService, (Object[]) ArrayUtil.toArray(allUser, Long.class, TgUser::getUserId));
 		}
 		return Messager.OK();
 	}
+	// TODO: 2026/3/5 列表查询
+
+	// TODO: 2026/3/5 设置/修改 代理
+
+	// TODO: 2026/3/5 随机重置代理
+
+	// TODO: 2026/3/5 删除账号（下线）
+
+	// TODO: 2026/3/5 发起登录授权
+
+	// TODO: 2026/3/5 提交授权码
+
+	// TODO: 2026/3/5 查询全部账号
+
+	// TODO: 2026/3/5 标记为机器人
+
+	// TODO: 2026/3/5 修改个人资料
+
+	// TODO: 2026/3/5 检查账号代理
 
 }

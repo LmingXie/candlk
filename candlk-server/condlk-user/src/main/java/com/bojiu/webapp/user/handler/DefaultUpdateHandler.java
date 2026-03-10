@@ -510,7 +510,7 @@ public class DefaultUpdateHandler implements Client.ResultHandler {
 					}
 				});
 
-				TdApi.SetTdlibParameters request = new TdApi.SetTdlibParameters();
+				final TdApi.SetTdlibParameters request = new TdApi.SetTdlibParameters();
 				request.databaseDirectory = user.getPhone(); // 设置数据库目录
 				// request.databaseEncryptionKey = "123456".getBytes(StandardCharsets.UTF_8);
 				request.useMessageDatabase = false; // 不使用TDLib的消息数据库
@@ -570,8 +570,6 @@ public class DefaultUpdateHandler implements Client.ResultHandler {
 				log.warn("不支持 AuthorizationStateWaitEmailCode 请输入电子邮件授权验证码：{}", user.getUserId());
 			}
 			case TdApi.AuthorizationStateWaitRegistration.CONSTRUCTOR -> {
-				// String firstName = promptString("请输入您的名字: ");
-				// String lastName = promptString("请输入您的姓: ");
 				log.warn("不支持【注册】 AuthorizationStateWaitRegistration 请输入您的名字和姓：{}", user.getUserId());
 				client.send(new TdApi.RegisterUser(jsonInfo.firstName, jsonInfo.lastName, false), AuthorizationRequestHandler.getInstance());
 			}
