@@ -15,9 +15,9 @@ public abstract class LoginBaseBetApiImpl extends BaseBetApiImpl {
 	/** 登录 */
 	protected abstract JSONObject doLogin(String lang);
 
-	/** 登录超时时间 */
+	/** 登录超时时间（单位：小时） */
 	public int getTokenTimeout() {
-		return 3;
+		return 3 * 24;
 	}
 
 	/** 获取登录 Token */
@@ -31,7 +31,7 @@ public abstract class LoginBaseBetApiImpl extends BaseBetApiImpl {
 				final JSONObject result = doLogin(getDefaultLanguage());
 				if (result != null) {
 					loginInfo = result;
-					opsForValue.set(key, Jsons.encode(loginInfo), getTokenTimeout(), TimeUnit.DAYS);
+					opsForValue.set(key, Jsons.encode(loginInfo), getTokenTimeout(), TimeUnit.HOURS);
 				}
 			}
 		}

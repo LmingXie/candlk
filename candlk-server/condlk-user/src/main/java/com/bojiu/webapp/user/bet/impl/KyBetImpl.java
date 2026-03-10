@@ -3,8 +3,7 @@ package com.bojiu.webapp.user.bet.impl;
 import java.io.*;
 import java.net.URI;
 import java.net.URLDecoder;
-import java.net.http.HttpRequest;
-import java.net.http.HttpResponse;
+import java.net.http.*;
 import java.nio.charset.StandardCharsets;
 import java.util.*;
 import java.util.stream.Collectors;
@@ -12,24 +11,22 @@ import java.util.zip.GZIPInputStream;
 
 import com.alibaba.fastjson2.JSONArray;
 import com.alibaba.fastjson2.JSONObject;
+import com.bojiu.common.model.ErrorMessageException;
 import com.bojiu.common.model.Messager;
 import com.bojiu.common.util.Common;
-import com.bojiu.common.util.SpringUtil;
 import com.bojiu.context.web.Jsons;
-import com.bojiu.webapp.user.bet.BaseBetApiImpl;
-import com.bojiu.webapp.user.dto.GameDTO;
+import com.bojiu.webapp.user.bet.LoginBaseBetApiImpl;
+import com.bojiu.webapp.user.dto.*;
 import com.bojiu.webapp.user.dto.GameDTO.OddsInfo;
-import com.bojiu.webapp.user.dto.ScoreResult;
 import com.bojiu.webapp.user.model.*;
 import lombok.extern.slf4j.Slf4j;
-import me.codeplayer.util.EasyDate;
-import me.codeplayer.util.StringUtil;
+import me.codeplayer.util.*;
 import org.springframework.http.HttpMethod;
 import org.springframework.stereotype.Service;
 
 @Slf4j
 @Service
-public class KyBetImpl extends BaseBetApiImpl {
+public class KyBetImpl extends LoginBaseBetApiImpl {
 
 	@Override
 	public BetProvider getProvider() {
@@ -81,6 +78,7 @@ public class KyBetImpl extends BaseBetApiImpl {
 		 */
 	@Override
 	public Set<GameDTO> getGameBets(String lang) {
+		getLoginToken();
 		final Map<String, Object> params = new TreeMap<>();
 		final StringBuilder sb = new StringBuilder();
 		Set<GameDTO> gameDTOs = new HashSet<>();
@@ -225,20 +223,52 @@ public class KyBetImpl extends BaseBetApiImpl {
 	final String userId = "529740290458888888";
 
 	@Override
+	protected HttpClient currentClient() {
+		HttpClient client = getProxyClient();
+		return client == null ? defaultClient() : client;
+	}
+
+	@Override
 	protected HttpRequest.Builder createRequest(HttpMethod method, URI uri, Map<String, Object> params, int flags) {
 		HttpRequest.Builder builder = super.createRequest(method, uri, params, flags);
-		builder.setHeader("Accept-Language", "zh-CN,zh;q=0.9");
-		builder.setHeader("Origin", "https://user-pc-new.zlshelves.com");
-		builder.setHeader("Referer", "https://user-pc-new.zlshelves.com/");
-		builder.setHeader("User-Agent", "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/143.0.0.0 Safari/537.36");
-		final String token = getConfig().token;
-		builder.setHeader("checkId", "pc-" + token + "-" + userId + "-" + System.currentTimeMillis());
-		builder.setHeader("lang", params == null ? getDefaultLanguage() : (String) params.remove("lang"));
-		builder.setHeader("request-code", "{\"panda-bss-source\":\"2\"}");
-		builder.setHeader("requestId", token);
-		builder.setHeader("sec-ch-ua", "\"Google Chrome\";v=\"143\", \"Chromium\";v=\"143\", \"Not A(Brand\";v=\"24\"");
-		builder.setHeader("sec-ch-ua-mobile", "?0");
-		builder.setHeader("sec-ch-ua-platform", "\"Windows\"");
+		if (uri != v4URI) {
+			builder.setHeader("User-Agent", "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/143.0.0.0 Safari/537.36");
+			final Object apiSite = params == null ? null : params.remove("x-api-site");
+			if (apiSite == null) {
+				builder.setHeader("lang", params == null ? getDefaultLanguage() : (String) params.remove("lang"));
+				builder.setHeader("Accept-Language", "zh-CN,zh;q=0.9");
+				builder.setHeader("Origin", "https://user-pc-new.zlshelves.com");
+				builder.setHeader("Referer", "https://user-pc-new.zlshelves.com/");
+				final String token = loginInfo != null ? loginInfo.getString("token") : getConfig().token;
+				builder.setHeader("checkId", "pc-" + token + "-" + userId + "-" + System.currentTimeMillis());
+				builder.setHeader("request-code", "{\"panda-bss-source\":\"2\"}");
+				builder.setHeader("requestId", token);
+				builder.setHeader("sec-ch-ua", "\"Google Chrome\";v=\"143\", \"Chromium\";v=\"143\", \"Not A(Brand\";v=\"24\"");
+				builder.setHeader("sec-ch-ua-mobile", "?0");
+				builder.setHeader("sec-ch-ua-platform", "\"Windows\"");
+			} else {
+				builder.setHeader("x-api-client", "web");
+				builder.setHeader("x-api-site", (String) apiSite);
+				builder.setHeader("x-api-uuid", UUID.randomUUID().toString());
+				builder.setHeader("x-api-version", "2.0.0");
+				if (loginInfo != null) {
+					builder.setHeader("x-api-token", loginInfo.getString("apiToken"));
+				}
+				Object apiToken = params.remove("apiToken");
+				if (apiToken != null) {
+					builder.setHeader("x-api-token", (String) apiToken);
+				}
+				if (uri.getPath().endsWith("/launch")) {
+					/*
+					测试发现 x-api-xxx 前面为时间戳，后面为根据请求URL生成的签名，由于其使用了 WASM 进行计算，暂不进行逆向
+					源码生成 X-API-XXX：
+					 1、null === (n = t.match(/\/\w+\/\w+/i)) || void 0 === n ? void 0
+					 2、return (r = t).includes("/component") && (r = "/site
+					 */
+					builder.setHeader("x-api-xxx", (System.currentTimeMillis() / 1000) + "561704683abf661728c1ce4d4c374be7ac97acb8b321897cec3c31");
+				}
+			}
+		}
 		return builder;
 	}
 
@@ -246,15 +276,102 @@ public class KyBetImpl extends BaseBetApiImpl {
 		return URI.create(this.getConfig().endPoint + url + "?t=" + System.currentTimeMillis());
 	}
 
+	protected URI buildWebsiteURI(String basePath, String url) {
+		return URI.create(basePath + url);
+	}
+
+	final URI v4URI = URI.create("http://127.0.0.1:5008/word/verify");
+	final Map<String, Object> v4Params = new TreeMap<>() {{
+		put("captcha_id", "283ed0bd78efd3d7899888027e9a851f");
+	}};
+
+	@Override
+	protected JSONObject doLogin(String lang) {
+		final BetApiConfig config = this.getConfig();
+		return doLogin(config.ext.getString("siteId"), config.ext.getString("website"), config.username, config.password);
+	}
+
+	@Override
+	public int getTokenTimeout() {
+		return 1;
+	}
+
+	public JSONObject doLogin(String siteId, String basePath, String username, String password) {
+		// 获取极验V4验证码信息
+		final Messager<JSONObject> v4Msg = super.sendRequest(HttpMethod.POST, v4URI, v4Params);
+		if (!v4Msg.isOK()) {
+			throw new ErrorMessageException("获取极验V4验证码失败：" + v4Msg.data().getString("msg"));
+		}
+		JSONObject data = v4Msg.data().getJSONObject("data");
+		final JSONObject seccode = data.getJSONObject("seccode");
+		if (seccode == null) {
+			throw new ErrorMessageException("获取极验V4验证码失败：lotNumber为空");
+		}
+
+		// 开云校验验证码
+		final Map<String, Object> params = new TreeMap<>();
+		params.put("x-api-site", siteId); // 站点ID
+		params.put("validate_way", 1);
+		params.put("lot_number", seccode.getString("lot_number"));
+		params.put("captcha_output", seccode.getString("captcha_output"));
+		params.put("gen_time", seccode.getString("gen_time"));
+		params.put("pass_token", seccode.getString("pass_token"));
+		final Messager<JSONObject> verifyMsg = super.sendRequest(HttpMethod.POST, buildWebsiteURI(basePath, "/site/api/v1/user/member/validateGeeCheckV2"), params);
+		final String newLotNumber = verifyMsg.data().getJSONObject("data").getJSONObject("captcha_args").getString("lot_number");
+		if (StringUtil.isEmpty(newLotNumber)) {
+			throw new ErrorMessageException("极验V4验证码校验失败：" + verifyMsg.data().getJSONObject("data").getString("reason"));
+		}
+
+		// 获取登录Token
+		params.clear();
+		params.put("x-api-site", siteId); // 站点ID
+		params.put("name", username);
+		params.put("password", Encrypter.md5(password));
+		params.put("Kaptchcate", 0);
+		params.put("codeId", newLotNumber);
+		final Messager<JSONObject> loginMsg = super.sendRequest(HttpMethod.POST, buildWebsiteURI(basePath, "/site/api/v1/user/login"), params);
+		data = loginMsg.data().getJSONObject("data");
+		final String apiToken = data.getString("token");
+		data.put("apiToken", apiToken);
+
+		params.clear();
+		params.put("x-api-site", siteId); // 站点ID
+		params.put("apiToken", apiToken);
+		params.put("name", username);
+		params.put("enName", "YBTY");
+		params.put("isApp", 0);
+		params.put("https", 1);
+		params.put("isManualLaunch", false);
+		params.put("clientType", "web");
+		params.put("isActivity", false);
+		params.put("isPandaAct", "0");
+
+		final Messager<JSONObject> launchMsg = super.sendRequest(HttpMethod.POST, buildWebsiteURI(basePath, "/game/api/v1/venue/launch"), params);
+		final String gameUrl = launchMsg.data().getJSONObject("data").getString("url");
+		int beginIndex = gameUrl.indexOf("?token=") + 7;
+		String token = gameUrl.substring(beginIndex, gameUrl.indexOf("&", beginIndex));
+		data.put("token", token);
+		return data;
+	}
+
 	@Override
 	protected String mapStatus(JSONObject json, HttpResponse<String> response) {
-		final String errorCode = (String) getErrorCode(json);
-		if (!"0000000".equals(errorCode)) {
-			if ("0401013".equals(errorCode)) { // 掉登录
-				SpringUtil.logError(log, () -> "【" + getProvider() + "】掉登录，请手动补登录，errCode：0401013");
+		final URI uri = response.request().uri();
+		if (uri == v4URI) {
+			if (!"true".equals(json.getString("success"))) {
+				log.warn("【{}-极验】获取验证码失败：{}", getProvider(), json.getString("msg"));
+				return null;
 			}
-			log.warn("接口响应错误：{}", json.getString("msg"));
-			return null;
+		} else {
+			final String errorCode = (String) getErrorCode(json);
+			if (!"0000000".equals(errorCode)/*游戏状态码*/ && !"6000".equals(json.getString("status_code"))/*官网状态码*/) {
+				if ("0401013".equals(errorCode)) { // 掉登录
+					clearLoginToken();
+					// SpringUtil.logError(log, () -> "【" + getProvider() + "】掉登录，请手动补登录，errCode：0401013");
+				}
+				log.warn("接口响应错误：{}", json.getString("msg"));
+				return null;
+			}
 		}
 		return Messager.OK;
 	}
@@ -353,6 +470,7 @@ public class KyBetImpl extends BaseBetApiImpl {
 	transient long tournamentIdCacheTime = 0;
 
 	private String doQueryTournament(long startTime, long endTime, String lang) {
+		getLoginToken();
 		if (tournamentId == null || System.currentTimeMillis() > tournamentIdCacheTime) {
 			final Map<String, Object> params = new TreeMap<>();
 			params.put("lang", lang);
@@ -384,6 +502,7 @@ public class KyBetImpl extends BaseBetApiImpl {
 
 	@Override
 	public Map<Object, ScoreResult> getScoreResult() {
+		getLoginToken();
 		EasyDate d = new EasyDate().beginOf(Calendar.DATE);
 		final long endTime = d.getTime(), startTime = d.addDay(-1).getTime();
 		final String lang = getDefaultLanguage();

@@ -1,8 +1,10 @@
 package com.bojiu.webapp.user.dto;
 
+import com.alibaba.fastjson2.JSONObject;
 import com.bojiu.common.context.I18N;
 import com.bojiu.webapp.base.entity.MetaValue;
-import lombok.*;
+import lombok.Getter;
+import lombok.Setter;
 import lombok.experimental.Accessors;
 
 @Getter
@@ -25,6 +27,8 @@ public class BetApiConfig implements MetaValue<BaseRateConifg> {
 
 	/** 获取赛果的URL */
 	public String scoreResultUrl;
+	/** 扩展配置 */
+	public JSONObject ext;
 
 	@Override
 	public void validate() {

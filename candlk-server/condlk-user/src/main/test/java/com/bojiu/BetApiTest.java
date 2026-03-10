@@ -50,7 +50,7 @@ public class BetApiTest {
 
 	@Test
 	public void getGameBetsTest() {
-		BetApi api = BetApi.getInstance(BetProvider.PS);
+		BetApi api = BetApi.getInstance(BetProvider.KY);
 		gameBetJob.doQueryAndSyncGameBetsForSingleVendor(api);
 	}
 
