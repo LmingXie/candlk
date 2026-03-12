@@ -18,11 +18,13 @@ public enum PeriodType implements ValueProxyImpl<PeriodType, Integer> {
 	@EnumValue
 	public final Integer value;
 	public final String label;
+	public final boolean open;
 	final ValueProxy<PeriodType, Integer> proxy;
 
 	PeriodType(String label, boolean open) {
 		this.value = ordinal();
 		this.label = label;
+		this.open = open;
 		this.proxy = new ValueProxy<>(this, value, label);
 	}
 

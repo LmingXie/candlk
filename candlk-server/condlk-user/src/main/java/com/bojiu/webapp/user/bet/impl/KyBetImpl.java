@@ -367,7 +367,6 @@ public class KyBetImpl extends LoginBaseBetApiImpl {
 			if (!"0000000".equals(errorCode)/*游戏状态码*/ && !"6000".equals(json.getString("status_code"))/*官网状态码*/) {
 				if ("0401013".equals(errorCode)) { // 掉登录
 					clearLoginToken();
-					// SpringUtil.logError(log, () -> "【" + getProvider() + "】掉登录，请手动补登录，errCode：0401013");
 				}
 				log.warn("接口响应错误：{}", json.getString("msg"));
 				return null;
