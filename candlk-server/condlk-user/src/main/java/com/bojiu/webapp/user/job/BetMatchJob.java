@@ -28,16 +28,16 @@ public class BetMatchJob {
 
 	/** 需要匹配的平台对 */
 	static final List<Pair<BetProvider, BetProvider>> matchPair = List.of(
-			Pair.of(D1CE, KY),
-			Pair.of(D1CE, HG),
-			Pair.of(D1CE, PS),
+			// Pair.of(D1CE, KY),
+			// Pair.of(D1CE, HG),
+			// Pair.of(D1CE, PS),
 
-			Pair.of(KY, HG),
-			Pair.of(KY, PS)
+			Pair.of(KY, HG)/*,
+			Pair.of(KY, PS)*/
 	);
 	static final List<Pair<BetProvider, BetProvider>> matchPair2 = List.of(
-			Pair.of(KY, HG),
-			Pair.of(KY, PS)
+			Pair.of(KY, HG)
+			// Pair.of(KY, PS)
 	);
 	public static final Map<String, String> ALL_PAIR = new TreeMap<>(), ALL_PAIR2 = new TreeMap<>();
 

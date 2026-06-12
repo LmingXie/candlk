@@ -543,6 +543,8 @@ public abstract class BaseBetApiImpl extends BaseHttpUtil implements BetApi {
 	public static HttpClient.Builder prepareProxyClient(@NonNull String proxyConfig) {
 		// "proxy://username:password@host:port"
 		// proxy://127.0.0.1:10809
+		// proxy://yosm09z2:CJRy76dU@39.175.163.29:9555 39.175.163.29-9555-yosm09z2-CJRy76dU
+		// proxy://sp0fci7bns:ot8lSHlh56e1OtM~cw@isp.decodo.com:10001
 		final URI uri = URI.create(proxyConfig);
 		String username = null, password = null;
 		final String userInfo = uri.getUserInfo();
