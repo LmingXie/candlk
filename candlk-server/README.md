@@ -157,49 +157,47 @@ fi
 ## 创建隧道
 ```
 # 创建专用隧道用户
-adduser mysql_tunnel
+adduser read_agent
 
 # 限制该用户只能做端口转发
-usermod -s /usr/sbin/nologin mysql_tunnel
+usermod -s /usr/sbin/nologin read_agent
 
 # 生成 SSH Key
-ssh-keygen -t ed25519 -f ~/.ssh/mysql_tunnel -C "mysql-tunnel"
+ssh-keygen -t ed25519 -f ~/.ssh/read_agent -C "read-agent"
 
 # 上传公钥到远程服务器【server_ip 替换为公网IP】
-ssh-copy-id -i ~/.ssh/mysql_tunnel.pub mysql_tunnel@【server_ip】
+ssh-copy-id -i ~/.ssh/read_agent.pub read_agent@【server_ip】
 
 # 直接手工放 key
-mkdir -p /home/mysql_tunnel/.ssh
-touch /home/mysql_tunnel/.ssh/authorized_keys
-chown -R mysql_tunnel:mysql_tunnel /home/mysql_tunnel/.ssh
-chmod 700 /home/mysql_tunnel
-chmod 700 /home/mysql_tunnel/.ssh
-chmod 600 /home/mysql_tunnel/.ssh/authorized_keys
+mkdir -p /home/read_agent/.ssh
+touch /home/read_agent/.ssh/authorized_keys
+chown -R read_agent:read_agent /home/read_agent/.ssh
+chmod 700 /home/read_agent
+chmod 700 /home/read_agent/.ssh
+chmod 600 /home/read_agent/.ssh/authorized_keys
+chown read_agent:read_agent /home/read_agent/.ssh/authorized_keys
 
-cat /home/mysql_tunnel/.ssh/authorized_keys
+# 此时查看是空的
+cat /home/read_agent/.ssh/authorized_keys
 
-chown mysql_tunnel:mysql_tunnel /home/mysql_tunnel/.ssh/authorized_keys
-chmod 600 /home/mysql_tunnel/.ssh/authorized_keys
-ls -l /home/mysql_tunnel/.ssh
 # 查看公钥
-cat ~/.ssh/mysql_tunnel.pub
-# 把公钥写入
-nano /home/mysql_tunnel/.ssh/authorized_keys
+cat ~/.ssh/read_agent.pub
+# 将查看到的公钥写入到 authorized_keys 文件
+vi /home/read_agent/.ssh/authorized_keys
 
 # 启动 SSH 服务
 systemctl restart ssh
 
-# 测试 SSH 是否可连
-ssh -vvv -i ~/.ssh/mysql_tunnel mysql_tunnel@【server_ip】
 
-# 正常应看到
-Offering public key: /root/.ssh/mysql_tunnel
-Server accepts key
-Authentication succeeded
+# 查看 read_agent 用户的SSH密钥
+cat /root/.ssh/read_agent
+
+# 测试 SSH 是否可连
+ssh -vvv -i ~/.ssh/read_agent read_agent@【server_ip】
 
 # 通过隧道暴露 Redis 端口
 
-ssh -N -i ~/.ssh/mysql_tunnel -f -R 6380:127.0.0.1:6379 mysql_tunnel@【server_ip】
+ssh -N -i ~/.ssh/read_agent -f -R 6380:127.0.0.1:6379 read_agent@【server_ip】
 
 -N 不执行远程命令
 -f 后台运行
