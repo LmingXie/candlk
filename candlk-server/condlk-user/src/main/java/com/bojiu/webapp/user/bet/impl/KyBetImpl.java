@@ -139,9 +139,17 @@ public class KyBetImpl extends LoginBaseBetApiImpl {
 		result = sendRequest(HttpMethod.POST, buildURI("/yewu11/v1/w/structureMatchBaseInfoByMids"), params, FLAG);
 		if (!result.isOK()) {
 			params.clear();
-			final String msg = result.data().getString("msg");
+			JSONObject data = result.data();
+			final String msg = data == null ? null : data.getString("msg");
 			// The current number of visitors is too high. Please try again later
-			if (msg != null && (msg.startsWith("The current number of visitors") || msg.startsWith("当前访问人数过多"))) {
+			boolean gatewayErr = data == null && result.getCode() == 506;
+			if (gatewayErr) {
+				log.warn("获取赛事信息列表失败，请稍后再试：{}", result.getMsg());
+			}
+			if (gatewayErr || (msg != null && (
+					"0401038".equals(data.getString("code"))
+							|| msg.startsWith("The current number of visitors") || msg.startsWith("当前访问人数过多")
+			))) {
 				try {
 					Thread.sleep(543);
 				} catch (InterruptedException ignore) {
