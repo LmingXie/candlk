@@ -7,8 +7,8 @@ import javax.annotation.Resource;
 import com.bojiu.context.web.Jsons;
 import com.bojiu.webapp.UserApplication;
 import com.bojiu.webapp.user.bet.BetApi;
-import com.bojiu.webapp.user.bet.impl.PsBetImpl;
 import com.bojiu.webapp.user.dto.*;
+import com.bojiu.webapp.user.entity.User;
 import com.bojiu.webapp.user.job.BetMatchJob;
 import com.bojiu.webapp.user.job.GameBetJob;
 import com.bojiu.webapp.user.model.BetProvider;
@@ -35,9 +35,9 @@ public class BetApiTest {
 
 	@Test
 	public void getBetApi() {
-		BetProvider type = BetProvider.PS;
-		PsBetImpl api = (PsBetImpl) BetApi.getInstance(type);
-		for (int i = 0; i < 10; i++) {
+		BetProvider type = BetProvider.D1CE;
+		BetApi api = BetApi.getInstance(type);
+		for (int i = 0; i < 1; i++) {
 			long systemTime = System.currentTimeMillis();
 			api.getGameBets();
 			log.info("【{}】查询耗时：{}ms", i + 1, System.currentTimeMillis() - systemTime);
@@ -50,7 +50,8 @@ public class BetApiTest {
 
 	@Test
 	public void getGameBetsTest() {
-		BetApi api = BetApi.getInstance(BetProvider.HG);
+		User.initLoad();
+		BetApi api = BetApi.getInstance(BetProvider.KY);
 		gameBetJob.doQueryAndSyncGameBetsForSingleVendor(api);
 	}
 
@@ -65,8 +66,8 @@ public class BetApiTest {
 	@Test
 	public void matchTest() {
 		int parlaysSize = 2; // 串关大小（3场比赛为一组）
-		BetProvider parlaysProvider = BetProvider.HG;
-		BetProvider hedgingProvider = BetProvider.PS;
+		BetProvider parlaysProvider = BetProvider.D1CE;
+		BetProvider hedgingProvider = BetProvider.KY;
 
 		// 以下将串关平台称为“A”，对冲平台称为“B”
 		long startTime = System.currentTimeMillis();

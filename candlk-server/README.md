@@ -153,3 +153,55 @@ else
 fi
 
 ```
+
+## 创建隧道
+```
+# 创建专用隧道用户
+adduser mysql_tunnel
+
+# 限制该用户只能做端口转发
+usermod -s /usr/sbin/nologin mysql_tunnel
+
+# 生成 SSH Key
+ssh-keygen -t ed25519 -f ~/.ssh/mysql_tunnel -C "mysql-tunnel"
+
+# 上传公钥到远程服务器【server_ip 替换为公网IP】
+ssh-copy-id -i ~/.ssh/mysql_tunnel.pub mysql_tunnel@【server_ip】
+
+# 直接手工放 key
+mkdir -p /home/mysql_tunnel/.ssh
+touch /home/mysql_tunnel/.ssh/authorized_keys
+chown -R mysql_tunnel:mysql_tunnel /home/mysql_tunnel/.ssh
+chmod 700 /home/mysql_tunnel
+chmod 700 /home/mysql_tunnel/.ssh
+chmod 600 /home/mysql_tunnel/.ssh/authorized_keys
+
+cat /home/mysql_tunnel/.ssh/authorized_keys
+
+chown mysql_tunnel:mysql_tunnel /home/mysql_tunnel/.ssh/authorized_keys
+chmod 600 /home/mysql_tunnel/.ssh/authorized_keys
+ls -l /home/mysql_tunnel/.ssh
+# 查看公钥
+cat ~/.ssh/mysql_tunnel.pub
+# 把公钥写入
+nano /home/mysql_tunnel/.ssh/authorized_keys
+
+# 启动 SSH 服务
+systemctl restart ssh
+
+# 测试 SSH 是否可连
+ssh -vvv -i ~/.ssh/mysql_tunnel mysql_tunnel@【server_ip】
+
+# 正常应看到
+Offering public key: /root/.ssh/mysql_tunnel
+Server accepts key
+Authentication succeeded
+
+# 通过隧道暴露 Redis 端口
+
+ssh -N -i ~/.ssh/mysql_tunnel -f -R 6380:127.0.0.1:6379 mysql_tunnel@【server_ip】
+
+-N 不执行远程命令
+-f 后台运行
+-R 远程6380 → 本地Redis
+```
