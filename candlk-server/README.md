@@ -203,3 +203,22 @@ ssh -N -i ~/.ssh/read_agent -f -R 6380:127.0.0.1:6379 read_agent@【server_ip】
 -f 后台运行
 -R 远程6380 → 本地Redis
 ```
+
+
+## Redis 初始化数据
+```redis
+
+# 游戏赔率供应商配置
+HSET meta:0:1 "KY" "{"domain":"api.8h6sn5l.com","proxy":"proxy://127.0.0.1:10809","token":"eced9ab63314a5a7b483ba9524c2e77f0ff34536","username":"ky666798","password":"123456789Cr","ext":{"website":"https://www.qbx9fh.vip:8443","siteId":"4002"}}" "PS" "{"domain":"www.ps3838.com","password":"123456789Cr","username":"ATLUBCP009"}" "HG" "{"proxy":"proxy://127.0.0.1:10809","domain":"hga038.com","password":"123456789Cr","username":"Cte3t6bcz666","scoreResultUrl":"https://125.252.69.119"}" "D1CE" "{"proxy":"proxy://127.0.0.1:10809","domain":"cncrownbet-api.d1ce.com","password":"123456789Cr","username":"1611826811@qq.com","scoreResultUrl":"https://125.252.69.119"}"
+
+# 初始化基础赔率配置
+HSET meta:0:2 "base_rate_config" "{"aPrincipal":1000.0,"aRechargeRate":0.0,"rebate":{2:0.022,3:0.025,1:0.02,0:0.02}}"
+
+HSET meta:2419620332:2 "base_rate_config" "{"aPrincipal":1000.0,"aRechargeRate":0.0,"rebate":{3:0.025,2:0.025,0:0.02,1:0.02}}"
+
+-- 初始化账号数据
+-- 超管：admin_/Gqy@666
+-- 普通账号：Gqy007/Gunqiu@007
+HSET users "847956850" "{"bizFlag":0,"dealerId":0,"emailed":false,"enabled":false,"gender":1,"id":847956850,"lastLoginTime":1768827152615,"merchantId":0,"password":"Gunqiu@007","phone_":"","phoned":false,"present":false,"sessionId":"wq5m2VkfnLBdOizlsqjWO","status":1,"token":"wq5m2VkfnLBdOizlsqjWO.cpoYWtcOh0VLlMMx_L9-PLOyx08KKwiPSuGgthFFgYiTFYsI-enQRLWMBVbhGh5qFbolRsdiheSSCWYn_7ZiKA","topUserId":0,"ttl":1768913552615,"type":2,"username":"Gqy007","username_":"Gq***07"}" "2419620332" "{"bizFlag":0,"dealerId":0,"emailed":false,"enabled":false,"gender":1,"id":2419620332,"lastLoginTime":1769174881791,"merchantId":0,"password":"Gqy@666","phone_":"","phoned":false,"present":false,"sessionId":"wq5m2VkfnLBdOizlsqjWO","status":1,"token":"wq5m2VkfnLBdOizlsqjWO.J_xL4D-XMAr0KbQQ3EBY0i4BwsZsGu6s5Q5ARRggYqDqCKUHvnKH03RR2xam7KFyy8O0-5Ud5W--RCzJu7w_mQ","topUserId":0,"ttl":1769261281791,"type":1,"username":"admin_","username_":"ad***n_"}"
+
+```
