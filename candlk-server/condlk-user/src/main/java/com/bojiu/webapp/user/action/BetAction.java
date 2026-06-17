@@ -18,7 +18,6 @@ import com.bojiu.webapp.base.action.BaseAction;
 import com.bojiu.webapp.user.dto.BaseRateConifg;
 import com.bojiu.webapp.user.dto.HedgingDTO;
 import com.bojiu.webapp.user.entity.User;
-import com.bojiu.webapp.user.form.VerifyCardForm;
 import com.bojiu.webapp.user.form.query.HedgingQuery;
 import com.bojiu.webapp.user.job.BetMatchJob;
 import com.bojiu.webapp.user.service.BetMatchService;
@@ -27,7 +26,6 @@ import com.bojiu.webapp.user.vo.HedgingVO;
 import lombok.extern.slf4j.Slf4j;
 import me.codeplayer.util.*;
 import org.springframework.data.redis.core.ZSetOperations;
-import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.annotation.*;
 
 import static com.bojiu.webapp.user.model.MetaType.base_rate_config;
@@ -104,7 +102,7 @@ public class BetAction extends BaseAction {
 		return Messager.exposeData(page);
 	}
 
-	@Ready("保存推荐方案")
+	@Ready("保存/修改推荐方案")
 	@PostMapping("/save")
 	@Permission(Permission.USER)
 	public Messager<Void> save(ProxyRequest q, String value) {
@@ -177,20 +175,6 @@ public class BetAction extends BaseAction {
 	public Messager<HedgingVO> compare(ProxyRequest q, String value) {
 		I18N.assertNotNull(value);
 		return Messager.exposeData(betMatchService.calcMuti(value, q.now()));
-	}
-
-	@Ready("开云绑卡验证")
-	@PostMapping("/verifyCard")
-	@Permission(Permission.USER)
-	public Messager<Void> verifyCard(ProxyRequest q, @Validated VerifyCardForm form) {
-		// TODO: 2026/3/11 输入银行卡信息
-
-		// TODO: 2026/3/11 循环在所有站点（异步）
-
-		// TODO: 2026/3/11 获取登录Token
-
-		// TODO: 2026/3/11 绑卡
-		return Messager.OK();
 	}
 
 }
